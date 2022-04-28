@@ -23,6 +23,7 @@ def create_virtual_instance(namespace, ip, mac, prefix, outer_veth, inner_veth, 
     """
 
     script = (f''' bash -c '\
+ovs-vsctl add-port br-int {tap} -- set Interface {tap} type=internal && \
 ip netns add {namespace} && \
 ip link add {inner_veth} type veth peer name {outer_veth} && \
 ip link set {inner_veth} netns {namespace} && \
@@ -174,9 +175,10 @@ def main():
     subnet_id = json_response["subnets"][0]["id"]
     subnet_ip = json_response["subnets"][0]["cidr"].split("/")[0]
 
+    i = 0
     parser.add_argument("-s", "--subnets", action="store", dest="subnets",
                         type=str, nargs="*", default=[subnet_id],
-                        help="Examples: -i subnet1, subnet2, subnet3")
+                        help="Examples: -s subnet1, subnet2, subnet3")
     opts = parser.parse_args()
 
     for subnet in opts.subnets:
@@ -219,10 +221,13 @@ def main():
         port_id = json_response["port"]["id"]
 
     ###############CREATE VM###############
+        netns += str(i)
+        outer_veth_name += str(i)
+        inner_veth_name += str(i)
+        bridge_name += str(i)
         syslog("###############CREATE VM###############")
         create_virtual_instance(
             netns, ip, mac, prefix, outer_veth_name, inner_veth_name, bridge_name, tap_name, main_interface_name, subnet_ip)
-
     ###############UPDATE PORT###############
         update_port_body = {
             "port": {
@@ -252,5 +257,5 @@ def main():
             response = requests.put(update_port_endpoint, headers=headers, verify=False,
                                     data=json.dumps(update_port_body))
 
-
+        i += 1
 main()
