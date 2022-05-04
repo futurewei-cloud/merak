@@ -17,7 +17,7 @@ def run_cmd(cmd):
     return (returncode, text)
 
 
-def create_virtual_instance(namespace, ip, mac, prefix, outer_veth, inner_veth, bridge, tap, main_interface, subnet_ip):
+def create_virtual_instance(namespace, ip, mac, prefix, outer_veth, inner_veth, bridge, tap, gateway):
     """
     Creates a veth pair.
     """
@@ -33,6 +33,7 @@ ip netns exec {namespace} sysctl -w net.ipv4.tcp_mtu_probing=2 && \
 ip link set dev {outer_veth} up && \
 ip netns exec {namespace} ifconfig lo up &&  \
 ip netns exec {namespace} ifconfig {inner_veth} hw ether {mac} && \
+ip netns exec {namespace} route add default gw {gateway} && \
 ip link add name {bridge} type bridge && \
 ip link set {outer_veth} master {bridge} && \
 ip link set {tap} master {bridge} && \
@@ -71,7 +72,7 @@ def main():
     sgm_port = "30008"
     nmm_port = "30007"
     ncm_port = "30007"
-    get_network_endpoint = "http://{}:{}/project/{}/subnets".format(
+    get_network_endpoint = "http://{}:{}/project/{}/subnets/".format(
         address, sm_port, project_id)
     create_port_endpoint = "http://{}:{}/project/{}/ports".format(
         address, pm_port, project_id)
@@ -162,8 +163,8 @@ def main():
 ###############GET SUBNET###############
 
     syslog("###############GET SUBNET###############")
-    syslog("get_subnet response {}".format(response.text))
     response = requests.get(get_network_endpoint)
+    syslog("get_subnet response {}".format(response.text))
     while not response.ok:
         sleep(5)
         syslog("get_subnet response {}".format(response.text))
@@ -184,6 +185,13 @@ def main():
     for subnet in opts.subnets:
         print("Creating VM in subnet: {}".format(subnet))
 
+        response = requests.get(get_network_endpoint + subnet)
+        while not response.ok:
+            sleep(5)
+            syslog("get_subnet response {}".format(response.text))
+            response = requests.get(get_network_endpoint + subnet)
+        json_response = response.json()
+        gateway = json_response["subnet"]["gateway_ip"]
     ###############CREATE MINIMAL PORT###############
         create_minimal_port_body = {
             "port": {
@@ -227,7 +235,7 @@ def main():
         bridge_name += str(i)
         syslog("###############CREATE VM###############")
         create_virtual_instance(
-            netns, ip, mac, prefix, outer_veth_name, inner_veth_name, bridge_name, tap_name, main_interface_name, subnet_ip)
+            netns, ip, mac, prefix, outer_veth_name, inner_veth_name, bridge_name, tap_name, gateway)
     ###############UPDATE PORT###############
         update_port_body = {
             "port": {
@@ -258,4 +266,6 @@ def main():
                                     data=json.dumps(update_port_body))
 
         i += 1
+
+
 main()
