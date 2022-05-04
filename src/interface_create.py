@@ -17,12 +17,13 @@ def run_cmd(cmd):
     return (returncode, text)
 
 
-def create_virtual_instance(namespace, ip, mac, prefix, outer_veth, inner_veth, bridge, tap, main_interface, subnet_ip):
+def create_virtual_instance(namespace, ip, mac, prefix, outer_veth, inner_veth, bridge, tap, gateway):
     """
     Creates a veth pair.
     """
 
     script = (f''' bash -c '\
+ovs-vsctl add-port br-int {tap} -- set Interface {tap} type=internal && \
 ip netns add {namespace} && \
 ip link add {inner_veth} type veth peer name {outer_veth} && \
 ip link set {inner_veth} netns {namespace} && \
@@ -32,6 +33,7 @@ ip netns exec {namespace} sysctl -w net.ipv4.tcp_mtu_probing=2 && \
 ip link set dev {outer_veth} up && \
 ip netns exec {namespace} ifconfig lo up &&  \
 ip netns exec {namespace} ifconfig {inner_veth} hw ether {mac} && \
+ip netns exec {namespace} route add default gw {gateway} && \
 ip link add name {bridge} type bridge && \
 ip link set {outer_veth} master {bridge} && \
 ip link set {tap} master {bridge} && \
@@ -70,7 +72,7 @@ def main():
     sgm_port = "30008"
     nmm_port = "30007"
     ncm_port = "30007"
-    get_network_endpoint = "http://{}:{}/project/{}/subnets".format(
+    get_network_endpoint = "http://{}:{}/project/{}/subnets/".format(
         address, sm_port, project_id)
     create_port_endpoint = "http://{}:{}/project/{}/ports".format(
         address, pm_port, project_id)
@@ -161,8 +163,8 @@ def main():
 ###############GET SUBNET###############
 
     syslog("###############GET SUBNET###############")
-    syslog("get_subnet response {}".format(response.text))
     response = requests.get(get_network_endpoint)
+    syslog("get_subnet response {}".format(response.text))
     while not response.ok:
         sleep(5)
         syslog("get_subnet response {}".format(response.text))
@@ -174,14 +176,22 @@ def main():
     subnet_id = json_response["subnets"][0]["id"]
     subnet_ip = json_response["subnets"][0]["cidr"].split("/")[0]
 
+    i = 0
     parser.add_argument("-s", "--subnets", action="store", dest="subnets",
                         type=str, nargs="*", default=[subnet_id],
-                        help="Examples: -i subnet1, subnet2, subnet3")
+                        help="Examples: -s subnet1, subnet2, subnet3")
     opts = parser.parse_args()
 
     for subnet in opts.subnets:
         print("Creating VM in subnet: {}".format(subnet))
 
+        response = requests.get(get_network_endpoint + subnet)
+        while not response.ok:
+            sleep(5)
+            syslog("get_subnet response {}".format(response.text))
+            response = requests.get(get_network_endpoint + subnet)
+        json_response = response.json()
+        gateway = json_response["subnet"]["gateway_ip"]
     ###############CREATE MINIMAL PORT###############
         create_minimal_port_body = {
             "port": {
@@ -219,10 +229,13 @@ def main():
         port_id = json_response["port"]["id"]
 
     ###############CREATE VM###############
+        netns += str(i)
+        outer_veth_name += str(i)
+        inner_veth_name += str(i)
+        bridge_name += str(i)
         syslog("###############CREATE VM###############")
         create_virtual_instance(
-            netns, ip, mac, prefix, outer_veth_name, inner_veth_name, bridge_name, tap_name, main_interface_name, subnet_ip)
-
+            netns, ip, mac, prefix, outer_veth_name, inner_veth_name, bridge_name, tap_name, gateway)
     ###############UPDATE PORT###############
         update_port_body = {
             "port": {
@@ -251,6 +264,8 @@ def main():
             syslog("update_port response {}".format(response.text))
             response = requests.put(update_port_endpoint, headers=headers, verify=False,
                                     data=json.dumps(update_port_body))
+
+        i += 1
 
 
 main()
