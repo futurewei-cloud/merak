@@ -100,11 +100,11 @@ Delete Node
 
 #### Alcor
 
-![merak network manager plugin alcor example diagram](images/merak_alcor_network_manager_plugin_example.png)
+![merak network manager plugin alcor example diagram](/assets/images/merak_alcor_network_manager_plugin_example.png)
 
 #### Mizar
 
-![merak network manager plugin mizar example diagram](images/merak_mizar_network_manager_plugin_example.png)
+![merak network manager plugin mizar example diagram](/assets/images/merak_mizar_network_manager_plugin_example.png)
 
 # Merak Agent
 Manages simulated VM creation and provides an interface to allocate an endpoint on a node for a specific network plugin.
@@ -149,15 +149,15 @@ Delete Sim Endpoint
 
 ### Merak Node
 
-![merak node design diagram](images/merak_node_design_diagram.png)
+![merak node design diagram](/assets/images/merak_node_design_diagram.png)
 
 ### Merak VM
 
-![merak vm design diagram](images/merak_vm_design_diagram.png)
+![merak vm design diagram](/assets/images/merak_vm_design_diagram.png)
 
 ### Merak Endpoint
 
-![merak endpoint design diagram](images/merak_endpoint_design_diagram.png)
+![merak endpoint design diagram](/assets/images/merak_endpoint_design_diagram.png)
 
 ### Examples
 
@@ -165,13 +165,13 @@ Delete Sim Endpoint
 
 Alcor Merak plugin will take the role of Openstack Neutron.
 
-![merak alcor node example](images/merak_alcor_node_example.png)
+![merak alcor node example](/assets/images/merak_alcor_node_example.png)
 
 #### Mizar
 
 Mizar Merak plugin will take the role of local node pod operator.
 
-![merak mizar node example](images/merak_mizar_node_example.png)
+![merak mizar node example](/assets/images/merak_mizar_node_example.png)
 
 #### VM and Endpoint allocation plugin interface
 
@@ -182,7 +182,7 @@ Network Provider dependent. Responsible for hooking up the dataplane devices and
 
 ### Alcor Example
 
-![merak e2e alcor example](images/merak_e2e_alcor_example.png)
+![merak e2e alcor example](/assets/images/merak_e2e_alcor_example.png)
 
 #### Monitoring/Data Collection
 
