@@ -3,7 +3,6 @@
 Merak compute manages the allocation of virtual machines and ports.
 
 ## Services
-***
 
 The following services are provided over gRPC
 
@@ -28,7 +27,7 @@ Test Scenarios:
   - Delete an existing test scenario
 
 ## Components
-***
+
 ### Merak Compute Controller
 The Merak Compute Controller will be responsible for receiving, parsing, and acting on requests sent  from the scenario manager.
 The compute manager will also update the database with all schedulable pods.
@@ -87,7 +86,7 @@ stop_test(vm, src):
 - Stops any running test in the VM originating from the source
 
 ## Scheduling
-***
+
 Merak Compute will assume that the Kubernetes scheduler has uniformally distributed its pods across all nodes in the cluster.
 
 #### VM/Port Distribution
@@ -113,11 +112,11 @@ The following are the three VM and Port scheduling settings.
 **Random**: VM/Port will be created at a random rate.
 
 ## Workflow
-***
+
 ![merak compute design diagram](../images/merak_compute_design_diagram.png)
 ## Data Model
 
-***
+
 
 #### Compute Datamodel
 

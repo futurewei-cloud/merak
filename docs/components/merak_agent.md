@@ -2,7 +2,6 @@
 Manages VM creation and provides an interface to allocate an endpoint/port on a single node for a specific network provider.
 
 ## Services
-***
 
 The following services are exposed by the Merak Agent over gRPC
 
@@ -37,7 +36,6 @@ The following services are exposed by the Merak Agent over gRPC
   - Stops an existing test on this host.
 
 ## Simulation Design
-***
 
 ### Merak Node
 
@@ -59,7 +57,6 @@ In order to simulate network devices and isolation and  on these containers, we 
 
 
 ## Network Provider Plugin
-***
 #### Interface
 
 The Merak Agent will communicate locally with the network provider's plugin via gRPC. The following interface will need to be exposed by the plugin.
