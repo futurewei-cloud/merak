@@ -22,15 +22,15 @@ In order to communicate with the Scenario Manager and operate on topology in the
 ## Workflow
 This is the workflow of Merak-topo, including the operation for creating, deleting, and updating a topology.
 ### Create 
-![merak-topo create topology workflow](images/merak-topo_create_topology_workflow.png)
+![merak-topo create topology workflow](./images/merak-topo_create_topology_workflow.png)
 
 
 ### Delete 
-![merak-topo delete topology workflow](images/merak-topo_delete_topology_workflow.png)
+![merak-topo delete topology workflow](./images/merak-topo_delete_topology_workflow.png)
 
 
 ### Update 
-![merak-topo update topology workflow](images/merak-topo_create_topology_workflow.png)
+![merak-topo update topology workflow](./images/merak-topo_create_topology_workflow.png)
 
 
 
