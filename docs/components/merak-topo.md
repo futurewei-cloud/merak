@@ -34,7 +34,19 @@ This is the main workflows of Merak-topo based on the received message from the 
 
 
 ## Data Schema
-This data schema is adopted from the defined data in the Scenario Manager, including  Common enum type and Topology info.
+The data schemas of common enum type and topology info are adopted from the defined data in the Scenario Manager. The data schemas of gRPC and database info are defined for Merak-topo gRPC server and database.
+
+### Common enum type
+
+![merak-topo data schema of the common enum type](../images/merak-topo_data_schema_enum_type.png)
+
+### Topology Info
+
+![merak-topo data schema of the topology info](../images/merak-topo_data_schema_topology_info.png)
+
+### gRPC & Database Info
+
+![merak-topo data schema of the gRPC and database info](../images/merak-topo_data_schema_grpc_db.png)
 
 ## Class Diagram
 This is the class diagram of Merak-topo with a gRPC Server and database for communicating with the Service Manager and saving the local topology data.
