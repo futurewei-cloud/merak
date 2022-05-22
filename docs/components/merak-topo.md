@@ -17,7 +17,7 @@ Merak-topo is a Merak function which create/update/delete network topology in th
 </ol>
 
 # Design
-In order to communicate with the Scenario Manager and operate on topology in the Kubernete cluster, the main resource for the Merak-topo is designed as the following workflow, data schema, and design diagram.
+In order to communicate with the Scenario Manager and operate on topology in the Kubernete cluster, the main resource for the Merak-topo is designed as the following workflow, data schema, and class diagram.
 
 ## Workflow
 This is the main workflows of Merak-topo based on the received message from the Scenario Manager, including the operation for creating, deleting, and updating a topology.
@@ -34,4 +34,9 @@ This is the main workflows of Merak-topo based on the received message from the 
 
 
 ## Data Schema
+This data schema is adopted from the defined data in the Scenario Manager, including  Common enum type and Topology info.
 
+## Class Diagram
+This is the class diagram of Merak-topo with a gRPC Server and database for communicating with the Service Manager and saving the local topology data.
+
+![merak-topo class diagram](../images/merak-topo_class_diagram.png)
