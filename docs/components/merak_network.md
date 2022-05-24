@@ -18,7 +18,8 @@ ___
 4. Create/modify/delete Number of Subnet per VPC  
 5. Create Router  
 6. Connect Subnets to Router  
-7. Store the above information in DB, and have the ability to delete them after each test run. Or have ability to modify our network configurations on the fly.  
+7. node registration
+8. Store the above information in DB, and have the ability to delete them after each test run. Or have ability to modify our network configurations on the fly.  
 
 ## Design  
 ___  
@@ -28,7 +29,51 @@ ___
 - Once received request from the Merak Scenario Manager, Merak Network will start to do its job. Making VPC, Security Group, Router, Subnet; and attach them together.  
 - After setup the virtual network, all information related to future use will be saved into DB. Currently planning on using the mongoDB, the schema will be show in the below section.  
 
-![merak network diagram](../images/MerakNetworkFlow.drawio.svg)  
+___  
+
+Merak Network will have couple of functions:  
+- For virtual network setup will be very simple function on the Merak Network, it will read in the payload from Merak Config Manager. With the endpoint and payload info pass in,  
+- Bellow are a example of how user may supply to the Merak, but for now if we only test against Alcor, those can be build in, and implement the function later.  
+    ```
+    {
+        "VPC": {
+            "endpoint": "",
+            "methods": {
+                "create": "",
+                "delete": "",
+                "update": ""
+            },
+            "payload format": {
+                "VPC_ID": "",
+                "Name": "",
+                "Project_id": "",
+                "Tenant_id": "",
+                "cider_size": "",
+                "Tunnel_id": "",
+                "Gateways": ""
+            }
+        }
+    }
+    ```
+- Information come into Merak Network will be:
+  - Number of VPC
+  - Number of Subnet per VPC
+  - VPC cider size
+  - Subnet cider size
+- For the first design, all subnet within one VPC will be connect to one router.  
+- Once the config is received, Merak Network will assign UUID to VPC_id, Router_id, Subnet and other essential information to create the virtual network and have the ability to connect all component together.
+- Then Merak Network will make restful api calls to Alcor (and other services later on).  
+- As for how to create/modify/delete the virtual network, Merak Network will also receive from the Merak Netconfig; in a list of priory or operation order. For example if want to perform create VPC, Subnets, and attach everything together, may look like the following:
+    1. Create VPC
+    2. Create Subnet
+    3. Attach Subnet to Router
+- For node registration, Merak Network will get node info (ip, node name, mac, etc...) from Scenario Manager. Either one-by-one or as bulk. And also the end point and payload. Then Merak Network will make the restful api call.  
+  
+<!-- - Merak config will be supply the user defined json config file. Then Merak Network will modify the json into proper format then send out the restful request.  
+  - While doing the above operation, Merak Network will also keep the state of network configuration within the DB. -->
+___  
+
+<!-- ![merak network diagram](../images/MerakNetworkFlow.drawio.svg)   -->
 
 ## Data Schema  
 ___  
