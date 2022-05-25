@@ -1,0 +1,15 @@
+syntax="proto3";
+package merak;
+option go_package = "/";
+
+enum OperationType {
+    INFO = 0;
+    CREATE = 1;
+    UPDATE = 2;
+    DELETE = 3;
+  }
+
+enum MessageType {
+    FULL = 0;
+    DELTA = 1;
+}
