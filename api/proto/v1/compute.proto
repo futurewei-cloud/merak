@@ -1,0 +1,64 @@
+syntax="proto3";
+package merak;
+option go_package = "/";
+import "common.proto";
+
+enum VMDeployType {
+    ASSIGN = 0;
+    UNIFORM = 1;
+    SKEW = 2;
+    RANDOM = 3;
+}
+
+enum VMScheduleType {
+    SEQUENTIAL = 0;
+    RPS = 1;
+    RANDOM_SCHEDULE = 2;
+}
+
+message InternalVMPod {
+    OperationType operation_type = 1;
+    string pod_ip = 2;
+    uint32 num_of_vm = 3;
+    repeated string subnets = 4;
+}
+
+message InternalPodInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    string ip = 4;
+}
+
+message InternalVMInfo {
+    OperationType operation_type = 1;
+    VMDeployType deploy_type = 2;
+    repeated string vpcs = 3;
+    repeated string subnets = 4;
+    repeated string secgroups = 5;
+    uint32 num_port_per_vm = 6;
+    repeated InternalVMPod deploy_method = 7;
+    string service_url = 8;
+}
+
+message InternalComputeConfiguration {
+    uint32 format_version = 1;
+    uint32 revision_number = 2;
+    string request_id = 3;
+    string compute_config_id = 4;
+    MessageType message_type = 5;
+    repeated InternalPodInfo pods = 6;
+    repeated InternalVMInfo vms = 7;
+    VMScheduleType scheduler = 8;
+    InternalComputeExtraInfo  extra_info= 9;
+}
+
+
+message InternalComputeConfigInfo {
+    OperationType operation_type = 1;
+    InternalComputeConfiguration config = 2;
+}
+
+message InternalComputeExtraInfo {
+    string info = 1;
+}
