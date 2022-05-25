@@ -34,19 +34,56 @@ This is the main workflows of Merak-topo based on the received message from the 
 
 
 ## Data Schema
-The data schemas of common enum type and topology info are adopted from the defined data in the Scenario Manager. The data schemas of gRPC and database info are defined for Merak-topo gRPC server and database.
+The data schemas of common enum type and topology info are adopted from the Protocol Buffer Message definition in the Scenario Manager. The data schema of database in the Merak-topo is defined as follows.
 
-### Common enum type
+<!-- ### Common enum type
 
 ![merak-topo data schema of the common enum type](../images/merak-topo_data_schema_enum_type.png)
 
 ### Topology Info
 
-![merak-topo data schema of the topology info](../images/merak-topo_data_schema_topology_info.png)
+![merak-topo data schema of the topology info](../images/merak-topo_data_schema_topology_info.png) -->
 
-### gRPC & Database Info
+### Database 
 
-![merak-topo data schema of the gRPC and database info](../images/merak-topo_data_schema_grpc_db.png)
+```JSON
+{ 
+    "topology-id": string
+    "nodes": 
+        {
+            "name": "a1"
+            "nics": [
+                {
+                    "intf": "a1-intf1"
+                    "ip":"10.99.1.2"
+                },
+                {
+                    "intf": "a1-intf2"
+                    "ip":"10.99.1.3"
+                }
+            ]
+            
+            
+        }
+    "links": 
+        {
+            "pair":[
+                {
+                    "local_name": "a2"
+                    "local_nics": "a2-intf1"
+                    "local_ip": ""
+                    "peer_name": "a3"
+                    "peer_nics": "a3-intf1"
+                    "peer_ip": ""
+                }
+                
+            ]
+        }
+
+}
+
+```
+<!-- ![merak-topo data schema of the gRPC and database info](../images/merak-topo_data_schema_grpc_db.png) -->
 
 ## Class Diagram
 This is the class diagram of Merak-topo with a gRPC Server and database for communicating with the Service Manager and saving the local topology data.
