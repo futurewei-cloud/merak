@@ -71,10 +71,11 @@ Merak Network will have couple of functions:
   
 <!-- - Merak config will be supply the user defined json config file. Then Merak Network will modify the json into proper format then send out the restful request.  
   - While doing the above operation, Merak Network will also keep the state of network configuration within the DB. -->
-___  
+<!-- ___   -->
 
 <!-- ![merak network diagram](../images/MerakNetworkFlow.drawio.svg)   -->
 
+![merak network diagram](../images/MerakNetwork_v2.drawio.svg)  
 ## Data Schema  
 ___  
 
