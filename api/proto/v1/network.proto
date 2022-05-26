@@ -1,3 +1,52 @@
 syntax="proto3";
 package merak;
 option go_package = "/";
+import "common.proto";
+
+message InternalSecurityGroupRulelnfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    string description = 4;
+    string ethertype = 5;
+    string direction = 6;
+    string protocol = 7;
+    string port_range = 8;
+    string remote_group_id = 9;
+    string remote_ip_prefix = 10;
+
+}
+
+message InternalRouterInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    repeated string subnets = 4;
+}
+message InternalGatewayInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    repeated string ips = 4;
+}
+message InternalSecurityGroupInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    repeated string ips = 4;
+    repeated InternalSecurityGroupRulelnfo rules = 5;
+    repeated string apply_to = 6;
+}
+
+message InternalNetworkInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    uint32 number_of_vpcs = 4;
+    uint32 number_of_subnet_per_vpc = 5;
+    repeated string subnet_ciders = 6;
+    uint32 number_of_security_groups = 7;
+    repeated InternalRouterInfo routers = 8;
+    repeated InternalGatewayInfo gateways = 9;
+    repeated InternalSecurityGroupInfo security_groups = 10;
+}
