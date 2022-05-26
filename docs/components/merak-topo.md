@@ -48,8 +48,13 @@ The data schemas of common enum type and topology info are adopted from the Prot
 
 ```JSON
 { 
-    "topology-id": ""
-    "nodes": 
+    "topology_id": "",
+    "vnodes": ["a1","a2","a3"],
+    "vlinks": ["link1"]
+}
+
+{
+    "node": 
         {
             "name": "a1"
             "nics": [
@@ -61,13 +66,16 @@ The data schemas of common enum type and topology info are adopted from the Prot
                     "intf": "a1-intf2"
                     "ip":"10.99.1.3"
                 }
-            ]
-            
-            
+            ]          
+          
         }
-    "links": 
-        {
-            "pair":[
+}
+
+{
+    "link": 
+       {
+            "name": "link1",
+            "pair":
                 {
                     "local_name": "a2"
                     "local_nics": "a2-intf1"
@@ -75,9 +83,8 @@ The data schemas of common enum type and topology info are adopted from the Prot
                     "peer_name": "a3"
                     "peer_nics": "a3-intf1"
                     "peer_ip": ""
-                }
-                
-            ]
+                }            
+            
         }
 
 }
