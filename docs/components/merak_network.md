@@ -33,28 +33,6 @@ ___
 
 Merak Network will have couple of functions:  
 - For virtual network setup will be very simple function on the Merak Network, it will read in the payload from Merak Config Manager. With the endpoint and payload info pass in,  
-- Bellow are a example of how user may supply to the Merak, but for now if we only test against Alcor, those can be build in, and implement the function later.  
-    ```
-    {
-        "VPC": {
-            "endpoint": "",
-            "methods": {
-                "create": "",
-                "delete": "",
-                "update": ""
-            },
-            "payload format": {
-                "VPC_ID": "",
-                "Name": "",
-                "Project_id": "",
-                "Tenant_id": "",
-                "cider_size": "",
-                "Tunnel_id": "",
-                "Gateways": ""
-            }
-        }
-    }
-    ```
 - Information come into Merak Network will be:
   - Number of VPC
   - Number of Subnet per VPC
