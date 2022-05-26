@@ -121,15 +121,18 @@ The following are the three VM and Port scheduling settings.
 
 - Pod
   - ID
+  - Name
   - IP
     - VMs
 
 - VM
   - ID
+  - Name
     - Ports
 
 - Ports
   - ID
+  - Name
   - VM
   - Tenant
   - VPC
@@ -144,6 +147,7 @@ Example:
     "pod":
     {
         "id": "pod1",
+        "name": "node1",
         "ip": "10.0.0.2",
         "vms": ["vm1","vm2"]
     }
@@ -154,7 +158,8 @@ Example:
 {
   "vm":
   {
-      "id": "vm1"
+      "id": "netns1",
+      "name": "vm1",
       "ports": ["port1", "port2"]
   }
 }
@@ -164,8 +169,9 @@ Example:
 {
   "port":
   {
-      "id": "port1",
-      "vm": "vm1"
+      "id": "veth1",
+      "name": "port1",
+      "vm": "netns1",
       "tenant": "tenant1",
       "vpc": "vpc1",
       "subnet": "subnet1",
