@@ -30,7 +30,7 @@ This is the main workflows of Merak-topo based on the received message from the 
 
 
 ### Update 
-![merak-topo update topology workflow](../images/merak-topo_create_topology_workflow.png)
+![merak-topo update topology workflow](../images/merak-topo_update_topology_workflow.png)
 
 
 ## Data Schema
@@ -48,7 +48,7 @@ The data schemas of common enum type and topology info are adopted from the Prot
 
 ```JSON
 { 
-    "topology-id": string
+    "topology-id": ""
     "nodes": 
         {
             "name": "a1"
