@@ -30,7 +30,7 @@ This is the main workflows of Merak-topo based on the received message from the 
 
 
 ### Update 
-![merak-topo update topology workflow](../images/merak-topo_update_topology_workflow.png)
+![merak-topo update topology workflow](../images/merak-topo_update_topology_workflow.PNG)
 
 
 ## Data Schema
