@@ -63,14 +63,14 @@ For new we are planning on store data in Redis DB, below are the schema for each
     ```  
     {
         "VPC": {
-            "VPC_ID": "",
-            "Name": "",
-            "Project_id": "",
-            "Tenant_id": "",
-            "cider_size": "",
-            "Tunnel_id": "",
-            "security_group_id":"",
-            "Gateways": ""
+            "tenant_id_projectId_VPC_ID": "",
+            "tenant_id_projectId_Name": "",
+            "tenant_id_projectId_Project_id": "",
+            "tenant_id_projectId_Tenant_id": "",
+            "tenant_id_projectId_cider_size": "",
+            "tenant_id_projectId_Tunnel_id": "",
+            "tenant_id_projectId_security_group_id":"",
+            "tenant_id_projectId_Gateways": ""
         }
     }
     ```  
