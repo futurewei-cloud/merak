@@ -14,7 +14,6 @@ message InternalSecurityGroupRulelnfo {
     string port_range = 8;
     string remote_group_id = 9;
     string remote_ip_prefix = 10;
-
 }
 
 message InternalRouterInfo {
@@ -23,12 +22,14 @@ message InternalRouterInfo {
     string name = 3;
     repeated string subnets = 4;
 }
+
 message InternalGatewayInfo {
     OperationType operation_type = 1;
     string id = 2;
     string name = 3;
     repeated string ips = 4;
 }
+
 message InternalSecurityGroupInfo {
     OperationType operation_type = 1;
     string id = 2;
