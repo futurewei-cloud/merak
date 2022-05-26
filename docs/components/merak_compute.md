@@ -1,193 +1,247 @@
 # Merak Compute
 
-Merak compute manages the creation and configuration of simulated virtual machines and endpoints.
+Merak compute manages the allocation of virtual machines and ports.
 
-![merak compute design diagram](images/merak_compute_design_diagram.png)
+![merak compute design diagram](../images/merak_compute_design_diagram.png)
 
-## Components
+## Services
 
-### Interface with Merak Scenario Manager
+The following services are provided over gRPC
 
-Merak compute watches API server for pods annotated by scenario manager.
+Compute Scenarios:
+- INFO
+  - Returns information about the current status of the scheduled VMs and Ports.
+- CREATE
+  - Creates a new set of VMs and Ports.
+- UPDATE
+  - Update an existing set of VMs and Ports.
+- DELETE
+  - Delete an existing set of VMs and Ports.
 
-Examples:
-- meraksim.com/num_vms=5
-- meraksim.com/endpoints_per_vm=6
-- meraksim.com/test_icmp
-- meraksim.com/test_tcp
-- meraksim.com/test_udp
-
-### Network Manager Plugin Interface
-
-Need a runtime communication interface.
-Possible Candidates:
-gRPC
-Kubernets CRD
-
-###### gRPC client to plugin server.
-
-Plugin server to be implemented by developers.
-These plugins will be responsible for communicating with the network provider's control plane
-
-#### Interface
-
-Create VPC
-
-- VNI
-- ID
-- IP
-- Prefix
-- Optional
-
-Update VPC
-
-- VNI
-- ID
-- IP
-- Prefix
-- Optional
-
-Delete VPC
-
-- VNI
-- ID
-- Optional
-
-Create Subnet
-
-- VNI
-- ID
-- VPC
-- IP
-- Prefix
-- Optional
-
-Update Subnet
-
-- VNI
-- ID
-- VPC
-- IP
-- Prefix
-- Optional
-
-Delete Subnet
-
-- VNI
-- ID
-- Optional
-
-Create Node
-- Name
-- IP
-- Mac
-- Optional
-
-Update Node
-- Name
-- IP
-- Mac
-- Optional
-
-Delete Node
-- Name
-- IP
-- Mac
-- Optional
-
-
-### Examples
-
-#### Alcor
-
-![merak network manager plugin alcor example diagram](images/merak_alcor_network_manager_plugin_example.png)
-
-#### Mizar
-
-![merak network manager plugin mizar example diagram](images/merak_mizar_network_manager_plugin_example.png)
-
-# Merak Agent
-Manages simulated VM creation and provides an interface to allocate an endpoint on a node for a specific network plugin.
-
-Merak node images deployed as kubernetes pods.
-
-#### Interface Between Merak Agent and Network Provider Plugin
-
-Create Sim VM
-- Name
-- Optional
-
-Update Sim VM
-- Name
-- Optional
-
-Delete Sim VM
-- Name
-- Optional
-
-Create Sim Endpoint
-- ID
-- IP
-- MAC
-- Subnet
-- Interface Name
-- Optional
-
-Update Sim Endpoint
-- ID
-- IP
-- MAC
-- Subnet
-- Interface Name
-- Optional
-
-Delete Sim Endpoint
-- ID
-- Optional
+Test Scenarios:
+- INFO
+  - Returns information about the status of an existing test scenario
+- CREATE
+  - Creates a new test scenario
+- UPDATE
+  - Update an existing test scenario
+- DELETE
+  - Delete an existing test scenario
 
 ## Components
 
-### Merak Node
+### Merak Compute Controller
+The Merak Compute Controller will be responsible for receiving, parsing, and acting on requests sent  from the scenario manager.
+The compute manager will also update the database with all schedulable pods.
 
-![merak node design diagram](images/merak_node_design_diagram.png)
+### VM Controller
+The VM Controller will be responsible for making calls to the Merak Agent to Create/Update/Delete VMs.
+#### Interface with Merak Agent
 
-### Merak VM
+get_vm(hostname, vm):
+- Returns info about the VM on a node.
 
-![merak vm design diagram](images/merak_vm_design_diagram.png)
+get_vm_node(hostname):
+- Returns info about all VMs on the node.
 
-### Merak Endpoint
+create_n_vms_on_host(hostname, n)
+- creates n VMs at hostname
+- returns a list of names of VMs created
 
-![merak endpoint design diagram](images/merak_endpoint_design_diagram.png)
+delete_n_vms(hostname)
+- deletes n VMs at hostname
+- returns a list of names of VMs deleted
 
-### Examples
+### Port Controller
+The Port Controller will be responsible for making calls to the Merak Agent to Create/Update/Delete Ports.
 
-#### Alcor
+#### Interface with Merak Agent
 
-Alcor Merak plugin will take the role of Openstack Neutron.
+get_ports_vm(hostname, vm):
+- Returns info on all ports in the VM on the node.
 
-![merak alcor node example](images/merak_alcor_node_example.png)
+get_ports_node(hostname):
+- Returns info on all ports on the node.
 
-#### Mizar
+create_n_ports(hostname, vm, tenant, vpc, subnet, security_group)
+- creates n ports in vm at hostname in the described VPC and subnet
+- returns a list of names and IP of the ports created
 
-Mizar Merak plugin will take the role of local node pod operator.
+delete_n_ports(hostname, vm)
+- deletes n ports at hostname in vm
+- returns a list of names of ports deleted
 
-![merak mizar node example](images/merak_mizar_node_example.png)
+### Test Controller
 
-#### VM and Endpoint allocation plugin interface
+The Test controller will be responsible for coordinating tests across the available vms.
 
-Communicate to plugin via environment variables.
-Network Provider dependent. Responsible for hooking up the dataplane devices and applications.
+#### Interface with Merak Agent
 
-## End-to-end Workflow
+get_test(vm, src):
+- Returns the status of a running test on the VM origination from the source
 
-### Alcor Example
+run_test(vm, src, target, test-type, opt):
+- Runs a network test from inside the VM to the target
+- Returns the result of the ping test
 
-![merak e2e alcor example](images/merak_e2e_alcor_example.png)
+stop_test(vm, src):
+- Stops any running test in the VM originating from the source
 
-#### Monitoring/Data Collection
+## Scheduling
 
-eBPF tools
+Merak Compute will assume that the Kubernetes scheduler has uniformally distributed its pods across all nodes in the cluster.
 
-#### Testing
+#### VM/Port Distribution
 
-iPerf inside network namespace
+The following are the four VM and port distribution settings.
+
+**Manual**: VMs/Ports are manually assigned to an existing port.
+
+**Random**: Schedules VMs/Pods randomly
+
+**Skew**: Schedule majority of VM/Pods on a small group of hosts.
+
+**Uniform**: Schedule all VM/Pods evenly.
+
+#### VM/Port Schedule Rate
+
+The following are the three VM and Port scheduling settings.
+
+**Sequential**: Each VM/Port will be created one-by-one.
+
+**RPS**: VMs/Ports will be created at a given rate given by the Scenario Manager.
+
+**Random**: VM/Port will be created at a random rate.
+
+## Data Model
+
+
+
+#### Compute Datamodel
+
+- Pod
+  - ID
+  - Name
+  - IP
+    - VMs
+
+- VM
+  - ID
+  - Name
+    - Ports
+
+- Ports
+  - ID
+  - Name
+  - VM
+  - Tenant
+  - VPC
+  - Subnet
+  - Security Group
+  - IP
+
+
+Example:
+```
+{
+    "pod":
+    {
+        "id": "pod1",
+        "name": "node1",
+        "ip": "10.0.0.2",
+        "vms": ["vm1","vm2"]
+    }
+}
+```
+
+```
+{
+  "vm":
+  {
+      "id": "netns1",
+      "name": "vm1",
+      "ports": ["port1", "port2"]
+  }
+}
+```
+
+```
+{
+  "port":
+  {
+      "id": "veth1",
+      "name": "port1",
+      "vm": "netns1",
+      "tenant": "tenant1",
+      "vpc": "vpc1",
+      "subnet": "subnet1",
+      "security_group": "sg1",
+      "ip": "20.0.0.2",
+  }
+}
+
+```
+
+#### Test Datamodel
+
+- Test
+  - Name
+  - source
+    - host
+      - vm
+        - port
+  - target
+    - host
+      - vm
+        - port
+  - test-type
+  - results
+
+Example:
+```
+{
+    test:
+    {
+        "name": "test-ping",
+        "source":
+        [
+            {
+                "host": "pod1",
+                "vm":   "vm1",
+                "port": "port1"
+            },
+            {
+                "host": "pod1",
+                "vm":   "vm1",
+                "port": "port2"
+            },
+
+        ],
+        "target":
+        [
+            {
+                "host": "pod2",
+                "vm":   "vm1",
+                "port": "port1"
+            },
+            {
+                "host": "pod2",
+                "vm":   "vm2",
+                "port": "port1"
+            },
+
+        ],
+        "test-type": "ping",
+        "results":
+        [
+            "source_1->target_1": "pass",
+            "source1->target_2": "failed",
+            "source2->target_1": "pass",
+            "source2->target_2": "pending"
+        ]
+
+    }
+}
+```
+### Data Storage
+Merak Compute will use a distributed KV Datastore behind a Kubernetes ClusterIP service.
