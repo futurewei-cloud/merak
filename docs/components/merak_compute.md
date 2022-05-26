@@ -2,6 +2,8 @@
 
 Merak compute manages the allocation of virtual machines and ports.
 
+![merak compute design diagram](../images/merak_compute_design_diagram.png)
+
 ## Services
 
 The following services are provided over gRPC
@@ -111,9 +113,6 @@ The following are the three VM and Port scheduling settings.
 
 **Random**: VM/Port will be created at a random rate.
 
-## Workflow
-
-![merak compute design diagram](../images/merak_compute_design_diagram.png)
 ## Data Model
 
 
@@ -121,75 +120,60 @@ The following are the three VM and Port scheduling settings.
 #### Compute Datamodel
 
 - Pod
-  - Name
+  - ID
   - IP
     - VMs
-      - Ports
-          - Name
-          - Tenant
-          - VPC
-          - Subnet
-          - Security Group
-          - IP
+
+- VM
+  - ID
+    - Ports
+
+- Ports
+  - ID
+  - VM
+  - Tenant
+  - VPC
+  - Subnet
+  - Security Group
+  - IP
+
 
 Example:
 ```
 {
     "pod":
     {
-        "name": "pod1",
+        "id": "pod1",
         "ip": "10.0.0.2",
-        "vms":
-        [
-            {
-                "name": "vm1"
-                "ports":
-                [
-                    {
-                        "name": "port1",
-                        "tenant": "tenant1",
-                        "vpc": "vpc1",
-                        "subnet": "subnet1",
-                        "security_group": "sg1",
-                        "ip": "20.0.0.2",
-                    },
-                    {
-                        "name": "port2",
-                        "tenant": "tenant1",
-                        "vpc": "vpc1",
-                        "subnet": "subnet1",
-                        "security_group": "sg1",
-                        "ip": "20.0.0.3"
-                    }
-                ]
-
-            },
-            {
-                "name": "vm2",
-                "ports":
-                [
-                    {
-                        "name": "port1",
-                        "tenant": "tenant1",
-                        "vpc": "vpc1",
-                        "subnet": "subnet1",
-                        "security_group": "sg1",
-                        "ip": "20.0.0.4"
-                    },
-                    {
-                        "name": "port2",
-                        "tenant": "tenant1",
-                        "vpc": "vpc1",
-                        "subnet": "subnet1",
-                        "security_group": "sg1",
-                        "ip": "20.0.0.5"
-                    }
-                ]
-
-            }
-        ]
+        "vms": ["vm1","vm2"]
     }
 }
+```
+
+```
+{
+  "vm":
+  {
+      "id": "vm1"
+      "ports": ["port1", "port2"]
+  }
+}
+```
+
+```
+{
+  "port":
+  {
+      "id": "port1",
+      "vm": "vm1"
+      "tenant": "tenant1",
+      "vpc": "vpc1",
+      "subnet": "subnet1",
+      "security_group": "sg1",
+      "ip": "20.0.0.2",
+  }
+}
+
 ```
 
 #### Test Datamodel
@@ -254,5 +238,4 @@ Example:
 }
 ```
 ### Data Storage
-Merak Compute will use a Redis Cluster behind a Kubernetes ClusterIP service.
-Using the RedisJson module, Pod JSON objects will be mapped to unique IDs.
+Merak Compute will use a distributed KV Datastore behind a Kubernetes ClusterIP service.

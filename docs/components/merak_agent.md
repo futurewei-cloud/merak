@@ -1,6 +1,8 @@
 # Merak Agent
 Manages VM creation and provides an interface to allocate an endpoint/port on a single node for a specific network provider.
 
+![merak agent design diagram](../images/merak_agent_design.png)
+
 ## Services
 
 The following services are exposed by the Merak Agent over gRPC
