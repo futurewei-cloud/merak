@@ -17,7 +17,7 @@ There are many different hardware resource management platform in the field, cur
 
 The following diagram illustrate the high-level architecture of Merak on a kubernetes cluster using Meshnet CNI and the basic workflow to emulate Alcor's control plane for creating VMs in the emulated compute nodes.
 
-![Merak Architecture](docs/images/merak-hi-architecture.png)
+![Merak Architecture](docs/images/merak-architecture.png)
 
 ### Components
 - Scenario Manager: create the required topology and test scenarios.
@@ -27,8 +27,9 @@ The following diagram illustrate the high-level architecture of Merak on a kuber
 - Merak Agent: create virtual network devices (bridges, tap devices and veth pairs) and network namespace for VMs, collect test results and send the results back to merak compute.
 
 ## Scalability 
-In order to provide more virtual and emulated resources with limited hardware resources, two possible solutions are investigated and developed in this project:
+In order to provide more virtual and emulated resources with limited hardware resources, three possible solutions are investigated and developed in this project:
 - Docker-in-Docker
 - Kubernetes-in-Kubernetes (KinK)
+- Kubernetes cluster in virtual machines
 
 For ore detail design and information, please refer to the docs folder in this repository. 
