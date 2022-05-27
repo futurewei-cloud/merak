@@ -9,26 +9,29 @@ import (
 	"strings"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
-	"github.com/futurewei-cloud/merak/services/common"
-	"github.com/futurewei-cloud/merak/services/merak-compute/services"
+	constants "github.com/futurewei-cloud/merak/services/common"
+	service "github.com/futurewei-cloud/merak/services/merak-compute/grpc"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc"
 )
 
 func main() {
 	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *services.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *service.Port))
+	if err != nil {
+		log.Fatalln("ERROR: Failed to listen", err)
+	}
 	gRPCServer := grpc.NewServer()
-	pb.RegisterMerakComputeServiceServer(gRPCServer, &services.Server{})
+	pb.RegisterMerakComputeServiceServer(gRPCServer, &service.Server{})
 
-	temporal := os.Getenv(common.TEMPORAL_ENV)
+	temporal_address := os.Getenv(constants.TEMPORAL_ENV)
 	var sb strings.Builder
-	sb.WriteString(temporal)
+	sb.WriteString(temporal_address)
 	sb.WriteString(":")
-	sb.WriteString(common.TEMPORAL_PORT)
+	sb.WriteString(constants.TEMPORAL_PORT)
 
 	log.Printf("Connecting to Temporal server at %s", sb.String())
-	client, err := client.NewClient(client.Options{
+	service.TemporalClient, err = client.NewClient(client.Options{
 		HostPort: sb.String(),
 	})
 	if err != nil {
@@ -41,5 +44,5 @@ func main() {
 		log.Fatalf("failed to serve: %v", err)
 	}
 
-	defer client.Close()
+	defer service.TemporalClient.Close()
 }

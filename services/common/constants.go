@@ -1,4 +1,4 @@
-package common
+package constants
 
 const (
 	TEMPORAL_PORT            = "7233"

@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"context"
@@ -6,23 +6,27 @@ import (
 	"log"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
-	"github.com/futurewei-cloud/merak/services/common"
+	constants "github.com/futurewei-cloud/merak/services/common"
+	"go.temporal.io/sdk/client"
 )
 
 var (
-	Port = flag.Int("port", common.COMPUTE_GRPC_SERVER_PORT, "The server port")
+	Port = flag.Int("port", constants.COMPUTE_GRPC_SERVER_PORT, "The server port")
 )
 
 type Server struct {
 	pb.UnimplementedMerakComputeServiceServer
 }
 
+var TemporalClient client.Client
+
 func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.InternalComputeConfigInfo, error) {
-	log.Printf("Received")
+	log.Printf("Received from ComputeHandler")
+
 	return in, nil
 }
 
 func (s *Server) TestHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.InternalComputeConfigInfo, error) {
-	log.Printf("Received")
+	log.Printf("Received on TestHandler")
 	return in, nil
 }
