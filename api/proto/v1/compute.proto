@@ -1,7 +1,13 @@
 syntax="proto3";
 package merak;
-option go_package = "/";
+option go_package = "merak/";
 import "common.proto";
+
+service MerakComputeService {
+    rpc PodHandler (InternalVMPod) returns (InternalVMPod) {}
+    rpc VMHandler (InternalVMPod) returns (InternalVMPod) {}
+    rpc TestHandler (InternalVMPod) returns (InternalVMPod) {}
+}
 
 enum VMDeployType {
     ASSIGN = 0;

@@ -1,6 +1,6 @@
 syntax="proto3";
 package merak;
-option go_package = "/";
+option go_package = "merak/";
 
 enum OperationType {
     INFO = 0;

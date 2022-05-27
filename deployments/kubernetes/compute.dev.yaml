@@ -1,0 +1,32 @@
+# Merak namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: merak
+---
+# Merak Compute Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: merak-compute
+  namespace: merak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: merak-compute
+  template:
+    metadata:
+      labels:
+        app: merak-compute
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: merak-compute
+        image: phudtran/merak-compute:dev
+        env:
+        - name: "TEMPORAL"
+          value: "temporaltest-frontend.default.svc.cluster.local"
