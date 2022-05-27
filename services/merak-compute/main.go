@@ -27,7 +27,6 @@ func main() {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	gRPCServer := grpc.NewServer()
 	pb.RegisterMerakComputeServiceServer(gRPCServer, &server{})
-	log.Printf("gRPC server listening at %v", lis.Addr())
 
 	temporal := os.Getenv(common.TEMPORAL_ENV)
 	var sb strings.Builder
@@ -44,7 +43,7 @@ func main() {
 	}
 	log.Printf("Successfully connected to Temporal!")
 
-	log.Printf("Starting gRPC Server!")
+	log.Printf("Starting gRPC server. Listening at %v", lis.Addr())
 	if err := gRPCServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

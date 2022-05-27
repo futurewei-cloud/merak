@@ -4,6 +4,21 @@ kind: Namespace
 metadata:
   name: merak
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: merak-compute-service
+  namespace: merak
+spec:
+  selector:
+    app: merak-compute
+  ports:
+    - protocol: TCP
+      name: grpc
+      port: 40051
+      targetPort: 40051
+  type: ClusterIP
+---
 # Merak Compute Deployment
 apiVersion: apps/v1
 kind: Deployment
@@ -11,7 +26,7 @@ metadata:
   name: merak-compute
   namespace: merak
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: merak-compute
@@ -27,6 +42,9 @@ spec:
       containers:
       - name: merak-compute
         image: phudtran/merak-compute:dev
+        ports:
+          - containerPort: 40051
+            name: grpc
         env:
         - name: "TEMPORAL"
           value: "temporaltest-frontend.default.svc.cluster.local"
