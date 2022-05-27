@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
-	"github.com/futurewei-cloud/merak/src/common"
+	"github.com/futurewei-cloud/merak/services/common"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc"
 )

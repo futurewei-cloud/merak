@@ -1,4 +1,4 @@
-modules := src
+modules := services
 -include $(patsubst %, %/module.mk, $(modules))
 
 all:: merak-compute proto
@@ -15,4 +15,4 @@ docker-build:
 
 clean:
 	rm api/proto/v1/merak/*.pb.go
-	rm src/merak-compute/build/*
+	rm services/merak-compute/build/*
