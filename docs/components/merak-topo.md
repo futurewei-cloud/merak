@@ -96,3 +96,38 @@ The data schemas of common enum type and topology info are adopted from the Prot
 This is the class diagram of Merak-topo with a gRPC Server and database for communicating with the Service Manager and saving the local topology data.
 
 ![merak-topo class diagram](../images/merak-topo_class_diagram.png)
+
+
+## Implementation Plan
+This is the initial implementation plan for Merak-topo, the scheduled date will be adjusted based on the project plan.
+
+<ol>
+1. gRPC Server --     6/1<br>
+2. database  --  6/2 <br>
+3. Topology   --      6/7
+<ol>
+    3.1. parser()<br>
+    3.2. create_topology() <br>
+    3.3. create_configmap() <br>
+    3.4. create_service() <br>
+    3.5. delete_topology() <br>
+    3.6. delete_configmap() <br>
+    3.7. delete_service() <br>
+    3.8. update_topology() <br>
+    3.9. update_configmap() <br>
+    3.10. update_service() <br>
+</ol>
+4. Vhost -- 6/8 <br>  
+5. Vrouter -- 6/8 <br>
+6. Vswitch -- 6/8<br>
+7. Vgateway -- 6/8<br> 
+8. Vlink   --  6/8 <br>
+9. Pod    --   6/10
+<ol>
+    9.1 create_pod() <br>
+    9.2 delete_pod() <br>
+    9.3 update_pod() <br>
+    9.4 get_pod() <br>
+</ol>
+
+</ol>
