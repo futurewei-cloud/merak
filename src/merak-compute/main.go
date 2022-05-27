@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	port = flag.Int("port", 50051, "The server port")
+	port = flag.Int("port", common.COMPUTE_GRPC_SERVER_PORT, "The server port")
 )
 
 type server struct {
