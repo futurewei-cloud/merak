@@ -64,3 +64,10 @@ message InternalServiceInfo {
     string when_to_run = 9;
     string where_to_run = 10;
 }
+
+service MerakNetworkService {
+    rpc NetworkInfoHandler (InternalNetworkInfo) returns (InternalNetworkInfo) {}
+    rpc NetworkInfoTestHandler (InternalNetworkInfo) returns (InternalNetworkInfo) {}
+    rpc InternalServiceHandler (InternalServiceInfo) returns (InternalServiceInfo) {}
+    rpc InternalServiceTestHandler (InternalServiceInfo) returns (InternalServiceInfo) {}
+}
