@@ -1,3 +1,69 @@
 syntax="proto3";
 package merak;
 option go_package = "merak/";
+import "common.proto";
+
+enum TopologyType {
+    SINGLE = 0;
+    LINEAR = 1;
+    TREE = 2;
+    REVERSED = 3;
+    MESH = 4;
+    CUSTOM = 5;
+}
+
+enum VNodeType {
+    VHOST = 0;
+    VSWITCH = 1;
+    VGATEWAY = 2;
+    VROUTER = 3;
+}
+
+message InternalVNicInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    string ip = 4;
+}
+
+message InternalVNodeInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    VNodeType type = 4;
+    repeated InternalVNicInfo vnics = 5;
+}
+
+message InternalVLinkInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    string src = 4;
+    string dst = 5;
+}
+
+message InternalTopologyConfiguration {
+    uint32 format_version = 1;
+    uint32 revision_number = 2;
+    string request_id = 3;
+    string topology_id = 4;
+    MessageType message_type = 5;
+    TopologyType topology_type = 6;
+    repeated InternalVNodeInfo vnodes = 7;
+    repeated InternalVLinkInfo vlinks = 8;
+    InternalTopologyExtraInfo extra_info = 9;
+}
+
+message InternalTopologyInfo {
+    OperationType operation_type = 1;
+    InternalTopologyConfiguration config = 2;
+}
+
+message InternalTopologyExtraInfo {
+    string info = 1;
+}
+
+service MerakTopologyService {
+    rpc TopologyHandler (InternalTopologyInfo) returns (InternalTopologyInfo) {}
+}
+
