@@ -21,12 +21,12 @@ type Server struct {
 var TemporalClient client.Client
 
 func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.InternalComputeConfigInfo, error) {
-	log.Printf("Received from ComputeHandler")
+	log.Printf("Received on ComputeHandler %s", in)
 
 	return in, nil
 }
 
 func (s *Server) TestHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.InternalComputeConfigInfo, error) {
-	log.Printf("Received on TestHandler")
+	log.Printf("Received on TestHandler %s", in)
 	return in, nil
 }

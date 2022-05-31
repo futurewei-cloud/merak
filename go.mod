@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	go.temporal.io/sdk v1.14.0
-	google.golang.org/grpc v1.44.0
+	google.golang.org/grpc v1.46.2
 	google.golang.org/protobuf v1.27.1
 )
 

@@ -10,7 +10,7 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
-	service "github.com/futurewei-cloud/merak/services/merak-compute/grpc"
+	"github.com/futurewei-cloud/merak/services/merak-compute/grpc/service"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc"
 )

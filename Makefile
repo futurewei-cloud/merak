@@ -13,6 +13,9 @@ docker-build:
 	docker build -t phudtran/merak-compute:dev -f docker/compute.Dockerfile .
 	docker push phudtran/merak-compute:dev
 
+test:
+	go test -v services/merak-compute/tests/compute_test.go
+
 clean:
 	rm api/proto/v1/merak/*.pb.go
 	rm services/merak-compute/build/*
