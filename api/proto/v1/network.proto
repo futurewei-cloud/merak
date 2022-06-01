@@ -1,3 +1,105 @@
 syntax="proto3";
 package merak;
 option go_package = "merak/";
+import "common.proto";
+
+message InternalSecurityGroupRulelnfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    string description = 4;
+    string ethertype = 5;
+    string direction = 6;
+    string protocol = 7;
+    string port_range = 8;
+    string remote_group_id = 9;
+    string remote_ip_prefix = 10;
+}
+
+message InternalRouterInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    repeated string subnets = 4;
+}
+
+message InternalGatewayInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    repeated string ips = 4;
+}
+
+message InternalSecurityGroupInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    repeated string ips = 4;
+    repeated InternalSecurityGroupRulelnfo rules = 5;
+    repeated string apply_to = 6;
+}
+
+message InternalNetworkInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    uint32 number_of_vpcs = 4;
+    uint32 number_of_subnet_per_vpc = 5;
+    repeated string subnet_ciders = 6;
+    uint32 number_of_security_groups = 7;
+    repeated InternalRouterInfo routers = 8;
+    repeated InternalGatewayInfo gateways = 9;
+    repeated InternalSecurityGroupInfo security_groups = 10;
+}
+
+message InternalServiceInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    string cmd = 4;
+    string url = 5;
+    repeated string parameters = 6;
+    repeated string return_code = 7;
+    repeated string return_string = 8;
+    string when_to_run = 9;
+    string where_to_run = 10;
+}
+
+message InternalComputeInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    string ip = 4;
+    string mac = 5;
+    string veth = 6;
+}
+
+message InternalStorageInfo{
+    string info = 1;
+}
+
+message InternalNetConfigExtraInfo {
+    string info = 1;
+}
+
+message InternalNetConfigConfiguration {
+    uint32 format_version = 1;
+    uint32 revision_number = 2;
+    string request_id = 3;
+    string netconfig_id = 4;
+    MessageType message_type = 5;
+    repeated InternalServiceInfo services = 6;
+    repeated InternalComputeInfo computes = 7;
+    repeated InternalNetworkInfo networks = 8;
+    repeated InternalStorageInfo storages = 9;
+    repeated InternalNetConfigExtraInfo extra_info = 10;
+}
+
+message InternalNetConfigInfo {
+    OperationType operation_type = 1;
+    InternalNetConfigConfiguration configuration = 2;
+}
+
+service MerakNetworkService {
+    rpc InternalNetConfigConfigurationHandler (InternalNetConfigConfiguration) returns (InternalNetConfigInfo) {}
+}
