@@ -65,9 +65,34 @@ message InternalServiceInfo {
     string where_to_run = 10;
 }
 
+message InternalPodInfo {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    string ip = 4;
+}
+
+message InternalStorageExtraInfo{
+    string TBD = 1;
+}
+
+message InternalNetConfigExtraInfo {
+    string TBD = 1;
+}
+
+message InternalNetConfigConfiguration {
+    uint32 format_version = 1;
+    uint32 revision_number = 2;
+    string request_id = 3;
+    string netconfig_id = 4;
+    MessageType message_type = 5;
+    repeated InternalServiceInfo services = 6;
+    repeated InternalPodInfo computes = 7;
+    repeated InternalNetworkInfo networks = 8;
+    repeated InternalStorageExtraInfo storages = 9;
+    repeated InternalNetConfigExtraInfo extra_info = 10;
+}
+
 service MerakNetworkService {
-    rpc NetworkInfoHandler (InternalNetworkInfo) returns (InternalNetworkInfo) {}
-    rpc NetworkInfoTestHandler (InternalNetworkInfo) returns (InternalNetworkInfo) {}
-    rpc InternalServiceHandler (InternalServiceInfo) returns (InternalServiceInfo) {}
-    rpc InternalServiceTestHandler (InternalServiceInfo) returns (InternalServiceInfo) {}
+    rpc InternalNetConfigConfigurationHandler (InternalNetConfigConfiguration) returns (InternalNetConfigConfiguration) {}
 }
