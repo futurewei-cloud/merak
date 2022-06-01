@@ -77,7 +77,7 @@ message InternalStorageExtraInfo{
 }
 
 message InternalNetConfigExtraInfo {
-    string TBD = 1;
+    string info = 1;
 }
 
 message InternalNetConfigConfiguration {
