@@ -14,6 +14,10 @@ import (
 var (
 	Port            = flag.Int("port", constants.COMPUTE_GRPC_SERVER_PORT, "The server port")
 	workflowOptions client.StartWorkflowOptions
+	returnMessage   = pb.ReturnMessage{
+		ReturnCode:    pb.ReturnCode_FAILED,
+		ReturnMessage: "Unintialized",
+	}
 )
 
 type Server struct {
@@ -37,6 +41,10 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			ID:        "CreateWorkflow",
 			TaskQueue: "Create",
 		}
+		for _, pod := range in.Config.Pods {
+			log.Println(pod)
+		}
+
 	case pb.OperationType_UPDATE:
 		workflowOptions = client.StartWorkflowOptions{
 			ID:        "UpdateWorkflow",
@@ -49,6 +57,9 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		}
 	default:
 		log.Println("Unknown Operation")
+		returnMessage.ReturnCode = pb.ReturnCode_FAILED
+		returnMessage.ReturnMessage = "ComputeHandler: Unknown Operation"
+		return &returnMessage, nil
 	}
 
 	we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, vm.Create, "Temporal")
@@ -58,10 +69,12 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 
 	log.Println("Started workflow", "WorkflowID", we.GetID(), "RunID", we.GetRunID())
 
-	return in, nil
+	return &returnMessage, nil
 }
 
 func (s *Server) TestHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
 	log.Printf("Received on TestHandler %s", in)
-	return in, nil
+	returnMessage.ReturnCode = pb.ReturnCode_FAILED
+	returnMessage.ReturnMessage = "Unimplemented"
+	return &returnMessage, nil
 }
