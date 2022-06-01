@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	Port = flag.Int("port", constants.COMPUTE_GRPC_SERVER_PORT, "The server port")
+	Port            = flag.Int("port", constants.COMPUTE_GRPC_SERVER_PORT, "The server port")
+	workflowOptions client.StartWorkflowOptions
 )
 
 type Server struct {
@@ -21,11 +22,33 @@ type Server struct {
 
 var TemporalClient client.Client
 
-func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.InternalComputeConfigInfo, error) {
+func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
 	log.Printf("Received on ComputeHandler %s", in)
-	workflowOptions := client.StartWorkflowOptions{
-		ID:        "hello_world_workflowID",
-		TaskQueue: "hello-world",
+	// Parse input
+
+	switch op := in.OperationType; op {
+	case pb.OperationType_INFO:
+		workflowOptions = client.StartWorkflowOptions{
+			ID:        "InfoWorkflow",
+			TaskQueue: "Info",
+		}
+	case pb.OperationType_CREATE:
+		workflowOptions = client.StartWorkflowOptions{
+			ID:        "CreateWorkflow",
+			TaskQueue: "Create",
+		}
+	case pb.OperationType_UPDATE:
+		workflowOptions = client.StartWorkflowOptions{
+			ID:        "UpdateWorkflow",
+			TaskQueue: "Update",
+		}
+	case pb.OperationType_DELETE:
+		workflowOptions = client.StartWorkflowOptions{
+			ID:        "DeleteWorkflow",
+			TaskQueue: "Delete",
+		}
+	default:
+		log.Println("Unknown Operation")
 	}
 
 	we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, vm.Create, "Temporal")
@@ -38,7 +61,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 	return in, nil
 }
 
-func (s *Server) TestHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.InternalComputeConfigInfo, error) {
+func (s *Server) TestHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
 	log.Printf("Received on TestHandler %s", in)
 	return in, nil
 }

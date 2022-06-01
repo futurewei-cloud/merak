@@ -13,3 +13,13 @@ enum MessageType {
     FULL = 0;
     DELTA = 1;
 }
+
+enum ReturnCode {
+  OK = 0;
+  FAILED = 1;
+}
+
+message ReturnMessage {
+  ReturnCode return_code = 1;
+  string return_message = 2;
+}
