@@ -65,15 +65,17 @@ message InternalServiceInfo {
     string where_to_run = 10;
 }
 
-message InternalPodInfo {
+message InternalComputeInfo {
     OperationType operation_type = 1;
     string id = 2;
     string name = 3;
     string ip = 4;
+    string mac = 5;
+    string veth = 6;
 }
 
-message InternalStorageExtraInfo{
-    string TBD = 1;
+message InternalStorageInfo{
+    string info = 1;
 }
 
 message InternalNetConfigExtraInfo {
@@ -87,12 +89,17 @@ message InternalNetConfigConfiguration {
     string netconfig_id = 4;
     MessageType message_type = 5;
     repeated InternalServiceInfo services = 6;
-    repeated InternalPodInfo computes = 7;
+    repeated InternalComputeInfo computes = 7;
     repeated InternalNetworkInfo networks = 8;
-    repeated InternalStorageExtraInfo storages = 9;
+    repeated InternalStorageInfo storages = 9;
     repeated InternalNetConfigExtraInfo extra_info = 10;
 }
 
+message InternalNetConfigInfo {
+    OperationType operation_type = 1;
+    InternalNetConfigConfiguration configuration = 2;
+}
+
 service MerakNetworkService {
-    rpc InternalNetConfigConfigurationHandler (InternalNetConfigConfiguration) returns (InternalNetConfigConfiguration) {}
+    rpc InternalNetConfigConfigurationHandler (InternalNetConfigConfiguration) returns (InternalNetConfigInfo) {}
 }
