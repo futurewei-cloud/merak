@@ -2,4 +2,6 @@
 
 The following figure shows the definition for protobuf message between components:
 
-![protobuf message](images/merak_contracts.drawio-3.svg)  
+![protobuf message 1](images/protobuf-1.png)
+![protobuf message 2](images/protobuf-2.png)
+![protobuf message 3](images/protobuf-3.png)
