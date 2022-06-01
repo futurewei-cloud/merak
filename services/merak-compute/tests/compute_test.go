@@ -1,4 +1,4 @@
-package merak
+package test
 
 import (
 	"context"
@@ -48,5 +48,4 @@ func TestGrpc(t *testing.T) {
 		t.Fatalf("Test Handler failed: %v", err)
 	}
 	log.Printf("Response: %+v", resp)
-	// Test for output here.
 }

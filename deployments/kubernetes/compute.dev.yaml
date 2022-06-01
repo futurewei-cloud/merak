@@ -16,7 +16,7 @@ spec:
     - protocol: TCP
       name: grpc
       port: 40051
-      targetPort: 40051
+      targetPort: compute-grpc
   type: ClusterIP
 ---
 # Merak Compute Deployment
@@ -44,7 +44,34 @@ spec:
         image: phudtran/merak-compute:dev
         ports:
           - containerPort: 40051
-            name: grpc
+            name: compute-grpc
+        env:
+        - name: "TEMPORAL"
+          value: "temporaltest-frontend.default.svc.cluster.local"
+---
+# Merak Compute VM Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: merak-compute-vm-worker
+  namespace: merak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: merak-compute-vm-worker
+  template:
+    metadata:
+      labels:
+        app: merak-compute-vm-worker
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: merak-compute-vm-worker
+        image: phudtran/merak-compute-vm-worker:dev
         env:
         - name: "TEMPORAL"
           value: "temporaltest-frontend.default.svc.cluster.local"

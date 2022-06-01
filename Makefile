@@ -10,8 +10,11 @@ deploy-dev:
 	kubectl apply -f deployments/kubernetes/compute.dev.yaml
 
 docker-build:
+# Compute
 	docker build -t phudtran/merak-compute:dev -f docker/compute.Dockerfile .
+	docker build -t phudtran/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
 	docker push phudtran/merak-compute:dev
+	docker push phudtran/merak-compute-vm-worker:dev
 
 test:
 	go test -v services/merak-compute/tests/compute_test.go

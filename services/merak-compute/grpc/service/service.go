@@ -7,6 +7,7 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
+	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/vm"
 	"go.temporal.io/sdk/client"
 )
 
@@ -22,6 +23,17 @@ var TemporalClient client.Client
 
 func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.InternalComputeConfigInfo, error) {
 	log.Printf("Received on ComputeHandler %s", in)
+	workflowOptions := client.StartWorkflowOptions{
+		ID:        "hello_world_workflowID",
+		TaskQueue: "hello-world",
+	}
+
+	we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, vm.Create, "Temporal")
+	if err != nil {
+		log.Fatalln("Unable to execute workflow", err)
+	}
+
+	log.Println("Started workflow", "WorkflowID", we.GetID(), "RunID", we.GetRunID())
 
 	return in, nil
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
@@ -24,11 +25,15 @@ func main() {
 	gRPCServer := grpc.NewServer()
 	pb.RegisterMerakComputeServiceServer(gRPCServer, &service.Server{})
 
-	temporal_address := os.Getenv(constants.TEMPORAL_ENV)
+	temporal_address, ok := os.LookupEnv(constants.TEMPORAL_ENV)
+	if !ok {
+		log.Println("Temporal environment variable not set, using default address.")
+		temporal_address = constants.TEMPRAL_ADDRESS
+	}
 	var sb strings.Builder
 	sb.WriteString(temporal_address)
 	sb.WriteString(":")
-	sb.WriteString(constants.TEMPORAL_PORT)
+	sb.WriteString(strconv.Itoa(constants.TEMPORAL_PORT))
 
 	log.Printf("Connecting to Temporal server at %s", sb.String())
 	service.TemporalClient, err = client.NewClient(client.Options{
