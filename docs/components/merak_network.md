@@ -53,66 +53,61 @@ Merak Network will have couple of functions:
 
 <!-- ![merak network diagram](../images/MerakNetworkFlow.drawio.svg)   -->
 
-![merak network diagram](../images/MerakNetwork_v2.drawio.svg)  
+![merak network diagram](../images/MerakNetworkV2.drawio.svg)  
+
 ## Data Schema  
 ___  
 
 For new we are planning on store data in Redis DB, below are the schema for each data point:  
 
-- Initial IDs:  
+- Tenant:  
     ```
-    {
-        "tenantIds": [],
-        "<tenantIds>_projectIds": [],
-        "projectIds": [],
-        "<projectId>_vpc_ids": [],
-        "<vpc_ids>_router_ids": [],
-        "<vpc_ids>_subnet_ids": []
-    }
+    - ID
+        - Projects
+    ```  
+
+- Project:  
+    ```
+    - ID
+        - TenantID
+        - VPCIDs
+        - SubnetIDs
+        - RouterIDs
+        - SecurityGroupIDs
     ```
 
 - VPC:  
     ```  
-    {
-        "VPC": {
-            "<projectId>_Name": "",
-            "<projectId>_Project_id": "",
-            "<projectId>_Tenant_id": "",
-            "<projectId>_cider_size": "",
-            "<projectId>_Tunnel_id": "",
-            "<projectId>_security_group_id":"",
-            "<projectId>_Gateways": ""
-        }
-    }
+    - ID
+        - Name
+        - CiderSize
+        - ProjectID
+        - TenantID
+        - SecurityGroupID
+        - SubnetIDs
+        - Gateways
     ```  
 
 - Security Group:  
     ```  
-    {
-        "security_group":{
-            "<projectId>_security_group_id":"",
-        }
-    }
+    - ID
+        - ProjectID
     ```  
 
 - Router:  
     ```  
-    {
-        "Router": {
-            "<router_id>_Name": "",
-            "<router_id>_security_group_id":""
-        }
-    }
+    - ID
+        - Name
+        - SecurityGroupID
+        - VPCID
+        - SubnetIDs
     ```  
 
 - Subnet:  
     ```  
-    {
-        "Subnet": {
-            "<subnet_id>_Name": "",
-            "<subnet_id>_cider_size": "",
-            "<subnet_id>_security_group_id":"",
-            "<subnet_id>_router_id": ""
-        }
-    }
+    - ID
+        - Name
+        - CiderSize
+        - SecurityGroupID
+        - RouterID
     ```  
