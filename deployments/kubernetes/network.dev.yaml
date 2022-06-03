@@ -1,0 +1,51 @@
+# Merak namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: merak
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: merak-network-service
+  namespace: merak
+spec:
+  selector:
+    app: merak-network
+  ports:
+    - protocol: TCP
+      name: grpc
+      port: 40052
+      targetPort: network-grpc
+  type: ClusterIP
+---
+# Merak network Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: merak-network
+  namespace: merak
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: merak-network
+  template:
+    metadata:
+      labels:
+        app: merak-network
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: merak-network
+        image: yanmo96/merak-network:dev
+        ports:
+          - containerPort: 40052
+            name: network-grpc
+        env:
+        - name: "TEMPORAL"
+          value: "temporaltest-frontend.default.svc.cluster.local"
+
