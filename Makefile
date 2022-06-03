@@ -15,6 +15,9 @@ docker-build:
 	docker build -t phudtran/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
 	docker push phudtran/merak-compute:dev
 	docker push phudtran/merak-compute-vm-worker:dev
+# Netowrk
+	docker build -t yanmo96/merak-network:dev -f docker/netowrk.Dockerfile .
+	docker push yanmo96/merak-network:dev
 
 test:
 	go test -v services/merak-compute/tests/compute_test.go
