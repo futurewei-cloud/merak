@@ -6,4 +6,5 @@ const (
 	TEMPORAL_ENV                = "TEMPORAL"
 	COMPUTE_GRPC_SERVER_PORT    = 40051
 	COMPUTE_GRPC_SERVER_ADDRESS = "merak-compute-service.merak.svc.cluster.local"
+	TOPOLOGY_GRPC_SERVER_PORT   = 40055
 )
