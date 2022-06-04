@@ -1,4 +1,4 @@
-package test
+package tests
 
 import (
 	"context"
@@ -37,7 +37,7 @@ func TestGrpc(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
-	defer conn.Close()
+
 	client := pb.NewMerakTopologyServiceClient(conn)
 
 	// message InternalVNicInfo {
@@ -63,21 +63,19 @@ func TestGrpc(t *testing.T) {
 	// 	string dst = 5;
 	// }
 
-	node0 := pb.InternalNodeInfo{
+	node0 := pb.InternalVNodeInfo{
 		OperationType: pb.OperationType_CREATE,
 		Id:            "0",
 		Name:          "node_0",
-		Type:          pb.TopologyType_SINGLE,
-		Nics:          "node0-eth1",
-		Nics:          "node0-eth2",
+		Type:          pb.VNodeType_VHOST,
+		Vnics:         []*pb.InternalVNicInfo{},
 	}
-	node1 := pb.InternalNodeInfo{
+	node1 := pb.InternalVNodeInfo{
 		OperationType: pb.OperationType_CREATE,
 		Id:            "1",
 		Name:          "node_1",
-		Type:          pb.TopologyType_SINGLE,
-		Nics:          "node1-eth1",
-		Nics:          "node1-eth2",
+		Type:          pb.VNodeType_VSWITCH,
+		Vnics:         []*pb.InternalVNicInfo{},
 	}
 
 	link0 := pb.InternalVLinkInfo{
@@ -100,25 +98,30 @@ func TestGrpc(t *testing.T) {
 		FormatVersion:  1,
 		RevisionNumber: 1,
 		RequestId:      "test",
-		topologyId:     "test",
+		TopologyId:     "topology_id",
 		MessageType:    pb.MessageType_FULL,
-		Nodes:          []*pb.InternalVNodeInfo{node0, node1},
-		Links:          []*pb.InternalVLinkInfo{link0, link1},
+		Vnodes:         []*pb.InternalVNodeInfo{&node0, &node1},
+		Vlinks:         []*pb.InternalVLinkInfo{&link0, &link1},
 		ExtraInfo:      &pb.InternalTopologyExtraInfo{Info: "test"},
 	}
 
 	topology_info := pb.InternalTopologyInfo{
-		OperationType:                 pb.OperationType_CREATE,
-		InternalTopologyConfiguration: topologyConfig,
+		OperationType: pb.OperationType_CREATE,
+		Config:        &topologyConfig,
 	}
 
 	resp, err := client.TopologyHandler(ctx, &topology_info)
 	if err != nil {
 		t.Fatalf("Topology Handler failed: %v", err)
 	}
-	resp, err = client.TestHandler(ctx, &pb.InternalToplogyInfo{})
+
+	log.Printf("TopologyHandler Response: %+v", resp)
+
+	resp, err = client.TestHandler(ctx, &topology_info)
 	if err != nil {
 		t.Fatalf("Test Handler failed: %v", err)
 	}
-	log.Printf("Response: %+v", resp)
+	log.Printf("TestHandler Response: %+v", resp)
+
+	defer conn.Close()
 }

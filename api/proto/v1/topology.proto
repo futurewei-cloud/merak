@@ -3,6 +3,11 @@ package merak;
 option go_package = "merak/";
 import "common.proto";
 
+service MerakTopologyService {
+    rpc TopologyHandler (InternalTopologyInfo) returns (ReturnMessage) {}
+    rpc TestHandler (InternalTopologyInfo) returns (ReturnMessage) {}
+}
+
 enum TopologyType {
     SINGLE = 0;
     LINEAR = 1;
@@ -63,7 +68,5 @@ message InternalTopologyExtraInfo {
     string info = 1;
 }
 
-service MerakTopologyService {
-    rpc TopologyHandler (InternalTopologyInfo) returns (InternalTopologyInfo) {}
-}
+
 

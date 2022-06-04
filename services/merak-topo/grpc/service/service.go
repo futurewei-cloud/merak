@@ -7,24 +7,22 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
-	"go.temporal.io/sdk/client"
 )
 
 var (
-	Port = flag.Int("port", constants.TOPOLOGY_GRPC_SERVER_PORT, "The server port")
-	// returnMessage = pb.ReturnMessage{
-	// 	ReturnCode:    pb.ReturnCode_FAILED,
-	// 	ReturnMessage: "Unintialized",
-	// }
+	Port          = flag.Int("port", constants.TOPOLOGY_GRPC_SERVER_PORT, "The server port")
+	returnMessage = pb.ReturnMessage{
+		ReturnCode:    pb.ReturnCode_FAILED,
+		ReturnMessage: "Unintialized",
+	}
 )
 
 type Server struct {
+	pb.UnimplementedMerakTopologyServiceServer
 }
 
-var TemporalClient client.Client
-
 func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInfo) (*pb.ReturnMessage, error) {
-	log.Printf("Received from TopologyHandler %s", in)
+	log.Printf("Received on TopologyHandler %s", in)
 
 	//Parse input
 
@@ -39,17 +37,17 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 		// update topology
 	default:
 		log.Println("Unknown Operation")
-		// 	returnMessage.ReturnCode = pb.ReturnCode_FAILED
-		// 	returnMessage.ReturnMessage = "TopologyHandler: Unknown Operation"
-		// 	return &returnMessage, nil
+		returnMessage.ReturnCode = pb.ReturnCode_FAILED
+		returnMessage.ReturnMessage = "TopologyHandler: Unknown Operation"
+		return &pb.ReturnMessage{}, nil
 	}
 
-	return &in, nil
+	return &pb.ReturnMessage{}, nil
 }
 
-func (s *Server) TestHandler(ctx context.Context, message *pb.InternalTopologyInfo) (*pb.InternalTopologyInfo, error) {
-	log.Printf("Received on TestHandler")
-	// 	returnMessage.ReturnCode = pb.ReturnCode_FAILED
-	// 	returnMessage.ReturnMessage = "Unimplemented"
-	return &pd.InternalTopologyInfo, nil
+func (s *Server) TestHandler(ctx context.Context, in *pb.InternalTopologyInfo) (*pb.ReturnMessage, error) {
+	log.Printf("Received on TestHandler %s", in)
+	returnMessage.ReturnCode = pb.ReturnCode_FAILED
+	returnMessage.ReturnMessage = "Unimplemented"
+	return &pb.ReturnMessage{}, nil
 }
