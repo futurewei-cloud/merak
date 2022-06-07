@@ -124,4 +124,5 @@ func TestGrpc(t *testing.T) {
 	log.Printf("TestHandler Response: %+v", resp)
 
 	defer conn.Close()
+
 }
