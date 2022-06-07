@@ -36,40 +36,49 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			ID:        "InfoWorkflow",
 			TaskQueue: "Info",
 		}
+		log.Println("Info Unimplemented")
+		returnMessage.ReturnCode = pb.ReturnCode_FAILED
+		returnMessage.ReturnMessage = "Info Unimplemented"
+		return &returnMessage, nil
 	case pb.OperationType_CREATE:
 		workflowOptions = client.StartWorkflowOptions{
 			ID:        "CreateWorkflow",
 			TaskQueue: "Create",
 		}
 		for _, pod := range in.Config.Pods {
-			log.Println(pod)
+			log.Println(pod.Ip)
 		}
-
+		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, vm.Create, "Temporal")
+		if err != nil {
+			log.Fatalln("Unable to execute workflow", err)
+		}
+		log.Println("Started workflow", "WorkflowID", we.GetID(), "RunID", we.GetRunID())
+		return &returnMessage, nil
 	case pb.OperationType_UPDATE:
 		workflowOptions = client.StartWorkflowOptions{
 			ID:        "UpdateWorkflow",
 			TaskQueue: "Update",
 		}
+		log.Println("Update Unimplemented")
+		returnMessage.ReturnCode = pb.ReturnCode_FAILED
+		returnMessage.ReturnMessage = "Update Unimplemented"
+		return &returnMessage, nil
 	case pb.OperationType_DELETE:
 		workflowOptions = client.StartWorkflowOptions{
 			ID:        "DeleteWorkflow",
 			TaskQueue: "Delete",
 		}
+		log.Println("Delete Unimplemented")
+		returnMessage.ReturnCode = pb.ReturnCode_FAILED
+		returnMessage.ReturnMessage = "ComputeHandler: Delete Unimplemented"
+
+		return &returnMessage, nil
 	default:
 		log.Println("Unknown Operation")
 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "ComputeHandler: Unknown Operation"
 		return &returnMessage, nil
 	}
-
-	we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, vm.Create, "Temporal")
-	if err != nil {
-		log.Fatalln("Unable to execute workflow", err)
-	}
-
-	log.Println("Started workflow", "WorkflowID", we.GetID(), "RunID", we.GetRunID())
-
-	return &returnMessage, nil
 }
 
 func (s *Server) TestHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
