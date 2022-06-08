@@ -8,6 +8,7 @@ import (
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/vm"
+	"github.com/go-redis/redis/v9"
 	"go.temporal.io/sdk/client"
 )
 
@@ -20,16 +21,16 @@ var (
 	}
 )
 
+var TemporalClient client.Client
+var RedisClient redis.Client
+
 type Server struct {
 	pb.UnimplementedMerakComputeServiceServer
 }
 
-var TemporalClient client.Client
-
 func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
 	log.Printf("Received on ComputeHandler %s", in)
 	// Parse input
-
 	switch op := in.OperationType; op {
 	case pb.OperationType_INFO:
 		workflowOptions = client.StartWorkflowOptions{
@@ -45,9 +46,18 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			ID:        "CreateWorkflow",
 			TaskQueue: "Create",
 		}
+
 		for _, pod := range in.Config.Pods {
-			log.Println(pod.Ip)
+			if err := RedisClient.SAdd(ctx, "NodIPsSet", pod.Ip).Err(); err != nil {
+				log.Fatalln("Unable add node IPs to redis", err)
+			}
 		}
+		ips := RedisClient.SMembers(ctx, "NodIPsSet")
+		err := ips.Err()
+		if err != nil {
+			log.Fatalln("Unable get node IPs from redis", err)
+		}
+		log.Println(ips.Val())
 		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, vm.Create, "Temporal")
 		if err != nil {
 			log.Fatalln("Unable to execute workflow", err)

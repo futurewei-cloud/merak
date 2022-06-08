@@ -6,12 +6,12 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	go.temporal.io/sdk v1.14.0
 	google.golang.org/grpc v1.46.2
-	google.golang.org/protobuf v1.27.1
 	k8s.io/api v0.24.3
 	k8s.io/apimachinery v0.24.3
 	k8s.io/client-go v0.24.3
 	k8s.io/utils v0.0.0-20220810061631-2e139fc3ae1e
 	sigs.k8s.io/controller-runtime v0.12.3
+	google.golang.org/protobuf v1.28.0
 )
 
 require (
@@ -60,7 +60,10 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/alicebob/miniredis v2.5.0+incompatible
 	github.com/andybalholm/brotli v1.0.4 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
@@ -68,6 +71,7 @@ require (
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/gofiber/fiber/v2 v2.34.0
 	github.com/gofiber/swagger v0.0.1
+	github.com/go-redis/redis/v9 v9.0.0-beta.1 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gogo/status v1.1.0 // indirect
@@ -93,6 +97,8 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/net v0.0.0-20220531201128-c960675eff93 // indirect
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
+	golang.org/x/sys v0.0.0-20220222200937-f2425489ef4c // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
 	golang.org/x/tools v0.1.10 // indirect

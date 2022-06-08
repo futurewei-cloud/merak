@@ -18,7 +18,7 @@ func main() {
 	temporal_address, ok := os.LookupEnv(constants.TEMPORAL_ENV)
 	if !ok {
 		log.Println("Temporal environment variable not set, using default address.")
-		temporal_address = constants.TEMPRAL_ADDRESS
+		temporal_address = constants.TEMPORAL_ADDRESS
 	}
 	var sb strings.Builder
 	sb.WriteString(temporal_address)
@@ -33,7 +33,7 @@ func main() {
 	}
 	defer c.Close()
 
-	w := worker.New(c, "hello-world", worker.Options{})
+	w := worker.New(c, "VmCreate", worker.Options{})
 
 	w.RegisterWorkflow(vm.Create)
 	w.RegisterActivity(activities.VmCreate)
