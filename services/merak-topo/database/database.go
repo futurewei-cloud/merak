@@ -40,27 +40,19 @@ type Vnode struct {
 //     "link":
 //        {
 //             "name": "link1",
-//             "pairs":
+//             "local":
 //                 {
-//                     "local_name": "a2"
-//                     "local_nics": "a2-intf1"
-//                     "local_ip": ""
-//                     "peer_name": "a3"
-//                     "peer_nics": "a3-intf1"
-//                     "peer_ip": ""
+//                     "name": "a2",
+//                     "nics": "a2-intf1",
+//                     "ip": ""
+//                 },
+//             "peer":
+//                 {
+//                     "name": "a3",
+//                     "nics": "a3-intf1",
+//                     "ip": ""
 //                 }
-
 //         }
-
-// }
-
-// type Pair struct {
-// 	Local_name string `json:"local_name"`
-// 	Local_nics string `json:"local_nics"`
-// 	Local_ip   string `json:"local_ip"`
-// 	Peer_name  string `json:"peer_name"`
-// 	Peer_nics  string `json:"peer_nics"`
-// 	Peer_ip    string `json:"peer_ip"`
 // }
 
 type Vport struct {
@@ -82,9 +74,9 @@ type Vlink struct {
 // }
 
 type TopologyData struct {
-	Topology_id string   `json:"topology_id"`
-	Vnodes      []string `json:"vnodes"`
-	Vlinks      []string `json:"vlinks"`
+	Topology_id string  `json:"topology_id"`
+	Vnodes      []Vnode `json:"vnodes"`
+	Vlinks      []Vlink `json:"vlinks"`
 }
 
 // var Topo TopologyData
@@ -118,31 +110,41 @@ type TopologyData struct {
 var Ctx = context.Background()
 var RDB *redis.Client
 
-func CreateDBClient() {
+func CreateDBClient() *redis.Client {
 
-	rdb := redis.NewClient(&redis.Options{
+	client := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
-	RDB = rdb
+	return client
 }
 
-func SetValue(key string, val interface{}) {
+func PingClient(client *redis.Client) error {
+	pong, err := client.Ping(Ctx).Result()
+	if err != nil {
+		return err
+	}
+	fmt.Println(pong, err)
+	return nil
+}
+
+func SetValue(client *redis.Client, key string, val interface{}) {
 	j, err := json.Marshal(val)
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	err2 := RDB.Set(Ctx, key, j, 0).Err()
+	err2 := client.Set(Ctx, key, j, 0).Err()
 	if err2 != nil {
-		panic(err2)
+		// panic(err2)
+		fmt.Println(err2.Error())
 	} else {
 		fmt.Printf("Save data in Redis")
 	}
 }
 
-func GetValue(key string) string {
-	val, err := RDB.Get(Ctx, key).Result()
+func GetValue(client *redis.Client, key string) string {
+	val, err := client.Get(Ctx, key).Result()
 	if err != nil {
 		panic(err)
 	} else {

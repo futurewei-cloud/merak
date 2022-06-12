@@ -9,8 +9,8 @@ import (
 )
 
 func TestDB(t *testing.T) {
-	database.CreateDBClient()
-	fmt.Println("DB created")
+	t_client := database.CreateDBClient()
+	fmt.Println("DB created.")
 
 	//     "node":
 	//         {
@@ -117,29 +117,32 @@ func TestDB(t *testing.T) {
 
 	topo1 := database.TopologyData{
 		Topology_id: "topo1",
-		Vnodes:      []string{"vnode0", "vnode1", "vnode2"},
-		Vlinks:      []string{"vlink1", "vlink2"},
+		Vnodes:      []database.Vnode{vnode0, vnode1},
+		Vlinks:      []database.Vlink{vlink1},
 	}
 
-	var val string
-
-	database.SetValue("topo:proj1-topo1", topo1)
-	database.SetValue("node:proj1-topo1-node1", vnode0)
-	database.SetValue("link:proj1-topo1-link1", vlink1)
+	fmt.Println("set topo1")
+	database.SetValue(t_client, "topo:proj1-topo1", topo1)
+	fmt.Println("set node1")
+	database.SetValue(t_client, "node:proj1-topo1-node1", vnode0)
+	fmt.Println("set link1")
+	database.SetValue(t_client, "link:proj1-topo1-link1", vlink1)
 
 	// vnode--- key   vnode:proj1-topo1-vnode1
 	// vlink --- key  vlink:proj1-topo1-vlink1
 
-	val = database.GetValue("topo:proj1-topo1")
+	var val string
 
-	fmt.Printf("The returned data from Radis is %+v ", val)
+	val = database.GetValue(t_client, "topo:proj1-topo1")
 
-	val = database.GetValue("node:proj1-topo1-node1")
+	fmt.Printf("The returned data from Radis is %+v. \n", val)
 
-	fmt.Printf("The returned data from Radis is %+v ", val)
+	val = database.GetValue(t_client, "node:proj1-topo1-node1")
 
-	val = database.GetValue("link:proj1-topo1-link1")
+	fmt.Printf("The returned data from Radis is %+v.\n ", val)
 
-	fmt.Printf("The returned data from Radis is %+v ", val)
+	val = database.GetValue(t_client, "link:proj1-topo1-link1")
+
+	fmt.Printf("The returned data from Radis is %+v.\n", val)
 
 }
