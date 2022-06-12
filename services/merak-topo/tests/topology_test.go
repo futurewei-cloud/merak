@@ -66,14 +66,14 @@ func TestGrpc(t *testing.T) {
 	node0 := pb.InternalVNodeInfo{
 		OperationType: pb.OperationType_CREATE,
 		Id:            "0",
-		Name:          "node_0",
+		Name:          "proj1-topo1-vnode0",
 		Type:          pb.VNodeType_VHOST,
 		Vnics:         []*pb.InternalVNicInfo{},
 	}
 	node1 := pb.InternalVNodeInfo{
 		OperationType: pb.OperationType_CREATE,
 		Id:            "1",
-		Name:          "node_1",
+		Name:          "proj1-topo1-vnode1",
 		Type:          pb.VNodeType_VSWITCH,
 		Vnics:         []*pb.InternalVNicInfo{},
 	}
@@ -94,34 +94,45 @@ func TestGrpc(t *testing.T) {
 		Dst:           "10.0.0.3",
 	}
 
-	topologyConfig := pb.InternalTopologyConfiguration{
+	// vnode--- key   vnode:proj1-topo1-vnode1
+	// vlink --- key  vlink:proj1-topo1-vlink1
+	topologyConfig_c1 := pb.InternalTopologyConfiguration{
 		FormatVersion:  1,
 		RevisionNumber: 1,
 		RequestId:      "test",
-		TopologyId:     "topology_id",
+		TopologyId:     "proj1-topo1",
 		MessageType:    pb.MessageType_FULL,
 		Vnodes:         []*pb.InternalVNodeInfo{&node0, &node1},
 		Vlinks:         []*pb.InternalVLinkInfo{&link0, &link1},
 		ExtraInfo:      &pb.InternalTopologyExtraInfo{Info: "test"},
 	}
 
+	// Test cases for operation INFO, CREATE, DELETE, UPDATE
+
 	topology_info := pb.InternalTopologyInfo{
-		OperationType: pb.OperationType_CREATE,
-		Config:        &topologyConfig,
+		OperationType: pb.OperationType_INFO,
+		Config:        &topologyConfig_c1,
 	}
 
-	resp, err := client.TopologyHandler(ctx, &topology_info)
-	if err != nil {
-		t.Fatalf("Topology Handler failed: %v", err)
-	}
+	// topology_create := pb.InternalTopologyInfo{
+	// 	OperationType: pb.OperationType_CREATE,
+	// 	Config:        &topologyConfig_c1,
+	// }
 
-	log.Printf("TopologyHandler Response: %+v", resp)
+	// Run Test for INFO
 
-	resp, err = client.TestHandler(ctx, &topology_info)
-	if err != nil {
-		t.Fatalf("Test Handler failed: %v", err)
+	resp1, err1 := client.TopologyHandler(ctx, &topology_info)
+	if err1 != nil {
+		t.Fatalf("Topology Handler failed: %v", err1)
 	}
-	log.Printf("TestHandler Response: %+v", resp)
+	log.Printf("TopologyHandler Response: %+v", resp1)
+
+	// Run Test for CREATE
+	// resp2, err2 := client.TopologyHandler(ctx, &topology_create)
+	// if err2 != nil {
+	// 	t.Fatalf("Topology Handler failed: %v", err2)
+	// }
+	// log.Printf("TopologyHandler Response: %+v", resp2)
 
 	defer conn.Close()
 
