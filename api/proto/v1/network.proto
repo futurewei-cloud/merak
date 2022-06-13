@@ -101,5 +101,5 @@ message InternalNetConfigInfo {
 }
 
 service MerakNetworkService {
-    rpc InternalNetConfigConfigurationHandler (InternalNetConfigConfiguration) returns (InternalNetConfigInfo) {}
+    rpc InternalNetConfigConfigurationHandler (InternalNetConfigInfo) returns (ReturnMessage) {}
 }
