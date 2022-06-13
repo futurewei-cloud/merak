@@ -1,0 +1,23 @@
+package common
+
+import (
+	"time"
+
+	"github.com/go-redis/redis/v9"
+)
+
+var RedisClient redis.Client
+
+const (
+	TEMPORAL_SUCESS_CODE    = "SUCCESS"
+	TEMPORAL_FAIL_CODE      = "FAILED"
+	TEMPORAL_RETRY_INTERVAL = time.Second
+	TEMPORAL_BACKOFF        = 2.0
+	TEMPORAL_MAX_INTERVAL   = time.Second * 100
+
+	VM_TASK_QUEUE         = "COMPUTE_TASK_QUEUE"
+	VM_INFO_WORKFLOW_ID   = "VM_INFO_WORKFLOW"
+	VM_CREATE_WORKFLOW_ID = "VM_CREATE_WORKFLOW"
+	VM_UPDATE_WORKFLOW_ID = "VM_UPDATE_WORKFLOW"
+	VM_DELETE_WORKFLOW_ID = "VM_DELETE_WORKFLOW"
+)
