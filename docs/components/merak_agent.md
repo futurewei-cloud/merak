@@ -29,13 +29,13 @@ The following services are exposed by the Merak Agent over gRPC
 - DELETE
   - Delete an existing set of VMs and Ports.
 
-#### Tests
+<!-- #### Tests
 - INFO
   - Returns the status of a running test on this host.
 - CREATE
   - Runs a new test on this host.
 - DELETE
-  - Stops an existing test on this host.
+  - Stops an existing test on this host. -->
 
 ## Simulation Design
 

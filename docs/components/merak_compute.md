@@ -1,12 +1,13 @@
 # Merak Compute
 
-Merak compute manages the allocation of virtual machines and ports.
+Merak compute is a distributed service that manages the allocation of virtual machines and ports. It utilizes [Temporal](https://temporal.io) as a microservice framework to
+reliably and scalably allocate emulated VMs, and ports.
 
 ![merak compute design diagram](../images/merak_compute_design_diagram.png)
 
 ## Services
 
-The following services are provided over gRPC
+The following services are provided over gRPC.
 
 Compute Scenarios:
 - INFO
@@ -18,7 +19,7 @@ Compute Scenarios:
 - DELETE
   - Delete an existing set of VMs and Ports.
 
-Test Scenarios:
+<!-- Test Scenarios:
 - INFO
   - Returns information about the status of an existing test scenario
 - CREATE
@@ -26,19 +27,27 @@ Test Scenarios:
 - UPDATE
   - Update an existing test scenario
 - DELETE
-  - Delete an existing test scenario
+  - Delete an existing test scenario -->
 
 ## Components
 
 ### Merak Compute Controller
-The Merak Compute Controller will be responsible for receiving, parsing, and acting on requests sent  from the scenario manager.
-The compute manager will also update the database with all schedulable pods.
+The Merak Compute Controller will be responsible for receiving, parsing, and acting on requests sent  from the scenario manager. It also be responsible for registering the various
+workflows and activities with their corresponding workers.
+Based on the requests, it will invoke workers via a temporal client to run the workflows.
 
-### VM Controller
-The VM Controller will be responsible for making calls to the Merak Agent to Create/Update/Delete VMs.
-#### Interface with Merak Agent
+### VM Workers
+The VM Worker will be responsible for making calls to the Merak Agent to Create/Update/Delete VMs by running workflows.
+#### VM Worklfows
 
-get_vm(hostname, vm):
+The VM workers will be responsible for running the following workflows
+
+- VM Create
+- VM Delete
+- VM Update
+- VM Info
+
+<!-- get_vm(hostname, vm):
 - Returns info about the VM on a node.
 
 get_vm_node(hostname):
@@ -50,12 +59,17 @@ create_n_vms_on_host(hostname, n)
 
 delete_n_vms(hostname)
 - deletes n VMs at hostname
-- returns a list of names of VMs deleted
+- returns a list of names of VMs deleted -->
 
-### Port Controller
-The Port Controller will be responsible for making calls to the Merak Agent to Create/Update/Delete Ports.
+### Port Workers
+The Port Worker will be responsible for making calls to the Merak Agent to Create/Update/Delete Ports by running workflows
 
-#### Interface with Merak Agent
+- Port Create
+- PortM Delete
+- Port Update
+- Port Info
+
+<!-- #### Interface with Merak Agent
 
 get_ports_vm(hostname, vm):
 - Returns info on all ports in the VM on the node.
@@ -69,9 +83,9 @@ create_n_ports(hostname, vm, tenant, vpc, subnet, security_group)
 
 delete_n_ports(hostname, vm)
 - deletes n ports at hostname in vm
-- returns a list of names of ports deleted
+- returns a list of names of ports deleted -->
 
-### Test Controller
+<!-- ### Test Controller
 
 The Test controller will be responsible for coordinating tests across the available vms.
 
@@ -85,7 +99,7 @@ run_test(vm, src, target, test-type, opt):
 - Returns the result of the ping test
 
 stop_test(vm, src):
-- Stops any running test in the VM originating from the source
+- Stops any running test in the VM originating from the source -->
 
 ## Scheduling
 
@@ -182,7 +196,7 @@ Example:
 
 ```
 
-#### Test Datamodel
+<!-- #### Test Datamodel
 
 - Test
   - Name
@@ -241,7 +255,7 @@ Example:
         ]
 
     }
-}
+} -->
 ```
 ### Data Storage
 Merak Compute will use a distributed KV Datastore behind a Kubernetes ClusterIP service.
