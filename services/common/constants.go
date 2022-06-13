@@ -15,5 +15,4 @@ const (
 
 	COMPUTE_REDIS_ADDRESS = "compute-redis-main.merak.svc.cluster.local"
 	COMPUTE_REDIS_PORT    = 30051
-	COMPUTE_TASK_QUEUE    = "COMPUTE_TASK_QUEUE"
 )

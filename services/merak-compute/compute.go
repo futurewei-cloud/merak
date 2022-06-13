@@ -33,6 +33,7 @@ func main() {
 	sb.WriteString(strconv.Itoa(constants.TEMPORAL_PORT))
 	var err error
 	log.Printf("Connecting to Temporal server at %s", sb.String())
+
 	service.TemporalClient, err = client.NewClient(client.Options{
 		HostPort: sb.String(),
 	})

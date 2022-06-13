@@ -2,9 +2,8 @@ package activities
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/futurewei-cloud/merak/services/merak-compute/activities/common"
+	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/activity"
 )
 
@@ -17,8 +16,6 @@ func VmCreate(ctx context.Context) (string, error) {
 		return "Failed!", err
 	}
 	logger.Info("Success in storing Node IPs!", "NodeIps", ips.Val())
-	fmt.Println("HI FROM VM CREATE")
-	logger.Info("HI FROM LOGGER")
 
-	return "success!", nil
+	return common.TEMPORAL_SUCESS_CODE, nil
 }

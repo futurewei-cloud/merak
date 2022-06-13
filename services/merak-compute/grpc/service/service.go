@@ -7,9 +7,11 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
+	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/vm"
 	"github.com/go-redis/redis/v9"
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/temporal"
 )
 
 var (
@@ -30,12 +32,19 @@ type Server struct {
 
 func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
 	log.Println("Received on ComputeHandler", in)
+	retrypolicy := &temporal.RetryPolicy{
+		InitialInterval:    common.TEMPORAL_RETRY_INTERVAL,
+		BackoffCoefficient: common.TEMPORAL_BACKOFF,
+		MaximumInterval:    common.TEMPORAL_MAX_INTERVAL,
+	}
+
 	// Parse input
 	switch op := in.OperationType; op {
 	case pb.OperationType_INFO:
 		workflowOptions = client.StartWorkflowOptions{
-			ID:        "InfoWorkflow",
-			TaskQueue: "Info",
+			ID:          common.VM_INFO_WORKFLOW_ID,
+			TaskQueue:   common.VM_TASK_QUEUE,
+			RetryPolicy: retrypolicy,
 		}
 		log.Println("Info Unimplemented")
 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
@@ -43,8 +52,9 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		return &returnMessage, nil
 	case pb.OperationType_CREATE:
 		workflowOptions = client.StartWorkflowOptions{
-			ID:        "VMCreateWorkflow",
-			TaskQueue: constants.COMPUTE_TASK_QUEUE,
+			ID:          common.VM_CREATE_WORKFLOW_ID,
+			TaskQueue:   common.VM_TASK_QUEUE,
+			RetryPolicy: retrypolicy,
 		}
 		log.Println("Operation Create")
 		// Store Available Node IPs in DB
@@ -74,8 +84,9 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		return &returnMessage, nil
 	case pb.OperationType_UPDATE:
 		workflowOptions = client.StartWorkflowOptions{
-			ID:        "UpdateWorkflow",
-			TaskQueue: "Update",
+			ID:          common.VM_UPDATE_WORKFLOW_ID,
+			TaskQueue:   common.VM_TASK_QUEUE,
+			RetryPolicy: retrypolicy,
 		}
 		log.Println("Update Unimplemented")
 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
@@ -83,8 +94,9 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		return &returnMessage, nil
 	case pb.OperationType_DELETE:
 		workflowOptions = client.StartWorkflowOptions{
-			ID:        "DeleteWorkflow",
-			TaskQueue: "Delete",
+			ID:          common.VM_DELETE_WORKFLOW_ID,
+			TaskQueue:   common.VM_TASK_QUEUE,
+			RetryPolicy: retrypolicy,
 		}
 		log.Println("Delete Unimplemented")
 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
@@ -97,11 +109,4 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		returnMessage.ReturnMessage = "ComputeHandler: Unknown Operation"
 		return &returnMessage, nil
 	}
-}
-
-func (s *Server) TestHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
-	log.Printf("Received on TestHandler %s", in)
-	returnMessage.ReturnCode = pb.ReturnCode_FAILED
-	returnMessage.ReturnMessage = "Unimplemented"
-	return &returnMessage, nil
 }
