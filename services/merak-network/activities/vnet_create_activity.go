@@ -1,13 +1,27 @@
 package activities
 
 import (
+	"container/list"
 	"context"
-
-	"go.temporal.io/sdk/activity"
+	"fmt"
+	"github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	"github.com/google/uuid"
+	"log"
 )
 
-func VnetCreate(ctx context.Context, name string) (string, error) {
-	logger := activity.GetLogger(ctx)
-	logger.Info("Activity", "name", name)
-	return "Hello " + name + "!", nil
+func VnetCreate(ctx context.Context, network *merak.InternalNetworkInfo) (string, error) {
+	log.Println("VnetCreate")
+	log.Printf("merak.InternalNetworkInfo: %s", network)
+
+	vpcs := list.New()
+	for i := 0; i < int(network.NumberOfVpcs); i++ {
+		id := uuid.New()
+		log.Printf("UUID: %s", id.String())
+		vpcs.PushBack(id.String())
+	}
+	for e := vpcs.Front(); e != nil; e = e.Next() {
+		fmt.Println(e)
+		//log.Printf(e)
+	}
+	return "VnetCreate", nil
 }

@@ -3,55 +3,25 @@ package main
 import (
 	"flag"
 	"fmt"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	"github.com/futurewei-cloud/merak/services/merak-network/grpc/service"
+	"google.golang.org/grpc"
 	"log"
 	"net"
-	"os"
-	"strconv"
-	"strings"
-
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
-	constants "github.com/futurewei-cloud/merak/services/common"
-	"github.com/futurewei-cloud/merak/services/merak-network/grpc/service"
-	"go.temporal.io/sdk/client"
-	"google.golang.org/grpc"
-)
-
-var (
-	Port = flag.Int("port", constants.NETWORK_GRPC_SERVER_PORT, "The server port")
 )
 
 func main() {
 	flag.Parse()
+	//lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *service.Port))
 	if err != nil {
-		log.Fatalln("ERROR: Failed to listen", err)
+		log.Fatalf("failed to listen: %v", err)
 	}
-	gRPCServer := grpc.NewServer()
-	pb.RegisterMerakNetworkServiceServer(gRPCServer, &service.Server{})
-
-	temporal_address, ok := os.LookupEnv(constants.TEMPORAL_ENV)
-	if !ok {
-		log.Println("Temporal environment variable not set, using default address.")
-		temporal_address = constants.TEMPRAL_ADDRESS
-	}
-	var sb strings.Builder
-	sb.WriteString(temporal_address)
-	sb.WriteString(":")
-	sb.WriteString(strconv.Itoa(constants.TEMPORAL_PORT))
-
-	log.Printf("Connecting to Temporal server at %s", sb.String())
-	service.TemporalClient, err = client.NewClient(client.Options{
-		HostPort: sb.String(),
-	})
-	if err != nil {
-		log.Fatalln("ERROR: Unable to create Temporal client", err)
-	}
-	log.Printf("Successfully connected to Temporal!")
-
-	log.Printf("Starting gRPC server. Listening at %v", lis.Addr())
-	if err := gRPCServer.Serve(lis); err != nil {
+	s := grpc.NewServer()
+	// pb.RegisterGreeterServer(s, &server{})
+	pb.RegisterMerakNetworkServiceServer(s, &service.Server{})
+	log.Printf("server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-
-	defer service.TemporalClient.Close()
 }
