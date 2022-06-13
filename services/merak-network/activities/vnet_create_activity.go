@@ -10,6 +10,7 @@ import (
 )
 
 func VnetCreate(ctx context.Context, network *merak.InternalNetworkInfo) (string, error) {
+	log.Printf("Test")
 	log.Println("VnetCreate")
 	log.Printf("merak.InternalNetworkInfo: %s", network)
 
