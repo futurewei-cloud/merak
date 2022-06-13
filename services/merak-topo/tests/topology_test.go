@@ -16,6 +16,8 @@ const bufSize = 1024 * 1024
 
 var lis *bufconn.Listener
 
+// Test cases for operation INFO, CREATE, DELETE, UPDATE
+
 func init() {
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
@@ -31,38 +33,8 @@ func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
 }
 
-func TestGrpc(t *testing.T) {
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-
-	client := pb.NewMerakTopologyServiceClient(conn)
-
-	// message InternalVNicInfo {
-	// 	OperationType operation_type = 1;
-	// 	string id = 2;
-	// 	string name = 3;
-	// 	string ip = 4;
-	// }
-
-	// message InternalVNodeInfo {
-	// 	OperationType operation_type = 1;
-	// 	string id = 2;
-	// 	string name = 3;
-	// 	VNodeType type = 4;
-	// 	repeated InternalVNicInfo vnics = 5;
-	// }
-
-	// message InternalVLinkInfo {
-	// 	OperationType operation_type = 1;
-	// 	string id = 2;
-	// 	string name = 3;
-	// 	string src = 4;
-	// 	string dst = 5;
-	// }
-
+func TestGRPC(t *testing.T) {
+	// Test case setup
 	node0 := pb.InternalVNodeInfo{
 		OperationType: pb.OperationType_CREATE,
 		Id:            "0",
@@ -99,28 +71,45 @@ func TestGrpc(t *testing.T) {
 	topologyConfig_c1 := pb.InternalTopologyConfiguration{
 		FormatVersion:  1,
 		RevisionNumber: 1,
-		RequestId:      "test",
+		RequestId:      "proj1-topo1-info-test",
 		TopologyId:     "proj1-topo1",
 		MessageType:    pb.MessageType_FULL,
 		Vnodes:         []*pb.InternalVNodeInfo{&node0, &node1},
 		Vlinks:         []*pb.InternalVLinkInfo{&link0, &link1},
-		ExtraInfo:      &pb.InternalTopologyExtraInfo{Info: "test"},
+		ExtraInfo:      &pb.InternalTopologyExtraInfo{Info: "info test"},
 	}
 
-	// Test cases for operation INFO, CREATE, DELETE, UPDATE
-
+	topologyConfig_c2 := pb.InternalTopologyConfiguration{
+		FormatVersion:  1,
+		RevisionNumber: 1,
+		RequestId:      "proj1-topo2-create-test",
+		TopologyId:     "proj1-topo2",
+		MessageType:    pb.MessageType_FULL,
+		Vnodes:         []*pb.InternalVNodeInfo{},
+		Vlinks:         []*pb.InternalVLinkInfo{},
+		ExtraInfo:      &pb.InternalTopologyExtraInfo{Info: "create test"},
+	}
+	// Test cases for INFO, CREATE, DELETE, UPDATE
 	topology_info := pb.InternalTopologyInfo{
 		OperationType: pb.OperationType_INFO,
 		Config:        &topologyConfig_c1,
 	}
 
-	// topology_create := pb.InternalTopologyInfo{
-	// 	OperationType: pb.OperationType_CREATE,
-	// 	Config:        &topologyConfig_c1,
-	// }
+	topology_create := pb.InternalTopologyInfo{
+		OperationType: pb.OperationType_CREATE,
+		Config:        &topologyConfig_c2,
+	}
+
+	// gRPC Setup
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+
+	client := pb.NewMerakTopologyServiceClient(conn)
 
 	// Run Test for INFO
-
 	resp1, err1 := client.TopologyHandler(ctx, &topology_info)
 	if err1 != nil {
 		t.Fatalf("Topology Handler failed: %v", err1)
@@ -128,11 +117,11 @@ func TestGrpc(t *testing.T) {
 	log.Printf("TopologyHandler Response: %+v", resp1)
 
 	// Run Test for CREATE
-	// resp2, err2 := client.TopologyHandler(ctx, &topology_create)
-	// if err2 != nil {
-	// 	t.Fatalf("Topology Handler failed: %v", err2)
-	// }
-	// log.Printf("TopologyHandler Response: %+v", resp2)
+	resp2, err2 := client.TopologyHandler(ctx, &topology_create)
+	if err2 != nil {
+		t.Fatalf("Topology Handler failed: %v", err2)
+	}
+	log.Printf("TopologyHandler Response: %+v", resp2)
 
 	defer conn.Close()
 
