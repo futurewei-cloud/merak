@@ -40,7 +40,7 @@ func (s *Server) InternalNetConfigConfigurationHandler(ctx context.Context, in *
 		for _, network := range in.Configuration.Networks {
 			log.Println(network)
 			ctx := context.TODO()
-			activities.VnetCreate(ctx, network)
+			go activities.VnetCreate(ctx, network)
 		}
 		for _, storage := range in.Configuration.Storages {
 			log.Println(storage)

@@ -18,7 +18,7 @@ ___
 4. Create/modify/delete Number of Subnet per VPC  
 5. Create Router  
 6. Connect Subnets to Router  
-7. node registration
+7. Node registration
 8. Store the above information in DB, and have the ability to delete them after each test run. Or have ability to modify our network configurations on the fly.  
 
 ## Design  
