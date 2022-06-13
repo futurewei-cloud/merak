@@ -33,7 +33,7 @@ func DeployScenario(c *fiber.Ctx) error {
 		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
 	}
 
-	if err := handler.Deploy(&scenario); err != nil {
+	if err := handler.DeployTopology(&scenario); err != nil {
 		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
 	}
 

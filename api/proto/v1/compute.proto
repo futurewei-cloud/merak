@@ -41,9 +41,11 @@ message InternalVMInfo {
     repeated string vpcs = 3;
     repeated string subnets = 4;
     repeated string secgroups = 5;
-    uint32 num_port_per_vm = 6;
-    repeated InternalVMPod deploy_method = 7;
-    string service_url = 8;
+    uint32 num_vm_per_vpc_per_pod = 6;
+    uint32 num_vm_per_subnet_per_pod = 7;
+    uint32 num_port_per_vm = 8;
+    repeated InternalVMPod deploy_method = 9;
+    string service_url = 10;
 }
 
 message InternalComputeConfiguration {

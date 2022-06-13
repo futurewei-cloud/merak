@@ -59,7 +59,7 @@ message InternalServiceInfo {
     string cmd = 4;
     string url = 5;
     repeated string parameters = 6;
-    repeated string return_code = 7;
+    repeated uint32 return_code = 7;
     repeated string return_string = 8;
     string when_to_run = 9;
     string where_to_run = 10;
@@ -90,16 +90,16 @@ message InternalNetConfigConfiguration {
     MessageType message_type = 5;
     repeated InternalServiceInfo services = 6;
     repeated InternalComputeInfo computes = 7;
-    repeated InternalNetworkInfo networks = 8;
-    repeated InternalStorageInfo storages = 9;
-    repeated InternalNetConfigExtraInfo extra_info = 10;
+    InternalNetworkInfo network = 8;
+    InternalStorageInfo storage = 9;
+    InternalNetConfigExtraInfo extra_info = 10;
 }
 
 message InternalNetConfigInfo {
     OperationType operation_type = 1;
-    InternalNetConfigConfiguration configuration = 2;
+    InternalNetConfigConfiguration config = 2;
 }
 
 service MerakNetworkService {
-    rpc InternalNetConfigConfigurationHandler (InternalNetConfigConfiguration) returns (InternalNetConfigInfo) {}
+    rpc InternalNetConfigConfigurationHandler (InternalNetConfigConfiguration) returns (ReturnMessage) {}
 }

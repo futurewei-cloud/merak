@@ -42,16 +42,32 @@ message InternalVLinkInfo {
     string dst = 5;
 }
 
+message InternalTopologyImage {
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    string registry = 4;
+    repeated string cmd = 5;
+    repeated string args = 6;
+}
+
 message InternalTopologyConfiguration {
     uint32 format_version = 1;
     uint32 revision_number = 2;
     string request_id = 3;
-    string topology_id = 4;
-    MessageType message_type = 5;
-    TopologyType topology_type = 6;
-    repeated InternalVNodeInfo vnodes = 7;
-    repeated InternalVLinkInfo vlinks = 8;
-    InternalTopologyExtraInfo extra_info = 9;
+    MessageType message_type = 4;
+    string topology_id = 5;
+    string name = 6;
+    TopologyType topology_type = 7;
+    uint32 number_of_vhosts = 8;
+    uint32 number_of_racks = 9;
+    uint32 vhost_per_rack = 10;
+    uint32 number_of_control_plane_gateways = 11;
+    repeated string control_palne_gateway_ips = 12;
+    repeated InternalTopologyImage images = 13; 
+    repeated InternalVNodeInfo vnodes = 14;
+    repeated InternalVLinkInfo vlinks = 15;
+    InternalTopologyExtraInfo extra_info = 16;
 }
 
 message InternalTopologyInfo {
@@ -64,6 +80,7 @@ message InternalTopologyExtraInfo {
 }
 
 service MerakTopologyService {
-    rpc TopologyHandler (InternalTopologyInfo) returns (InternalTopologyInfo) {}
+    rpc TopologyHandler (InternalTopologyInfo) returns (ReturnMessage) {}
+    rpc TestHandler (InternalTopologyInfo) returns (ReturnMessage) {}
 }
 

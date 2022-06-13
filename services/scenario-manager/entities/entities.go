@@ -58,7 +58,7 @@ type Service struct {
 	Cmd          string   `json:"cmd"`
 	Url          string   `json:"url"`
 	Parameters   []string `json:"parameters"`
-	ReturnCode   []uint   `json:"return_code"`
+	ReturnCode   []uint32 `json:"return_code"`
 	ReturnString []string `json:"return_string"`
 	WhenToRun    string   `json:"when_to_run"`
 	WhereToRun   string   `json:"where_to_run"`
@@ -91,6 +91,7 @@ type Image struct {
 
 type VNode struct {
 	Name string `json:"name"`
+	Type string `json:"type"`
 	Nics []Nic  `json:"nics"`
 }
 
@@ -127,9 +128,9 @@ type Router struct {
 }
 
 type Gateway struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-	Ip   string `json:"ip"`
+	Id   string   `json:"id"`
+	Name string   `json:"name"`
+	Ips  []string `json:"ips"`
 }
 
 type SecurityGroup struct {
@@ -160,6 +161,7 @@ type ComputeConfig struct {
 	NumberOfPortPerVm        uint             `json:"number_of_port_per_vm"`
 	VmDeployType             string           `json:"vm_deploy_type"`
 	Scheduler                string           `json:"scheduler"`
+	NumberOfVpcs             uint             `json:"number_of_vpcs"`
 	NumberOfVmPerVpc         []uint           `json:"number_of_vm_per_vpc"`
 	NumberOfSubnetsPerVpc    []uint           `json:"number_of_subnets_per_vpc"`
 	VPCInfo                  []ComputeVPCInfo `json:"vpc_info"`
