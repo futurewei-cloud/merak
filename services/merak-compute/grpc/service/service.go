@@ -29,7 +29,7 @@ type Server struct {
 }
 
 func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
-	log.Printf("Received on ComputeHandler %s", in)
+	log.Println("Received on ComputeHandler", in)
 	// Parse input
 	switch op := in.OperationType; op {
 	case pb.OperationType_INFO:
@@ -43,26 +43,34 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		return &returnMessage, nil
 	case pb.OperationType_CREATE:
 		workflowOptions = client.StartWorkflowOptions{
-			ID:        "CreateWorkflow",
-			TaskQueue: "Create",
+			ID:        "VMCreateWorkflow",
+			TaskQueue: constants.COMPUTE_TASK_QUEUE,
 		}
-
+		log.Println("Operation Create")
+		// Store Available Node IPs in DB
 		for _, pod := range in.Config.Pods {
 			if err := RedisClient.SAdd(ctx, "NodIPsSet", pod.Ip).Err(); err != nil {
-				log.Fatalln("Unable add node IPs to redis", err)
+				log.Fatalln("Unable add node IPs to DB", err)
 			}
 		}
-		ips := RedisClient.SMembers(ctx, "NodIPsSet")
-		err := ips.Err()
-		if err != nil {
-			log.Fatalln("Unable get node IPs from redis", err)
-		}
-		log.Println(ips.Val())
-		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, vm.Create, "Temporal")
+
+		// Start VM Create Workflow
+		var result string
+		log.Println("Executing VM Create Workflow!")
+		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, vm.Create)
 		if err != nil {
 			log.Fatalln("Unable to execute workflow", err)
 		}
 		log.Println("Started workflow", "WorkflowID", we.GetID(), "RunID", we.GetRunID())
+
+		// Synch get results of workflow
+		err = we.Get(context.Background(), &result)
+		if err != nil {
+			log.Fatalln("Unable get workflow result", err)
+		}
+		log.Println("Workflow result:", result)
+		returnMessage.ReturnCode = pb.ReturnCode_OK
+		returnMessage.ReturnMessage = "Create Success!"
 		return &returnMessage, nil
 	case pb.OperationType_UPDATE:
 		workflowOptions = client.StartWorkflowOptions{
