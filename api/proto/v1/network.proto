@@ -45,11 +45,12 @@ message InternalNetworkInfo {
     string name = 3;
     uint32 number_of_vpcs = 4;
     uint32 number_of_subnet_per_vpc = 5;
-    repeated string subnet_ciders = 6;
-    uint32 number_of_security_groups = 7;
-    repeated InternalRouterInfo routers = 8;
-    repeated InternalGatewayInfo gateways = 9;
-    repeated InternalSecurityGroupInfo security_groups = 10;
+    string vpc_cider = 6;
+    repeated string subnet_ciders = 7;
+    uint32 number_of_security_groups = 8;
+    repeated InternalRouterInfo routers = 9;
+    repeated InternalGatewayInfo gateways = 10;
+    repeated InternalSecurityGroupInfo security_groups = 11;
 }
 
 message InternalServiceInfo {
