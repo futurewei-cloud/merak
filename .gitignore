@@ -1,9 +1,6 @@
 .DS_Store
 *.pb.go
-<<<<<<< HEAD
 vendor
-=======
 .vscode
->>>>>>> Add simple redis
 services/merak-compute/build/*
 services/scenario-manager/build/*
