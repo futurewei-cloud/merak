@@ -50,6 +50,7 @@ message InternalSubnetInfo {
   string subnet_id = 1;
   string subnet_cidr = 2;
   string subnet_gw = 3;
+  uint32 number_vms = 4;
 }
 
 message InternalVpcInfo {

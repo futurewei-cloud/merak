@@ -55,6 +55,12 @@ func DeployTopology(s *entities.Scenario) error {
 		return fmt.Errorf("Deploy network failed! Error = '%s', return = '%s'", err.Error(), responseNetwork.ReturnMessage)
 	}
 
+	for _, n := range responseNetwork.Vpcs {
+		for _, s := range n.Subnets {
+			s.NumberVms = uint32(compute.NumberOfVmPerVpc) / uint32(compute.NumberOfComputeNodes) / uint32(len(n.Subnets))
+		}
+	}
+
 	var computeconf pb.InternalComputeConfigInfo
 	if err := constructComputeMessage(&compute, &service, responseTopo, responseNetwork, &computeconf); err != nil {
 		return errors.New("Compute protobuf message error!")
@@ -231,7 +237,7 @@ func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entit
 	computePb.Config.MessageType = pb.MessageType_FULL
 	computePb.Config.Pods = topoReturn.ComputeNodes
 	computePb.Config.VmDeploy.OperationType = pb.OperationType_CREATE
-	computePb.Config.VmDeploy.Vpcs = netReturn.Vpcs // need to be updated with for each loop
+	computePb.Config.VmDeploy.Vpcs = netReturn.Vpcs
 	computePb.Config.VmDeploy.Secgroups = netReturn.SecurityGroupIds
 	computePb.Config.VmDeploy.DeployType = getVMDeployType(compute.VmDeployType)
 	computePb.Config.VmDeploy.Scheduler = getVMDeployScheduler(compute.Scheduler)
