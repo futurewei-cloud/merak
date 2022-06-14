@@ -59,11 +59,11 @@ The data schemas of common enum type and topology info are adopted from the Prot
             "name": "a1"
             "nics": [
                 {
-                    "intf": "a1-intf1",
+                    "intf": "a1-intf1"
                     "ip":"10.99.1.2"
                 },
                 {
-                    "intf": "a1-intf2",
+                    "intf": "a1-intf2"
                     "ip":"10.99.1.3"
                 }
             ]          
@@ -75,19 +75,18 @@ The data schemas of common enum type and topology info are adopted from the Prot
     "link": 
        {
             "name": "link1",
-            "local":
+            "pair":
                 {
-                    "name": "a2",
-                    "nics": "a2-intf1",
-                    "ip": ""
-                },
-            "peer":
-                {
-                    "name": "a3",
-                    "nics": "a3-intf1",
-                    "ip": ""
-                }         
+                    "local_name": "a2"
+                    "local_nics": "a2-intf1"
+                    "local_ip": ""
+                    "peer_name": "a3"
+                    "peer_nics": "a3-intf1"
+                    "peer_ip": ""
+                }            
+            
         }
+
 }
 
 ```
@@ -103,9 +102,9 @@ This is the class diagram of Merak-topo with a gRPC Server and database for comm
 This is the initial implementation plan for Merak-topo, the scheduled date will be adjusted based on the project plan.
 
 <ol>
-1. gRPC Server <br>
-2. database   <br>
-3. Topology  
+1. gRPC Server --     6/1<br>
+2. database  --  6/2 <br>
+3. Topology   --      6/7
 <ol>
     3.1. parser()<br>
     3.2. create_topology() <br>
@@ -118,12 +117,12 @@ This is the initial implementation plan for Merak-topo, the scheduled date will 
     3.9. update_configmap() <br>
     3.10. update_service() <br>
 </ol>
-4. Vhost  <br>  
-5. Vrouter  <br>
-6. Vswitch <br>
-7. Vgateway <br> 
-8. Vlink   <br>
-9. Pod    
+4. Vhost -- 6/8 <br>  
+5. Vrouter -- 6/8 <br>
+6. Vswitch -- 6/8<br>
+7. Vgateway -- 6/8<br> 
+8. Vlink   --  6/8 <br>
+9. Pod    --   6/10
 <ol>
     9.1 create_pod() <br>
     9.2 delete_pod() <br>
