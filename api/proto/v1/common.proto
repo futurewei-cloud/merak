@@ -23,3 +23,36 @@ message ReturnMessage {
   ReturnCode return_code = 1;
   string return_message = 2;
 }
+
+message InternalServiceInfo {
+  OperationType operation_type = 1;
+  string id = 2;
+  string name = 3;
+  string cmd = 4;
+  string url = 5;
+  repeated string parameters = 6;
+  repeated uint32 return_code = 7;
+  repeated string return_string = 8;
+  string when_to_run = 9;
+  string where_to_run = 10;
+}
+
+message InternalComputeInfo {
+  OperationType operation_type = 1;
+  string id = 2;
+  string name = 3;
+  string ip = 4;
+  string mac = 5;
+  string veth = 6;
+}
+
+message InternalSubnetInfo {
+  string subnet_id = 1;
+  string subnet_cidr = 2;
+  string subnet_gw = 3;
+}
+
+message InternalVpcInfo {
+  string vpc_id = 1;
+  repeated InternalSubnetInfo subnets = 2; 
+}

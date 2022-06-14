@@ -46,9 +46,10 @@ message InternalTopologyImage {
     OperationType operation_type = 1;
     string id = 2;
     string name = 3;
-    string registry = 4;
-    repeated string cmd = 5;
-    repeated string args = 6;
+    VNodeType type = 4;
+    string registry = 5;
+    repeated string cmd = 6;
+    repeated string args = 7;
 }
 
 message InternalTopologyConfiguration {
@@ -62,12 +63,13 @@ message InternalTopologyConfiguration {
     uint32 number_of_vhosts = 8;
     uint32 number_of_racks = 9;
     uint32 vhost_per_rack = 10;
-    uint32 number_of_control_plane_gateways = 11;
-    repeated string control_palne_gateway_ips = 12;
-    repeated InternalTopologyImage images = 13; 
-    repeated InternalVNodeInfo vnodes = 14;
-    repeated InternalVLinkInfo vlinks = 15;
-    InternalTopologyExtraInfo extra_info = 16;
+    string data_plane_cidr = 11;
+    uint32 number_of_gateways = 12;
+    repeated string gateway_ips = 13;
+    repeated InternalTopologyImage images = 14; 
+    repeated InternalVNodeInfo vnodes = 15;
+    repeated InternalVLinkInfo vlinks = 16;
+    InternalTopologyExtraInfo extra_info = 17;
 }
 
 message InternalTopologyInfo {
@@ -79,8 +81,14 @@ message InternalTopologyExtraInfo {
     string info = 1;
 }
 
+message ReturnTopologyMessage {
+    ReturnCode return_code = 1;
+    string return_message = 2;
+    repeated InternalComputeInfo compute_nodes = 3;
+}
+
 service MerakTopologyService {
-    rpc TopologyHandler (InternalTopologyInfo) returns (ReturnMessage) {}
-    rpc TestHandler (InternalTopologyInfo) returns (ReturnMessage) {}
+    rpc TopologyHandler (InternalTopologyInfo) returns (ReturnTopologyMessage) {}
+    rpc TestHandler (InternalTopologyInfo) returns (ReturnTopologyMessage) {}
 }
 

@@ -125,8 +125,6 @@ func UpdateCompute(c *fiber.Ctx) error {
 
 	compute.Name = updateCompute.Name
 	compute.NumberOfComputeNodes = updateCompute.NumberOfComputeNodes
-	compute.NumberOfSubnetsPerVpc = updateCompute.NumberOfSubnetsPerVpc
-	compute.NumberOfVmPerComputeNode = updateCompute.NumberOfVmPerComputeNode
 	compute.NumberOfVmPerVpc = updateCompute.NumberOfVmPerVpc
 	compute.NumberOfPortPerVm = updateCompute.NumberOfPortPerVm
 	compute.VmDeployType = updateCompute.VmDeployType

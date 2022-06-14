@@ -38,20 +38,32 @@ func DeployTopology(s *entities.Scenario) error {
 		return errors.New("Topology protobuf message error!")
 	}
 
+	responseTopo, err := grpcclient.TopologyClient(&topoconf)
+
+	if err != nil || responseTopo.ReturnCode == pb.ReturnCode_FAILED {
+		return fmt.Errorf("Deploy topology failed! Error = '%s', return = '%s'", err.Error(), responseTopo.ReturnMessage)
+	}
+
 	var netconf pb.InternalNetConfigInfo
-	if err := constructNetConfMessage(&network, &service, &netconf); err != nil {
+	if err := constructNetConfMessage(&network, &service, responseTopo, &netconf); err != nil {
 		return errors.New("Netconfig protobuf message error!")
+	}
+
+	responseNetwork, err := grpcclient.NetworkClient(&netconf)
+
+	if err != nil || responseNetwork.ReturnCode == pb.ReturnCode_FAILED {
+		return fmt.Errorf("Deploy network failed! Error = '%s', return = '%s'", err.Error(), responseNetwork.ReturnMessage)
 	}
 
 	var computeconf pb.InternalComputeConfigInfo
-	if err := constructComputeMessage(&compute, &computeconf); err != nil {
-		return errors.New("Netconfig protobuf message error!")
+	if err := constructComputeMessage(&compute, &service, responseTopo, responseNetwork, &computeconf); err != nil {
+		return errors.New("Compute protobuf message error!")
 	}
 
-	response, err := grpcclient.TopologyClient(&topoconf)
+	responseCompute, err := grpcclient.ComputeClient(&computeconf)
 
-	if err != nil || response.ReturnCode == pb.ReturnCode_FAILED {
-		return fmt.Errorf("Deploy topology failed! Error = '%s', return = '%s'", err.Error(), response.ReturnMessage)
+	if err != nil || responseCompute.ReturnCode == pb.ReturnCode_FAILED {
+		return fmt.Errorf("Deploy compute failed! Error = '%s', return = '%s'", err.Error(), responseCompute.ReturnMessage)
 	}
 
 	return nil
@@ -69,8 +81,9 @@ func constructTopologyMessage(topo *entities.TopologyConfig, topoPb *pb.Internal
 	topoPb.Config.NumberOfVhosts = uint32(topo.NumberOfVhosts)
 	topoPb.Config.NumberOfRacks = uint32(topo.NumberOfRacks)
 	topoPb.Config.VhostPerRack = uint32(topo.VhostsPerRack)
-	topoPb.Config.NumberOfControlPlaneGateways = uint32(topo.NumberOfControlPlaneGateways)
-	topoPb.Config.ControlPalneGatewayIps = topo.ControlPlaneGatewayIPs
+	topoPb.Config.DataPlaneCidr = topo.DataPlaneCidr
+	topoPb.Config.NumberOfGateways = uint32(topo.NumberOfGateways)
+	topoPb.Config.GatewayIps = topo.GatewayIPs
 
 	for _, image := range topo.Images {
 		var imagePb pb.InternalTopologyImage
@@ -130,7 +143,7 @@ func getVNodeType(vnodeType string) pb.VNodeType {
 	}
 }
 
-func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entities.ServiceConfig, netconfPb *pb.InternalNetConfigInfo) error {
+func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entities.ServiceConfig, topoReturn *pb.ReturnTopologyMessage, netconfPb *pb.InternalNetConfigInfo) error {
 	netconfPb.OperationType = pb.OperationType_CREATE
 	netconfPb.Config.FormatVersion = 1
 	netconfPb.Config.RevisionNumber = 1
@@ -140,17 +153,19 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 
 	var servicePb pb.InternalServiceInfo
 	for _, service := range serviceConf.Services {
-		servicePb.OperationType = pb.OperationType_CREATE
-		servicePb.Id = service.Id
-		servicePb.Name = service.Name
-		servicePb.Cmd = service.Cmd
-		servicePb.Url = service.Url
-		servicePb.Parameters = service.Parameters
-		servicePb.ReturnCode = service.ReturnCode
-		servicePb.ReturnString = service.ReturnString
-		servicePb.WhenToRun = service.WhenToRun
-		servicePb.WhereToRun = service.WhereToRun
-		netconfPb.Config.Services = append(netconfPb.Config.Services, &servicePb)
+		if strings.ToUpper(service.WhereToRun) == utils.MERAK_NETWORK {
+			servicePb.OperationType = pb.OperationType_CREATE
+			servicePb.Id = service.Id
+			servicePb.Name = service.Name
+			servicePb.Cmd = service.Cmd
+			servicePb.Url = service.Url
+			servicePb.Parameters = service.Parameters
+			servicePb.ReturnCode = service.ReturnCode
+			servicePb.ReturnString = service.ReturnString
+			servicePb.WhenToRun = service.WhenToRun
+			servicePb.WhereToRun = service.WhereToRun
+			netconfPb.Config.Services = append(netconfPb.Config.Services, &servicePb)
+		}
 	}
 
 	netconfPb.Config.Network.OperationType = pb.OperationType_CREATE
@@ -202,16 +217,67 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 		netconfPb.Config.Network.SecurityGroups = append(netconfPb.Config.Network.SecurityGroups, &sgPb)
 	}
 
+	netconfPb.Config.Computes = topoReturn.ComputeNodes
+
 	return nil
 }
 
-func constructComputeMessage(compute *entities.ComputeConfig, computePb *pb.InternalComputeConfigInfo) error {
+func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entities.ServiceConfig, topoReturn *pb.ReturnTopologyMessage, netReturn *pb.ReturnNetworkMessage, computePb *pb.InternalComputeConfigInfo) error {
 	computePb.OperationType = pb.OperationType_CREATE
 	computePb.Config.FormatVersion = 1
 	computePb.Config.RevisionNumber = 1
 	computePb.Config.RequestId = utils.GenUUID()
 	computePb.Config.ComputeConfigId = compute.Id
 	computePb.Config.MessageType = pb.MessageType_FULL
+	computePb.Config.Pods = topoReturn.ComputeNodes
+	computePb.Config.VmDeploy.OperationType = pb.OperationType_CREATE
+	computePb.Config.VmDeploy.Vpcs = netReturn.Vpcs // need to be updated with for each loop
+	computePb.Config.VmDeploy.Secgroups = netReturn.SecurityGroupIds
+	computePb.Config.VmDeploy.DeployType = getVMDeployType(compute.VmDeployType)
+	computePb.Config.VmDeploy.Scheduler = getVMDeployScheduler(compute.Scheduler)
+
+	var servicePb pb.InternalServiceInfo
+	for _, service := range serviceConf.Services {
+		if strings.ToUpper(service.WhereToRun) == utils.MERAK_COMPUTE || strings.ToUpper(service.WhereToRun) == utils.MERAK_AGENT {
+			servicePb.OperationType = pb.OperationType_CREATE
+			servicePb.Id = service.Id
+			servicePb.Name = service.Name
+			servicePb.Cmd = service.Cmd
+			servicePb.Url = service.Url
+			servicePb.Parameters = service.Parameters
+			servicePb.ReturnCode = service.ReturnCode
+			servicePb.ReturnString = service.ReturnString
+			servicePb.WhenToRun = service.WhenToRun
+			servicePb.WhereToRun = service.WhereToRun
+			computePb.Config.Services = append(computePb.Config.Services, &servicePb)
+		}
+	}
 
 	return nil
+}
+
+func getVMDeployType(deploy string) pb.VMDeployType {
+	switch strings.ToLower(deploy) {
+	case "assign":
+		return pb.VMDeployType_ASSIGN
+	case "skew":
+		return pb.VMDeployType_SKEW
+	case "random":
+		return pb.VMDeployType_RANDOM
+	default:
+		return pb.VMDeployType_UNIFORM
+	}
+}
+
+func getVMDeployScheduler(scheduler string) pb.VMScheduleType {
+	switch strings.ToLower(scheduler) {
+	case "sequential":
+		return pb.VMScheduleType_SEQUENTIAL
+	case "skew":
+		return pb.VMScheduleType_RPS
+	case "random":
+		return pb.VMScheduleType_RANDOM_SCHEDULE
+	default:
+		return pb.VMScheduleType_SEQUENTIAL
+	}
 }

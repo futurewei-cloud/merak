@@ -127,8 +127,9 @@ func UpdateTopology(c *fiber.Ctx) error {
 	topology.NumberOfVhosts = updateTopology.NumberOfVhosts
 	topology.NumberOfRacks = updateTopology.NumberOfRacks
 	topology.TopoType = updateTopology.TopoType
-	topology.NumberOfControlPlaneGateways = updateTopology.NumberOfControlPlaneGateways
-	topology.ControlPlaneGatewayIPs = updateTopology.ControlPlaneGatewayIPs
+	topology.DataPlaneCidr = updateTopology.DataPlaneCidr
+	topology.NumberOfGateways = updateTopology.NumberOfGateways
+	topology.GatewayIPs = updateTopology.GatewayIPs
 	topology.VNodes = updateTopology.VNodes
 	topology.VLinks = updateTopology.VLinks
 	topology.UpdatedAt = time.Now()

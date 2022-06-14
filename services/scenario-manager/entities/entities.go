@@ -66,19 +66,20 @@ type Service struct {
 
 // Topology Configuration
 type TopologyConfig struct {
-	Id                           string    `json:"id"`
-	Name                         string    `json:"name"`
-	TopoType                     string    `json:"type"`
-	NumberOfVhosts               uint      `json:"number_of_vhosts"`
-	NumberOfRacks                uint      `json:"number_of_racks"`
-	VhostsPerRack                uint      `json:"vhosts_per_rack"`
-	NumberOfControlPlaneGateways uint      `json:"number_of_control_plane_gateways"`
-	ControlPlaneGatewayIPs       []string  `json:"control_plane_gateway_ips"`
-	Images                       []Image   `json:"images"`
-	VNodes                       []VNode   `json:"vnodes"`
-	VLinks                       []VLink   `json:"vlinks"`
-	CreatedAt                    time.Time `json:"created_at"`
-	UpdatedAt                    time.Time `json:"updated_at"`
+	Id               string    `json:"id"`
+	Name             string    `json:"name"`
+	TopoType         string    `json:"type"`
+	NumberOfVhosts   uint      `json:"number_of_vhosts"`
+	NumberOfRacks    uint      `json:"number_of_racks"`
+	VhostsPerRack    uint      `json:"vhosts_per_rack"`
+	DataPlaneCidr    string    `json:"data_plane_cidr"`
+	NumberOfGateways uint      `json:"number_of_control_plane_gateways"`
+	GatewayIPs       []string  `json:"control_plane_gateway_ips"`
+	Images           []Image   `json:"images"`
+	VNodes           []VNode   `json:"vnodes"`
+	VLinks           []VLink   `json:"vlinks"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
 
 type Image struct {
@@ -154,19 +155,16 @@ type Rule struct {
 
 // Compute Configuration
 type ComputeConfig struct {
-	Id                       string           `json:"id"`
-	Name                     string           `json:"name"`
-	NumberOfComputeNodes     uint             `json:"number_of_compute_nodes"`
-	NumberOfVmPerComputeNode uint             `json:"number_of_vm_per_compute_node"`
-	NumberOfPortPerVm        uint             `json:"number_of_port_per_vm"`
-	VmDeployType             string           `json:"vm_deploy_type"`
-	Scheduler                string           `json:"scheduler"`
-	NumberOfVpcs             uint             `json:"number_of_vpcs"`
-	NumberOfVmPerVpc         []uint           `json:"number_of_vm_per_vpc"`
-	NumberOfSubnetsPerVpc    []uint           `json:"number_of_subnets_per_vpc"`
-	VPCInfo                  []ComputeVPCInfo `json:"vpc_info"`
-	CreatedAt                time.Time        `json:"created_at"`
-	UpdatedAt                time.Time        `json:"updated_at"`
+	Id                   string           `json:"id"`
+	Name                 string           `json:"name"`
+	NumberOfComputeNodes uint             `json:"number_of_compute_nodes"`
+	NumberOfPortPerVm    uint             `json:"number_of_port_per_vm"`
+	VmDeployType         string           `json:"vm_deploy_type"`
+	Scheduler            string           `json:"scheduler"`
+	NumberOfVmPerVpc     uint             `json:"number_of_vm_per_vpc"`
+	VPCInfo              []ComputeVPCInfo `json:"vpc_info"`
+	CreatedAt            time.Time        `json:"created_at"`
+	UpdatedAt            time.Time        `json:"updated_at"`
 }
 
 type ComputeVPCInfo struct {

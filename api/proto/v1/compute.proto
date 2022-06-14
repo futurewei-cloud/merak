@@ -28,24 +28,13 @@ message InternalVMPod {
     repeated string subnets = 4;
 }
 
-message InternalPodInfo {
-    OperationType operation_type = 1;
-    string id = 2;
-    string name = 3;
-    string ip = 4;
-}
-
-message InternalVMInfo {
+message InternalVMDeployInfo {
     OperationType operation_type = 1;
     VMDeployType deploy_type = 2;
-    repeated string vpcs = 3;
-    repeated string subnets = 4;
-    repeated string secgroups = 5;
-    uint32 num_vm_per_vpc_per_pod = 6;
-    uint32 num_vm_per_subnet_per_pod = 7;
-    uint32 num_port_per_vm = 8;
-    repeated InternalVMPod deploy_method = 9;
-    string service_url = 10;
+    repeated InternalVpcInfo vpcs = 3;
+    repeated string secgroups = 4;
+    VMScheduleType scheduler = 5;
+    repeated InternalVMPod deploy_method = 6;
 }
 
 message InternalComputeConfiguration {
@@ -54,12 +43,11 @@ message InternalComputeConfiguration {
     string request_id = 3;
     string compute_config_id = 4;
     MessageType message_type = 5;
-    repeated InternalPodInfo pods = 6;
-    repeated InternalVMInfo vms = 7;
-    VMScheduleType scheduler = 8;
-    InternalComputeExtraInfo  extra_info= 9;
+    repeated InternalComputeInfo pods = 6;
+    InternalVMDeployInfo vm_deploy = 7;
+    repeated InternalServiceInfo services = 8;
+    InternalComputeExtraInfo extra_info= 9;
 }
-
 
 message InternalComputeConfigInfo {
     OperationType operation_type = 1;
