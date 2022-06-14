@@ -1,0 +1,989 @@
+basePath: /
+definitions:
+  entities.ComputeConfig:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      number_of_compute_nodes:
+        type: integer
+      number_of_port_per_vm:
+        type: integer
+      number_of_subnets_per_vpc:
+        items:
+          type: integer
+        type: array
+      number_of_vm_per_compute_node:
+        type: integer
+      number_of_vm_per_vpc:
+        items:
+          type: integer
+        type: array
+      scheduler:
+        type: string
+      updated_at:
+        type: string
+      vm_deploy_type:
+        type: string
+      vpc_info:
+        items:
+          $ref: '#/definitions/entities.ComputeVPCInfo'
+        type: array
+    type: object
+  entities.ComputeSubnetInfo:
+    properties:
+      number_of_vms:
+        type: integer
+      subnet_id:
+        type: string
+    type: object
+  entities.ComputeVPCInfo:
+    properties:
+      number_of_subnets:
+        type: integer
+      subnet_info:
+        items:
+          $ref: '#/definitions/entities.ComputeSubnetInfo'
+        type: array
+      vpc_id:
+        type: string
+    type: object
+  entities.Gateway:
+    properties:
+      id:
+        type: string
+      ip:
+        type: string
+      name:
+        type: string
+    type: object
+  entities.Image:
+    properties:
+      args:
+        items:
+          type: string
+        type: array
+      cmd:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      registry:
+        type: string
+    type: object
+  entities.NetworkConfig:
+    properties:
+      created_at:
+        type: string
+      gateways:
+        items:
+          $ref: '#/definitions/entities.Gateway'
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      number_of_security_groups:
+        type: integer
+      number_of_subnet_per_vpc:
+        type: integer
+      number_of_vpcs:
+        type: integer
+      routers:
+        items:
+          $ref: '#/definitions/entities.Router'
+        type: array
+      security_groups:
+        items:
+          $ref: '#/definitions/entities.SecurityGroup'
+        type: array
+      subnet_ciders:
+        items:
+          type: string
+        type: array
+      updated_at:
+        type: string
+    type: object
+  entities.Nic:
+    properties:
+      ip:
+        type: string
+      name:
+        type: string
+    type: object
+  entities.Router:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      subnet_gateways:
+        items:
+          type: string
+        type: array
+    type: object
+  entities.Rule:
+    properties:
+      description:
+        type: string
+      direction:
+        type: string
+      ethertype:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      port_range:
+        type: string
+      protocol:
+        type: string
+      remote_group_id:
+        type: string
+      remote_ip_prefix:
+        type: string
+    type: object
+  entities.Scenario:
+    properties:
+      compute_config_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      network_config_id:
+        type: string
+      project_id:
+        type: string
+      service_config_id:
+        type: string
+      test_config_id:
+        type: string
+      topology_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  entities.SecurityGroup:
+    properties:
+      apply_to:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      rules:
+        items:
+          $ref: '#/definitions/entities.Rule'
+        type: array
+    type: object
+  entities.Service:
+    properties:
+      cmd:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      parameters:
+        items:
+          type: string
+        type: array
+      return_code:
+        items:
+          type: integer
+        type: array
+      return_string:
+        items:
+          type: string
+        type: array
+      url:
+        type: string
+      when_to_run:
+        type: string
+      where_to_run:
+        type: string
+    type: object
+  entities.ServiceConfig:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      services:
+        items:
+          $ref: '#/definitions/entities.Service'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  entities.Test:
+    properties:
+      cmd:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      parameters:
+        items:
+          type: string
+        type: array
+      script:
+        type: string
+      when_to_run:
+        type: string
+      where_to_run:
+        type: string
+    type: object
+  entities.TestConfig:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      tests:
+        items:
+          $ref: '#/definitions/entities.Test'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  entities.TopologyConfig:
+    properties:
+      control_plane_gateway_ips:
+        items:
+          type: string
+        type: array
+      created_at:
+        type: string
+      id:
+        type: string
+      images:
+        items:
+          $ref: '#/definitions/entities.Image'
+        type: array
+      name:
+        type: string
+      number_of_control_plane_gateways:
+        type: integer
+      number_of_racks:
+        type: integer
+      number_of_vhosts:
+        type: integer
+      type:
+        type: string
+      updated_at:
+        type: string
+      vhosts_per_rack:
+        type: integer
+      vlinks:
+        items:
+          $ref: '#/definitions/entities.VLink'
+        type: array
+      vnodes:
+        items:
+          $ref: '#/definitions/entities.VNode'
+        type: array
+    type: object
+  entities.VLink:
+    properties:
+      from:
+        type: string
+      name:
+        type: string
+      to:
+        type: string
+    type: object
+  entities.VNode:
+    properties:
+      name:
+        type: string
+      nics:
+        items:
+          $ref: '#/definitions/entities.Nic'
+        type: array
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Restful APIs for Merak Cloud Emulator
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Merak Rest API
+  version: "2.0"
+paths:
+  /:
+    get:
+      consumes:
+      - '*/*'
+      description: get the status of server.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Show the status of server.
+      tags:
+      - root
+  /api/compute-config:
+    post:
+      consumes:
+      - application/json
+      description: Create a compute-config
+      parameters:
+      - description: ComputeConfig
+        in: body
+        name: compute_config
+        required: true
+        schema:
+          $ref: '#/definitions/entities.ComputeConfig'
+      responses:
+        "200":
+          description: Compute data with success message
+          schema:
+            $ref: '#/definitions/entities.ComputeConfig'
+        "500":
+          description: Compute null with failure message
+      summary: Insert a compute-config to database
+      tags:
+      - compute-config
+  /api/network-config:
+    post:
+      consumes:
+      - application/json
+      description: Create a network-config
+      parameters:
+      - description: NetworkConfig
+        in: body
+        name: network_config
+        required: true
+        schema:
+          $ref: '#/definitions/entities.NetworkConfig'
+      responses:
+        "200":
+          description: network-config data with success message
+          schema:
+            $ref: '#/definitions/entities.NetworkConfig'
+        "500":
+          description: network-config null with failure message
+      summary: Insert a network-config to database
+      tags:
+      - network-config
+  /api/scenarios:
+    post:
+      consumes:
+      - application/json
+      description: Create a scenario
+      parameters:
+      - description: Scenario
+        in: body
+        name: scenario
+        required: true
+        schema:
+          $ref: '#/definitions/entities.Scenario'
+      responses:
+        "200":
+          description: scenario data with success message
+          schema:
+            $ref: '#/definitions/entities.Scenario'
+        "500":
+          description: scenario null with failure message
+      summary: Insert a scenario to database
+      tags:
+      - scenario
+  /api/service-config:
+    post:
+      consumes:
+      - application/json
+      description: Create a service-config
+      parameters:
+      - description: ServiceConfig
+        in: body
+        name: service_config
+        required: true
+        schema:
+          $ref: '#/definitions/entities.ServiceConfig'
+      responses:
+        "200":
+          description: service-config data with success message
+          schema:
+            $ref: '#/definitions/entities.ServiceConfig'
+        "500":
+          description: service-config null with failure message
+      summary: Insert a service-config to database
+      tags:
+      - service-config
+  /api/test-config:
+    post:
+      consumes:
+      - application/json
+      description: Create a test-config
+      parameters:
+      - description: TestConfig
+        in: body
+        name: test_config
+        required: true
+        schema:
+          $ref: '#/definitions/entities.TestConfig'
+      responses:
+        "200":
+          description: Compute data with success message
+          schema:
+            $ref: '#/definitions/entities.TestConfig'
+        "500":
+          description: Compute null with failure message
+      summary: Insert a test-config to database
+      tags:
+      - test-config
+  /api/topologies:
+    post:
+      consumes:
+      - application/json
+      description: Create a topology
+      parameters:
+      - description: TopologyConfig
+        in: body
+        name: topology_config
+        required: true
+        schema:
+          $ref: '#/definitions/entities.TopologyConfig'
+      responses:
+        "200":
+          description: topology data with success message
+          schema:
+            $ref: '#/definitions/entities.TopologyConfig'
+        "500":
+          description: topology null with failure message
+      summary: Insert a topology to database
+      tags:
+      - topology
+  /v1/compute-config:
+    get:
+      consumes:
+      - application/json
+      description: Get all compute-config
+      responses:
+        "200":
+          description: array of compute-config with success message
+          schema:
+            items:
+              $ref: '#/definitions/entities.ComputeConfig'
+            type: array
+        "404":
+          description: null compute-config data with error message
+      summary: Get all compute-config from database
+      tags:
+      - compute-config
+  /v1/compute-config/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a compute-config
+      parameters:
+      - description: ComputeConfId
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: compute-config data with success message
+          schema:
+            $ref: '#/definitions/entities.ComputeConfig'
+        "404":
+          description: compute-config data with null and error message
+      summary: Delete a compute-config from database
+      tags:
+      - compute-config
+    get:
+      consumes:
+      - application/json
+      description: Get a compute-config
+      parameters:
+      - description: ComputeConfId
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: compute-config data with success message
+          schema:
+            $ref: '#/definitions/entities.ComputeConfig'
+        "404":
+          description: compute-config data with null and error message
+      summary: Get a compute-config from database
+      tags:
+      - compute-config
+    put:
+      consumes:
+      - application/json
+      description: Update a compute-config
+      parameters:
+      - description: ComputeConfId
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: ComputeConfig
+        in: body
+        name: compute_config
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: compute_config data with success message
+          schema:
+            $ref: '#/definitions/entities.ComputeConfig'
+        "500":
+          description: compute_config null with failure message
+      summary: Update a compute-config to database
+      tags:
+      - compute-config
+  /v1/network-config:
+    get:
+      consumes:
+      - application/json
+      description: Get all network-config
+      responses:
+        "200":
+          description: array of network-config with success message
+          schema:
+            items:
+              $ref: '#/definitions/entities.NetworkConfig'
+            type: array
+        "404":
+          description: null network-config data with error message
+      summary: Get all network-config from database
+      tags:
+      - network-config
+  /v1/network-config/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a network-config
+      parameters:
+      - description: NetworkId
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: network-config data with success message
+          schema:
+            $ref: '#/definitions/entities.NetworkConfig'
+        "404":
+          description: network-config data with null and error message
+      summary: Delete a network-config from database
+      tags:
+      - network-config
+    get:
+      consumes:
+      - application/json
+      description: Get a network-config
+      parameters:
+      - description: NetworkId
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: network-config data with success message
+          schema:
+            $ref: '#/definitions/entities.NetworkConfig'
+        "404":
+          description: network-config data with null and error message
+      summary: Get a network-config from database
+      tags:
+      - network-config
+    put:
+      consumes:
+      - application/json
+      description: Update a network-config
+      parameters:
+      - description: NetworkId
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: NetworkConfig
+        in: body
+        name: network_config
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: network-config data with success message
+          schema:
+            $ref: '#/definitions/entities.NetworkConfig'
+        "500":
+          description: network-config null with failure message
+      summary: Update a network-config to database
+      tags:
+      - network-config
+  /v1/senarios:
+    get:
+      consumes:
+      - application/json
+      description: Get all scenario
+      responses:
+        "200":
+          description: array of scenario with success message
+          schema:
+            items:
+              $ref: '#/definitions/entities.Scenario'
+            type: array
+        "404":
+          description: null scenario data with error message
+      summary: Get all scenario from database
+      tags:
+      - scenario
+  /v1/senarios/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a scenario
+      parameters:
+      - description: ScenarioId
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: scenario data with success message
+          schema:
+            $ref: '#/definitions/entities.Scenario'
+        "404":
+          description: scenario data with null and error message
+      summary: Delete a scenario from database
+      tags:
+      - scenario
+    get:
+      consumes:
+      - application/json
+      description: Get a scenario
+      parameters:
+      - description: ScenarioId
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: scenario data with success message
+          schema:
+            $ref: '#/definitions/entities.Scenario'
+        "404":
+          description: scenario data with null and error message
+      summary: Get a scenario from database
+      tags:
+      - scenario
+    put:
+      consumes:
+      - application/json
+      description: Update a scenario
+      parameters:
+      - description: ScenarioId
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Scenario
+        in: body
+        name: scenario
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: scenario data with success message
+          schema:
+            $ref: '#/definitions/entities.Scenario'
+        "500":
+          description: scenario null with failure message
+      summary: Update a scenario to database
+      tags:
+      - scenario
+  /v1/service-config:
+    get:
+      consumes:
+      - application/json
+      description: Get all service-config
+      responses:
+        "200":
+          description: array of service-config with success message
+          schema:
+            items:
+              $ref: '#/definitions/entities.ServiceConfig'
+            type: array
+        "404":
+          description: null service-config data with error message
+      summary: Get all service-config from database
+      tags:
+      - service-config
+  /v1/service-config/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a service-config
+      parameters:
+      - description: NetworkId
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: service-config data with success message
+          schema:
+            $ref: '#/definitions/entities.ServiceConfig'
+        "404":
+          description: service-config data with null and error message
+      summary: Delete a service-config from database
+      tags:
+      - service-config
+    get:
+      consumes:
+      - application/json
+      description: Get a service-config
+      parameters:
+      - description: NetworkId
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: service-config data with success message
+          schema:
+            $ref: '#/definitions/entities.ServiceConfig'
+        "404":
+          description: service-config data with null and error message
+      summary: Get a service-config from database
+      tags:
+      - service-config
+    put:
+      consumes:
+      - application/json
+      description: Update a service-config
+      parameters:
+      - description: NetworkId
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: ServiceConfig
+        in: body
+        name: Service_config
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: service-config data with success message
+          schema:
+            $ref: '#/definitions/entities.ServiceConfig'
+        "500":
+          description: service-config null with failure message
+      summary: Update a service-config to database
+      tags:
+      - service-config
+  /v1/test-config:
+    get:
+      consumes:
+      - application/json
+      description: Get all test-config
+      responses:
+        "200":
+          description: array of test-config with success message
+          schema:
+            items:
+              $ref: '#/definitions/entities.TestConfig'
+            type: array
+        "404":
+          description: null test-config data with error message
+      summary: Get all test-config from database
+      tags:
+      - test-config
+  /v1/test-config/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a test-config
+      parameters:
+      - description: ComputeConfId
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: test-config data with success message
+          schema:
+            $ref: '#/definitions/entities.TestConfig'
+        "404":
+          description: test-config data with null and error message
+      summary: Delete a test-config from database
+      tags:
+      - test-config
+    get:
+      consumes:
+      - application/json
+      description: Get a test-config
+      parameters:
+      - description: ComputeConfId
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: test-config data with success message
+          schema:
+            $ref: '#/definitions/entities.TestConfig'
+        "404":
+          description: test-config data with null and error message
+      summary: Get a test-config from database
+      tags:
+      - test-config
+    put:
+      consumes:
+      - application/json
+      description: Update a test-config
+      parameters:
+      - description: ComputeConfId
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: TestConfig
+        in: body
+        name: compute_config
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: compute_config data with success message
+          schema:
+            $ref: '#/definitions/entities.TestConfig'
+        "500":
+          description: compute_config null with failure message
+      summary: Update a test-config to database
+      tags:
+      - test-config
+  /v1/topologies:
+    get:
+      consumes:
+      - application/json
+      description: Get all topologies
+      responses:
+        "200":
+          description: array of topology with success message
+          schema:
+            items:
+              $ref: '#/definitions/entities.TopologyConfig'
+            type: array
+        "404":
+          description: null topology data with error message
+      summary: Get all topologies from database
+      tags:
+      - topology
+  /v1/topologies/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a topology
+      parameters:
+      - description: TopologyId
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: topology data with success message
+          schema:
+            $ref: '#/definitions/entities.TopologyConfig'
+        "404":
+          description: topology data with null and error message
+      summary: Delete a topology from database
+      tags:
+      - topology
+    get:
+      consumes:
+      - application/json
+      description: Get a topology
+      parameters:
+      - description: TopologyId
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: topology data with success message
+          schema:
+            $ref: '#/definitions/entities.TopologyConfig'
+        "404":
+          description: topology data with null and error message
+      summary: Get a topology from database
+      tags:
+      - topology
+    put:
+      consumes:
+      - application/json
+      description: Update a topology
+      parameters:
+      - description: TopologyId
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: TopologyConfig
+        in: body
+        name: topology_config
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: topology data with success message
+          schema:
+            $ref: '#/definitions/entities.TopologyConfig'
+        "500":
+          description: topology null with failure message
+      summary: Update a topology to database
+      tags:
+      - topology
+schemes:
+- http
+swagger: "2.0"
