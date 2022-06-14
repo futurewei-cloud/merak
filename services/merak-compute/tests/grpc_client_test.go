@@ -24,40 +24,65 @@ func TestGrpcClient(t *testing.T) {
 		t.Fatalf("Failed to dial gRPC server address!: %v", err)
 	}
 	client := pb.NewMerakComputeServiceClient(conn)
-	vmPod := pb.InternalVMPod{
+
+	pod0 := pb.InternalVMPod{
 		OperationType: pb.OperationType_CREATE,
 		PodIp:         "10.0.0.2",
-		NumOfVm:       3,
 		Subnets:       []string{"subnet0", "subnet1"},
+		NumOfVm:       3,
 	}
 
-	pod0 := pb.InternalPodInfo{
+	pod1 := pb.InternalVMPod{
 		OperationType: pb.OperationType_CREATE,
-		Id:            "0",
-		Name:          "pod_name",
-		Ip:            "10.0.0.2",
+		PodIp:         "10.0.0.3",
+		Subnets:       []string{"subnet0", "subnet1"},
+		NumOfVm:       3,
+	}
+	pod2 := pb.InternalVMPod{
+		OperationType: pb.OperationType_CREATE,
+		PodIp:         "10.0.0.4",
+		Subnets:       []string{"subnet0", "subnet1"},
+		NumOfVm:       3,
 	}
 
-	pod1 := pb.InternalPodInfo{
-		OperationType: pb.OperationType_CREATE,
-		Id:            "1",
-		Name:          "pod_name",
-		Ip:            "10.0.0.3",
+	subnets := pb.InternalSubnetInfo{
+		SubnetId:   "1",
+		SubnetCidr: "10.0.0.0/16",
+		SubnetGw:   "10.0.0.1",
+		NumberVms:  2,
 	}
-	pod2 := pb.InternalPodInfo{
+	vpc := pb.InternalVpcInfo{
+		VpcId:   "1",
+		Subnets: []*pb.InternalSubnetInfo{&subnets},
+	}
+	deploy := pb.InternalVMDeployInfo{
+		OperationType: pb.OperationType_CREATE,
+		DeployType:    pb.VMDeployType_UNIFORM,
+		Vpcs:          []*pb.InternalVpcInfo{&vpc},
+		Secgroups:     []string{"test1", "test2"},
+		Scheduler:     pb.VMScheduleType_SEQUENTIAL,
+		DeployMethod:  []*pb.InternalVMPod{&pod0, &pod1, &pod2},
+	}
+
+	service := pb.InternalServiceInfo{
 		OperationType: pb.OperationType_CREATE,
 		Id:            "2",
-		Name:          "pod_name",
-		Ip:            "10.0.0.4",
+		Name:          "test",
+		Cmd:           "create",
+		Url:           "merak.com",
+		Parameters:    []string{"test1", "test2"},
+		ReturnCode:    []uint32{0},
+		ReturnString:  []string{"success"},
+		WhenToRun:     "now",
+		WhereToRun:    "here",
 	}
-	vms := pb.InternalVMInfo{
+	pod := pb.InternalComputeInfo{
 		OperationType: pb.OperationType_CREATE,
-		DeployType:    pb.VMDeployType_RANDOM,
-		Vpcs:          []string{"vpc0", "vpc1"},
-		Subnets:       []string{"subnet0", "subnet1"},
-		Secgroups:     []string{"sg0", "sg1"},
-		NumPortPerVm:  2,
-		DeployMethod:  []*pb.InternalVMPod{&vmPod},
+		Id:            "1",
+		Name:          "test",
+		Ip:            "10.0.0.5",
+		Mac:           "aa:bb:cc:dd:ee",
+		Veth:          "test",
 	}
 	computeConfig := pb.InternalComputeConfiguration{
 		FormatVersion:   1,
@@ -65,9 +90,9 @@ func TestGrpcClient(t *testing.T) {
 		RequestId:       "test",
 		ComputeConfigId: "test",
 		MessageType:     pb.MessageType_FULL,
-		Pods:            []*pb.InternalPodInfo{&pod0, &pod1, &pod2},
-		Vms:             []*pb.InternalVMInfo{&vms},
-		Scheduler:       pb.VMScheduleType_SEQUENTIAL,
+		Pods:            []*pb.InternalComputeInfo{&pod},
+		VmDeploy:        &deploy,
+		Services:        []*pb.InternalServiceInfo{&service},
 		ExtraInfo:       &pb.InternalComputeExtraInfo{Info: "test"},
 	}
 
