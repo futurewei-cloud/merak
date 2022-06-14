@@ -3,6 +3,11 @@ package merak;
 option go_package = "merak/";
 import "common.proto";
 
+service MerakTopologyService {
+    rpc TopologyHandler (InternalTopologyInfo) returns (ReturnMessage) {}
+    
+}
+
 enum TopologyType {
     SINGLE = 0;
     LINEAR = 1;
@@ -18,6 +23,7 @@ enum VNodeType {
     VGATEWAY = 2;
     VROUTER = 3;
 }
+
 
 message InternalVNicInfo {
     OperationType operation_type = 1;
@@ -57,13 +63,17 @@ message InternalTopologyConfiguration {
 message InternalTopologyInfo {
     OperationType operation_type = 1;
     InternalTopologyConfiguration config = 2;
+//     int32 vhost_num = ;
+//     int32 vswitch_num = ;
+//     int32 vgateway_num = ;
+//     int32 vrouter_num = ;
 }
 
 message InternalTopologyExtraInfo {
     string info = 1;
 }
 
-service MerakTopologyService {
-    rpc TopologyHandler (InternalTopologyInfo) returns (InternalTopologyInfo) {}
-}
+
+
+
 
