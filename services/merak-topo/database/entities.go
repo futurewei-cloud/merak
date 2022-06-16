@@ -6,17 +6,20 @@ type Nic struct {
 }
 
 type Vnode struct {
+	Id   string `json:"id"`
 	Name string `json:"name"`
 	Nics []Nic  `json:"nics"`
 }
 
 type Vport struct {
+	Id   string `json:"id"`
 	Name string `json:"name"`
 	Intf string `json:"nic"`
 	Ip   string `json:"ip"`
 }
 
 type Vlink struct {
+	Id   string `json:"id"`
 	Name string `json:"name"`
 	Src  Vport  `json:"src"`
 	Dst  Vport  `json:"dst"`

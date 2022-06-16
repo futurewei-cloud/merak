@@ -3,53 +3,121 @@ package database
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/go-redis/redis/v8"
 )
 
-var Ctx = context.Background()
-var RDB *redis.Client
+var (
+	ErrNil = errors.New("no matching record found in redis database")
+	Ctx    = context.Background()
+	Rdb    *redis.Client
+)
 
-func CreateDBClient() *redis.Client {
-
+func ConnectDatabase() error {
 	client := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
-		DB:       0,  // use default DB
+		DB:       3,  // use default DB
 	})
-	return client
-}
 
-func PingClient(client *redis.Client) error {
-	pong, err := client.Ping(Ctx).Result()
-	if err != nil {
+	if err := client.Ping(Ctx).Err(); err != nil {
 		return err
 	}
-	fmt.Println(pong, err)
+
+	Rdb = client
 	return nil
 }
 
-func SetValue(client *redis.Client, key string, val interface{}) {
+func SetValue(key string, val interface{}) error {
 	j, err := json.Marshal(val)
 	if err != nil {
-		fmt.Println("error:", err)
+		return err
 	}
-	err2 := client.Set(Ctx, key, j, 0).Err()
+	err2 := Rdb.Set(Ctx, key, j, 0).Err()
 	if err2 != nil {
 		// panic(err2)
-		fmt.Println(err2.Error())
-	} else {
-		fmt.Printf("Save data in Redis")
+		return err2
 	}
+
+	return nil
 }
 
-func GetValue(client *redis.Client, key string) string {
-	val, err := client.Get(Ctx, key).Result()
+func Get(key string) (string, error) {
+	val, err := Rdb.Get(Ctx, key).Result()
 	if err != nil {
-		panic(err)
-	} else {
-		fmt.Printf("Get data in Redis")
+		return "", err
 	}
-	return val
+	return val, nil
+}
+
+func Del(key string) error {
+	if err := Rdb.Del(Ctx, key).Err(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Function for finding an entity from database
+func FindEntity(id string, prefix string, entity interface{}) error {
+	if id == "" {
+		return errors.New("Invalid for id: parameter!!!")
+	}
+	value, err := Rdb.Get(Ctx, prefix+id).Result()
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal([]byte(value), &entity)
+	return err
+}
+
+func GetAllValuesWithKeyPrefix(prefix string) (map[string]string, error) {
+	keys, err := getKeys(fmt.Sprintf("%s*", prefix))
+	if err != nil {
+		return nil, err
+	}
+
+	values, err := getKeyAndValueMap(keys, prefix)
+	if err != nil {
+		return nil, err
+	}
+	return values, nil
+}
+
+func getKeys(prefix string) ([]string, error) {
+	var allkeys []string
+	var cursor uint64
+	count := int64(10)
+
+	for {
+		var keys []string
+		var err error
+		keys, cursor, err := Rdb.Scan(Ctx, cursor, prefix, count).Result()
+		if err != nil {
+			return nil, fmt.Errorf("Scan db error '%s' when retriving key '%s' keys", err, prefix)
+		}
+
+		allkeys = append(allkeys, keys...)
+		if cursor == 0 {
+			break
+		}
+	}
+	return allkeys, nil
+}
+
+func getKeyAndValueMap(keys []string, prefix string) (map[string]string, error) {
+	values := make(map[string]string)
+	for _, key := range keys {
+		value, err := Rdb.Get(Ctx, key).Result()
+		if err != nil {
+			return nil, fmt.Errorf("Get value error '%s' when retriving key '%s' keys", err, prefix)
+		}
+
+		// Strip off the prefix from the key so that we save the key to the value
+		strippedKey := strings.Split(key, prefix)
+		values[strippedKey[1]] = value
+	}
+	return values, nil
 }

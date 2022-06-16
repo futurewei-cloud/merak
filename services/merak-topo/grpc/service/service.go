@@ -8,6 +8,7 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
+	"github.com/futurewei-cloud/merak/services/merak-topo/handler"
 )
 
 var (
@@ -60,11 +61,10 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 	case pb.OperationType_CREATE:
 
-		// var number_of_vhosts uint32
-		// var number_of_racks uint32
-		// var vhost_per_rack uint32
-		// var data_plane_cidr string
-		// var images []InternalTopologyImage
+		aca_num := 8
+		rack_num := 4
+		aca_per_rack := 2
+		data_plane_cidr := "10.200.0.0/16"
 
 		// save topology data to radis
 
@@ -81,11 +81,13 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			//
 		default:
 			// pb.TopologyType_TREE
+			topology_create := handler.Create(uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), data_plane_cidr)
+			fmt.Printf("The created topology is: %+v \n", topology_create)
 
 		}
 
-		returnMessage.ReturnCode = pb.ReturnCode_OK
-		returnMessage.ReturnMessage = "Topology Deployed."
+		// returnMessage.ReturnCode = pb.ReturnCode_OK
+		// returnMessage.ReturnMessage = "Topology Deployed."
 	case pb.OperationType_DELETE:
 		// delete topology
 

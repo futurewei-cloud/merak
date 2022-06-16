@@ -79,26 +79,26 @@ func TestGRPC(t *testing.T) {
 		ExtraInfo:      &pb.InternalTopologyExtraInfo{Info: "info test"},
 	}
 
-	// topologyConfig_c2 := pb.InternalTopologyConfiguration{
-	// 	FormatVersion:  1,
-	// 	RevisionNumber: 1,
-	// 	RequestId:      "proj1-topo2-create-test",
-	// 	TopologyId:     "proj1-topo2",
-	// 	MessageType:    pb.MessageType_FULL,
-	// 	Vnodes:         []*pb.InternalVNodeInfo{},
-	// 	Vlinks:         []*pb.InternalVLinkInfo{},
-	// 	ExtraInfo:      &pb.InternalTopologyExtraInfo{Info: "create test"},
-	// }
+	topologyConfig_c2 := pb.InternalTopologyConfiguration{
+		FormatVersion:  1,
+		RevisionNumber: 1,
+		RequestId:      "proj1-topo2-create-test",
+		TopologyId:     "proj1-topo2",
+		MessageType:    pb.MessageType_FULL,
+		Vnodes:         []*pb.InternalVNodeInfo{},
+		Vlinks:         []*pb.InternalVLinkInfo{},
+		ExtraInfo:      &pb.InternalTopologyExtraInfo{Info: "create test"},
+	}
 	// Test cases for INFO, CREATE, DELETE, UPDATE
 	topology_info := pb.InternalTopologyInfo{
 		OperationType: pb.OperationType_INFO,
 		Config:        &topologyConfig_c1,
 	}
 
-	// topology_create := pb.InternalTopologyInfo{
-	// 	OperationType: pb.OperationType_CREATE,
-	// 	Config:        &topologyConfig_c2,
-	// }
+	topology_create := pb.InternalTopologyInfo{
+		OperationType: pb.OperationType_CREATE,
+		Config:        &topologyConfig_c2,
+	}
 
 	// gRPC Setup
 	ctx := context.Background()
@@ -117,11 +117,11 @@ func TestGRPC(t *testing.T) {
 	log.Printf("TopologyHandler Response: %+v", resp1)
 
 	// Run Test for CREATE
-	// resp2, err2 := client.TopologyHandler(ctx, &topology_create)
-	// if err2 != nil {
-	// 	t.Fatalf("Topology Handler failed: %v", err2)
-	// }
-	// log.Printf("TopologyHandler Response: %+v", resp2)
+	resp2, err2 := client.TopologyHandler(ctx, &topology_create)
+	if err2 != nil {
+		t.Fatalf("Topology Handler failed: %v", err2)
+	}
+	log.Printf("TopologyHandler Response: %+v", resp2)
 
 	defer conn.Close()
 
