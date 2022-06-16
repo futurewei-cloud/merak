@@ -31,6 +31,7 @@ func CreateCompute(c *fiber.Ctx) error {
 
 	var id = utils.GenUUID()
 	service.Id = id
+	service.Status = entities.STATUS_NONE
 	service.CreatedAt = time.Now()
 	service.UpdatedAt = time.Now()
 
@@ -47,7 +48,7 @@ func CreateCompute(c *fiber.Ctx) error {
 //@Product json
 //@Success 200 {object} []entities.ComputeConfig "array of compute-config with success message"
 //@Failure 404 {object} nil "null compute-config data with error message"
-//@Router /v1/compute-config [get]
+//@Router /api/compute-config [get]
 func GetComputes(c *fiber.Ctx) error {
 	var values map[string]string
 
@@ -57,7 +58,7 @@ func GetComputes(c *fiber.Ctx) error {
 	}
 
 	if len(values) < 1 {
-		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", errors.New("Compute config not present!!!").Error(), nil))
+		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", errors.New("compute config not present").Error(), nil))
 	}
 
 	var responseComputes []entities.ComputeConfig
@@ -65,7 +66,7 @@ func GetComputes(c *fiber.Ctx) error {
 	for _, value := range values {
 		var compute entities.ComputeConfig
 
-		err = json.Unmarshal([]byte(value), &compute)
+		_ = json.Unmarshal([]byte(value), &compute)
 		responseComputes = append(responseComputes, compute)
 	}
 
@@ -81,7 +82,7 @@ func GetComputes(c *fiber.Ctx) error {
 //@Param id path string true "ComputeConfId"
 //@Success 200 {object} entities.ComputeConfig "compute-config data with success message"
 //@Failure 404 {object} nil "compute-config data with null and error message"
-//@Router /v1/compute-config/{id} [get]
+//@Router /api/compute-config/{id} [get]
 func GetCompute(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -106,7 +107,7 @@ func GetCompute(c *fiber.Ctx) error {
 //@Param compute_config body string true "ComputeConfig"
 //@Success 200 {object} entities.ComputeConfig "compute_config data with success message"
 //@Failure 500 {object} nil "compute_config null with failure message"
-//@Router /v1/compute-config/{id} [put]
+//@Router /api/compute-config/{id} [put]
 func UpdateCompute(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -146,7 +147,7 @@ func UpdateCompute(c *fiber.Ctx) error {
 // @Param id path string true "ComputeConfId"
 // @Success 200 {object} entities.ComputeConfig "compute-config data with success message"
 // @Failure 404 {object} nil "compute-config data with null and error message"
-// @Router /v1/compute-config/{id} [delete]
+// @Router /api/compute-config/{id} [delete]
 func DeleteCompute(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {

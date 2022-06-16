@@ -31,6 +31,7 @@ func CreateTestConfig(c *fiber.Ctx) error {
 
 	var id = utils.GenUUID()
 	test.Id = id
+	test.Status = entities.STATUS_NONE
 	test.CreatedAt = time.Now()
 	test.UpdatedAt = time.Now()
 
@@ -47,7 +48,7 @@ func CreateTestConfig(c *fiber.Ctx) error {
 //@Product json
 //@Success 200 {object} []entities.TestConfig "array of test-config with success message"
 //@Failure 404 {object} nil "null test-config data with error message"
-//@Router /v1/test-config [get]
+//@Router /api/test-config [get]
 func GetTestConfigs(c *fiber.Ctx) error {
 	var values map[string]string
 
@@ -57,7 +58,7 @@ func GetTestConfigs(c *fiber.Ctx) error {
 	}
 
 	if len(values) < 1 {
-		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", errors.New("Test config not present!!!").Error(), nil))
+		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", errors.New("test config not present").Error(), nil))
 	}
 
 	var responseTests []entities.TestConfig
@@ -65,7 +66,7 @@ func GetTestConfigs(c *fiber.Ctx) error {
 	for _, value := range values {
 		var test entities.TestConfig
 
-		err = json.Unmarshal([]byte(value), &test)
+		_ = json.Unmarshal([]byte(value), &test)
 		responseTests = append(responseTests, test)
 	}
 
@@ -81,7 +82,7 @@ func GetTestConfigs(c *fiber.Ctx) error {
 //@Param id path string true "ComputeConfId"
 //@Success 200 {object} entities.TestConfig "test-config data with success message"
 //@Failure 404 {object} nil "test-config data with null and error message"
-//@Router /v1/test-config/{id} [get]
+//@Router /api/test-config/{id} [get]
 func GetTestConfig(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -106,7 +107,7 @@ func GetTestConfig(c *fiber.Ctx) error {
 //@Param compute_config body string true "TestConfig"
 //@Success 200 {object} entities.TestConfig "compute_config data with success message"
 //@Failure 500 {object} nil "compute_config null with failure message"
-//@Router /v1/test-config/{id} [put]
+//@Router /api/test-config/{id} [put]
 func UpdateTestConfig(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -141,7 +142,7 @@ func UpdateTestConfig(c *fiber.Ctx) error {
 // @Param id path string true "ComputeConfId"
 // @Success 200 {object} entities.TestConfig "test-config data with success message"
 // @Failure 404 {object} nil "test-config data with null and error message"
-// @Router /v1/test-config/{id} [delete]
+// @Router /api/test-config/{id} [delete]
 func DeleteTestConfig(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {

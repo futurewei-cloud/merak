@@ -2,61 +2,29 @@ basePath: /
 definitions:
   entities.ComputeConfig:
     properties:
-      created_at:
-        type: string
-      id:
-        type: string
       name:
         type: string
       number_of_compute_nodes:
         type: integer
       number_of_port_per_vm:
         type: integer
-      number_of_subnets_per_vpc:
-        items:
-          type: integer
-        type: array
-      number_of_vm_per_compute_node:
-        type: integer
       number_of_vm_per_vpc:
-        items:
-          type: integer
-        type: array
+        type: integer
       scheduler:
-        type: string
-      updated_at:
         type: string
       vm_deploy_type:
         type: string
       vpc_info:
         items:
-          $ref: '#/definitions/entities.ComputeVPCInfo'
+          $ref: '#/definitions/entities.VPCInfo'
         type: array
-    type: object
-  entities.ComputeSubnetInfo:
-    properties:
-      number_of_vms:
-        type: integer
-      subnet_id:
-        type: string
-    type: object
-  entities.ComputeVPCInfo:
-    properties:
-      number_of_subnets:
-        type: integer
-      subnet_info:
-        items:
-          $ref: '#/definitions/entities.ComputeSubnetInfo'
-        type: array
-      vpc_id:
-        type: string
     type: object
   entities.Gateway:
     properties:
-      id:
-        type: string
-      ip:
-        type: string
+      ips:
+        items:
+          type: string
+        type: array
       name:
         type: string
     type: object
@@ -79,14 +47,10 @@ definitions:
     type: object
   entities.NetworkConfig:
     properties:
-      created_at:
-        type: string
       gateways:
         items:
           $ref: '#/definitions/entities.Gateway'
         type: array
-      id:
-        type: string
       name:
         type: string
       number_of_security_groups:
@@ -103,12 +67,10 @@ definitions:
         items:
           $ref: '#/definitions/entities.SecurityGroup'
         type: array
-      subnet_ciders:
+      vpcs:
         items:
-          type: string
+          $ref: '#/definitions/entities.VPCInfo'
         type: array
-      updated_at:
-        type: string
     type: object
   entities.Nic:
     properties:
@@ -119,8 +81,6 @@ definitions:
     type: object
   entities.Router:
     properties:
-      id:
-        type: string
       name:
         type: string
       subnet_gateways:
@@ -135,8 +95,6 @@ definitions:
       direction:
         type: string
       ethertype:
-        type: string
-      id:
         type: string
       name:
         type: string
@@ -153,10 +111,6 @@ definitions:
     properties:
       compute_config_id:
         type: string
-      created_at:
-        type: string
-      id:
-        type: string
       name:
         type: string
       network_config_id:
@@ -169,8 +123,15 @@ definitions:
         type: string
       topology_id:
         type: string
-      updated_at:
+    type: object
+  entities.ScenarioAction:
+    properties:
+      scenario_id:
         type: string
+      services:
+        items:
+          $ref: '#/definitions/entities.ServiceAction'
+        type: array
     type: object
   entities.SecurityGroup:
     properties:
@@ -178,20 +139,20 @@ definitions:
         items:
           type: string
         type: array
-      id:
-        type: string
       name:
+        type: string
+      project_id:
         type: string
       rules:
         items:
           $ref: '#/definitions/entities.Rule'
         type: array
+      tenant_id:
+        type: string
     type: object
   entities.Service:
     properties:
       cmd:
-        type: string
-      id:
         type: string
       name:
         type: string
@@ -214,26 +175,40 @@ definitions:
       where_to_run:
         type: string
     type: object
+  entities.ServiceAction:
+    properties:
+      action:
+        type: string
+      service_id:
+        type: string
+      service_name:
+        description: |-
+          The service id and name with the action
+          in: path
+          enum: DEPLOY, DELETE, UPDATE, CHECK
+        type: string
+    type: object
   entities.ServiceConfig:
     properties:
-      created_at:
-        type: string
-      id:
-        type: string
       name:
         type: string
       services:
         items:
           $ref: '#/definitions/entities.Service'
         type: array
-      updated_at:
+    type: object
+  entities.SubnetInfo:
+    properties:
+      number_of_vms:
+        type: integer
+      subnet_cidr:
+        type: string
+      subnet_gateway:
         type: string
     type: object
   entities.Test:
     properties:
       cmd:
-        type: string
-      id:
         type: string
       name:
         type: string
@@ -250,18 +225,12 @@ definitions:
     type: object
   entities.TestConfig:
     properties:
-      created_at:
-        type: string
-      id:
-        type: string
       name:
         type: string
       tests:
         items:
           $ref: '#/definitions/entities.Test'
         type: array
-      updated_at:
-        type: string
     type: object
   entities.TopologyConfig:
     properties:
@@ -269,9 +238,7 @@ definitions:
         items:
           type: string
         type: array
-      created_at:
-        type: string
-      id:
+      data_plane_cidr:
         type: string
       images:
         items:
@@ -286,8 +253,6 @@ definitions:
       number_of_vhosts:
         type: integer
       type:
-        type: string
-      updated_at:
         type: string
       vhosts_per_rack:
         type: integer
@@ -317,6 +282,21 @@ definitions:
         items:
           $ref: '#/definitions/entities.Nic'
         type: array
+      type:
+        type: string
+    type: object
+  entities.VPCInfo:
+    properties:
+      number_of_subnets:
+        type: integer
+      project_id:
+        type: string
+      subnet_info:
+        items:
+          $ref: '#/definitions/entities.SubnetInfo'
+        type: array
+      tenant_id:
+        type: string
     type: object
 host: localhost:3000
 info:
@@ -349,6 +329,22 @@ paths:
       tags:
       - root
   /api/compute-config:
+    get:
+      consumes:
+      - application/json
+      description: Get all compute-config
+      responses:
+        "200":
+          description: array of compute-config with success message
+          schema:
+            items:
+              $ref: '#/definitions/entities.ComputeConfig'
+            type: array
+        "404":
+          description: null compute-config data with error message
+      summary: Get all compute-config from database
+      tags:
+      - compute-config
     post:
       consumes:
       - application/json
@@ -370,134 +366,7 @@ paths:
       summary: Insert a compute-config to database
       tags:
       - compute-config
-  /api/network-config:
-    post:
-      consumes:
-      - application/json
-      description: Create a network-config
-      parameters:
-      - description: NetworkConfig
-        in: body
-        name: network_config
-        required: true
-        schema:
-          $ref: '#/definitions/entities.NetworkConfig'
-      responses:
-        "200":
-          description: network-config data with success message
-          schema:
-            $ref: '#/definitions/entities.NetworkConfig'
-        "500":
-          description: network-config null with failure message
-      summary: Insert a network-config to database
-      tags:
-      - network-config
-  /api/scenarios:
-    post:
-      consumes:
-      - application/json
-      description: Create a scenario
-      parameters:
-      - description: Scenario
-        in: body
-        name: scenario
-        required: true
-        schema:
-          $ref: '#/definitions/entities.Scenario'
-      responses:
-        "200":
-          description: scenario data with success message
-          schema:
-            $ref: '#/definitions/entities.Scenario'
-        "500":
-          description: scenario null with failure message
-      summary: Insert a scenario to database
-      tags:
-      - scenario
-  /api/service-config:
-    post:
-      consumes:
-      - application/json
-      description: Create a service-config
-      parameters:
-      - description: ServiceConfig
-        in: body
-        name: service_config
-        required: true
-        schema:
-          $ref: '#/definitions/entities.ServiceConfig'
-      responses:
-        "200":
-          description: service-config data with success message
-          schema:
-            $ref: '#/definitions/entities.ServiceConfig'
-        "500":
-          description: service-config null with failure message
-      summary: Insert a service-config to database
-      tags:
-      - service-config
-  /api/test-config:
-    post:
-      consumes:
-      - application/json
-      description: Create a test-config
-      parameters:
-      - description: TestConfig
-        in: body
-        name: test_config
-        required: true
-        schema:
-          $ref: '#/definitions/entities.TestConfig'
-      responses:
-        "200":
-          description: Compute data with success message
-          schema:
-            $ref: '#/definitions/entities.TestConfig'
-        "500":
-          description: Compute null with failure message
-      summary: Insert a test-config to database
-      tags:
-      - test-config
-  /api/topologies:
-    post:
-      consumes:
-      - application/json
-      description: Create a topology
-      parameters:
-      - description: TopologyConfig
-        in: body
-        name: topology_config
-        required: true
-        schema:
-          $ref: '#/definitions/entities.TopologyConfig'
-      responses:
-        "200":
-          description: topology data with success message
-          schema:
-            $ref: '#/definitions/entities.TopologyConfig'
-        "500":
-          description: topology null with failure message
-      summary: Insert a topology to database
-      tags:
-      - topology
-  /v1/compute-config:
-    get:
-      consumes:
-      - application/json
-      description: Get all compute-config
-      responses:
-        "200":
-          description: array of compute-config with success message
-          schema:
-            items:
-              $ref: '#/definitions/entities.ComputeConfig'
-            type: array
-        "404":
-          description: null compute-config data with error message
-      summary: Get all compute-config from database
-      tags:
-      - compute-config
-  /v1/compute-config/{id}:
+  /api/compute-config/{id}:
     delete:
       consumes:
       - application/json
@@ -564,7 +433,7 @@ paths:
       summary: Update a compute-config to database
       tags:
       - compute-config
-  /v1/network-config:
+  /api/network-config:
     get:
       consumes:
       - application/json
@@ -581,7 +450,28 @@ paths:
       summary: Get all network-config from database
       tags:
       - network-config
-  /v1/network-config/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Create a network-config
+      parameters:
+      - description: NetworkConfig
+        in: body
+        name: network_config
+        required: true
+        schema:
+          $ref: '#/definitions/entities.NetworkConfig'
+      responses:
+        "200":
+          description: network-config data with success message
+          schema:
+            $ref: '#/definitions/entities.NetworkConfig'
+        "500":
+          description: network-config null with failure message
+      summary: Insert a network-config to database
+      tags:
+      - network-config
+  /api/network-config/{id}:
     delete:
       consumes:
       - application/json
@@ -648,7 +538,51 @@ paths:
       summary: Update a network-config to database
       tags:
       - network-config
-  /v1/senarios:
+  /api/scenarios:
+    post:
+      consumes:
+      - application/json
+      description: Create a scenario
+      parameters:
+      - description: Scenario
+        in: body
+        name: scenario
+        required: true
+        schema:
+          $ref: '#/definitions/entities.Scenario'
+      responses:
+        "200":
+          description: scenario data with success message
+          schema:
+            $ref: '#/definitions/entities.Scenario'
+        "500":
+          description: scenario null with failure message
+      summary: Insert a scenario to database
+      tags:
+      - scenario
+  /api/scenarios/action:
+    post:
+      consumes:
+      - application/json
+      description: Take an action on a scenario
+      parameters:
+      - description: ScenarioAction
+        in: body
+        name: scenario
+        required: true
+        schema:
+          $ref: '#/definitions/entities.ScenarioAction'
+      responses:
+        "200":
+          description: scenario action data with success message
+          schema:
+            $ref: '#/definitions/entities.ScenarioAction'
+        "500":
+          description: scenario action null with failure message
+      summary: Do something on a scenario
+      tags:
+      - scenario
+  /api/senarios:
     get:
       consumes:
       - application/json
@@ -665,7 +599,7 @@ paths:
       summary: Get all scenario from database
       tags:
       - scenario
-  /v1/senarios/{id}:
+  /api/senarios/{id}:
     delete:
       consumes:
       - application/json
@@ -732,7 +666,7 @@ paths:
       summary: Update a scenario to database
       tags:
       - scenario
-  /v1/service-config:
+  /api/service-config:
     get:
       consumes:
       - application/json
@@ -749,7 +683,28 @@ paths:
       summary: Get all service-config from database
       tags:
       - service-config
-  /v1/service-config/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Create a service-config
+      parameters:
+      - description: ServiceConfig
+        in: body
+        name: service_config
+        required: true
+        schema:
+          $ref: '#/definitions/entities.ServiceConfig'
+      responses:
+        "200":
+          description: service-config data with success message
+          schema:
+            $ref: '#/definitions/entities.ServiceConfig'
+        "500":
+          description: service-config null with failure message
+      summary: Insert a service-config to database
+      tags:
+      - service-config
+  /api/service-config/{id}:
     delete:
       consumes:
       - application/json
@@ -816,7 +771,7 @@ paths:
       summary: Update a service-config to database
       tags:
       - service-config
-  /v1/test-config:
+  /api/test-config:
     get:
       consumes:
       - application/json
@@ -833,7 +788,28 @@ paths:
       summary: Get all test-config from database
       tags:
       - test-config
-  /v1/test-config/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Create a test-config
+      parameters:
+      - description: TestConfig
+        in: body
+        name: test_config
+        required: true
+        schema:
+          $ref: '#/definitions/entities.TestConfig'
+      responses:
+        "200":
+          description: Compute data with success message
+          schema:
+            $ref: '#/definitions/entities.TestConfig'
+        "500":
+          description: Compute null with failure message
+      summary: Insert a test-config to database
+      tags:
+      - test-config
+  /api/test-config/{id}:
     delete:
       consumes:
       - application/json
@@ -900,7 +876,7 @@ paths:
       summary: Update a test-config to database
       tags:
       - test-config
-  /v1/topologies:
+  /api/topologies:
     get:
       consumes:
       - application/json
@@ -917,7 +893,28 @@ paths:
       summary: Get all topologies from database
       tags:
       - topology
-  /v1/topologies/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Create a topology
+      parameters:
+      - description: TopologyConfig
+        in: body
+        name: topology_config
+        required: true
+        schema:
+          $ref: '#/definitions/entities.TopologyConfig'
+      responses:
+        "200":
+          description: topology data with success message
+          schema:
+            $ref: '#/definitions/entities.TopologyConfig'
+        "500":
+          description: topology null with failure message
+      summary: Insert a topology to database
+      tags:
+      - topology
+  /api/topologies/{id}:
     delete:
       consumes:
       - application/json

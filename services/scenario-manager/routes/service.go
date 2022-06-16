@@ -47,7 +47,7 @@ func CreateService(c *fiber.Ctx) error {
 //@Product json
 //@Success 200 {object} []entities.ServiceConfig "array of service-config with success message"
 //@Failure 404 {object} nil "null service-config data with error message"
-//@Router /v1/service-config [get]
+//@Router /api/service-config [get]
 func GetServices(c *fiber.Ctx) error {
 	var values map[string]string
 
@@ -57,7 +57,7 @@ func GetServices(c *fiber.Ctx) error {
 	}
 
 	if len(values) < 1 {
-		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", errors.New("Service config not present!!!").Error(), nil))
+		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", errors.New("service config not present").Error(), nil))
 	}
 
 	var responseNetworks []entities.ServiceConfig
@@ -65,7 +65,7 @@ func GetServices(c *fiber.Ctx) error {
 	for _, value := range values {
 		var service entities.ServiceConfig
 
-		err = json.Unmarshal([]byte(value), &service)
+		_ = json.Unmarshal([]byte(value), &service)
 		responseNetworks = append(responseNetworks, service)
 	}
 
@@ -81,7 +81,7 @@ func GetServices(c *fiber.Ctx) error {
 //@Param id path string true "NetworkId"
 //@Success 200 {object} entities.ServiceConfig "service-config data with success message"
 //@Failure 404 {object} nil "service-config data with null and error message"
-//@Router /v1/service-config/{id} [get]
+//@Router /api/service-config/{id} [get]
 func GetService(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -106,7 +106,7 @@ func GetService(c *fiber.Ctx) error {
 //@Param Service_config body string true "ServiceConfig"
 //@Success 200 {object} entities.ServiceConfig "service-config data with success message"
 //@Failure 500 {object} nil "service-config null with failure message"
-//@Router /v1/service-config/{id} [put]
+//@Router /api/service-config/{id} [put]
 func UpdateService(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -141,7 +141,7 @@ func UpdateService(c *fiber.Ctx) error {
 // @Param id path string true "NetworkId"
 // @Success 200 {object} entities.ServiceConfig "service-config data with success message"
 // @Failure 404 {object} nil "service-config data with null and error message"
-// @Router /v1/service-config/{id} [delete]
+// @Router /api/service-config/{id} [delete]
 func DeleteService(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {

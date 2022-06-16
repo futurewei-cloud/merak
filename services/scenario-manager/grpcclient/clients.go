@@ -12,7 +12,7 @@ import (
 func TopologyClient(topopb *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
 	var conn *grpc.ClientConn
 
-	conn, err := grpc.Dial(":7777", grpc.WithInsecure())
+	conn, err := grpc.Dial(":40052", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %s", err)
 		return nil, fmt.Errorf("Cannot connect to merak-topology grpc server: %s", err)
@@ -33,7 +33,7 @@ func TopologyClient(topopb *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage,
 func NetworkClient(netconfpb *pb.InternalNetConfigInfo) (*pb.ReturnNetworkMessage, error) {
 	var conn *grpc.ClientConn
 
-	conn, err := grpc.Dial(":7777", grpc.WithInsecure())
+	conn, err := grpc.Dial(":40053", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %s", err)
 		return nil, fmt.Errorf("Cannot connect to merak-network grpc server: %s", err)
@@ -54,7 +54,7 @@ func NetworkClient(netconfpb *pb.InternalNetConfigInfo) (*pb.ReturnNetworkMessag
 func ComputeClient(computepb *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
 	var conn *grpc.ClientConn
 
-	conn, err := grpc.Dial(":7777", grpc.WithInsecure())
+	conn, err := grpc.Dial(":40051", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %s", err)
 		return nil, fmt.Errorf("Cannot connect to merak-compute grpc server: %s", err)
