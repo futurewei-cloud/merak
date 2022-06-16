@@ -35,6 +35,5 @@ func VmCreate(ctx context.Context) (string, error) {
 			logger.Info(vm.String())
 		}
 	}
-
 	return common.TEMPORAL_SUCESS_CODE, nil
 }
