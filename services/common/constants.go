@@ -15,4 +15,8 @@ const (
 
 	COMPUTE_REDIS_ADDRESS = "compute-redis-main.merak.svc.cluster.local"
 	COMPUTE_REDIS_PORT    = 30051
+
+	COMPUTE_REDIS_NODE_IP_SET = "NodeIPSet"
+	COMPUTE_REDIS_NODE_MAP    = "NodeHashMap"
+	COMPUTE_REDIS_VM_MAP      = "VMHashMap"
 )

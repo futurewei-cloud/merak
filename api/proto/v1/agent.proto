@@ -1,0 +1,9 @@
+syntax="proto3";
+package merak;
+option go_package = "merak/";
+import "common.proto";
+
+service MerakAgentService {
+    rpc PortHandler (InternalComputeConfigInfo) returns (ReturnMessage) {}
+}
+

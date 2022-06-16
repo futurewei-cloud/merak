@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
-	"github.com/futurewei-cloud/merak/services/merak-compute/grpc/service"
+	"github.com/futurewei-cloud/merak/services/merak-compute/handler"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
@@ -20,7 +20,7 @@ var lis *bufconn.Listener
 func init() {
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
-	pb.RegisterMerakComputeServiceServer(s, &service.Server{})
+	pb.RegisterMerakComputeServiceServer(s, &handler.Server{})
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("Server exited with error: %v", err)
