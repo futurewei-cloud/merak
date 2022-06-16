@@ -4,13 +4,14 @@ import (
 	"time"
 )
 
-type ScenarioStatus string
+type ServiceStatus string
 
 const (
-	STATUS_NONE      ScenarioStatus = "NONE"
-	STATUS_DEPLOYING ScenarioStatus = "DEPLOYING"
-	STATUS_READY     ScenarioStatus = "READY"
-	STATUS_DELETING  ScenarioStatus = "DELETING"
+	STATUS_NONE      ServiceStatus = "NONE"
+	STATUS_DEPLOYING ServiceStatus = "DEPLOYING"
+	STATUS_READY     ServiceStatus = "READY"
+	STATUS_DELETING  ServiceStatus = "DELETING"
+	STATUS_FAILED    ServiceStatus = "FAILED"
 )
 
 type EventName string
@@ -18,42 +19,48 @@ type EventName string
 const (
 	ENENT_DEPLOY EventName = "DEPLOY"
 	EVENT_DELETE EventName = "DELETE"
+	EVENT_UPDATE EventName = "UPDATE"
 	EVENT_CHECK  EventName = "CHECK"
 )
 
 // Action
-type Event struct {
-	Id         string    `json:"id"`
-	ScenarioId string    `json:"scenario_id"`
-	Action     EventName `json:"action"`
+type ScenarioAction struct {
+	Id         string          `json:"id" swaggerignore:"true"`
+	ScenarioId string          `json:"scenario_id"`
+	Services   []ServiceAction `json:"services"`
+}
+
+type ServiceAction struct {
+	ServiceName string    `json:"service_name"`
+	Action      EventName `json:"action"`
 }
 
 // Scenario
 type Scenario struct {
-	Id            string         `json:"id"`
-	Name          string         `json:"name"`
-	ProjectId     string         `json:"project_id"`
-	TopologyId    string         `json:"topology_id"`
-	ServiceConfId string         `json:"service_config_id"`
-	NetworkConfId string         `json:"network_config_id"`
-	ComputeConfId string         `json:"compute_config_id"`
-	TestConfId    string         `json:"test_config_id"`
-	Status        ScenarioStatus `json:"status"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
+	Id            string        `json:"id" swaggerignore:"true"`
+	Name          string        `json:"name"`
+	ProjectId     string        `json:"project_id"`
+	TopologyId    string        `json:"topology_id"`
+	ServiceConfId string        `json:"service_config_id"`
+	NetworkConfId string        `json:"network_config_id"`
+	ComputeConfId string        `json:"compute_config_id"`
+	TestConfId    string        `json:"test_config_id"`
+	Status        ServiceStatus `json:"status" swaggerignore:"true"`
+	CreatedAt     time.Time     `json:"created_at" swaggerignore:"true"`
+	UpdatedAt     time.Time     `json:"updated_at" swaggerignore:"true"`
 }
 
 // Service Configuration
 type ServiceConfig struct {
-	Id        string    `json:"id"`
+	Id        string    `json:"id" swaggerignore:"true"`
 	Name      string    `json:"name"`
 	Services  []Service `json:"services"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at" swaggerignore:"true"`
+	UpdatedAt time.Time `json:"updated_at" swaggerignore:"true"`
 }
 
 type Service struct {
-	Id           string   `json:"id"`
+	Id           string   `json:"id" swaggerignore:"true"`
 	Name         string   `json:"name"`
 	Cmd          string   `json:"cmd"`
 	Url          string   `json:"url"`
@@ -66,20 +73,21 @@ type Service struct {
 
 // Topology Configuration
 type TopologyConfig struct {
-	Id               string    `json:"id"`
-	Name             string    `json:"name"`
-	TopoType         string    `json:"type"`
-	NumberOfVhosts   uint      `json:"number_of_vhosts"`
-	NumberOfRacks    uint      `json:"number_of_racks"`
-	VhostsPerRack    uint      `json:"vhosts_per_rack"`
-	DataPlaneCidr    string    `json:"data_plane_cidr"`
-	NumberOfGateways uint      `json:"number_of_control_plane_gateways"`
-	GatewayIPs       []string  `json:"control_plane_gateway_ips"`
-	Images           []Image   `json:"images"`
-	VNodes           []VNode   `json:"vnodes"`
-	VLinks           []VLink   `json:"vlinks"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
+	Id               string        `json:"id" swaggerignore:"true"`
+	Name             string        `json:"name"`
+	TopoType         string        `json:"type"`
+	NumberOfVhosts   uint          `json:"number_of_vhosts"`
+	NumberOfRacks    uint          `json:"number_of_racks"`
+	VhostsPerRack    uint          `json:"vhosts_per_rack"`
+	DataPlaneCidr    string        `json:"data_plane_cidr"`
+	NumberOfGateways uint          `json:"number_of_control_plane_gateways"`
+	GatewayIPs       []string      `json:"control_plane_gateway_ips"`
+	Images           []Image       `json:"images"`
+	VNodes           []VNode       `json:"vnodes"`
+	VLinks           []VLink       `json:"vlinks"`
+	Status           ServiceStatus `json:"status" swaggerignore:"true"`
+	CreatedAt        time.Time     `json:"created_at" swaggerignore:"true"`
+	UpdatedAt        time.Time     `json:"updated_at" swaggerignore:"true"`
 }
 
 type Image struct {
@@ -109,40 +117,43 @@ type VLink struct {
 
 // Network Configuration
 type NetworkConfig struct {
-	Id                     string          `json:"id"`
+	Id                     string          `json:"id" swaggerignore:"true"`
 	Name                   string          `json:"name"`
 	NumberOfVPCS           uint            `json:"number_of_vpcs"`
 	NumberOfSubnetPerVpc   uint            `json:"number_of_subnet_per_vpc"`
 	NumberOfSecurityGroups uint            `json:"number_of_security_groups"`
-	SubnetCiders           []string        `json:"subnet_ciders"`
+	Vpcs                   []VPCInfo       `json:"vpcs"`
 	Routers                []Router        `json:"routers"`
 	Gateways               []Gateway       `json:"gateways"`
 	SecurityGroups         []SecurityGroup `json:"security_groups"`
-	CreatedAt              time.Time       `json:"created_at"`
-	UpdatedAt              time.Time       `json:"updated_at"`
+	Status                 ServiceStatus   `json:"status" swaggerignore:"true"`
+	CreatedAt              time.Time       `json:"created_at" swaggerignore:"true"`
+	UpdatedAt              time.Time       `json:"updated_at" swaggerignore:"true"`
 }
 
 type Router struct {
-	Id             string   `json:"id"`
+	Id             string   `json:"id" swaggerignore:"true"`
 	Name           string   `json:"name"`
 	SubnetGateways []string `json:"subnet_gateways"`
 }
 
 type Gateway struct {
-	Id   string   `json:"id"`
+	Id   string   `json:"id" swaggerignore:"true"`
 	Name string   `json:"name"`
 	Ips  []string `json:"ips"`
 }
 
 type SecurityGroup struct {
-	Id      string   `json:"id"`
-	Name    string   `json:"name"`
-	Rules   []Rule   `json:"rules"`
-	ApplyTo []string `json:"apply_to"`
+	Id        string   `json:"id" swaggerignore:"true"`
+	Name      string   `json:"name"`
+	TenantId  string   `json:"tenant_id"`
+	ProjectId string   `json:"project_id"`
+	Rules     []Rule   `json:"rules"`
+	ApplyTo   []string `json:"apply_to"`
 }
 
 type Rule struct {
-	Id             string `json:"id"`
+	Id             string `json:"id" swaggerignore:"true"`
 	Name           string `json:"name"`
 	Description    string `json:"description"`
 	EtherType      string `json:"ethertype"`
@@ -155,40 +166,46 @@ type Rule struct {
 
 // Compute Configuration
 type ComputeConfig struct {
-	Id                   string           `json:"id"`
-	Name                 string           `json:"name"`
-	NumberOfComputeNodes uint             `json:"number_of_compute_nodes"`
-	NumberOfPortPerVm    uint             `json:"number_of_port_per_vm"`
-	VmDeployType         string           `json:"vm_deploy_type"`
-	Scheduler            string           `json:"scheduler"`
-	NumberOfVmPerVpc     uint             `json:"number_of_vm_per_vpc"`
-	VPCInfo              []ComputeVPCInfo `json:"vpc_info"`
-	CreatedAt            time.Time        `json:"created_at"`
-	UpdatedAt            time.Time        `json:"updated_at"`
+	Id                   string        `json:"id" swaggerignore:"true"`
+	Name                 string        `json:"name"`
+	NumberOfComputeNodes uint          `json:"number_of_compute_nodes"`
+	NumberOfPortPerVm    uint          `json:"number_of_port_per_vm"`
+	VmDeployType         string        `json:"vm_deploy_type"`
+	Scheduler            string        `json:"scheduler"`
+	NumberOfVmPerVpc     uint          `json:"number_of_vm_per_vpc"`
+	VPCInfo              []VPCInfo     `json:"vpc_info"`
+	Status               ServiceStatus `json:"status" swaggerignore:"true"`
+	CreatedAt            time.Time     `json:"created_at" swaggerignore:"true"`
+	UpdatedAt            time.Time     `json:"updated_at" swaggerignore:"true"`
 }
 
-type ComputeVPCInfo struct {
-	VpcId           string              `json:"vpc_id"`
-	NumberOfSubnets uint                `json:"number_of_subnets"`
-	SubnetInfo      []ComputeSubnetInfo `json:"subnet_info"`
+type VPCInfo struct {
+	VpcId           string       `json:"vpc_id" swaggerignore:"true"`
+	TenantId        string       `json:"tenant_id"`
+	ProjectId       string       `json:"project_id"`
+	NumberOfSubnets uint         `json:"number_of_subnets"`
+	SubnetInfo      []SubnetInfo `json:"subnet_info"`
 }
 
-type ComputeSubnetInfo struct {
-	SubnetId    string `json:"subnet_id"`
-	NumberOfVMs uint   `json:"number_of_vms"`
+type SubnetInfo struct {
+	SubnetId      string `json:"subnet_id" swaggerignore:"true"`
+	SubnetCidr    string `json:"subnet_cidr"`
+	SubnetGateway string `json:"subnet_gateway"`
+	NumberOfVMs   uint   `json:"number_of_vms"`
 }
 
 // Test Configuration
 type TestConfig struct {
-	Id        string    `json:"id"`
-	Name      string    `json:"name"`
-	Tests     []Test    `json:"tests"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Id        string        `json:"id" swaggerignore:"true"`
+	Name      string        `json:"name"`
+	Tests     []Test        `json:"tests"`
+	Status    ServiceStatus `json:"status" swaggerignore:"true"`
+	CreatedAt time.Time     `json:"created_at" swaggerignore:"true"`
+	UpdatedAt time.Time     `json:"updated_at" swaggerignore:"true"`
 }
 
 type Test struct {
-	Id         string   `json:"id"`
+	Id         string   `json:"id" swaggerignore:"true"`
 	Name       string   `json:"name"`
 	Script     string   `json:"script"`
 	Cmd        string   `json:"cmd"`

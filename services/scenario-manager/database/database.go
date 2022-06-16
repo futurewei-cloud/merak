@@ -63,7 +63,7 @@ func Del(key string) error {
 // Function for finding an entity from database
 func FindEntity(id string, prefix string, entity interface{}) error {
 	if id == "" {
-		return errors.New("Invalid for id: parameter!!!")
+		return errors.New("invalid for id parameter")
 	}
 	value, err := Rdb.Get(Ctx, prefix+id).Result()
 	if err != nil {
@@ -96,7 +96,7 @@ func getKeys(prefix string) ([]string, error) {
 		var err error
 		keys, cursor, err := Rdb.Scan(Ctx, cursor, prefix, count).Result()
 		if err != nil {
-			return nil, fmt.Errorf("Scan db error '%s' when retriving key '%s' keys", err, prefix)
+			return nil, fmt.Errorf("scan db error '%s' when retriving key '%s' keys", err, prefix)
 		}
 
 		allkeys = append(allkeys, keys...)
@@ -112,7 +112,7 @@ func getKeyAndValueMap(keys []string, prefix string) (map[string]string, error) 
 	for _, key := range keys {
 		value, err := Rdb.Get(Ctx, key).Result()
 		if err != nil {
-			return nil, fmt.Errorf("Get value error '%s' when retriving key '%s' keys", err, prefix)
+			return nil, fmt.Errorf("get value error '%s' when retriving key '%s' keys", err, prefix)
 		}
 
 		// Strip off the prefix from the key so that we save the key to the value

@@ -12,47 +12,114 @@ import (
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
 )
 
-func DeployTopology(s *entities.Scenario) error {
+func TopologyHandler(s *entities.Scenario, responseTopo *pb.ReturnTopologyMessage) error {
 	var topology entities.TopologyConfig
 	if err := database.FindEntity(s.TopologyId, utils.KEY_PREFIX_SCENARIO, &topology); err != nil {
-		return errors.New("Topology not found!")
+		return errors.New("topology not found")
+	}
+
+	if topology.Status != entities.STATUS_NONE {
+		return fmt.Errorf("topology '%s' is '%s' now)", topology.Id, topology.Status)
 	}
 
 	var network entities.NetworkConfig
 	if err := database.FindEntity(s.NetworkConfId, utils.KEY_PREFIX_NETWORK, &network); err != nil {
-		return errors.New("Network config not found!")
+		return fmt.Errorf("network config '%s' not found", s.NetworkConfId)
 	}
 
-	var service entities.ServiceConfig
-	if err := database.FindEntity(s.ServiceConfId, utils.KEY_PREFIX_SERVICE, &service); err != nil {
-		return errors.New("Service config not found!")
-	}
-
-	var compute entities.ComputeConfig
-	if err := database.FindEntity(s.ComputeConfId, utils.KEY_PREFIX_COMPUTE, &compute); err != nil {
-		return errors.New("Compute config not found!")
+	if network.Status != entities.STATUS_NONE {
+		return fmt.Errorf("nework config '%s' is '%s' now", s.NetworkConfId, network.Status)
 	}
 
 	var topoconf pb.InternalTopologyInfo
 	if err := constructTopologyMessage(&topology, &topoconf); err != nil {
-		return errors.New("Topology protobuf message error!")
+		return errors.New("topology protobuf message error")
 	}
+
+	topology.Status = entities.STATUS_DEPLOYING
+	database.Set(utils.KEY_PREFIX_TOPOLOGY+topology.Id, &topology)
 
 	responseTopo, err := grpcclient.TopologyClient(&topoconf)
 
 	if err != nil || responseTopo.ReturnCode == pb.ReturnCode_FAILED {
-		return fmt.Errorf("Deploy topology failed! Error = '%s', return = '%s'", err.Error(), responseTopo.ReturnMessage)
+		topology.Status = entities.STATUS_FAILED
+		database.Set(utils.KEY_PREFIX_TOPOLOGY+topology.Id, &topology)
+		return fmt.Errorf("deploy topology failed, Error = '%s', return = '%s'", err.Error(), responseTopo.ReturnMessage)
+	}
+
+	topology.Status = entities.STATUS_READY
+	database.Set(utils.KEY_PREFIX_TOPOLOGY+topology.Id, &topology)
+
+	return nil
+}
+
+func NetworkHandler(s *entities.Scenario, responseTopo *pb.ReturnTopologyMessage, responseNetwork *pb.ReturnNetworkMessage) error {
+	var network entities.NetworkConfig
+	if err := database.FindEntity(s.NetworkConfId, utils.KEY_PREFIX_NETWORK, &network); err != nil {
+		return errors.New("network config not found")
+	}
+
+	if network.Status != entities.STATUS_NONE {
+		return fmt.Errorf("network config '%s' is '%s' now)", network.Id, network.Status)
+	}
+
+	if responseTopo.ReturnCode != pb.ReturnCode_OK {
+		return fmt.Errorf("topology is not ready")
+	}
+
+	var service entities.ServiceConfig
+	if err := database.FindEntity(s.ServiceConfId, utils.KEY_PREFIX_SERVICE, &service); err != nil {
+		return errors.New("service config not found")
+	}
+
+	var compute entities.ComputeConfig
+	if err := database.FindEntity(s.ComputeConfId, utils.KEY_PREFIX_COMPUTE, &compute); err != nil {
+		return fmt.Errorf("compute config '%s' not found", s.ComputeConfId)
+	}
+
+	if compute.Status != entities.STATUS_NONE {
+		return fmt.Errorf("nework config '%s' is '%s' now", s.ComputeConfId, compute.Status)
 	}
 
 	var netconf pb.InternalNetConfigInfo
 	if err := constructNetConfMessage(&network, &service, responseTopo, &netconf); err != nil {
-		return errors.New("Netconfig protobuf message error!")
+		return errors.New("netconfig protobuf message error")
 	}
+
+	network.Status = entities.STATUS_DEPLOYING
+	database.Set(utils.KEY_PREFIX_NETWORK+network.Id, &network)
 
 	responseNetwork, err := grpcclient.NetworkClient(&netconf)
 
 	if err != nil || responseNetwork.ReturnCode == pb.ReturnCode_FAILED {
-		return fmt.Errorf("Deploy network failed! Error = '%s', return = '%s'", err.Error(), responseNetwork.ReturnMessage)
+		network.Status = entities.STATUS_FAILED
+		database.Set(utils.KEY_PREFIX_NETWORK+network.Id, &network)
+		return fmt.Errorf("deploy network failed, Error = '%s', return = '%s'", err.Error(), responseNetwork.ReturnMessage)
+	}
+
+	network.Status = entities.STATUS_READY
+	database.Set(utils.KEY_PREFIX_NETWORK+network.Id, &network)
+
+	return nil
+}
+
+func ComputeHanlder(s *entities.Scenario, responseTopo *pb.ReturnTopologyMessage, responseNetwork *pb.ReturnNetworkMessage, responseCompute *pb.ReturnMessage) error {
+	var compute entities.ComputeConfig
+	if err := database.FindEntity(s.ComputeConfId, utils.KEY_PREFIX_COMPUTE, &compute); err != nil {
+		return errors.New("compute config not found")
+	}
+
+	if compute.Status != entities.STATUS_NONE {
+		return fmt.Errorf("compute config '%s' is '%s' now)", compute.Id, compute.Status)
+	}
+
+	if responseNetwork.ReturnCode != pb.ReturnCode_OK {
+		return fmt.Errorf("network is not ready")
+	}
+
+	var service entities.ServiceConfig
+	if err := database.FindEntity(s.ServiceConfId, utils.KEY_PREFIX_SERVICE, &service); err != nil {
+		return errors.New("service config not found")
 	}
 
 	for _, n := range responseNetwork.Vpcs {
@@ -63,14 +130,22 @@ func DeployTopology(s *entities.Scenario) error {
 
 	var computeconf pb.InternalComputeConfigInfo
 	if err := constructComputeMessage(&compute, &service, responseTopo, responseNetwork, &computeconf); err != nil {
-		return errors.New("Compute protobuf message error!")
+		return errors.New("compute protobuf message error")
 	}
+
+	compute.Status = entities.STATUS_DEPLOYING
+	database.Set(utils.KEY_PREFIX_COMPUTE+compute.Id, &compute)
 
 	responseCompute, err := grpcclient.ComputeClient(&computeconf)
 
 	if err != nil || responseCompute.ReturnCode == pb.ReturnCode_FAILED {
-		return fmt.Errorf("Deploy compute failed! Error = '%s', return = '%s'", err.Error(), responseCompute.ReturnMessage)
+		compute.Status = entities.STATUS_FAILED
+		database.Set(utils.KEY_PREFIX_COMPUTE+compute.Id, &compute)
+		return fmt.Errorf("deploy compute failed, Error = '%s', return = '%s'", err.Error(), responseCompute.ReturnMessage)
 	}
+
+	compute.Status = entities.STATUS_READY
+	database.Set(utils.KEY_PREFIX_COMPUTE+compute.Id, &compute)
 
 	return nil
 }
@@ -180,7 +255,22 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 	netconfPb.Config.Network.NumberOfVpcs = uint32(netconf.NumberOfVPCS)
 	netconfPb.Config.Network.NumberOfSubnetPerVpc = uint32(netconf.NumberOfSubnetPerVpc)
 	netconfPb.Config.Network.NumberOfSecurityGroups = uint32(netconf.NumberOfSecurityGroups)
-	netconfPb.Config.Network.SubnetCiders = netconf.SubnetCiders
+
+	var vpcPb pb.InternalVpcInfo
+	for _, vpc := range netconf.Vpcs {
+		vpcPb.VpcId = vpc.VpcId
+		vpcPb.TenantId = vpc.TenantId
+		vpcPb.ProjectId = vpc.ProjectId
+
+		var subnetPb pb.InternalSubnetInfo
+		for _, subnet := range vpc.SubnetInfo {
+			subnetPb.SubnetId = subnet.SubnetId
+			subnetPb.SubnetCidr = subnet.SubnetCidr
+			subnetPb.SubnetGw = subnet.SubnetGateway
+			vpcPb.Subnets = append(vpcPb.Subnets, &subnetPb)
+		}
+		netconfPb.Config.Network.Vpcs = append(netconfPb.Config.Network.Vpcs, &vpcPb)
+	}
 
 	var routerPb pb.InternalRouterInfo
 	for _, router := range netconf.Routers {
