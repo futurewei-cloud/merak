@@ -31,6 +31,7 @@ func CreateTopology(c *fiber.Ctx) error {
 
 	var id = utils.GenUUID()
 	topology.Id = id
+	topology.Status = entities.STATUS_NONE
 	topology.CreatedAt = time.Now()
 	topology.UpdatedAt = time.Now()
 
@@ -47,7 +48,7 @@ func CreateTopology(c *fiber.Ctx) error {
 //@Product json
 //@Success 200 {object} []entities.TopologyConfig "array of topology with success message"
 //@Failure 404 {object} nil "null topology data with error message"
-//@Router /v1/topologies [get]
+//@Router /api/topologies [get]
 func GetTopologies(c *fiber.Ctx) error {
 	var values map[string]string
 
@@ -57,7 +58,7 @@ func GetTopologies(c *fiber.Ctx) error {
 	}
 
 	if len(values) < 1 {
-		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", errors.New("Topology not present!!!").Error(), nil))
+		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", errors.New("topology not present").Error(), nil))
 	}
 
 	var responseTopologies []entities.TopologyConfig
@@ -65,7 +66,7 @@ func GetTopologies(c *fiber.Ctx) error {
 	for _, value := range values {
 		var topology entities.TopologyConfig
 
-		err = json.Unmarshal([]byte(value), &topology)
+		_ = json.Unmarshal([]byte(value), &topology)
 		responseTopologies = append(responseTopologies, topology)
 	}
 
@@ -81,7 +82,7 @@ func GetTopologies(c *fiber.Ctx) error {
 //@Param id path string true "TopologyId"
 //@Success 200 {object} entities.TopologyConfig "topology data with success message"
 //@Failure 404 {object} nil "topology data with null and error message"
-//@Router /v1/topologies/{id} [get]
+//@Router /api/topologies/{id} [get]
 func GetTopology(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -106,7 +107,7 @@ func GetTopology(c *fiber.Ctx) error {
 //@Param topology_config body string true "TopologyConfig"
 //@Success 200 {object} entities.TopologyConfig "topology data with success message"
 //@Failure 500 {object} nil "topology null with failure message"
-//@Router /v1/topologies/{id} [put]
+//@Router /api/topologies/{id} [put]
 func UpdateTopology(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -148,7 +149,7 @@ func UpdateTopology(c *fiber.Ctx) error {
 // @Param id path string true "TopologyId"
 // @Success 200 {object} entities.TopologyConfig "topology data with success message"
 // @Failure 404 {object} nil "topology data with null and error message"
-// @Router /v1/topologies/{id} [delete]
+// @Router /api/topologies/{id} [delete]
 func DeleteTopology(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {

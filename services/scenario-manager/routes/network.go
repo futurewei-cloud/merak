@@ -31,6 +31,7 @@ func CreateNetwork(c *fiber.Ctx) error {
 
 	var id = utils.GenUUID()
 	network.Id = id
+	network.Status = entities.STATUS_NONE
 	network.CreatedAt = time.Now()
 	network.UpdatedAt = time.Now()
 
@@ -47,7 +48,7 @@ func CreateNetwork(c *fiber.Ctx) error {
 //@Product json
 //@Success 200 {object} []entities.NetworkConfig "array of network-config with success message"
 //@Failure 404 {object} nil "null network-config data with error message"
-//@Router /v1/network-config [get]
+//@Router /api/network-config [get]
 func GetNetworks(c *fiber.Ctx) error {
 	var values map[string]string
 
@@ -57,7 +58,7 @@ func GetNetworks(c *fiber.Ctx) error {
 	}
 
 	if len(values) < 1 {
-		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", errors.New("Network config not present!!!").Error(), nil))
+		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", errors.New("network config not present").Error(), nil))
 	}
 
 	var responseNetworks []entities.NetworkConfig
@@ -65,7 +66,7 @@ func GetNetworks(c *fiber.Ctx) error {
 	for _, value := range values {
 		var network entities.NetworkConfig
 
-		err = json.Unmarshal([]byte(value), &network)
+		_ = json.Unmarshal([]byte(value), &network)
 		responseNetworks = append(responseNetworks, network)
 	}
 
@@ -81,7 +82,7 @@ func GetNetworks(c *fiber.Ctx) error {
 //@Param id path string true "NetworkId"
 //@Success 200 {object} entities.NetworkConfig "network-config data with success message"
 //@Failure 404 {object} nil "network-config data with null and error message"
-//@Router /v1/network-config/{id} [get]
+//@Router /api/network-config/{id} [get]
 func GetNetwork(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -106,7 +107,7 @@ func GetNetwork(c *fiber.Ctx) error {
 //@Param network_config body string true "NetworkConfig"
 //@Success 200 {object} entities.NetworkConfig "network-config data with success message"
 //@Failure 500 {object} nil "network-config null with failure message"
-//@Router /v1/network-config/{id} [put]
+//@Router /api/network-config/{id} [put]
 func UpdateNetwork(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -127,7 +128,7 @@ func UpdateNetwork(c *fiber.Ctx) error {
 	network.NumberOfVPCS = updateNetwork.NumberOfVPCS
 	network.NumberOfSubnetPerVpc = updateNetwork.NumberOfSubnetPerVpc
 	network.NumberOfSecurityGroups = updateNetwork.NumberOfSecurityGroups
-	network.SubnetCiders = updateNetwork.SubnetCiders
+	network.Vpcs = updateNetwork.Vpcs
 	network.Routers = updateNetwork.Routers
 	network.Gateways = updateNetwork.Gateways
 	network.SecurityGroups = updateNetwork.SecurityGroups
@@ -147,7 +148,7 @@ func UpdateNetwork(c *fiber.Ctx) error {
 // @Param id path string true "NetworkId"
 // @Success 200 {object} entities.NetworkConfig "network-config data with success message"
 // @Failure 404 {object} nil "network-config data with null and error message"
-// @Router /v1/network-config/{id} [delete]
+// @Router /api/network-config/{id} [delete]
 func DeleteNetwork(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {

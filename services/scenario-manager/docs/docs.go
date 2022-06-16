@@ -50,6 +50,30 @@ const docTemplate = `{
             }
         },
         "/api/compute-config": {
+            "get": {
+                "description": "Get all compute-config",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "compute-config"
+                ],
+                "summary": "Get all compute-config from database",
+                "responses": {
+                    "200": {
+                        "description": "array of compute-config with success message",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/entities.ComputeConfig"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "null compute-config data with error message"
+                    }
+                }
+            },
             "post": {
                 "description": "Create a compute-config",
                 "consumes": [
@@ -83,203 +107,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/network-config": {
-            "post": {
-                "description": "Create a network-config",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "network-config"
-                ],
-                "summary": "Insert a network-config to database",
-                "parameters": [
-                    {
-                        "description": "NetworkConfig",
-                        "name": "network_config",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/entities.NetworkConfig"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "network-config data with success message",
-                        "schema": {
-                            "$ref": "#/definitions/entities.NetworkConfig"
-                        }
-                    },
-                    "500": {
-                        "description": "network-config null with failure message"
-                    }
-                }
-            }
-        },
-        "/api/scenarios": {
-            "post": {
-                "description": "Create a scenario",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "scenario"
-                ],
-                "summary": "Insert a scenario to database",
-                "parameters": [
-                    {
-                        "description": "Scenario",
-                        "name": "scenario",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/entities.Scenario"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "scenario data with success message",
-                        "schema": {
-                            "$ref": "#/definitions/entities.Scenario"
-                        }
-                    },
-                    "500": {
-                        "description": "scenario null with failure message"
-                    }
-                }
-            }
-        },
-        "/api/service-config": {
-            "post": {
-                "description": "Create a service-config",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "service-config"
-                ],
-                "summary": "Insert a service-config to database",
-                "parameters": [
-                    {
-                        "description": "ServiceConfig",
-                        "name": "service_config",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/entities.ServiceConfig"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "service-config data with success message",
-                        "schema": {
-                            "$ref": "#/definitions/entities.ServiceConfig"
-                        }
-                    },
-                    "500": {
-                        "description": "service-config null with failure message"
-                    }
-                }
-            }
-        },
-        "/api/test-config": {
-            "post": {
-                "description": "Create a test-config",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "test-config"
-                ],
-                "summary": "Insert a test-config to database",
-                "parameters": [
-                    {
-                        "description": "TestConfig",
-                        "name": "test_config",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/entities.TestConfig"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Compute data with success message",
-                        "schema": {
-                            "$ref": "#/definitions/entities.TestConfig"
-                        }
-                    },
-                    "500": {
-                        "description": "Compute null with failure message"
-                    }
-                }
-            }
-        },
-        "/api/topologies": {
-            "post": {
-                "description": "Create a topology",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "topology"
-                ],
-                "summary": "Insert a topology to database",
-                "parameters": [
-                    {
-                        "description": "TopologyConfig",
-                        "name": "topology_config",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/entities.TopologyConfig"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "topology data with success message",
-                        "schema": {
-                            "$ref": "#/definitions/entities.TopologyConfig"
-                        }
-                    },
-                    "500": {
-                        "description": "topology null with failure message"
-                    }
-                }
-            }
-        },
-        "/v1/compute-config": {
-            "get": {
-                "description": "Get all compute-config",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "compute-config"
-                ],
-                "summary": "Get all compute-config from database",
-                "responses": {
-                    "200": {
-                        "description": "array of compute-config with success message",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/entities.ComputeConfig"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "null compute-config data with error message"
-                    }
-                }
-            }
-        },
-        "/v1/compute-config/{id}": {
+        "/api/compute-config/{id}": {
             "get": {
                 "description": "Get a compute-config",
                 "consumes": [
@@ -380,7 +208,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/network-config": {
+        "/api/network-config": {
             "get": {
                 "description": "Get all network-config",
                 "consumes": [
@@ -404,9 +232,41 @@ const docTemplate = `{
                         "description": "null network-config data with error message"
                     }
                 }
+            },
+            "post": {
+                "description": "Create a network-config",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "network-config"
+                ],
+                "summary": "Insert a network-config to database",
+                "parameters": [
+                    {
+                        "description": "NetworkConfig",
+                        "name": "network_config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.NetworkConfig"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "network-config data with success message",
+                        "schema": {
+                            "$ref": "#/definitions/entities.NetworkConfig"
+                        }
+                    },
+                    "500": {
+                        "description": "network-config null with failure message"
+                    }
+                }
             }
         },
-        "/v1/network-config/{id}": {
+        "/api/network-config/{id}": {
             "get": {
                 "description": "Get a network-config",
                 "consumes": [
@@ -507,7 +367,75 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/senarios": {
+        "/api/scenarios": {
+            "post": {
+                "description": "Create a scenario",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scenario"
+                ],
+                "summary": "Insert a scenario to database",
+                "parameters": [
+                    {
+                        "description": "Scenario",
+                        "name": "scenario",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.Scenario"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "scenario data with success message",
+                        "schema": {
+                            "$ref": "#/definitions/entities.Scenario"
+                        }
+                    },
+                    "500": {
+                        "description": "scenario null with failure message"
+                    }
+                }
+            }
+        },
+        "/api/scenarios/action": {
+            "post": {
+                "description": "Take an action on a scenario",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scenario"
+                ],
+                "summary": "Do something on a scenario",
+                "parameters": [
+                    {
+                        "description": "ScenarioAction",
+                        "name": "scenario",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.ScenarioAction"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "scenario action data with success message",
+                        "schema": {
+                            "$ref": "#/definitions/entities.ScenarioAction"
+                        }
+                    },
+                    "500": {
+                        "description": "scenario action null with failure message"
+                    }
+                }
+            }
+        },
+        "/api/senarios": {
             "get": {
                 "description": "Get all scenario",
                 "consumes": [
@@ -533,7 +461,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/senarios/{id}": {
+        "/api/senarios/{id}": {
             "get": {
                 "description": "Get a scenario",
                 "consumes": [
@@ -634,7 +562,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/service-config": {
+        "/api/service-config": {
             "get": {
                 "description": "Get all service-config",
                 "consumes": [
@@ -658,9 +586,41 @@ const docTemplate = `{
                         "description": "null service-config data with error message"
                     }
                 }
+            },
+            "post": {
+                "description": "Create a service-config",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "service-config"
+                ],
+                "summary": "Insert a service-config to database",
+                "parameters": [
+                    {
+                        "description": "ServiceConfig",
+                        "name": "service_config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.ServiceConfig"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "service-config data with success message",
+                        "schema": {
+                            "$ref": "#/definitions/entities.ServiceConfig"
+                        }
+                    },
+                    "500": {
+                        "description": "service-config null with failure message"
+                    }
+                }
             }
         },
-        "/v1/service-config/{id}": {
+        "/api/service-config/{id}": {
             "get": {
                 "description": "Get a service-config",
                 "consumes": [
@@ -761,7 +721,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/test-config": {
+        "/api/test-config": {
             "get": {
                 "description": "Get all test-config",
                 "consumes": [
@@ -785,9 +745,41 @@ const docTemplate = `{
                         "description": "null test-config data with error message"
                     }
                 }
+            },
+            "post": {
+                "description": "Create a test-config",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "test-config"
+                ],
+                "summary": "Insert a test-config to database",
+                "parameters": [
+                    {
+                        "description": "TestConfig",
+                        "name": "test_config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.TestConfig"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Compute data with success message",
+                        "schema": {
+                            "$ref": "#/definitions/entities.TestConfig"
+                        }
+                    },
+                    "500": {
+                        "description": "Compute null with failure message"
+                    }
+                }
             }
         },
-        "/v1/test-config/{id}": {
+        "/api/test-config/{id}": {
             "get": {
                 "description": "Get a test-config",
                 "consumes": [
@@ -888,7 +880,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/topologies": {
+        "/api/topologies": {
             "get": {
                 "description": "Get all topologies",
                 "consumes": [
@@ -912,9 +904,41 @@ const docTemplate = `{
                         "description": "null topology data with error message"
                     }
                 }
+            },
+            "post": {
+                "description": "Create a topology",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "topology"
+                ],
+                "summary": "Insert a topology to database",
+                "parameters": [
+                    {
+                        "description": "TopologyConfig",
+                        "name": "topology_config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.TopologyConfig"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "topology data with success message",
+                        "schema": {
+                            "$ref": "#/definitions/entities.TopologyConfig"
+                        }
+                    },
+                    "500": {
+                        "description": "topology null with failure message"
+                    }
+                }
             }
         },
-        "/v1/topologies/{id}": {
+        "/api/topologies/{id}": {
             "get": {
                 "description": "Get a topology",
                 "consumes": [
@@ -1020,12 +1044,6 @@ const docTemplate = `{
         "entities.ComputeConfig": {
             "type": "object",
             "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
                 "name": {
                     "type": "string"
                 },
@@ -1035,25 +1053,10 @@ const docTemplate = `{
                 "number_of_port_per_vm": {
                     "type": "integer"
                 },
-                "number_of_subnets_per_vpc": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "number_of_vm_per_compute_node": {
+                "number_of_vm_per_vpc": {
                     "type": "integer"
                 },
-                "number_of_vm_per_vpc": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
                 "scheduler": {
-                    "type": "string"
-                },
-                "updated_at": {
                     "type": "string"
                 },
                 "vm_deploy_type": {
@@ -1062,47 +1065,19 @@ const docTemplate = `{
                 "vpc_info": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/entities.ComputeVPCInfo"
+                        "$ref": "#/definitions/entities.VPCInfo"
                     }
-                }
-            }
-        },
-        "entities.ComputeSubnetInfo": {
-            "type": "object",
-            "properties": {
-                "number_of_vms": {
-                    "type": "integer"
-                },
-                "subnet_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "entities.ComputeVPCInfo": {
-            "type": "object",
-            "properties": {
-                "number_of_subnets": {
-                    "type": "integer"
-                },
-                "subnet_info": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/entities.ComputeSubnetInfo"
-                    }
-                },
-                "vpc_id": {
-                    "type": "string"
                 }
             }
         },
         "entities.Gateway": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "ip": {
-                    "type": "string"
+                "ips": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "name": {
                     "type": "string"
@@ -1138,17 +1113,11 @@ const docTemplate = `{
         "entities.NetworkConfig": {
             "type": "object",
             "properties": {
-                "created_at": {
-                    "type": "string"
-                },
                 "gateways": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/entities.Gateway"
                     }
-                },
-                "id": {
-                    "type": "string"
                 },
                 "name": {
                     "type": "string"
@@ -1174,14 +1143,11 @@ const docTemplate = `{
                         "$ref": "#/definitions/entities.SecurityGroup"
                     }
                 },
-                "subnet_ciders": {
+                "vpcs": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/entities.VPCInfo"
                     }
-                },
-                "updated_at": {
-                    "type": "string"
                 }
             }
         },
@@ -1199,9 +1165,6 @@ const docTemplate = `{
         "entities.Router": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "string"
-                },
                 "name": {
                     "type": "string"
                 },
@@ -1223,9 +1186,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "ethertype": {
-                    "type": "string"
-                },
-                "id": {
                     "type": "string"
                 },
                 "name": {
@@ -1251,12 +1211,6 @@ const docTemplate = `{
                 "compute_config_id": {
                     "type": "string"
                 },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
                 "name": {
                     "type": "string"
                 },
@@ -1274,9 +1228,20 @@ const docTemplate = `{
                 },
                 "topology_id": {
                     "type": "string"
-                },
-                "updated_at": {
+                }
+            }
+        },
+        "entities.ScenarioAction": {
+            "type": "object",
+            "properties": {
+                "scenario_id": {
                     "type": "string"
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entities.ServiceAction"
+                    }
                 }
             }
         },
@@ -1289,10 +1254,10 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
-                "id": {
+                "name": {
                     "type": "string"
                 },
-                "name": {
+                "project_id": {
                     "type": "string"
                 },
                 "rules": {
@@ -1300,6 +1265,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/entities.Rule"
                     }
+                },
+                "tenant_id": {
+                    "type": "string"
                 }
             }
         },
@@ -1307,9 +1275,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "cmd": {
-                    "type": "string"
-                },
-                "id": {
                     "type": "string"
                 },
                 "name": {
@@ -1344,15 +1309,24 @@ const docTemplate = `{
                 }
             }
         },
+        "entities.ServiceAction": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "service_id": {
+                    "type": "string"
+                },
+                "service_name": {
+                    "description": "The service id and name with the action\nin: path\nenum: DEPLOY, DELETE, UPDATE, CHECK",
+                    "type": "string"
+                }
+            }
+        },
         "entities.ServiceConfig": {
             "type": "object",
             "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
                 "name": {
                     "type": "string"
                 },
@@ -1361,8 +1335,19 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/entities.Service"
                     }
+                }
+            }
+        },
+        "entities.SubnetInfo": {
+            "type": "object",
+            "properties": {
+                "number_of_vms": {
+                    "type": "integer"
                 },
-                "updated_at": {
+                "subnet_cidr": {
+                    "type": "string"
+                },
+                "subnet_gateway": {
                     "type": "string"
                 }
             }
@@ -1371,9 +1356,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "cmd": {
-                    "type": "string"
-                },
-                "id": {
                     "type": "string"
                 },
                 "name": {
@@ -1399,12 +1381,6 @@ const docTemplate = `{
         "entities.TestConfig": {
             "type": "object",
             "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
                 "name": {
                     "type": "string"
                 },
@@ -1413,9 +1389,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/entities.Test"
                     }
-                },
-                "updated_at": {
-                    "type": "string"
                 }
             }
         },
@@ -1428,10 +1401,7 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
+                "data_plane_cidr": {
                     "type": "string"
                 },
                 "images": {
@@ -1453,9 +1423,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "type": {
-                    "type": "string"
-                },
-                "updated_at": {
                     "type": "string"
                 },
                 "vhosts_per_rack": {
@@ -1500,6 +1467,29 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/entities.Nic"
                     }
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "entities.VPCInfo": {
+            "type": "object",
+            "properties": {
+                "number_of_subnets": {
+                    "type": "integer"
+                },
+                "project_id": {
+                    "type": "string"
+                },
+                "subnet_info": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entities.SubnetInfo"
+                    }
+                },
+                "tenant_id": {
+                    "type": "string"
                 }
             }
         }
