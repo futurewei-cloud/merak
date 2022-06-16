@@ -10,7 +10,7 @@ import (
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
-	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/vm"
+	create "github.com/futurewei-cloud/merak/services/merak-compute/workflows"
 	"github.com/go-redis/redis/v9"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
@@ -58,7 +58,7 @@ func main() {
 	log.Println("Connected to DB!")
 
 	w := worker.New(c, common.VM_TASK_QUEUE, worker.Options{})
-	w.RegisterWorkflow(vm.Create)
+	w.RegisterWorkflow(create.Create)
 	w.RegisterActivity(activities.VmCreate)
 	log.Println("Registered VM Workflows and activities.")
 	log.Println("Starting VM Worker.")
