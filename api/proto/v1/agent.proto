@@ -7,3 +7,6 @@ service MerakAgentService {
     rpc PortHandler (InternalComputeConfigInfo) returns (ReturnMessage) {}
 }
 
+message InternalPortConfig {
+
+}
