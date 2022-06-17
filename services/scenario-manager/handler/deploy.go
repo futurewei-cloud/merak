@@ -14,7 +14,7 @@ import (
 
 func TopologyHandler(s *entities.Scenario, responseTopo *pb.ReturnTopologyMessage) error {
 	var topology entities.TopologyConfig
-	if err := database.FindEntity(s.TopologyId, utils.KEY_PREFIX_SCENARIO, &topology); err != nil {
+	if err := database.FindEntity(s.TopologyId, utils.KEY_PREFIX_TOPOLOGY, &topology); err != nil {
 		return errors.New("topology not found")
 	}
 
@@ -152,19 +152,20 @@ func ComputeHanlder(s *entities.Scenario, responseTopo *pb.ReturnTopologyMessage
 
 func constructTopologyMessage(topo *entities.TopologyConfig, topoPb *pb.InternalTopologyInfo) error {
 	topoPb.OperationType = pb.OperationType_CREATE
-	topoPb.Config.FormatVersion = 1
-	topoPb.Config.RevisionNumber = 1
-	topoPb.Config.RequestId = utils.GenUUID()
-	topoPb.Config.TopologyId = topo.Id
-	topoPb.Config.Name = topo.Name
-	topoPb.Config.MessageType = pb.MessageType_FULL
-	topoPb.Config.TopologyType = getTopoloyType(topo.TopoType)
-	topoPb.Config.NumberOfVhosts = uint32(topo.NumberOfVhosts)
-	topoPb.Config.NumberOfRacks = uint32(topo.NumberOfRacks)
-	topoPb.Config.VhostPerRack = uint32(topo.VhostsPerRack)
-	topoPb.Config.DataPlaneCidr = topo.DataPlaneCidr
-	topoPb.Config.NumberOfGateways = uint32(topo.NumberOfGateways)
-	topoPb.Config.GatewayIps = topo.GatewayIPs
+	var conf pb.InternalTopologyConfiguration
+	conf.FormatVersion = 1
+	conf.RevisionNumber = 1
+	conf.RequestId = utils.GenUUID()
+	conf.TopologyId = topo.Id
+	conf.Name = topo.Name
+	conf.MessageType = pb.MessageType_FULL
+	conf.TopologyType = getTopoloyType(topo.TopoType)
+	conf.NumberOfVhosts = uint32(topo.NumberOfVhosts)
+	conf.NumberOfRacks = uint32(topo.NumberOfRacks)
+	conf.VhostPerRack = uint32(topo.VhostsPerRack)
+	conf.DataPlaneCidr = topo.DataPlaneCidr
+	conf.NumberOfGateways = uint32(topo.NumberOfGateways)
+	conf.GatewayIps = topo.GatewayIPs
 
 	for _, image := range topo.Images {
 		var imagePb pb.InternalTopologyImage
@@ -174,7 +175,7 @@ func constructTopologyMessage(topo *entities.TopologyConfig, topoPb *pb.Internal
 		imagePb.Cmd = image.Cmd
 		imagePb.Args = image.Args
 		imagePb.Registry = image.Registry
-		topoPb.Config.Images = append(topoPb.Config.Images, &imagePb)
+		conf.Images = append(conf.Images, &imagePb)
 	}
 
 	for _, vnode := range topo.VNodes {
@@ -188,8 +189,10 @@ func constructTopologyMessage(topo *entities.TopologyConfig, topoPb *pb.Internal
 			vnicPb.Ip = vnic.Ip
 			vnodePb.Vnics = append(vnodePb.Vnics, &vnicPb)
 		}
-		topoPb.Config.Vnodes = append(topoPb.Config.Vnodes, &vnodePb)
+		conf.Vnodes = append(conf.Vnodes, &vnodePb)
 	}
+
+	topoPb.Config = &conf
 
 	return nil
 }
@@ -226,11 +229,12 @@ func getVNodeType(vnodeType string) pb.VNodeType {
 
 func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entities.ServiceConfig, topoReturn *pb.ReturnTopologyMessage, netconfPb *pb.InternalNetConfigInfo) error {
 	netconfPb.OperationType = pb.OperationType_CREATE
-	netconfPb.Config.FormatVersion = 1
-	netconfPb.Config.RevisionNumber = 1
-	netconfPb.Config.RequestId = utils.GenUUID()
-	netconfPb.Config.NetconfigId = netconf.Id
-	netconfPb.Config.MessageType = pb.MessageType_FULL
+	var conf pb.InternalNetConfigConfiguration
+	conf.FormatVersion = 1
+	conf.RevisionNumber = 1
+	conf.RequestId = utils.GenUUID()
+	conf.NetconfigId = netconf.Id
+	conf.MessageType = pb.MessageType_FULL
 
 	var servicePb pb.InternalServiceInfo
 	for _, service := range serviceConf.Services {
@@ -245,16 +249,17 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 			servicePb.ReturnString = service.ReturnString
 			servicePb.WhenToRun = service.WhenToRun
 			servicePb.WhereToRun = service.WhereToRun
-			netconfPb.Config.Services = append(netconfPb.Config.Services, &servicePb)
+			conf.Services = append(conf.Services, &servicePb)
 		}
 	}
 
-	netconfPb.Config.Network.OperationType = pb.OperationType_CREATE
-	netconfPb.Config.Network.Id = netconf.Id
-	netconfPb.Config.Network.Name = netconf.Name
-	netconfPb.Config.Network.NumberOfVpcs = uint32(netconf.NumberOfVPCS)
-	netconfPb.Config.Network.NumberOfSubnetPerVpc = uint32(netconf.NumberOfSubnetPerVpc)
-	netconfPb.Config.Network.NumberOfSecurityGroups = uint32(netconf.NumberOfSecurityGroups)
+	var netPb pb.InternalNetworkInfo
+	netPb.OperationType = pb.OperationType_CREATE
+	netPb.Id = netconf.Id
+	netPb.Name = netconf.Name
+	netPb.NumberOfVpcs = uint32(netconf.NumberOfVPCS)
+	netPb.NumberOfSubnetPerVpc = uint32(netconf.NumberOfSubnetPerVpc)
+	netPb.NumberOfSecurityGroups = uint32(netconf.NumberOfSecurityGroups)
 
 	var vpcPb pb.InternalVpcInfo
 	for _, vpc := range netconf.Vpcs {
@@ -269,7 +274,7 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 			subnetPb.SubnetGw = subnet.SubnetGateway
 			vpcPb.Subnets = append(vpcPb.Subnets, &subnetPb)
 		}
-		netconfPb.Config.Network.Vpcs = append(netconfPb.Config.Network.Vpcs, &vpcPb)
+		netPb.Vpcs = append(netPb.Vpcs, &vpcPb)
 	}
 
 	var routerPb pb.InternalRouterInfo
@@ -278,7 +283,7 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 		routerPb.Id = router.Id
 		routerPb.Name = router.Name
 		routerPb.Subnets = router.SubnetGateways
-		netconfPb.Config.Network.Routers = append(netconfPb.Config.Network.Routers, &routerPb)
+		netPb.Routers = append(netPb.Routers, &routerPb)
 	}
 
 	var gatewayPb pb.InternalGatewayInfo
@@ -287,7 +292,7 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 		gatewayPb.Id = gateway.Id
 		gatewayPb.Name = gateway.Name
 		gatewayPb.Ips = gateway.Ips
-		netconfPb.Config.Network.Gateways = append(netconfPb.Config.Network.Gateways, &gatewayPb)
+		netPb.Gateways = append(netPb.Gateways, &gatewayPb)
 	}
 
 	var sgPb pb.InternalSecurityGroupInfo
@@ -310,27 +315,35 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 			sgRulePb.RemoteIpPrefix = rule.RemoteIpPrefix
 			sgPb.Rules = append(sgPb.Rules, &sgRulePb)
 		}
-		netconfPb.Config.Network.SecurityGroups = append(netconfPb.Config.Network.SecurityGroups, &sgPb)
+		netPb.SecurityGroups = append(netPb.SecurityGroups, &sgPb)
 	}
 
-	netconfPb.Config.Computes = topoReturn.ComputeNodes
+	conf.Network = &netPb
+	conf.Computes = topoReturn.ComputeNodes
+	netconfPb.Config = &conf
 
 	return nil
 }
 
 func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entities.ServiceConfig, topoReturn *pb.ReturnTopologyMessage, netReturn *pb.ReturnNetworkMessage, computePb *pb.InternalComputeConfigInfo) error {
 	computePb.OperationType = pb.OperationType_CREATE
-	computePb.Config.FormatVersion = 1
-	computePb.Config.RevisionNumber = 1
-	computePb.Config.RequestId = utils.GenUUID()
-	computePb.Config.ComputeConfigId = compute.Id
-	computePb.Config.MessageType = pb.MessageType_FULL
-	computePb.Config.Pods = topoReturn.ComputeNodes
-	computePb.Config.VmDeploy.OperationType = pb.OperationType_CREATE
-	computePb.Config.VmDeploy.Vpcs = netReturn.Vpcs
-	computePb.Config.VmDeploy.Secgroups = netReturn.SecurityGroupIds
-	computePb.Config.VmDeploy.DeployType = getVMDeployType(compute.VmDeployType)
-	computePb.Config.VmDeploy.Scheduler = getVMDeployScheduler(compute.Scheduler)
+
+	var conf pb.InternalComputeConfiguration
+	conf.FormatVersion = 1
+	conf.RevisionNumber = 1
+	conf.RequestId = utils.GenUUID()
+	conf.ComputeConfigId = compute.Id
+	conf.MessageType = pb.MessageType_FULL
+	conf.Pods = topoReturn.ComputeNodes
+
+	var vmDeployPb pb.InternalVMDeployInfo
+	vmDeployPb.OperationType = pb.OperationType_CREATE
+	vmDeployPb.Vpcs = netReturn.Vpcs
+	vmDeployPb.Secgroups = netReturn.SecurityGroupIds
+	vmDeployPb.DeployType = getVMDeployType(compute.VmDeployType)
+	vmDeployPb.Scheduler = getVMDeployScheduler(compute.Scheduler)
+
+	conf.VmDeploy = &vmDeployPb
 
 	var servicePb pb.InternalServiceInfo
 	for _, service := range serviceConf.Services {
@@ -345,9 +358,11 @@ func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entit
 			servicePb.ReturnString = service.ReturnString
 			servicePb.WhenToRun = service.WhenToRun
 			servicePb.WhereToRun = service.WhereToRun
-			computePb.Config.Services = append(computePb.Config.Services, &servicePb)
+			conf.Services = append(conf.Services, &servicePb)
 		}
 	}
+
+	computePb.Config = &conf
 
 	return nil
 }

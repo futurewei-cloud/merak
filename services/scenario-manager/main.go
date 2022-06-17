@@ -99,7 +99,7 @@ func SetupRoutes(app *fiber.App) {
 	scenario.Get("/:id", routes.GetScenario)
 	scenario.Put("/:id", routes.UpdateScenario)
 	scenario.Delete("/:id", routes.DeleteScenario)
-	scenario.Post("/action", routes.ScenarioActoins)
+	scenario.Post("/actions", routes.ScenarioActoins)
 
 	// Topology
 	topology := app.Group(apiURL + "/topologies")

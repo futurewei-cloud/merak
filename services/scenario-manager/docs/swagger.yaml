@@ -179,13 +179,7 @@ definitions:
     properties:
       action:
         type: string
-      service_id:
-        type: string
       service_name:
-        description: |-
-          The service id and name with the action
-          in: path
-          enum: DEPLOY, DELETE, UPDATE, CHECK
         type: string
     type: object
   entities.ServiceConfig:
@@ -560,7 +554,7 @@ paths:
       summary: Insert a scenario to database
       tags:
       - scenario
-  /api/scenarios/action:
+  /api/scenarios/actions:
     post:
       consumes:
       - application/json

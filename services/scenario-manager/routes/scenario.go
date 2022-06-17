@@ -24,7 +24,7 @@ import (
 //@Param scenario body entities.ScenarioAction true "ScenarioAction"
 //@Success 200 {object} entities.ScenarioAction "scenario action data with success message"
 //@Failure 500 {object} nil "scenario action null with failure message"
-//@Router /api/scenarios/action [post]
+//@Router /api/scenarios/actions [post]
 func ScenarioActoins(c *fiber.Ctx) error {
 	var scenario_action entities.ScenarioAction
 
@@ -194,13 +194,7 @@ func UpdateScenario(c *fiber.Ctx) error {
 		c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
 	}
 
-	scenario.Name = updateScenario.Name
-	scenario.ProjectId = updateScenario.ProjectId
-	scenario.ServiceConfId = updateScenario.ServiceConfId
-	scenario.TopologyId = updateScenario.TopologyId
-	scenario.NetworkConfId = updateScenario.NetworkConfId
-	scenario.ComputeConfId = updateScenario.ComputeConfId
-	scenario.TestConfId = updateScenario.TestConfId
+	utils.EntityUpdateCheck(utils.UpdateChecker, &scenario, &updateScenario)
 	scenario.UpdatedAt = time.Now()
 
 	if err := checkRelatedEntities(&scenario); err != nil {
