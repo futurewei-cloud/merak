@@ -2,6 +2,9 @@
 package main
 
 import (
+	"bytes"
+	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -14,18 +17,69 @@ import (
 //	vpc_port     = "30001"
 //	project_id   = "123456789"
 //)
+type vpc_body struct {
+	Admin_state_up        bool   `json:"admin_state_up"`
+	Revision_number       int    `json:"revision_number"`
+	Cidr                  string `json:"cidr"`
+	By_default            bool   `json:"default"`
+	Description           string `json:"description"`
+	Dns_domain            string `json:"dns_domain"`
+	Id                    string `json:"id"`
+	Is_default            bool   `json:"is_default"`
+	Mtu                   int    `json:"mtu"`
+	Name                  string `json:"name"`
+	Port_security_enabled bool   `json:"port_security_enabled"`
+	Project_id            string `json:"project_id"`
+}
+
+type vpc_struct struct {
+	Network vpc_body `json:"network"`
+}
 
 func main() {
-	call("http://54.188.252.43:30001/project/123456789/vpcs", "GET")
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	vpc_body := vpc_struct{Network: vpc_body{
+		Admin_state_up:        true,
+		Revision_number:       0,
+		Cidr:                  "10.9.0.0/16",
+		By_default:            true,
+		Description:           "vpc",
+		Dns_domain:            "domain",
+		Id:                    "9192a4d4-ffff-4ece-b3f0-8d36e3d88009",
+		Is_default:            true,
+		Mtu:                   1400,
+		Name:                  "sample_vpc_9",
+		Port_security_enabled: true,
+		Project_id:            "123456789",
+	}}
+	//vpc_body := vpc_struct{
+	//	Admin_state_up:        true,
+	//	Revision_number:       0,
+	//	Cidr:                  "10.9.0.0/16",
+	//	By_default:            true,
+	//	Description:           "vpc",
+	//	Dns_domain:            "domain",
+	//	Id:                    "9192a4d4-ffff-4ece-b3f0-8d36e3d88009",
+	//	Is_default:            true,
+	//	Mtu:                   1400,
+	//	Name:                  "sample_vpc_9",
+	//	Port_security_enabled: true,
+	//	Project_id:            "123456789",
+	//}
+	call("http://54.188.252.43:30001/project/123456789/vpcs", "POST", vpc_body)
 }
-func call(url, method string) error {
+
+func call(url, method string, vpc_body vpc_struct) error {
 	client := &http.Client{
 		Timeout: time.Second * 10,
 	}
-	req, err := http.NewRequest(method, url, nil)
+	body, _ := json.Marshal(vpc_body)
+	log.Printf("body %s", string(body))
+	req, err := http.NewRequest(method, url, bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("Got error %s", err.Error())
 	}
+	req.Header.Set("Content-Type", "application/json")
 	//req.Header.Set("user-agent", "golang application")
 	//req.Header.Add("foo", "bar1")
 	//req.Header.Add("foo", "bar2")
