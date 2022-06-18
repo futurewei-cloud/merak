@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	Port          = flag.Int("port", constants.TOPOLOGY_GRPC_SERVER_PORT, "The server port")
+	Port          = flag.Int("port", constants.TOPLOGY_GRPC_SERVER_PORT, "The server port")
 	returnMessage = pb.ReturnMessage{
 		ReturnCode:    pb.ReturnCode_FAILED,
 		ReturnMessage: "Unintialized",

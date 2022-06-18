@@ -14,9 +14,9 @@ import (
 
 func TestGrpcClient(t *testing.T) {
 	var topology_address strings.Builder
-	topology_address.WriteString(constants.TOPOLOGY_GRPC_SERVER_ADDRESS)
+	topology_address.WriteString(constants.TOPLOGY_GRPC_SERVER_ADDRESS)
 	topology_address.WriteString(":")
-	topology_address.WriteString(strconv.Itoa(constants.TOPOLOGY_GRPC_SERVER_PORT))
+	topology_address.WriteString(strconv.Itoa(constants.TOPLOGY_GRPC_SERVER_PORT))
 
 	conn, err := grpc.Dial(topology_address.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

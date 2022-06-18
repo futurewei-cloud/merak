@@ -31,11 +31,6 @@ func main() {
 	//grpc client
 
 	// redis init check-- pingpong test
-	db_client := database.CreateDBClient()
-	if err := database.PingClient(db_client); err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println("Pass the redis ping test.")
-	}
+	err = database.ConnectDatabase()
 
 }
