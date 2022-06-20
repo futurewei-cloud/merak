@@ -26,7 +26,8 @@ func NewGrpcClient(conn *grpc.ClientConn, timeout time.Duration) GrpcClient {
 func TopologyClient(topopb *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
 	var conn *grpc.ClientConn
 
-	conn, err := grpc.Dial(":40052", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(":40052", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+
 	if err != nil {
 		log.Fatalf("did not connect: %s", err)
 		return nil, fmt.Errorf("Cannot connect to merak-topology grpc server: %s", err)

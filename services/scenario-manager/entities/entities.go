@@ -27,7 +27,6 @@ const (
 
 // Action
 type ScenarioAction struct {
-	Id         string          `json:"id" swaggerignore:"true"`
 	ScenarioId string          `json:"scenario_id"`
 	Services   []ServiceAction `json:"services"`
 }

@@ -31,7 +31,7 @@ func TestCreateScenario(t *testing.T) {
 		{
 			description: "create a scenario",
 			route:       "/api/scenarios",
-			body: map[string]string{"id": "", "name": "testScenario1", "project_id": "1", "topology_id": "1",
+			body: map[string]string{"name": "testScenario1", "project_id": "1", "topology_id": "1",
 				"service_config_id": "1", "network_config_id": "1", "compute_config_id": "1", "test_config_id": "1"},
 			expectedError: false,
 			expectedCode:  200,
