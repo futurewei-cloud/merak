@@ -22,8 +22,8 @@ var (
 
 func main() {
 	testInternalSecurityGroupRulelnfo := pb.InternalSecurityGroupRulelnfo{
-		OperationType:  pb.OperationType_CREATE,
-		Id:             "1",
+		OperationType: pb.OperationType_CREATE,
+		//Id:             "1",
 		Name:           "InternalSecurityGroupRulelnfo",
 		Description:    "InternalSecurityGroupRulelnfo_description",
 		Ethertype:      "5",
@@ -35,46 +35,46 @@ func main() {
 	}
 	testInternalRouterInfo := pb.InternalRouterInfo{
 		OperationType: pb.OperationType_CREATE,
-		Id:            "1",
-		Name:          "InternalRouterInfo",
-		Subnets:       []string{"10.6.0.0/16", "10.7.0.0/16"},
+		//Id:            "1",
+		Name:    "InternalRouterInfo",
+		Subnets: []string{"10.6.0.0/16", "10.7.0.0/16"},
 	}
 	testInternalGatewayInfo := pb.InternalGatewayInfo{
 		OperationType: pb.OperationType_CREATE,
-		Id:            "1",
-		Name:          "InternalGatewayInfo",
-		Ips:           []string{"10.6.0.1", "10.7.0.1"},
+		//Id:            "1",
+		Name: "InternalGatewayInfo",
+		Ips:  []string{"10.6.0.1", "10.7.0.1"},
 	}
 	testInternalSecurityGroupInfo := pb.InternalSecurityGroupInfo{
 		OperationType: pb.OperationType_CREATE,
-		Id:            "1",
-		Name:          "InternalSecurityGroupInfo",
-		TenantId:      "123456789",
-		ProjectId:     "123456789",
-		Rules:         []*pb.InternalSecurityGroupRulelnfo{&testInternalSecurityGroupRulelnfo},
-		ApplyTo:       []string{"ApplyTo"},
+		//Id:            "1",
+		Name:      "InternalSecurityGroupInfo",
+		TenantId:  "123456789",
+		ProjectId: "123456789",
+		Rules:     []*pb.InternalSecurityGroupRulelnfo{&testInternalSecurityGroupRulelnfo},
+		ApplyTo:   []string{"ApplyTo"},
 	}
 	testInternalSubnetInfo := pb.InternalSubnetInfo{
-		SubnetId:   "SubnetId1",
+		//SubnetId:   "SubnetId1",
 		SubnetCidr: "10.6.0.0/16",
 		SubnetGw:   "10.6.0.1",
 		NumberVms:  0,
 	}
 	testInternalSubnetInfo2 := pb.InternalSubnetInfo{
-		SubnetId:   "SubnetId2",
+		//SubnetId:   "SubnetId2",
 		SubnetCidr: "10.7.0.0/16",
 		SubnetGw:   "10.7.0.1",
 		NumberVms:  0,
 	}
 	testInternalVpcInfo := pb.InternalVpcInfo{
-		VpcId:     "VpcId1",
+		//VpcId:     "VpcId1",
 		TenantId:  "123456789",
 		ProjectId: "123456789",
 		Subnets:   []*pb.InternalSubnetInfo{&testInternalSubnetInfo, &testInternalSubnetInfo2},
 	}
 	testInternalNetworkInfo := pb.InternalNetworkInfo{
-		OperationType:          pb.OperationType_CREATE,
-		Id:                     "1",
+		OperationType: pb.OperationType_CREATE,
+		//Id:                     "1",
 		Name:                   "InternalNetworkInfo",
 		NumberOfVpcs:           1,
 		NumberOfSubnetPerVpc:   2,
@@ -86,23 +86,23 @@ func main() {
 	}
 	testInternalServiceInfo := pb.InternalServiceInfo{
 		OperationType: pb.OperationType_CREATE,
-		Id:            "1",
-		Name:          "InternalServiceInfo",
-		Cmd:           "InternalServiceInfo CMD",
-		Url:           "InternalServiceInfo URL",
-		Parameters:    []string{"Parameters"},
-		ReturnCode:    nil,
-		ReturnString:  []string{"ReturnString"},
-		WhenToRun:     "WhenToRun",
-		WhereToRun:    "WhereToRun",
+		//Id:            "1",
+		Name:         "InternalServiceInfo",
+		Cmd:          "InternalServiceInfo CMD",
+		Url:          "InternalServiceInfo URL",
+		Parameters:   []string{"Parameters"},
+		ReturnCode:   nil,
+		ReturnString: []string{"ReturnString"},
+		WhenToRun:    "WhenToRun",
+		WhereToRun:   "WhereToRun",
 	}
 	testInternalComputeInfo := pb.InternalComputeInfo{
 		OperationType: pb.OperationType_CREATE,
-		Id:            "1",
-		Name:          "InternalComputeInfo",
-		Ip:            "IP",
-		Mac:           "Mac",
-		Veth:          "Veth",
+		//Id:            "1",
+		Name: "InternalComputeInfo",
+		Ip:   "IP",
+		Mac:  "Mac",
+		Veth: "Veth",
 	}
 	testInternalStorageInfo := pb.InternalStorageInfo{Info: "InternalStorageInfo"}
 	testInternalNetConfigExtraInfo := pb.InternalNetConfigExtraInfo{Info: "InternalNetConfigExtraInfo"}

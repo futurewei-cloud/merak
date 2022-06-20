@@ -87,5 +87,5 @@ message ReturnNetworkMessage {
 }
 
 service MerakNetworkService {
-    rpc InternalNetConfigConfigurationHandler (InternalNetConfigInfo) returns (ReturnNetworkMessage) {}
+    rpc NetConfigHandler(InternalNetConfigInfo) returns (ReturnNetworkMessage) {}
 }
