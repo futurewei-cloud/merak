@@ -26,20 +26,20 @@ import (
 //@Failure 500 {object} nil "scenario action null with failure message"
 //@Router /api/scenarios/actions [post]
 func ScenarioActoins(c *fiber.Ctx) error {
-	var scenario_action entities.ScenarioAction
+	var scenarioAction entities.ScenarioAction
 
-	if err := c.BodyParser(&scenario_action); err != nil {
+	if err := c.BodyParser(&scenarioAction); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
 	}
 
 	var scenario entities.Scenario
-	if err := database.FindEntity(scenario_action.ScenarioId, utils.KEY_PREFIX_SCENARIO, &scenario); err != nil {
+	if err := database.FindEntity(scenarioAction.ScenarioId, utils.KEY_PREFIX_SCENARIO, &scenario); err != nil {
 		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", "Scenario not found!", nil))
 	}
 
-	// if scenario.Status != entities.STATUS_NONE {
-	// 	return c.Status(http.StatusNotAcceptable).JSON(utils.ReturnResponseMessage("FAILED", "Scenario is not available now!", nil))
-	// }
+	if scenario.Status != entities.STATUS_DONE && scenario.Status != entities.STATUS_NONE && scenario.Status != entities.STATUS_FAILED {
+		return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", "Scenario is not availalbe now!", nil))
+	}
 
 	if err := checkRelatedEntities(&scenario); err != nil {
 		return c.Status(http.StatusNotFound).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
@@ -48,33 +48,51 @@ func ScenarioActoins(c *fiber.Ctx) error {
 	scenario.Status = entities.STATUS_DEPLOYING
 	database.Set(utils.KEY_PREFIX_SCENARIO+scenario.Id, &scenario)
 
-	var returnTopo *pb.ReturnTopologyMessage
-	var returnNetwork *pb.ReturnNetworkMessage
-	var returnCompute *pb.ReturnMessage
-	for _, sa := range scenario_action.Services {
+	var scenarioStatus entities.ServiceStatus
+	for _, sa := range scenarioAction.Services {
 		if strings.ToLower(sa.ServiceName) == "topology" {
-			if err := handler.TopologyHandler(&scenario, returnTopo); err != nil {
-				return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
+			var returnTopo *pb.ReturnTopologyMessage
+			returnTopo, err := handler.TopologyHandler(&scenario, sa.Action)
+			if err != nil || returnTopo.ReturnCode == pb.ReturnCode_FAILED {
+				//return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
+				sa.Status = entities.STATUS_FAILED
+				scenarioStatus = entities.STATUS_FAILED
+			} else {
+				sa.Status = entities.STATUS_DONE
+				scenarioStatus = entities.STATUS_DONE
 			}
 		}
 		if strings.ToLower(sa.ServiceName) == "network" {
-			if err := handler.NetworkHandler(&scenario, returnTopo, returnNetwork); err != nil {
-				return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
+			var returnNetwork *pb.ReturnNetworkMessage
+			returnNetwork, err := handler.NetworkHandler(&scenario, sa.Action)
+			if err != nil || returnNetwork.ReturnCode == pb.ReturnCode_FAILED {
+				//return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
+				sa.Status = entities.STATUS_FAILED
+				scenarioStatus = entities.STATUS_FAILED
+			} else {
+				sa.Status = entities.STATUS_DONE
+				scenarioStatus = entities.STATUS_DONE
 			}
 		}
 		if strings.ToLower(sa.ServiceName) == "compute" {
-			if err := handler.ComputeHanlder(&scenario, returnTopo, returnNetwork, returnCompute); err != nil {
-				return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
+			var returnCompute *pb.ReturnMessage
+			returnCompute, err := handler.ComputeHanlder(&scenario, sa.Action)
+			if err != nil || returnCompute.ReturnCode == pb.ReturnCode_FAILED {
+				//return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
+				sa.Status = entities.STATUS_FAILED
+				scenarioStatus = entities.STATUS_FAILED
+			} else {
+				sa.Status = entities.STATUS_DONE
+				scenarioStatus = entities.STATUS_DONE
 			}
 		}
 	}
 
-	scenario.Status = entities.STATUS_DEPLOYING
+	scenario.Status = scenarioStatus
 	scenario.UpdatedAt = time.Now()
-
 	database.Set(utils.KEY_PREFIX_SCENARIO+scenario.Id, &scenario)
 
-	return c.Status(http.StatusOK).JSON(utils.ReturnResponseMessage("OK", "Scenario is deploying.", scenario))
+	return c.Status(http.StatusOK).JSON(utils.ReturnResponseMessage("OK", "Action on the scenario.", scenarioAction))
 }
 
 //Function for creating a scenario
