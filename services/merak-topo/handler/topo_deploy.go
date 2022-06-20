@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
@@ -133,43 +132,43 @@ func Topo_deploy(topo database.TopologyData) {
 		cm_nodes = append(cm_nodes, cm_node)
 	}
 
-	cmap := &corev1.ConfigMap{}
+	// cmap := &corev1.ConfigMap{}
 
-	newPod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-pod3",
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{Name: "test1box", Image: "busybox:latest", Command: []string{"sleep", "100000"}},
-			},
-		},
-	}
+	// newPod := &corev1.Pod{
+	// 	ObjectMeta: metav1.ObjectMeta{
+	// 		Name: "test-pod3",
+	// 	},
+	// 	Spec: corev1.PodSpec{
+	// 		Containers: []corev1.Container{
+	// 			{Name: "test1box", Image: "busybox:latest", Command: []string{"sleep", "100000"}},
+	// 		},
+	// 	},
+	// }
 
-	pod, err := clientset.CoreV1().Pods("default").Create(context.Background(), newPod, metav1.CreateOptions{})
+	// pod, err := clientset.CoreV1().Pods("default").Create(context.Background(), newPod, metav1.CreateOptions{})
 
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(pod)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Println(pod)
 
-	newPod2 := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-pod2",
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{Name: "test1box", Image: "busybox:latest", Command: []string{"sleep", "100000"}},
-			},
-		},
-	}
+	// newPod2 := &corev1.Pod{
+	// 	ObjectMeta: metav1.ObjectMeta{
+	// 		Name: "test-pod2",
+	// 	},
+	// 	Spec: corev1.PodSpec{
+	// 		Containers: []corev1.Container{
+	// 			{Name: "test1box", Image: "busybox:latest", Command: []string{"sleep", "100000"}},
+	// 		},
+	// 	},
+	// }
 
-	pod2, err := clientset.CoreV1().Pods("default").Create(context.Background(), newPod2, metav1.CreateOptions{})
+	// pod2, err := clientset.CoreV1().Pods("default").Create(context.Background(), newPod2, metav1.CreateOptions{})
 
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(pod2)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Println(pod2)
 
 }
 

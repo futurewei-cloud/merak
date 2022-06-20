@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -179,7 +178,7 @@ func Links_gen(nodes []database.Vnode, topo_id string) {
 
 				var paired = false
 
-				fmt.Printf("===snic %v===\n", snic.Intf)
+				// fmt.Printf("===snic %v===\n", snic.Intf)
 
 				if !slices.Contains(picked_intf, snic.Intf) && !paired {
 					picked_intf = append(picked_intf, snic.Intf)
@@ -193,10 +192,10 @@ func Links_gen(nodes []database.Vnode, topo_id string) {
 							for _, dnic := range d.Nics {
 								if !slices.Contains(picked_intf, dnic.Intf) && !paired {
 									picked_intf = append(picked_intf, dnic.Intf)
-									fmt.Printf("==dst Intf == %v \n", dnic.Intf)
+									paired = true
+									// fmt.Printf("==dst Intf == %v \n", dnic.Intf)
 									link := link_gen(node_name, dst_name, snic, dnic)
 									Topo_links = append(Topo_links, link)
-									paired = true
 
 								}
 							}
