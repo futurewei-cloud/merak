@@ -11,13 +11,15 @@ const (
 	STATUS_DEPLOYING ServiceStatus = "DEPLOYING"
 	STATUS_READY     ServiceStatus = "READY"
 	STATUS_DELETING  ServiceStatus = "DELETING"
+	STATUS_UPDATING  ServiceStatus = "UPDATING"
 	STATUS_FAILED    ServiceStatus = "FAILED"
+	STATUS_DONE      ServiceStatus = "DONE"
 )
 
 type EventName string
 
 const (
-	ENENT_DEPLOY EventName = "DEPLOY"
+	EVENT_DEPLOY EventName = "DEPLOY"
 	EVENT_DELETE EventName = "DELETE"
 	EVENT_UPDATE EventName = "UPDATE"
 	EVENT_CHECK  EventName = "CHECK"
@@ -25,14 +27,14 @@ const (
 
 // Action
 type ScenarioAction struct {
-	Id         string          `json:"id" swaggerignore:"true"`
 	ScenarioId string          `json:"scenario_id"`
 	Services   []ServiceAction `json:"services"`
 }
 
 type ServiceAction struct {
-	ServiceName string    `json:"service_name"`
-	Action      EventName `json:"action"`
+	ServiceName string        `json:"service_name"`
+	Action      EventName     `json:"action"`
+	Status      ServiceStatus `json:"status"`
 }
 
 // Scenario
