@@ -22,7 +22,7 @@ func TopologyHandler(s *entities.Scenario, action entities.EventName) (*pb.Retur
 	}
 
 	if action == entities.EVENT_DELETE {
-		if topology.Status != entities.STATUS_FAILED || topology.Status != entities.STATUS_READY {
+		if topology.Status != entities.STATUS_FAILED && topology.Status != entities.STATUS_READY {
 			return nil, fmt.Errorf("topology '%s' is '%s' now)", topology.Id, topology.Status)
 		}
 	}
@@ -101,7 +101,7 @@ func NetworkHandler(s *entities.Scenario, action entities.EventName) (*pb.Return
 	}
 
 	if action == entities.EVENT_DELETE {
-		if network.Status != entities.STATUS_FAILED || network.Status != entities.STATUS_READY {
+		if network.Status != entities.STATUS_FAILED && network.Status != entities.STATUS_READY {
 			return nil, fmt.Errorf("network '%s' is '%s' now)", network.Id, network.Status)
 		}
 	}
@@ -182,7 +182,7 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.Return
 	}
 
 	if action == entities.EVENT_DELETE {
-		if compute.Status != entities.STATUS_FAILED || compute.Status != entities.STATUS_READY {
+		if compute.Status != entities.STATUS_FAILED && compute.Status != entities.STATUS_READY {
 			return nil, fmt.Errorf("compute '%s' is '%s' now)", compute.Id, compute.Status)
 		}
 	}
