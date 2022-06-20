@@ -74,7 +74,8 @@ func Create(aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cid
 	// left_ports_tor, new_picked, new_picked_intfs := Link_gen(ngw_ports, tor_ports, cur_picked, cur_picked_intfs)
 	// left_ports_rack, new_picked1, new_picked_intfs1 := Link_gen(left_ports_tor, rack_ports, new_picked, new_picked_intfs)
 	// Link_gen(left_ports_rack, aca_ports, new_picked1, new_picked_intfs1)
-	Topo.Topology_id = "topo:" + GenUUID()
+	// Topo.Topology_id = "topo:" + GenUUID()
+	Topo.Topology_id = "topo1"
 
 	Links_gen(Topo_nodes, Topo.Topology_id)
 	fmt.Printf("The topology links are : %+v. \n", Topo_links)
@@ -84,11 +85,8 @@ func Create(aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cid
 	Topo.Vlinks = Topo_links
 	Topo.Vnodes = Topo_nodes
 
-	// fmt.Println("======== Topology Deployment ==== ")
-	// Topo_deploy()
-
-	return Topo
-
+	fmt.Println("======== Topology Deployment ==== ")
+	Topo_deploy(Topo)
 	// topo-deploy
 
 	// save to radis
@@ -98,6 +96,7 @@ func Create(aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cid
 	// --routing config
 	// --test all ping
 
+	return Topo
 }
 
 func Delete() {
