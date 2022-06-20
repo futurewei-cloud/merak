@@ -49,18 +49,36 @@ func main() {
 		OperationType: pb.OperationType_CREATE,
 		Id:            "1",
 		Name:          "InternalSecurityGroupInfo",
-		Ips:           []string{"IPs"},
+		TenantId:      "123456789",
+		ProjectId:     "123456789",
 		Rules:         []*pb.InternalSecurityGroupRulelnfo{&testInternalSecurityGroupRulelnfo},
 		ApplyTo:       []string{"ApplyTo"},
+	}
+	testInternalSubnetInfo := pb.InternalSubnetInfo{
+		SubnetId:   "SubnetId1",
+		SubnetCidr: "10.6.0.0/16",
+		SubnetGw:   "10.6.0.1",
+		NumberVms:  0,
+	}
+	testInternalSubnetInfo2 := pb.InternalSubnetInfo{
+		SubnetId:   "SubnetId2",
+		SubnetCidr: "10.7.0.0/16",
+		SubnetGw:   "10.7.0.1",
+		NumberVms:  0,
+	}
+	testInternalVpcInfo := pb.InternalVpcInfo{
+		VpcId:     "VpcId1",
+		TenantId:  "123456789",
+		ProjectId: "123456789",
+		Subnets:   []*pb.InternalSubnetInfo{&testInternalSubnetInfo, &testInternalSubnetInfo2},
 	}
 	testInternalNetworkInfo := pb.InternalNetworkInfo{
 		OperationType:          pb.OperationType_CREATE,
 		Id:                     "1",
 		Name:                   "InternalNetworkInfo",
 		NumberOfVpcs:           1,
-		VpcCiders:              []string{"10.0.0.0/8"},
 		NumberOfSubnetPerVpc:   2,
-		SubnetCiders:           []string{"10.6.0.0/16", "10.7.0.0/16"},
+		Vpcs:                   []*pb.InternalVpcInfo{&testInternalVpcInfo},
 		NumberOfSecurityGroups: 1,
 		Routers:                []*pb.InternalRouterInfo{&testInternalRouterInfo},
 		Gateways:               []*pb.InternalGatewayInfo{&testInternalGatewayInfo},

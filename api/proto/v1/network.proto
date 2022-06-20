@@ -34,9 +34,10 @@ message InternalSecurityGroupInfo {
     OperationType operation_type = 1;
     string id = 2;
     string name = 3;
-    repeated string ips = 4;
-    repeated InternalSecurityGroupRulelnfo rules = 5;
-    repeated string apply_to = 6;
+    string tenant_id = 4;
+    string project_id = 5;
+    repeated InternalSecurityGroupRulelnfo rules = 6;
+    repeated string apply_to = 7;
 }
 
 message InternalNetworkInfo {
@@ -44,13 +45,12 @@ message InternalNetworkInfo {
     string id = 2;
     string name = 3;
     uint32 number_of_vpcs = 4;
-    repeated string vpc_ciders = 5;
-    uint32 number_of_subnet_per_vpc = 6;
-    repeated string subnet_ciders = 7;
-    uint32 number_of_security_groups = 8;
-    repeated InternalRouterInfo routers = 9;
-    repeated InternalGatewayInfo gateways = 10;
-    repeated InternalSecurityGroupInfo security_groups = 11;
+    uint32 number_of_subnet_per_vpc = 5;
+    repeated InternalVpcInfo vpcs = 6;
+    uint32 number_of_security_groups = 7;
+    repeated InternalRouterInfo routers = 8;
+    repeated InternalGatewayInfo gateways = 9;
+    repeated InternalSecurityGroupInfo security_groups = 10;
 }
 
 message InternalStorageInfo{
