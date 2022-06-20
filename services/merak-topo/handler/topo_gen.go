@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 )
@@ -100,22 +102,23 @@ func Ips_gen(ip_num int, k int, count int, data_plane_cidr string) []string {
 	return ips
 }
 
-func Node_port_gen(intf_num int, dev_list []string, dev_type string, ips []string, ip_flag bool) ([]database.Vport, []string) {
+func Node_port_gen(intf_num int, dev_list []string, dev_type string, ips []string, ip_flag bool) []string {
 	// var nodes []database.Vnode
-	var node database.Vnode
-	var nics []database.Nic
-	var nic database.Nic
+
 	var ports []database.Vport
 	var port database.Vport
 
 	for _, dev := range dev_list {
+		var node database.Vnode
+		var nics []database.Nic
+		var nic database.Nic
 		dev_intf := Intf_name(intf_num, dev)
 
 		for _, dev_int := range dev_intf {
 			nic.Intf = dev_int
 			port.Intf = dev_int
 			port.Id = GenUUID()
-			port.Name = "vport" + ":" + port.Id
+			port.Name = "vport" + "-" + dev + "-" + port.Id
 			if ip_flag {
 				nic.Ip, ips = ips[len(ips)-1], ips[:len(ips)-1]
 				port.Ip = nic.Ip
@@ -133,37 +136,118 @@ func Node_port_gen(intf_num int, dev_list []string, dev_type string, ips []strin
 		node.Nics = nics
 		Topo_nodes = append(Topo_nodes, node)
 	}
-	return ports, ips
+	return ips
 }
 
-// paring logic-- len(src) > len(dst), 1-to-1 paired, return the left dst
-func Link_gen(ports1 []database.Vport, ports2 []database.Vport) []database.Vport {
-	// var paired_links []database.Vlink
+func link_gen(src_name string, dst_name string, snic database.Nic, dnic database.Nic) database.Vlink {
 	var link database.Vlink
-	var src_ports []database.Vport
-	var dst_ports []database.Vport
+	var link_dst database.Vport
+	var link_src database.Vport
 
-	if len(ports1) <= len(ports2) {
-		src_ports = ports1
-		dst_ports = ports2
-	} else {
-		src_ports = ports2
-		dst_ports = ports1
+	link_dst.Id = GenUUID()
+	link_dst.Name = "vport" + ":" + dst_name + ":" + link_dst.Id
+	link_dst.Intf = dnic.Intf
+	link_dst.Ip = dnic.Ip
+
+	link_src.Id = GenUUID()
+	link_src.Name = "vport" + ":" + src_name + ":" + link_src.Id
+	link_src.Intf = snic.Intf
+	link_src.Ip = snic.Ip
+
+	link.Id = GenUUID()
+	link.Name = "vlink" + ":" + src_name + ":" + dst_name
+	link.Src = link_src
+	link.Dst = link_dst
+
+	return link
+
+}
+
+func Links_gen(nodes []database.Vnode, topo_id string) {
+	src_nodes := nodes
+	dst_nodes := nodes
+
+	picked_intf := []string{}
+
+	for _, s := range src_nodes {
+		node_name := strings.Split(s.Name, ":")[0]
+
+		if strings.Contains(node_name, "tor") {
+
+			var paired_nodes []string
+			for _, snic := range s.Nics {
+
+				var paired = false
+
+				fmt.Printf("===snic %v===\n", snic.Intf)
+
+				if !slices.Contains(picked_intf, snic.Intf) && !paired {
+					picked_intf = append(picked_intf, snic.Intf)
+
+					for _, d := range dst_nodes {
+
+						dst_name := strings.Split(d.Name, ":")[0]
+
+						if (strings.Contains(dst_name, "cgw") || strings.Contains(dst_name, "vswitch")) && (!slices.Contains(paired_nodes, dst_name)) && !paired {
+							paired_nodes = append(paired_nodes, dst_name)
+							for _, dnic := range d.Nics {
+								if !slices.Contains(picked_intf, dnic.Intf) && !paired {
+									picked_intf = append(picked_intf, dnic.Intf)
+									fmt.Printf("==dst Intf == %v \n", dnic.Intf)
+									link := link_gen(node_name, dst_name, snic, dnic)
+									Topo_links = append(Topo_links, link)
+									paired = true
+
+								}
+							}
+						}
+					}
+
+				}
+
+			}
+
+		}
+
 	}
 
-	for t := 0; t < len(src_ports); t++ {
-		src := src_ports[len(src_ports)-1]
-		src_ports = src_ports[:len(src_ports)-1]
-		dst := dst_ports[len(dst_ports)-1]
-		dst_ports = dst_ports[:len(dst_ports)-1]
+	for _, s := range src_nodes {
+		node_name := strings.Split(s.Name, ":")[0]
+		if strings.Contains(node_name, "vhost") {
 
-		link.Id = GenUUID()
-		link.Name = "vlink:" + link.Id
-		link.Src = src
-		link.Dst = dst
-		// paired_links = append(paired_links, link)
-		Topo_links = append(Topo_links, link)
+			var paired_nodes []string
+
+			for _, snic := range s.Nics {
+				// fmt.Printf("===snic %v===\n", snic.Intf)
+				var paired = false
+				if !slices.Contains(picked_intf, snic.Intf) {
+					picked_intf = append(picked_intf, snic.Intf)
+
+					for _, d := range dst_nodes {
+
+						dst_name := strings.Split(d.Name, ":")[0]
+						if (strings.Contains(dst_name, "vswitch")) && (!slices.Contains(paired_nodes, dst_name)) && !paired {
+
+							paired_nodes = append(paired_nodes, dst_name)
+
+							for _, dnic := range d.Nics {
+								if !slices.Contains(picked_intf, dnic.Intf) && !paired {
+									picked_intf = append(picked_intf, dnic.Intf)
+									// fmt.Printf("==dst Intf == %v \n", dnic.Intf)
+									paired = true
+									link := link_gen(node_name, dst_name, snic, dnic)
+									Topo_links = append(Topo_links, link)
+
+								}
+							}
+						}
+					}
+				}
+
+			}
+
+		}
+
 	}
 
-	return dst_ports
 }
