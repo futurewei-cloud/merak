@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	
 
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 )
@@ -86,6 +87,8 @@ func Create(aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cid
 	Topo.Vnodes = Topo_nodes
 
 	fmt.Println("======== Topology Deployment ==== ")
+
+	
 	Topo_deploy(Topo)
 	// topo-deploy
 

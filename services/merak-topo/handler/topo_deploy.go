@@ -3,10 +3,13 @@ package handler
 import (
 	"context"
 	"fmt"
-	"strconv"
+	
 	"strings"
+	"flag"
+	
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 	"k8s.io/client-go/kubernetes"
@@ -56,7 +59,7 @@ func config_clink(link database.Vlink, topo_id string) ConfigClink {
 
 func Topo_deploy(topo database.TopologyData) {
 
-	topo_id := topo.Topology_id
+	// topo_id := topo.Topology_id
 
 	// fmt.Printf("topo_id %v", topo_id)
 
@@ -81,96 +84,141 @@ func Topo_deploy(topo database.TopologyData) {
 		fmt.Printf("K8s Cluster Node: %v \n", n.Name)
 	}
 
+	// k8s config
+	
+
+	kube_config := flag.String("kubeconfig", "~/.kube/config", "location to the kubeconfig file")
+	config1, err := clientcmd.BuildConfigFromFalgs("",*kube_config)
+	if err != nil{
+		//handle err
+	}
+	fmt.Println(config1)
+
+
+
+
 	// configure nodes in topology
-	var node_links []ConfigClink
-	var cm_nodes []Cnode
-	for _, link := range topo.Vlinks {
-		node_link := config_clink(link, topo_id)
-		node_links = append(node_links, node_link)
+	// var node_links []ConfigClink
+	// var cm_nodes []Cnode
+	// for _, link := range topo.Vlinks {
+	// 	node_link := config_clink(link, topo_id)
+	// 	node_links = append(node_links, node_link)
+	// }
+
+	// for _, node := range topo.Vnodes {
+	// 	cm_node := config_cnode(node, topo_id)
+	// 	uid := 0
+	// 	var cm_node_links []Clink
+
+	// 	fmt.Println(node.Name)
+	// 	for _, nlink := range node_links {
+	// 		// fmt.Println(nlink.Local_pod)
+	// 		var clink Clink
+	// 		if nlink.Local_pod == strings.Split(node.Name, ":")[0] {
+
+	// 			clink.Peer_pod = nlink.Peer_pod
+	// 			clink.Local_intf = nlink.Local_intf
+	// 			clink.Local_ip = nlink.Local_ip
+	// 			clink.Peer_intf = nlink.Peer_intf
+	// 			clink.Peer_ip = nlink.Peer_ip
+	// 			clink.Uid = strconv.FormatInt(int64(uid), 10)
+	// 			uid = uid + 1
+	// 			cm_node_links = append(cm_node_links, clink)
+	// 			// fmt.Println("*******")
+	// 			// fmt.Println(clink)
+
+	// 		} else if nlink.Peer_pod == strings.Split(node.Name, ":")[0] {
+
+	// 			clink.Peer_intf = nlink.Local_intf
+	// 			clink.Peer_ip = nlink.Local_ip
+	// 			clink.Local_intf = nlink.Peer_intf
+	// 			clink.Local_ip = nlink.Peer_ip
+	// 			clink.Uid = strconv.FormatInt(int64(uid), 10)
+	// 			uid = uid + 1
+	// 			cm_node_links = append(cm_node_links, clink)
+	// 			// fmt.Println("&&&&&&&")
+	// 			// fmt.Println(clink.Uid)
+
+	// 		}
+
+	// 	}
+	// 	cm_node.Spec.Links = cm_node_links
+	// 	fmt.Println("=============")
+	// 	fmt.Println(cm_node)
+	// 	cm_nodes = append(cm_nodes, cm_node)
+	// }
+
+	
+
+
+
+
+
+
+
+
+	newPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-pod3",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{Name: "test1box", Image: "busybox:latest", Command: []string{"sleep", "100000"}},
+			},
+		},
 	}
 
-	for _, node := range topo.Vnodes {
-		cm_node := config_cnode(node, topo_id)
-		uid := 0
-		var cm_node_links []Clink
+	pod, err := clientset.CoreV1().Pods("default").Create(context.Background(), newPod, metav1.CreateOptions{})
 
-		fmt.Println(node.Name)
-		for _, nlink := range node_links {
-			// fmt.Println(nlink.Local_pod)
-			var clink Clink
-			if nlink.Local_pod == strings.Split(node.Name, ":")[0] {
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(pod)
 
-				clink.Peer_pod = nlink.Peer_pod
-				clink.Local_intf = nlink.Local_intf
-				clink.Local_ip = nlink.Local_ip
-				clink.Peer_intf = nlink.Peer_intf
-				clink.Peer_ip = nlink.Peer_ip
-				clink.Uid = strconv.FormatInt(int64(uid), 10)
-				uid = uid + 1
-				cm_node_links = append(cm_node_links, clink)
-				// fmt.Println("*******")
-				// fmt.Println(clink)
-
-			} else if nlink.Peer_pod == strings.Split(node.Name, ":")[0] {
-
-				clink.Peer_intf = nlink.Local_intf
-				clink.Peer_ip = nlink.Local_ip
-				clink.Local_intf = nlink.Peer_intf
-				clink.Local_ip = nlink.Peer_ip
-				clink.Uid = strconv.FormatInt(int64(uid), 10)
-				uid = uid + 1
-				cm_node_links = append(cm_node_links, clink)
-				// fmt.Println("&&&&&&&")
-				// fmt.Println(clink.Uid)
-
-			}
-
-		}
-		cm_node.Spec.Links = cm_node_links
-		fmt.Println("=============")
-		fmt.Println(cm_node)
-		cm_nodes = append(cm_nodes, cm_node)
+	newPod2 := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-pod2",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{Name: "test1box", Image: "busybox:latest", Command: []string{"sleep", "100000"}},
+			},
+		},
 	}
 
-	// cmap := &corev1.ConfigMap{}
+	pod2, err := clientset.CoreV1().Pods("default").Create(context.Background(), newPod2, metav1.CreateOptions{})
 
-	// newPod := &corev1.Pod{
-	// 	ObjectMeta: metav1.ObjectMeta{
-	// 		Name: "test-pod3",
-	// 	},
-	// 	Spec: corev1.PodSpec{
-	// 		Containers: []corev1.Container{
-	// 			{Name: "test1box", Image: "busybox:latest", Command: []string{"sleep", "100000"}},
-	// 		},
-	// 	},
-	// }
-
-	// pod, err := clientset.CoreV1().Pods("default").Create(context.Background(), newPod, metav1.CreateOptions{})
-
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println(pod)
-
-	// newPod2 := &corev1.Pod{
-	// 	ObjectMeta: metav1.ObjectMeta{
-	// 		Name: "test-pod2",
-	// 	},
-	// 	Spec: corev1.PodSpec{
-	// 		Containers: []corev1.Container{
-	// 			{Name: "test1box", Image: "busybox:latest", Command: []string{"sleep", "100000"}},
-	// 		},
-	// 	},
-	// }
-
-	// pod2, err := clientset.CoreV1().Pods("default").Create(context.Background(), newPod2, metav1.CreateOptions{})
-
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println(pod2)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(pod2)
 
 }
+
+
+// func config (body map[string]string ) error{
+// 	configMap := &corev1.ConfigMap{
+// 		Metadata: &metav1.ObjectMeta{
+// 			Name:      k8s.String("my-configmap"),
+// 			Namespace: k8s.String("my-namespace"),
+// 		},
+// 		Data: map[string]string{"hello": "world"},
+// 	}
+
+// 	if err := client.Create(ctx, configMap); err != nil {
+// 		// handle error
+// 	}
+
+// 	configMap.Data = body
+
+// 	if err := client.Update(ctx, configMap); err != nil {
+// 		// handle error
+// 	}
+
+// 	if err := client.Delete(ctx, configMap); err != nil {
+// 		// handle error
+// 	}
+// }
 
 // cmap {
 // 	'apiVersion': 'networkop.co.uk/v1beta1',
