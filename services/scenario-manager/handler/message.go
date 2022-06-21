@@ -139,6 +139,7 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 		vpcPb.VpcId = vpc.VpcId
 		vpcPb.TenantId = vpc.TenantId
 		vpcPb.ProjectId = vpc.ProjectId
+		vpcPb.VpcCidr = vpc.VpcCidr
 
 		var subnetPb pb.InternalSubnetInfo
 		for _, subnet := range vpc.SubnetInfo {
