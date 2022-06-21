@@ -401,7 +401,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/scenarios/action": {
+        "/api/scenarios/actions": {
             "post": {
                 "description": "Take an action on a scenario",
                 "consumes": [
@@ -1315,11 +1315,7 @@ const docTemplate = `{
                 "action": {
                     "type": "string"
                 },
-                "service_id": {
-                    "type": "string"
-                },
                 "service_name": {
-                    "description": "The service id and name with the action\nin: path\nenum: DEPLOY, DELETE, UPDATE, CHECK",
                     "type": "string"
                 }
             }
