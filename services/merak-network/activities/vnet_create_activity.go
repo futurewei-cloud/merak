@@ -85,7 +85,6 @@ func doRouter(vpcId string) (routerId string) {
 	log.Println("doRouter done")
 	return returnJson.Router.ID
 }
-
 func doAttachRouter(routerId string, subnetId string) error {
 	log.Println("doAttachRouter")
 	attachRouterBody := entities.AttachRouterStruct{SubnetId: subnetId}
@@ -100,6 +99,26 @@ func doAttachRouter(routerId string, subnetId string) error {
 	log.Printf("returnJson : %+v", returnJson)
 	log.Println("doAttachRouter done")
 	return nil
+}
+func doSg(sg *pb.InternalSecurityGroupInfo) string {
+	log.Println("doSg")
+	sgBody := entities.SgStruct{Sg: entities.SgBody{
+		Description:        "sg Description",
+		Name:               "YM_sample_sg",
+		ProjectId:          sg.ProjectId,
+		SecurityGroupRules: nil,
+		TenantId:           sg.TenantId,
+	}}
+	returnMessage, returnErr := http.RequestCall("http://54.188.252.43:30008/project/123456789/security-groups", "POST", sgBody)
+	if returnErr != nil {
+		log.Fatalf("returnErr %s", returnErr)
+	}
+	log.Printf("returnMessage %s", returnMessage)
+	var returnJson entities.SgReturn
+	json.Unmarshal([]byte(returnMessage), &returnJson)
+	log.Printf("returnJson : %+v", returnJson)
+	log.Println("doSg done")
+	return returnJson.SecurityGroup.ID
 }
 
 func VnetCreate(ctx context.Context, network *pb.InternalNetworkInfo) (string, error) {
@@ -135,9 +154,13 @@ func VnetCreate(ctx context.Context, network *pb.InternalNetworkInfo) (string, e
 		}
 		returnInfo = append(returnInfo, &currentVPC)
 		log.Printf("VnetCreate End %s", returnInfo)
-
 	}
 
+	//doing security group
+	for i := 0; i < int(network.NumberOfSecurityGroups); i++ {
+		sgId := doSg(network.SecurityGroups[i])
+		log.Printf("sgId: %s", sgId)
+	}
 	//doing router: create and attach subnet
 	for _, router := range network.Routers {
 		routerId := doRouter(vpcId)

@@ -79,6 +79,32 @@ type SgBody struct {
 type SgStruct struct {
 	Sg SgBody `json:"security_group"`
 }
+type SgReturn struct {
+	SecurityGroup struct {
+		ID                 string `json:"id"`
+		ProjectID          string `json:"project_id"`
+		TenantID           string `json:"tenant_id"`
+		Name               string `json:"name"`
+		Description        string `json:"description"`
+		SecurityGroupRules []struct {
+			ID              string      `json:"id"`
+			ProjectID       string      `json:"project_id"`
+			TenantID        string      `json:"tenant_id"`
+			Name            string      `json:"name"`
+			Description     string      `json:"description"`
+			SecurityGroupID string      `json:"security_group_id"`
+			RemoteGroupID   interface{} `json:"remote_group_id"`
+			Direction       string      `json:"direction"`
+			RemoteIPPrefix  interface{} `json:"remote_ip_prefix"`
+			Protocol        interface{} `json:"protocol"`
+			PortRangeMax    interface{} `json:"port_range_max"`
+			PortRangeMin    interface{} `json:"port_range_min"`
+			Ethertype       string      `json:"ethertype"`
+		} `json:"security_group_rules"`
+		CreateAt string `json:"create_at"`
+		UpdateAt string `json:"update_at"`
+	} `json:"security_group"`
+}
 
 type SubnetBody struct {
 	Cider     string `json:"cidr"`
