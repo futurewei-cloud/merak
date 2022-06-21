@@ -161,6 +161,7 @@ func VnetCreate(ctx context.Context, network *pb.InternalNetworkInfo) (string, e
 		sgId := doSg(network.SecurityGroups[i])
 		log.Printf("sgId: %s", sgId)
 	}
+
 	//doing router: create and attach subnet
 	for _, router := range network.Routers {
 		routerId := doRouter(vpcId)
