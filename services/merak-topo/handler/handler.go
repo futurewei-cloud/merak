@@ -1,10 +1,11 @@
 package handler
 
 import (
-	"fmt"
-	
-
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
+
+	"fmt"
+
+	"k8s.io/client-go/kubernetes"
 )
 
 // grpc client
@@ -34,7 +35,7 @@ var (
 )
 
 //function CREATE
-func Create(aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cidr string) database.TopologyData {
+func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cidr string) database.TopologyData {
 
 	// topo-gen
 	var ovs_tor_device = []string{"tor-0"}
@@ -78,7 +79,7 @@ func Create(aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cid
 	// Topo.Topology_id = "topo:" + GenUUID()
 	Topo.Topology_id = "topo1"
 
-	Links_gen(Topo_nodes, Topo.Topology_id)
+	Links_gen(Topo_nodes)
 	fmt.Printf("The topology links are : %+v. \n", Topo_links)
 
 	fmt.Println("======== Generate topology data ==== ")
@@ -88,8 +89,7 @@ func Create(aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cid
 
 	fmt.Println("======== Topology Deployment ==== ")
 
-	
-	Topo_deploy(Topo)
+	Topo_deploy(k8client, Topo)
 	// topo-deploy
 
 	// save to radis

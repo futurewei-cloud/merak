@@ -138,6 +138,32 @@ func Node_port_gen(intf_num int, dev_list []string, dev_type string, ips []strin
 	return ips
 }
 
+func config_sclink(link database.Vlink) database.ConfigClink {
+
+	var config_clink database.ConfigClink
+
+	config_clink.Peer_pod = strings.Split(link.Name, ":")[2]
+	config_clink.Local_intf = link.Src.Intf
+	config_clink.Local_ip = link.Src.Ip
+	config_clink.Peer_intf = link.Dst.Intf
+	config_clink.Peer_ip = link.Dst.Ip
+
+	return config_clink
+}
+
+func config_dclink(link database.Vlink) database.ConfigClink {
+
+	var config_clink database.ConfigClink
+
+	config_clink.Peer_pod = strings.Split(link.Name, ":")[1]
+	config_clink.Local_intf = link.Dst.Intf
+	config_clink.Local_ip = link.Dst.Ip
+	config_clink.Peer_intf = link.Src.Intf
+	config_clink.Peer_ip = link.Src.Ip
+
+	return config_clink
+}
+
 func link_gen(src_name string, dst_name string, snic database.Nic, dnic database.Nic) database.Vlink {
 	var link database.Vlink
 	var link_dst database.Vport
@@ -162,13 +188,13 @@ func link_gen(src_name string, dst_name string, snic database.Nic, dnic database
 
 }
 
-func Links_gen(nodes []database.Vnode, topo_id string) {
-	src_nodes := nodes
-	dst_nodes := nodes
+func Links_gen(Topo_nodes []database.Vnode) {
+	src_nodes := Topo_nodes
+	dst_nodes := Topo_nodes
 
 	picked_intf := []string{}
 
-	for _, s := range src_nodes {
+	for i, s := range src_nodes {
 		node_name := strings.Split(s.Name, ":")[0]
 
 		if strings.Contains(node_name, "tor") {
@@ -183,7 +209,7 @@ func Links_gen(nodes []database.Vnode, topo_id string) {
 				if !slices.Contains(picked_intf, snic.Intf) && !paired {
 					picked_intf = append(picked_intf, snic.Intf)
 
-					for _, d := range dst_nodes {
+					for j, d := range dst_nodes {
 
 						dst_name := strings.Split(d.Name, ":")[0]
 
@@ -196,6 +222,14 @@ func Links_gen(nodes []database.Vnode, topo_id string) {
 									// fmt.Printf("==dst Intf == %v \n", dnic.Intf)
 									link := link_gen(node_name, dst_name, snic, dnic)
 									Topo_links = append(Topo_links, link)
+
+									s_clink := config_sclink(link)
+									s_clink.Uid = strconv.Itoa(len(Topo_nodes[i].Flinks))
+									Topo_nodes[i].Flinks = append(Topo_nodes[i].Flinks, s_clink)
+
+									d_clink := config_dclink(link)
+									d_clink.Uid = strconv.Itoa(len(Topo_nodes[j].Flinks))
+									Topo_nodes[j].Flinks = append(Topo_nodes[j].Flinks, d_clink)
 
 								}
 							}
@@ -210,7 +244,7 @@ func Links_gen(nodes []database.Vnode, topo_id string) {
 
 	}
 
-	for _, s := range src_nodes {
+	for i, s := range src_nodes {
 		node_name := strings.Split(s.Name, ":")[0]
 		if strings.Contains(node_name, "vhost") {
 
@@ -222,7 +256,7 @@ func Links_gen(nodes []database.Vnode, topo_id string) {
 				if !slices.Contains(picked_intf, snic.Intf) {
 					picked_intf = append(picked_intf, snic.Intf)
 
-					for _, d := range dst_nodes {
+					for j, d := range dst_nodes {
 
 						dst_name := strings.Split(d.Name, ":")[0]
 						if (strings.Contains(dst_name, "vswitch")) && (!slices.Contains(paired_nodes, dst_name)) && !paired {
@@ -236,6 +270,14 @@ func Links_gen(nodes []database.Vnode, topo_id string) {
 									paired = true
 									link := link_gen(node_name, dst_name, snic, dnic)
 									Topo_links = append(Topo_links, link)
+
+									s_clink := config_sclink(link)
+									s_clink.Uid = strconv.Itoa(len(Topo_nodes[i].Flinks))
+									Topo_nodes[i].Flinks = append(Topo_nodes[i].Flinks, s_clink)
+
+									d_clink := config_dclink(link)
+									d_clink.Uid = strconv.Itoa(len(Topo_nodes[j].Flinks))
+									Topo_nodes[j].Flinks = append(Topo_nodes[j].Flinks, d_clink)
 
 								}
 							}

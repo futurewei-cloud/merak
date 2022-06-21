@@ -9,6 +9,7 @@ import (
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-topo/handler"
+	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
 )
 
 var (
@@ -32,6 +33,11 @@ type Server struct {
 
 func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
 	log.Printf("Received on TopologyHandler %s", in)
+
+	k8client, err := utils.K8sClient()
+	if err != nil {
+		return nil, fmt.Errorf("create k8s client error %s", err.Error())
+	}
 
 	// Operation&Return
 	switch op := in.OperationType; op {
@@ -81,7 +87,7 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			//
 		default:
 			// pb.TopologyType_TREE
-			topology_create := handler.Create(uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), data_plane_cidr)
+			topology_create := handler.Create(k8client, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), data_plane_cidr)
 			fmt.Printf("The created topology is: %+v \n", topology_create)
 
 		}
