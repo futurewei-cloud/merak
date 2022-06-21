@@ -185,6 +185,7 @@ type VPCInfo struct {
 	VpcId           string       `json:"vpc_id" swaggerignore:"true"`
 	TenantId        string       `json:"tenant_id"`
 	ProjectId       string       `json:"project_id"`
+	VpcCidr         string       `json:"vpc_cidr"`
 	NumberOfSubnets uint         `json:"number_of_subnets"`
 	SubnetInfo      []SubnetInfo `json:"subnet_info"`
 }
