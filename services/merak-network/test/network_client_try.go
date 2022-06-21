@@ -37,13 +37,13 @@ func main() {
 		OperationType: pb.OperationType_CREATE,
 		//Id:            "1",
 		Name:    "InternalRouterInfo",
-		Subnets: []string{"10.6.0.0/16", "10.7.0.0/16"},
+		Subnets: []string{"10.8.1.0/24", "10.8.2.0/24"},
 	}
 	testInternalGatewayInfo := pb.InternalGatewayInfo{
 		OperationType: pb.OperationType_CREATE,
 		//Id:            "1",
 		Name: "InternalGatewayInfo",
-		Ips:  []string{"10.6.0.1", "10.7.0.1"},
+		Ips:  []string{"10.8.1.1", "10.8.2.1"},
 	}
 	testInternalSecurityGroupInfo := pb.InternalSecurityGroupInfo{
 		OperationType: pb.OperationType_CREATE,
@@ -56,20 +56,21 @@ func main() {
 	}
 	testInternalSubnetInfo := pb.InternalSubnetInfo{
 		//SubnetId:   "SubnetId1",
-		SubnetCidr: "10.6.0.0/16",
-		SubnetGw:   "10.6.0.1",
+		SubnetCidr: "10.8.1.0/24",
+		SubnetGw:   "10.8.1.1",
 		NumberVms:  0,
 	}
 	testInternalSubnetInfo2 := pb.InternalSubnetInfo{
 		//SubnetId:   "SubnetId2",
-		SubnetCidr: "10.7.0.0/16",
-		SubnetGw:   "10.7.0.1",
+		SubnetCidr: "10.8.2.0/24",
+		SubnetGw:   "10.8.2.1",
 		NumberVms:  0,
 	}
 	testInternalVpcInfo := pb.InternalVpcInfo{
 		//VpcId:     "VpcId1",
 		TenantId:  "123456789",
 		ProjectId: "123456789",
+		VpcCidr:   "10.8.0.0/16",
 		Subnets:   []*pb.InternalSubnetInfo{&testInternalSubnetInfo, &testInternalSubnetInfo2},
 	}
 	testInternalNetworkInfo := pb.InternalNetworkInfo{
@@ -137,7 +138,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	// r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
-	r, err := c.InternalNetConfigConfigurationHandler(ctx, &testInternalNetConfigInfo)
+	r, err := c.NetConfigHandler(ctx, &testInternalNetConfigInfo)
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}

@@ -55,7 +55,8 @@ message InternalSubnetInfo {
 
 message InternalVpcInfo {
   string vpc_id = 1;
-  string tenant_id = 2;
-  string project_id = 3;
-  repeated InternalSubnetInfo subnets = 4;
+  string vpc_cidr = 2;
+  string tenant_id = 3;
+  string project_id = 4;
+  repeated InternalSubnetInfo subnets = 5;
 }

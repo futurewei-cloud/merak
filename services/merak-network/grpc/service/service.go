@@ -29,7 +29,7 @@ type Server struct {
 	pb.UnimplementedMerakNetworkServiceServer
 }
 
-func (s *Server) InternalNetConfigConfigurationHandler(ctx context.Context, in *pb.InternalNetConfigInfo) (*pb.ReturnNetworkMessage, error) {
+func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigInfo) (*pb.ReturnNetworkMessage, error) {
 	log.Printf("Received on NetworkHandler %s", in)
 	// Parse input
 
