@@ -37,18 +37,17 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 	case pb.OperationType_INFO:
 		log.Println("Info")
 	case pb.OperationType_CREATE:
+		ctx := context.TODO()
 		// services
 		for _, services := range in.Config.Services {
 			log.Println(services)
 		}
-		// compute info
-		for _, compute := range in.Config.Computes {
-			log.Println(compute)
-		}
-		//network info
-		log.Println(in.Config.Network)
-		ctx := context.TODO()
-		go activities.VnetCreate(ctx, in.Config.Network)
+		// compute info done
+		log.Println(in.Config.Computes)
+		go activities.RegisterNode(ctx, in.Config.Computes)
+		//network info done
+		//log.Println(in.Config.Network)
+		//go activities.VnetCreate(ctx, in.Config.Network)
 		//// storage info
 		//for _, storage := range in.Config.Storage {
 		//	log.Println(storage)

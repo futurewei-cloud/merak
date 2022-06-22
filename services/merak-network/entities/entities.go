@@ -252,3 +252,26 @@ type AttachRouterReturn struct {
 	TenantID  string        `json:"tenant_id"`
 	Tags      []interface{} `json:"tags"`
 }
+
+type NodeBody struct {
+	LocalIP    string `json:"local_ip"`
+	MacAddress string `json:"mac_address"`
+	NodeID     string `json:"node_id"`
+	NodeName   string `json:"node_name"`
+	ServerPort int    `json:"server_port"`
+	Veth       string `json:"veth"`
+}
+type NodeStruct struct {
+	Hosts []NodeBody `json:"host_infos"`
+}
+type NodeReturn []struct {
+	NcmURI     string      `json:"ncm_uri"`
+	NodeID     string      `json:"node_id"`
+	NodeName   string      `json:"node_name"`
+	LocalIP    string      `json:"local_ip"`
+	MacAddress string      `json:"mac_address"`
+	Veth       string      `json:"veth"`
+	ServerPort int         `json:"server_port"`
+	HostDvrMac interface{} `json:"host_dvr_mac"`
+	NcmID      interface{} `json:"ncm_id"`
+}

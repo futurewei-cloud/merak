@@ -12,7 +12,7 @@ import (
 
 func RequestCall(url, method string, bodyIn interface{}) (string, error) {
 	client := &http.Client{
-		Timeout: time.Second * 10,
+		Timeout: time.Second * 20,
 	}
 	body, _ := json.Marshal(bodyIn)
 	log.Printf("body %s", string(body))

@@ -87,23 +87,31 @@ func main() {
 	}
 	testInternalServiceInfo := pb.InternalServiceInfo{
 		OperationType: pb.OperationType_CREATE,
-		//Id:            "1",
-		Name:         "InternalServiceInfo",
-		Cmd:          "InternalServiceInfo CMD",
-		Url:          "InternalServiceInfo URL",
-		Parameters:   []string{"Parameters"},
-		ReturnCode:   nil,
-		ReturnString: []string{"ReturnString"},
-		WhenToRun:    "WhenToRun",
-		WhereToRun:   "WhereToRun",
+		Id:            "1",
+		Name:          "InternalServiceInfo",
+		Cmd:           "InternalServiceInfo CMD",
+		Url:           "InternalServiceInfo URL",
+		Parameters:    []string{"Parameters"},
+		ReturnCode:    nil,
+		ReturnString:  []string{"ReturnString"},
+		WhenToRun:     "WhenToRun",
+		WhereToRun:    "WhereToRun",
 	}
-	testInternalComputeInfo := pb.InternalComputeInfo{
+	testInternalComputeInfo1 := pb.InternalComputeInfo{
 		OperationType: pb.OperationType_CREATE,
 		//Id:            "1",
-		Name: "InternalComputeInfo",
-		Ip:   "IP",
-		Mac:  "Mac",
-		Veth: "Veth",
+		Name: "YM_node5",
+		Ip:   "192.168.10.15",
+		Mac:  "36:db:23:8c:4a:c5",
+		Veth: "eth1",
+	}
+	testInternalComputeInfo2 := pb.InternalComputeInfo{
+		OperationType: pb.OperationType_CREATE,
+		//Id:            "1",
+		Name: "YM_node6",
+		Ip:   "192.168.10.16",
+		Mac:  "36:db:23:8c:4a:c6",
+		Veth: "eth1",
 	}
 	testInternalStorageInfo := pb.InternalStorageInfo{Info: "InternalStorageInfo"}
 	testInternalNetConfigExtraInfo := pb.InternalNetConfigExtraInfo{Info: "InternalNetConfigExtraInfo"}
@@ -114,7 +122,7 @@ func main() {
 		NetconfigId:    "InternalNetConfigConfiguration NetconfigId",
 		MessageType:    0,
 		Services:       []*pb.InternalServiceInfo{&testInternalServiceInfo},
-		Computes:       []*pb.InternalComputeInfo{&testInternalComputeInfo},
+		Computes:       []*pb.InternalComputeInfo{&testInternalComputeInfo1, &testInternalComputeInfo2},
 		Network:        &testInternalNetworkInfo,
 		Storage:        &testInternalStorageInfo,
 		ExtraInfo:      &testInternalNetConfigExtraInfo,
