@@ -104,7 +104,7 @@ func Ips_gen(ip_num int, k int, count int, data_plane_cidr string) []string {
 func Node_port_gen(intf_num int, dev_list []string, dev_type string, ips []string, ip_flag bool) []string {
 	// var nodes []database.Vnode
 
-	var ports []database.Vport
+	// var ports []database.Vport
 	var port database.Vport
 
 	for _, dev := range dev_list {
@@ -127,11 +127,12 @@ func Node_port_gen(intf_num int, dev_list []string, dev_type string, ips []strin
 			}
 
 			nics = append(nics, nic)
-			ports = append(ports, port)
+			// ports = append(ports, port)
 		}
 
 		node.Id = GenUUID()
-		node.Name = dev + ":" + node.Id
+		// node.Name = dev + ":" + node.Id
+		node.Name = dev
 		node.Nics = nics
 		Topo_nodes = append(Topo_nodes, node)
 	}

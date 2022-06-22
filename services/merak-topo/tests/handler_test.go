@@ -10,9 +10,9 @@ import (
 )
 
 func TestTopologyHandler(t *testing.T) {
-	aca_num := 16
-	rack_num := 4
-	aca_per_rack := 4
+	aca_num := 4
+	rack_num := 2
+	aca_per_rack := 2
 	data_plane_cidr := "10.200.0.0/16"
 
 	k8client, err := utils.K8sClient()
