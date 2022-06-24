@@ -102,9 +102,7 @@ func Ips_gen(ip_num int, k int, count int, data_plane_cidr string) []string {
 }
 
 func Node_port_gen(intf_num int, dev_list []string, dev_type string, ips []string, ip_flag bool) []string {
-	// var nodes []database.Vnode
 
-	// var ports []database.Vport
 	var port database.Vport
 
 	for _, dev := range dev_list {
@@ -139,28 +137,28 @@ func Node_port_gen(intf_num int, dev_list []string, dev_type string, ips []strin
 	return ips
 }
 
-func config_sclink(link database.Vlink) database.ConfigClink {
+func config_sclink(link database.Vlink) map[string]interface{} {
 
-	var config_clink database.ConfigClink
-
-	config_clink.Peer_pod = strings.Split(link.Name, ":")[2]
-	config_clink.Local_intf = link.Src.Intf
-	config_clink.Local_ip = link.Src.Ip
-	config_clink.Peer_intf = link.Dst.Intf
-	config_clink.Peer_ip = link.Dst.Ip
+	config_clink := map[string]interface{}{
+		"peer_pod":   strings.Split(link.Name, ":")[2],
+		"local_intf": link.Src.Intf,
+		"local_ip":   link.Src.Ip,
+		"peer_intf":  link.Dst.Intf,
+		"peer_ip":    link.Dst.Ip,
+	}
 
 	return config_clink
 }
 
-func config_dclink(link database.Vlink) database.ConfigClink {
+func config_dclink(link database.Vlink) map[string]interface{} {
 
-	var config_clink database.ConfigClink
-
-	config_clink.Peer_pod = strings.Split(link.Name, ":")[1]
-	config_clink.Local_intf = link.Dst.Intf
-	config_clink.Local_ip = link.Dst.Ip
-	config_clink.Peer_intf = link.Src.Intf
-	config_clink.Peer_ip = link.Src.Ip
+	config_clink := map[string]interface{}{
+		"peer_pod":   strings.Split(link.Name, ":")[1],
+		"local_intf": link.Dst.Intf,
+		"local_ip":   link.Dst.Ip,
+		"peer_intf":  link.Src.Intf,
+		"peer_ip":    link.Src.Ip,
+	}
 
 	return config_clink
 }
@@ -225,11 +223,11 @@ func Links_gen(Topo_nodes []database.Vnode) {
 									Topo_links = append(Topo_links, link)
 
 									s_clink := config_sclink(link)
-									s_clink.Uid = strconv.Itoa(len(Topo_nodes[i].Flinks))
+									s_clink["uid"] = len(Topo_nodes[i].Flinks)
 									Topo_nodes[i].Flinks = append(Topo_nodes[i].Flinks, s_clink)
 
 									d_clink := config_dclink(link)
-									d_clink.Uid = strconv.Itoa(len(Topo_nodes[j].Flinks))
+									d_clink["uid"] = len(Topo_nodes[j].Flinks)
 									Topo_nodes[j].Flinks = append(Topo_nodes[j].Flinks, d_clink)
 
 								}
@@ -273,11 +271,11 @@ func Links_gen(Topo_nodes []database.Vnode) {
 									Topo_links = append(Topo_links, link)
 
 									s_clink := config_sclink(link)
-									s_clink.Uid = strconv.Itoa(len(Topo_nodes[i].Flinks))
+									s_clink["uid"] = len(Topo_nodes[i].Flinks)
 									Topo_nodes[i].Flinks = append(Topo_nodes[i].Flinks, s_clink)
 
 									d_clink := config_dclink(link)
-									d_clink.Uid = strconv.Itoa(len(Topo_nodes[j].Flinks))
+									d_clink["uid"] = len(Topo_nodes[j].Flinks)
 									Topo_nodes[j].Flinks = append(Topo_nodes[j].Flinks, d_clink)
 
 								}

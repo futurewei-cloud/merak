@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"strconv"
+
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 
 	"fmt"
@@ -17,8 +19,7 @@ import (
 // ----Save topology yaml file
 
 // Call operation.ConfigTopo()
-// ---generate pod configuration data for creating pods
-// ---generate config-map for each pod in the topology through volum_amount
+// ---generate pod topology
 // ---generate pod specification
 
 // Call operation. DeployTopo()
@@ -26,16 +27,17 @@ import (
 // ---through k8s deployment
 
 var (
-	Topo    database.TopologyData
-	Vlinks  []database.Vlink
-	Vnodes  []database.Vnode
-	cgw_num int = 2
-	count   int = 250
-	k       int = 0 // subnet starting number
+	Topo       database.TopologyData
+	Vlinks     []database.Vlink
+	Vnodes     []database.Vnode
+	cgw_num    int = 2
+	count      int = 250
+	k          int = 0 // subnet starting number
+	topo_count int = 1
 )
 
 //function CREATE
-func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cidr string) database.TopologyData {
+func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cidr string) error {
 
 	// topo-gen
 	var ovs_tor_device = []string{"tor-0"}
@@ -70,17 +72,13 @@ func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca
 
 	fmt.Printf("The topology nodes are : %+v. \n", Topo_nodes)
 
-	// cur_picked_intfs := []string{}
-
 	fmt.Println("======== Pairing links ==== ")
-	// left_ports_tor, new_picked, new_picked_intfs := Link_gen(ngw_ports, tor_ports, cur_picked, cur_picked_intfs)
-	// left_ports_rack, new_picked1, new_picked_intfs1 := Link_gen(left_ports_tor, rack_ports, new_picked, new_picked_intfs)
-	// Link_gen(left_ports_rack, aca_ports, new_picked1, new_picked_intfs1)
-	// Topo.Topology_id = "topo:" + GenUUID()
-	Topo.Topology_id = "topo1"
+
+	Topo.Topology_id = "topo:" + strconv.FormatInt(int64(topo_count), 10)
+	topo_count = topo_count + 1
 
 	Links_gen(Topo_nodes)
-	fmt.Printf("The topology links are : %+v. \n", Topo_links)
+	// fmt.Printf("The topology links are : %+v. \n", Topo_links)
 
 	fmt.Println("======== Generate topology data ==== ")
 
@@ -89,23 +87,25 @@ func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca
 
 	fmt.Println("======== Topology Deployment ==== ")
 
-	Topo_deploy(k8client, Topo)
-	// topo-deploy
+	err := Topo_deploy(k8client, Topo)
+	if err != nil {
+		return fmt.Errorf("topology deployment error %s", err)
+	}
 
-	// save to radis
-
-	// network config
-	// --rack ovs config
-	// --routing config
-	// --test all ping
-
-	return Topo
+	return nil
 }
 
-func Delete() {
+func Delete(k8client *kubernetes.Clientset, topo database.TopologyData) error {
+
+	err := Topo_delete(k8client, Topo)
+	if err != nil {
+		return fmt.Errorf("topology delete fails %s", err)
+	}
+	return nil
 
 }
 
 func Update() {
+	//
 
 }
