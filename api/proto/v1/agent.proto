@@ -4,9 +4,17 @@ option go_package = "merak/";
 import "common.proto";
 
 service MerakAgentService {
-    rpc PortHandler (InternalComputeConfigInfo) returns (ReturnMessage) {}
+    rpc PortHandler (InternalPortConfig) returns (ReturnMessage) {}
 }
 
 message InternalPortConfig {
-
+    OperationType operation_type = 1;
+    string id = 2;
+    string name = 3;
+    string vpcid = 4;
+    string tenantid = 5;
+    string projectid = 6;
+    string subnetid = 7;
+    string gw = 8;
+    string sg = 9;
 }

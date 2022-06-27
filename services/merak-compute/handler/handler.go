@@ -100,6 +100,8 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 							"id", pod.Id+strconv.Itoa(j),
 							"name", pod.Id+strconv.Itoa(j),
 							"vpc", vpc.VpcId,
+							"tenantID", vpc.TenantId,
+							"projectID", vpc.ProjectId,
 							"subnet", subnet.SubnetId,
 							"gw", subnet.SubnetGw,
 							"sg", in.Config.VmDeploy.Secgroups[0],
@@ -135,7 +137,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			return &returnMessage, err
 		}
 		log.Println("Workflow result:", result)
-		SetReturnMessage("Create Success!", pb.ReturnCode_FAILED)
+		SetReturnMessage("Create Success!", pb.ReturnCode_OK)
 		return &returnMessage, nil
 
 	case pb.OperationType_UPDATE:
