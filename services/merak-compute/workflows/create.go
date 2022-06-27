@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
+	"go.temporal.io/sdk/log"
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -13,6 +14,7 @@ func Create(ctx workflow.Context) (string, error) {
 	}
 	ctx = workflow.WithActivityOptions(ctx, ao)
 	logger := workflow.GetLogger(ctx)
+	logger = log.With(logger)
 	var result string
 	logger.Info("VmCreate starting workflow.")
 	err := workflow.ExecuteActivity(ctx, activities.VmCreate).Get(ctx, &result)
