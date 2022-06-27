@@ -6,10 +6,12 @@ import (
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/log"
 )
 
 func VmCreate(ctx context.Context) (string, error) {
 	logger := activity.GetLogger(ctx)
+	logger = log.With(logger)
 	ids := common.RedisClient.SMembers(ctx, constants.COMPUTE_REDIS_NODE_IP_SET)
 	if ids.Err() != nil {
 		logger.Error("Unable get node IDs from redis", ids.Err())
