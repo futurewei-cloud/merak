@@ -1,6 +1,6 @@
 module := merak-compute
 
-merak.compute:: compute vm-worker
+merak-compute: compute vm-worker
 
 compute:
 	go build -o services/merak-compute/build/merak-compute services/merak-compute/compute.go

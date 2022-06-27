@@ -31,6 +31,9 @@ docker-build:
 	docker build -t phudtran/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
 	docker push phudtran/merak-compute:dev
 	docker push phudtran/merak-compute-vm-worker:dev
+# Agent
+	docker build -t phudtran/merak-agent:dev -f docker/agent.Dockerfile .
+	docker push phudtran/merak-agent:dev
 
 test:
 	go test -v services/merak-compute/tests/compute_test.go
@@ -38,3 +41,4 @@ test:
 clean:
 	rm api/proto/v1/merak/*.pb.go
 	rm services/merak-compute/build/*
+	rm services/scenario-manager/build/*
