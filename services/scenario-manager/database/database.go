@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/futurewei-cloud/merak/services/scenario-manager/entities"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -16,11 +17,11 @@ var (
 	Rdb    *redis.Client
 )
 
-func ConnectDatabase() error {
+func ConnectDatabase(cfg *entities.AppConfig) error {
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:55000",
-		Username: "default",
-		Password: "redispw",
+		Addr:     cfg.DBHost + ":" + cfg.DBPort,
+		Username: cfg.DBUser,
+		Password: cfg.DBPass,
 		DB:       0,
 	})
 

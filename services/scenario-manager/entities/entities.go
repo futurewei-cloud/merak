@@ -4,6 +4,13 @@ import (
 	"time"
 )
 
+type AppConfig struct {
+	DBHost string `yaml:"db_host"`
+	DBPort string `yaml:"db_port"`
+	DBUser string `yaml:"db_user"`
+	DBPass string `yaml:"db_pass"`
+}
+
 type ServiceStatus string
 
 const (

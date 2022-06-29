@@ -37,6 +37,11 @@ message InternalServiceInfo {
   string where_to_run = 10;
 }
 
+message InternalHostInfo {
+  string ip = 1;
+  repeated string routing_rules = 2;
+}
+
 message InternalComputeInfo {
   OperationType operation_type = 1;
   string id = 2;

@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/futurewei-cloud/merak/services/scenario-manager/database"
 	_ "github.com/futurewei-cloud/merak/services/scenario-manager/docs"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/routes"
+	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -42,9 +42,19 @@ func welcome(c *fiber.Ctx) error {
 }
 
 func Setup() *fiber.App {
+	cfgPath, err := utils.ParseFlags()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cfg, err := utils.NewConfig(cfgPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Connect to storage
-	if err := database.ConnectDatabase(); err != nil {
-		fmt.Printf("Cannot connect to Redis db!, error: '%s'\n", err)
+	if err := database.ConnectDatabase(cfg); err != nil {
+		log.Fatal(err)
 	}
 
 	// Fiber instance
