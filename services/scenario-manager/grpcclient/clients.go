@@ -3,10 +3,12 @@ package grpcclient
 import (
 	"context"
 	"fmt"
-	"log"
+	"strconv"
 	"time"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	constants "github.com/futurewei-cloud/merak/services/common"
+	"github.com/futurewei-cloud/merak/services/scenario-manager/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -26,18 +28,20 @@ func NewGrpcClient(conn *grpc.ClientConn, timeout time.Duration) GrpcClient {
 func TopologyClient(topopb *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
 	var conn *grpc.ClientConn
 
-	conn, err := grpc.Dial(":40052", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	addr := constants.TOPLOGY_GRPC_SERVER_ADDRESS + ":" + strconv.Itoa(constants.TOPLOGY_GRPC_SERVER_PORT)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 
 	if err != nil {
-		log.Fatalf("did not connect: %s", err)
-		return nil, fmt.Errorf("Cannot connect to merak-topology grpc server: %s", err)
+		logger.Log.Errorf("can not connect to %s", err)
+		return nil, fmt.Errorf("cannot connect to merak-topology grpc server: %s", err)
 	}
 	defer conn.Close()
 
 	response, err := NewGrpcClient(conn, time.Second).TopologyHandler(context.Background(), topopb)
 
 	if err != nil {
-		return nil, fmt.Errorf("error connecting to grpc server: %s", err.Error())
+		logger.Log.Errorf("error return from grpc server: %s", err)
+		return nil, fmt.Errorf("error return from grpc server: %s", err.Error())
 	}
 
 	return response, nil
@@ -52,10 +56,10 @@ func (g GrpcClient) TopologyHandler(ctx context.Context, topopb *pb.InternalTopo
 	response, err := client.TopologyHandler(ctx, topopb)
 
 	if err != nil {
-		log.Fatalf("Error when calling Merak-Topology: %s", err.Error())
-		return nil, fmt.Errorf("Error when calling merak-topology grpc server: %s", err.Error())
+		logger.Log.Errorf("Error when calling Merak-Topology: %s", err.Error())
+		return nil, fmt.Errorf("error when calling merak-topology grpc server: %s", err.Error())
 	}
-	log.Printf("Response from server: %s", response.GetReturnMessage())
+	logger.Log.Printf("Response from server: %s", response.GetReturnMessage())
 
 	return response, nil
 }
@@ -63,17 +67,19 @@ func (g GrpcClient) TopologyHandler(ctx context.Context, topopb *pb.InternalTopo
 func NetworkClient(netconfpb *pb.InternalNetConfigInfo) (*pb.ReturnNetworkMessage, error) {
 	var conn *grpc.ClientConn
 
-	conn, err := grpc.Dial(":40053", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	addr := constants.NETWORK_GRPC_SERVER_ADDRESS + ":" + strconv.Itoa(constants.NETWORK_GRPC_SERVER_PORT)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %s", err)
-		return nil, fmt.Errorf("Cannot connect to merak-network grpc server: %s", err)
+		logger.Log.Errorf("can not connect to %s", err)
+		return nil, fmt.Errorf("cannot connect to merak-network grpc server: %s", err)
 	}
 	defer conn.Close()
 
 	response, err := NewGrpcClient(conn, time.Second).NetConfigHandler(context.Background(), netconfpb)
 
 	if err != nil {
-		return nil, fmt.Errorf("error connecting to grpc server: %s", err.Error())
+		logger.Log.Errorf("error return from grpc server: %s", err)
+		return nil, fmt.Errorf("error return from grpc server: %s", err.Error())
 	}
 
 	return response, nil
@@ -88,10 +94,10 @@ func (g GrpcClient) NetConfigHandler(ctx context.Context, netconfpb *pb.Internal
 	response, err := client.NetConfigHandler(ctx, netconfpb)
 
 	if err != nil {
-		log.Fatalf("Error when calling Merak-Network: %s", err)
-		return nil, fmt.Errorf("Error when calling merak-network grpc server: %s", err)
+		logger.Log.Errorf("Error when calling Merak-Network: %s", err)
+		return nil, fmt.Errorf("error when calling merak-network grpc server: %s", err)
 	}
-	log.Printf("Response from server: %s", response.GetReturnMessage())
+	logger.Log.Printf("Response from server: %s", response.GetReturnMessage())
 
 	return response, nil
 }
@@ -99,16 +105,18 @@ func (g GrpcClient) NetConfigHandler(ctx context.Context, netconfpb *pb.Internal
 func ComputeClient(computepb *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
 	var conn *grpc.ClientConn
 
-	conn, err := grpc.Dial(":40051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	addr := constants.COMPUTE_GRPC_SERVER_ADDRESS + ":" + strconv.Itoa(constants.COMPUTE_GRPC_SERVER_PORT)
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %s", err)
-		return nil, fmt.Errorf("Cannot connect to merak-compute grpc server: %s", err)
+		logger.Log.Errorf("can not connect to %s", err)
+		return nil, fmt.Errorf("cannot connect to merak-compute grpc server: %s", err)
 	}
 	defer conn.Close()
 
 	response, err := NewGrpcClient(conn, time.Second).ComputeHandler(context.Background(), computepb)
 
 	if err != nil {
+		logger.Log.Errorf("error return from grpc server: %s", err)
 		return nil, fmt.Errorf("error connecting to grpc server: %s", err.Error())
 	}
 
@@ -124,10 +132,10 @@ func (g GrpcClient) ComputeHandler(ctx context.Context, computepb *pb.InternalCo
 	response, err := client.ComputeHandler(ctx, computepb)
 
 	if err != nil {
-		log.Fatalf("Error when calling Merak-Compute: %s", err)
-		return nil, fmt.Errorf("Error when calling merak-compute grpc server: %s", err)
+		logger.Log.Errorf("Error when calling Merak-Compute: %s", err)
+		return nil, fmt.Errorf("error when calling merak-compute grpc server: %s", err)
 	}
-	log.Printf("Response from server: %s", response.GetReturnMessage())
+	logger.Log.Printf("Response from server: %s", response.GetReturnMessage())
 
 	return response, nil
 }

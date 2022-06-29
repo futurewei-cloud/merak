@@ -5,10 +5,12 @@ import (
 )
 
 type AppConfig struct {
-	DBHost string `yaml:"db_host"`
-	DBPort string `yaml:"db_port"`
-	DBUser string `yaml:"db_user"`
-	DBPass string `yaml:"db_pass"`
+	DBHost    string `yaml:"db_host"`
+	DBPort    string `yaml:"db_port"`
+	DBUser    string `yaml:"db_user"`
+	DBPass    string `yaml:"db_pass"`
+	LogLevel  string `yaml:"log_level"`
+	UseSyslog bool   `yaml:"use_syslog"`
 }
 
 type ServiceStatus string

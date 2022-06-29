@@ -5,6 +5,7 @@ import (
 
 	"github.com/futurewei-cloud/merak/services/scenario-manager/database"
 	_ "github.com/futurewei-cloud/merak/services/scenario-manager/docs"
+	"github.com/futurewei-cloud/merak/services/scenario-manager/logger"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/routes"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
 	"github.com/gofiber/fiber/v2"
@@ -33,7 +34,7 @@ func main() {
 
 	// Start Server
 	if err := app.Listen(":3000"); err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 	}
 }
 
@@ -42,20 +43,28 @@ func welcome(c *fiber.Ctx) error {
 }
 
 func Setup() *fiber.App {
+	// Parse the config
 	cfgPath, err := utils.ParseFlags()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// Create a config
 	cfg, err := utils.NewConfig(cfgPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Connect to storage
-	if err := database.ConnectDatabase(cfg); err != nil {
+	// Start the log
+	if err := logger.StartLogger("scenario-manager", cfg.UseSyslog, cfg.LogLevel); err != nil {
 		log.Fatal(err)
 	}
+
+	// Connect to storage
+	if err := database.ConnectDatabase(cfg); err != nil {
+		logger.Log.Fatal(err)
+	}
+	logger.Log.Infoln("Database connected!")
 
 	// Fiber instance
 	app := fiber.New()
