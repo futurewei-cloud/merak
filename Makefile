@@ -10,16 +10,33 @@ deploy-dev:
 	kubectl apply -f deployments/kubernetes/compute.dev.yaml
 	kubectl apply -f deployments/kubernetes/scenario.dev.yaml
 
+<<<<<<< HEAD
 docker-build:
 # Scenario-Manager
 	docker build -t cjchung4849/scenario-manager:dev -f docker/scenario.Dockerfile .
 	docker push cjchung4849/scenario-manager:dev
+=======
+docker-all:
+>>>>>>> Initial agent
 # Compute
+	make proto
 	docker build -t phudtran/merak-compute:dev -f docker/compute.Dockerfile .
 	docker build -t phudtran/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
 	docker push phudtran/merak-compute:dev
 	docker push phudtran/merak-compute-vm-worker:dev
 # Agent
+	docker build -t phudtran/merak-agent:dev -f docker/agent.Dockerfile .
+	docker push phudtran/merak-agent:dev
+
+docker-compute:
+	make proto
+	docker build -t phudtran/merak-compute:dev -f docker/compute.Dockerfile .
+	docker build -t phudtran/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
+	docker push phudtran/merak-compute:dev
+	docker push phudtran/merak-compute-vm-worker:dev
+
+docker-agent:
+	make proto
 	docker build -t phudtran/merak-agent:dev -f docker/agent.Dockerfile .
 	docker push phudtran/merak-agent:dev
 

@@ -1,0 +1,3 @@
+[submodule "services/merak-agent/plugins/alcor-control-agent"]
+	path = services/merak-agent/plugins/alcor-control-agent
+	url = https://github.com/futurewei-cloud/alcor-control-agent.git

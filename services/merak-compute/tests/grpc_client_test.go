@@ -25,24 +25,13 @@ func TestGrpcClient(t *testing.T) {
 	}
 	client := pb.NewMerakComputeServiceClient(conn)
 
+	var ip string = ""
+
 	pod0 := pb.InternalVMPod{
 		OperationType: pb.OperationType_CREATE,
-		PodIp:         "10.0.0.2",
+		PodIp:         ip,
 		Subnets:       []string{"subnet0", "subnet1"},
-		NumOfVm:       3,
-	}
-
-	pod1 := pb.InternalVMPod{
-		OperationType: pb.OperationType_CREATE,
-		PodIp:         "10.0.0.3",
-		Subnets:       []string{"subnet0", "subnet1"},
-		NumOfVm:       3,
-	}
-	pod2 := pb.InternalVMPod{
-		OperationType: pb.OperationType_CREATE,
-		PodIp:         "10.0.0.4",
-		Subnets:       []string{"subnet0", "subnet1"},
-		NumOfVm:       3,
+		NumOfVm:       1,
 	}
 
 	subnets := pb.InternalSubnetInfo{
@@ -61,7 +50,7 @@ func TestGrpcClient(t *testing.T) {
 		Vpcs:          []*pb.InternalVpcInfo{&vpc},
 		Secgroups:     []string{"test1", "test2"},
 		Scheduler:     pb.VMScheduleType_SEQUENTIAL,
-		DeployMethod:  []*pb.InternalVMPod{&pod0, &pod1, &pod2},
+		DeployMethod:  []*pb.InternalVMPod{&pod0},
 	}
 
 	service := pb.InternalServiceInfo{
@@ -80,7 +69,7 @@ func TestGrpcClient(t *testing.T) {
 		OperationType: pb.OperationType_CREATE,
 		Id:            "1",
 		Name:          "test",
-		Ip:            "10.0.0.5",
+		Ip:            ip,
 		Mac:           "aa:bb:cc:dd:ee",
 		Veth:          "test",
 	}
