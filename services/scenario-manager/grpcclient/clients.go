@@ -9,6 +9,7 @@ import (
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/logger"
+	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -37,7 +38,7 @@ func TopologyClient(topopb *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage,
 	}
 	defer conn.Close()
 
-	response, err := NewGrpcClient(conn, time.Second).TopologyHandler(context.Background(), topopb)
+	response, err := NewGrpcClient(conn, time.Second*time.Duration(utils.GetGrpcTimeout())).TopologyHandler(context.Background(), topopb)
 
 	if err != nil {
 		logger.Log.Errorf("error return from grpc server: %s", err)
@@ -75,7 +76,7 @@ func NetworkClient(netconfpb *pb.InternalNetConfigInfo) (*pb.ReturnNetworkMessag
 	}
 	defer conn.Close()
 
-	response, err := NewGrpcClient(conn, time.Second).NetConfigHandler(context.Background(), netconfpb)
+	response, err := NewGrpcClient(conn, time.Second*time.Duration(utils.GetGrpcTimeout())).NetConfigHandler(context.Background(), netconfpb)
 
 	if err != nil {
 		logger.Log.Errorf("error return from grpc server: %s", err)
@@ -113,7 +114,7 @@ func ComputeClient(computepb *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, 
 	}
 	defer conn.Close()
 
-	response, err := NewGrpcClient(conn, time.Second).ComputeHandler(context.Background(), computepb)
+	response, err := NewGrpcClient(conn, time.Second*time.Duration(utils.GetGrpcTimeout())).ComputeHandler(context.Background(), computepb)
 
 	if err != nil {
 		logger.Log.Errorf("error return from grpc server: %s", err)

@@ -242,7 +242,7 @@ func TestScenarioActions(t *testing.T) {
 	sa.ScenarioId = "194d15c6aa3b4820bb640af26a22f2bf"
 	var ssa entities.ServiceAction
 	ssa.ServiceName = "topology"
-	ssa.Action = "deploy"
+	ssa.Action = "DEPLOY"
 	sa.Services = append(sa.Services, ssa)
 
 	// Setup the app as it is done in the main function

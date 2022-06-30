@@ -54,3 +54,10 @@ func ParseFlags() (string, error) {
 
 	return configPath, nil
 }
+
+func GetGrpcTimeout() int64 {
+	if cfg.GrpcTimeout <= 0 {
+		return 1
+	}
+	return cfg.GrpcTimeout
+}
