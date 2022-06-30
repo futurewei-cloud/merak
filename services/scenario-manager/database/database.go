@@ -89,22 +89,16 @@ func GetAllValuesWithKeyPrefix(prefix string) (map[string]string, error) {
 
 func getKeys(prefix string) ([]string, error) {
 	var allkeys []string
-	var cursor uint64
-	count := int64(10)
 
-	for {
-		var keys []string
-		var err error
-		keys, cursor, err := Rdb.Scan(Ctx, cursor, prefix, count).Result()
-		if err != nil {
-			return nil, fmt.Errorf("scan db error '%s' when retriving key '%s' keys", err, prefix)
-		}
-
-		allkeys = append(allkeys, keys...)
-		if cursor == 0 {
-			break
-		}
+	iter := Rdb.Scan(Ctx, 0, prefix, 0).Iterator()
+	for iter.Next(Ctx) {
+		allkeys = append(allkeys, iter.Val())
 	}
+
+	if err := iter.Err(); err != nil {
+		return nil, fmt.Errorf("scan db error '%s' when retriving key '%s' keys", err, prefix)
+	}
+
 	return allkeys, nil
 }
 
