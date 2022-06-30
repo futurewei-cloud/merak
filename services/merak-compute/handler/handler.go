@@ -79,7 +79,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 				SetReturnMessage("Unable add pod to DB Hash Map", pb.ReturnCode_FAILED)
 				return &returnMessage, err
 			}
-			log.Println("Added", "pod", pod.Name)
+			log.Println("Added pod " + pod.Name + " at address " + pod.Ip)
 			if err := RedisClient.SAdd(
 				ctx,
 				constants.COMPUTE_REDIS_NODE_IP_SET,
@@ -102,34 +102,36 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 							"vpc", vpc.VpcId,
 							"tenantID", vpc.TenantId,
 							"projectID", vpc.ProjectId,
-							"subnet", subnet.SubnetId,
+							"subnetID", subnet.SubnetId,
+							"cidr", subnet.SubnetCidr,
 							"gw", subnet.SubnetGw,
 							"sg", in.Config.VmDeploy.Secgroups[0],
-							"hostip", pod.Ip,
+							"hostIP", pod.Ip,
+							"hostmac", pod.Mac,
 						).Err(); err != nil {
 							SetReturnMessage("Unable add VM to DB Hash Map", pb.ReturnCode_FAILED)
 							return &returnMessage, err
 						}
-						log.Println("Added", "VM", pod.Id+strconv.Itoa(j), "vpc", vpc.VpcId, "subnet", subnet.SubnetId, "vm number", j, "of", int(subnet.NumberVms))
+						log.Println("Added VM " + pod.Id + strconv.Itoa(j) + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(j) + " of " + strconv.Itoa(int(subnet.NumberVms)))
 						if err := RedisClient.LPush(ctx, pod.Id, pod.Id+strconv.Itoa(j)).Err(); err != nil {
 							SetReturnMessage("Unable add VM to pod list", pb.ReturnCode_FAILED)
 							return &returnMessage, err
 						}
-						log.Println("Added pod -> vm mapping ", pod.Id+strconv.Itoa(j))
+						log.Println("Added pod -> vm mapping " + pod.Id + strconv.Itoa(j))
 					}
 				}
 			}
 
 		}
 		// Start VM Create Workflow
-		var result string
+		var result pb.ReturnMessage
 		log.Println("Executing VM Create Workflow!")
 		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create)
 		if err != nil {
 			SetReturnMessage("Unable to execute workflow", pb.ReturnCode_FAILED)
 			return &returnMessage, err
 		}
-		log.Println("Started workflow", "WorkflowID", we.GetID(), "RunID", we.GetRunID())
+		log.Println("Started workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
 
 		// Sync get results of workflow
 		err = we.Get(context.Background(), &result)
@@ -137,8 +139,8 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			SetReturnMessage("Unable get workflow result", pb.ReturnCode_FAILED)
 			return &returnMessage, err
 		}
-		log.Println("Workflow result:", result)
-		SetReturnMessage("Create Success!", pb.ReturnCode_OK)
+		log.Println("Workflow result:", result.ReturnMessage)
+		SetReturnMessage(result.GetReturnMessage(), result.ReturnCode)
 		return &returnMessage, nil
 
 	case pb.OperationType_UPDATE:

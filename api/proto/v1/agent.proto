@@ -17,4 +17,5 @@ message InternalPortConfig {
     string subnetid = 7;
     string gw = 8;
     string sg = 9;
+    string cidr = 10;
 }
