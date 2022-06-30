@@ -9,6 +9,8 @@ import (
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-network/activities"
 	"log"
+	"sync"
+	"time"
 )
 
 var (
@@ -17,6 +19,7 @@ var (
 	//	ReturnCode:    pb.ReturnCode_FAILED,
 	//	ReturnMessage: "Unintialized",
 	//}
+
 	returnNetworkMessage = pb.ReturnNetworkMessage{
 		ReturnCode:       pb.ReturnCode_FAILED,
 		ReturnMessage:    "returnNetworkMessage Unintialized",
@@ -31,23 +34,35 @@ type Server struct {
 
 func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigInfo) (*pb.ReturnNetworkMessage, error) {
 	log.Printf("Received on NetworkHandler %s", in)
+	log.Printf("OP type %s", in.GetOperationType())
+
+	wg := new(sync.WaitGroup)
 	// Parse input
 
-	switch op := in.OperationType; op {
+	//switch op := in.OperationType; op {
+	switch op := in.GetOperationType(); op {
 	case pb.OperationType_INFO:
 		log.Println("Info")
 	case pb.OperationType_CREATE:
 		ctx := context.TODO()
 		// services
-		for _, services := range in.Config.Services {
-			log.Println(services)
-		}
-		// compute info done
+		log.Println(in.Config.Services)
+		wg.Add(1)
+		//go activities.DoServices(ctx, in.Config.Services, wg)
+		go activities.DoServices(ctx, in.Config.GetServices(), wg)
+
+		//compute info done
 		log.Println(in.Config.Computes)
-		go activities.RegisterNode(ctx, in.Config.Computes)
+		wg.Add(1)
+		//go activities.RegisterNode(ctx, in.Config.Computes, wg)
+		go activities.RegisterNode(ctx, in.Config.GetComputes(), wg)
 		//network info done
-		//log.Println(in.Config.Network)
-		//go activities.VnetCreate(ctx, in.Config.Network)
+		log.Println(in.Config.Network)
+		wg.Add(1)
+		networkReturn := make(chan *pb.ReturnNetworkMessage)
+		//go activities.VnetCreate(ctx, in.Config.Network, wg, networkReturn)
+		go activities.VnetCreate(ctx, in.Config.GetNetwork(), wg, networkReturn)
+
 		//// storage info
 		//for _, storage := range in.Config.Storage {
 		//	log.Println(storage)
@@ -56,9 +71,16 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		//for _, extraInfo := range in.Config.ExtraInfo {
 		//	log.Println(extraInfo)
 		//}
+		log.Println("Before Wait")
+		//wg.Wait()
+		time.Sleep(15 * time.Second)
+		log.Println("After Wait")
+
 		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_CREATE"
-		return &returnNetworkMessage, nil
+		returnNetworkMessage := <-networkReturn
+		log.Printf("returnNetworkMessage %s", returnNetworkMessage)
+		return returnNetworkMessage, nil
 	case pb.OperationType_UPDATE:
 		log.Println("Update")
 	case pb.OperationType_DELETE:

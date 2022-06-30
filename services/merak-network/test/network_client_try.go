@@ -85,17 +85,41 @@ func main() {
 		Gateways:               []*pb.InternalGatewayInfo{&testInternalGatewayInfo},
 		SecurityGroups:         []*pb.InternalSecurityGroupInfo{&testInternalSecurityGroupInfo},
 	}
-	testInternalServiceInfo := pb.InternalServiceInfo{
+	testInternalServiceInfo1 := pb.InternalServiceInfo{
 		OperationType: pb.OperationType_CREATE,
 		Id:            "1",
-		Name:          "InternalServiceInfo",
+		Name:          "InternalServiceInfo INIT",
 		Cmd:           "InternalServiceInfo CMD",
 		Url:           "InternalServiceInfo URL",
 		Parameters:    []string{"Parameters"},
 		ReturnCode:    nil,
 		ReturnString:  []string{"ReturnString"},
-		WhenToRun:     "WhenToRun",
-		WhereToRun:    "WhereToRun",
+		WhenToRun:     "INIT",
+		WhereToRun:    "network",
+	}
+	testInternalServiceInfo3 := pb.InternalServiceInfo{
+		OperationType: pb.OperationType_CREATE,
+		Id:            "3",
+		Name:          "InternalServiceInfo AFTER 2",
+		Cmd:           "InternalServiceInfo CMD",
+		Url:           "InternalServiceInfo URL",
+		Parameters:    []string{"Parameters"},
+		ReturnCode:    nil,
+		ReturnString:  []string{"ReturnString"},
+		WhenToRun:     "AFTER: 2",
+		WhereToRun:    "network",
+	}
+	testInternalServiceInfo2 := pb.InternalServiceInfo{
+		OperationType: pb.OperationType_CREATE,
+		Id:            "2",
+		Name:          "InternalServiceInfo AFTER INIT",
+		Cmd:           "InternalServiceInfo CMD",
+		Url:           "InternalServiceInfo URL",
+		Parameters:    []string{"Parameters"},
+		ReturnCode:    nil,
+		ReturnString:  []string{"ReturnString"},
+		WhenToRun:     "AFTER: 1",
+		WhereToRun:    "network",
 	}
 	testInternalComputeInfo1 := pb.InternalComputeInfo{
 		OperationType: pb.OperationType_CREATE,
@@ -121,7 +145,7 @@ func main() {
 		RequestId:      "InternalNetConfigConfiguration RequestId",
 		NetconfigId:    "InternalNetConfigConfiguration NetconfigId",
 		MessageType:    0,
-		Services:       []*pb.InternalServiceInfo{&testInternalServiceInfo},
+		Services:       []*pb.InternalServiceInfo{&testInternalServiceInfo1, &testInternalServiceInfo3, &testInternalServiceInfo2},
 		Computes:       []*pb.InternalComputeInfo{&testInternalComputeInfo1, &testInternalComputeInfo2},
 		Network:        &testInternalNetworkInfo,
 		Storage:        &testInternalStorageInfo,

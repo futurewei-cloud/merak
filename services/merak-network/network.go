@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	"github.com/futurewei-cloud/merak/services/merak-network/database"
 	"github.com/futurewei-cloud/merak/services/merak-network/grpc/service"
 	"google.golang.org/grpc"
 	"log"
@@ -11,6 +12,10 @@ import (
 )
 
 func main() {
+	// Connect to storage
+	if err := database.ConnectDatabase(); err != nil {
+		fmt.Printf("Cannot connect to Redis db!, error: '%s'\n", err)
+	}
 	flag.Parse()
 	//lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *service.Port))

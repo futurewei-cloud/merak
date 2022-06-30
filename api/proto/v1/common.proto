@@ -3,15 +3,15 @@ package merak;
 option go_package = "merak/";
 
 enum OperationType {
-  INFO = 0;
-  CREATE = 1;
-  UPDATE = 2;
-  DELETE = 3;
-}
+    INFO = 0;
+    CREATE = 1;
+    UPDATE = 2;
+    DELETE = 3;
+  }
 
 enum MessageType {
-  FULL = 0;
-  DELTA = 1;
+    FULL = 0;
+    DELTA = 1;
 }
 
 enum ReturnCode {
@@ -55,8 +55,8 @@ message InternalSubnetInfo {
 
 message InternalVpcInfo {
   string vpc_id = 1;
-  string vpc_cidr = 2;
-  string tenant_id = 3;
-  string project_id = 4;
-  repeated InternalSubnetInfo subnets = 5;
+  string tenant_id = 2;
+  string project_id = 3;
+  string vpc_cidr = 4;
+  repeated InternalSubnetInfo subnets = 5; 
 }

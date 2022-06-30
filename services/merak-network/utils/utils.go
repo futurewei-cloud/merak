@@ -9,3 +9,7 @@ func GenUUID() string {
 	//uuidWithHyphen, _ := uuid.NewRandom()
 	return strings.Replace(uuid.New().String(), "-", "", -1)
 }
+func ReturnError() string {
+
+	return ""
+}

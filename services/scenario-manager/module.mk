@@ -1,6 +1,6 @@
 module := scenario-manager
 
-scenario.manager:: main 
+scenario.manager:: scenario
 
-main:
+scenario:
 	go build -o services/scenario-manager/build/scenario-manager services/scenario-manager/main.go
