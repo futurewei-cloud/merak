@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redis/v9 v9.0.0-beta.1
+	github.com/tidwall/gjson v1.14.1
 	go.temporal.io/sdk v1.14.0
 	google.golang.org/grpc v1.46.2
 	k8s.io/api v0.24.3

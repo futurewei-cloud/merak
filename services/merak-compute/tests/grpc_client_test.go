@@ -30,25 +30,27 @@ func TestGrpcClient(t *testing.T) {
 	pod0 := pb.InternalVMPod{
 		OperationType: pb.OperationType_CREATE,
 		PodIp:         ip,
-		Subnets:       []string{"subnet0", "subnet1"},
+		Subnets:       []string{"subnet1"},
 		NumOfVm:       1,
 	}
 
 	subnets := pb.InternalSubnetInfo{
-		SubnetId:   "1",
-		SubnetCidr: "10.0.0.0/16",
-		SubnetGw:   "10.0.0.1",
-		NumberVms:  2,
+		SubnetId:   "8182a4d4-ffff-4ece-b3f0-8d36e3d88000",
+		SubnetCidr: "10.0.1.0/24",
+		SubnetGw:   "10.0.1.1",
+		NumberVms:  1,
 	}
 	vpc := pb.InternalVpcInfo{
-		VpcId:   "1",
-		Subnets: []*pb.InternalSubnetInfo{&subnets},
+		VpcId:     "9192a4d4-ffff-4ece-b3f0-8d36e3d88001",
+		Subnets:   []*pb.InternalSubnetInfo{&subnets},
+		ProjectId: "123456789",
+		TenantId:  "123456789",
 	}
 	deploy := pb.InternalVMDeployInfo{
 		OperationType: pb.OperationType_CREATE,
 		DeployType:    pb.VMDeployType_UNIFORM,
 		Vpcs:          []*pb.InternalVpcInfo{&vpc},
-		Secgroups:     []string{"test1", "test2"},
+		Secgroups:     []string{"3dda2801-d675-4688-a63f-dcda8d111111"},
 		Scheduler:     pb.VMScheduleType_SEQUENTIAL,
 		DeployMethod:  []*pb.InternalVMPod{&pod0},
 	}
