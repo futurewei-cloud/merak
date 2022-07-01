@@ -80,9 +80,9 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			SetReturnMessage("Failed to marshal json!", pb.ReturnCode_FAILED)
 			return &returnMessage, err
 		}
-
-		log.Println("Sending body to Alcor: \n", body)
-		resp, err := http.Post("http://10.213.43.251:"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
+		log.Println("Sending body to Alcor: \n", minimalPortBody)
+		resp, err := http.Post("http://10.213.43.244:"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
+		log.Println("Response Code :", resp.StatusCode)
 		if err != nil {
 			SetReturnMessage("Failed to send create minimal port to Alcor!", pb.ReturnCode_FAILED)
 			return &returnMessage, err
@@ -243,7 +243,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Sending body to Alcor: \n", body)
-		resp, err = http.Post("http://10.213.43.251:"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
+		resp, err = http.Post("http://10.213.43.244:"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
 		if err != nil {
 			SetReturnMessage("Failed send Update Port request to Alcor!", pb.ReturnCode_FAILED)
 			return &returnMessage, err
