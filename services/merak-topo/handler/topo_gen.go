@@ -58,6 +58,7 @@ func Intf_name(dev_num int, prefix string) []string {
 func ip_gen_sub(upper int, k1 int, data_plane_cidr string) []string {
 	var ips_gen = []string{}
 	var ip string = data_plane_cidr
+
 	switch mask := strings.Split(data_plane_cidr, "/")[1]; mask {
 	case "8":
 		//

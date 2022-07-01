@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-redis/redis/v8"
+	corev1 "k8s.io/api/core/v1"
 )
 
 var (
@@ -34,12 +35,11 @@ func ConnectDatabase() error {
 func SetValue(key string, val interface{}) error {
 	j, err := json.Marshal(val)
 	if err != nil {
-		return err
+		return fmt.Errorf("fail to save value in DB %s", err)
 	}
-	err2 := Rdb.Set(Ctx, key, j, 0).Err()
-	if err2 != nil {
-		// panic(err2)
-		return err2
+	err = Rdb.Set(Ctx, key, j, 0).Err()
+	if err != nil {
+		return fmt.Errorf("fail to save value in DB %s", err)
 	}
 
 	return nil
@@ -61,16 +61,49 @@ func Del(key string) error {
 }
 
 // Function for finding an entity from database
-func FindEntity(id string, prefix string, entity interface{}) error {
-	if id == "" {
-		return errors.New("Invalid for id: parameter!!!")
+func FindEntity(id string, prefix string, entity interface{}) (interface{}, error) {
+	if (id + prefix) == "" {
+		return "invalid input", nil
 	}
-	value, err := Rdb.Get(Ctx, prefix+id).Result()
+	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		return err
+		return "fail to get value for key in DB", err
 	}
 	err = json.Unmarshal([]byte(value), &entity)
-	return err
+	if err != nil {
+		return "fail to unmarshal value in DB", err
+	}
+	return entity, nil
+}
+
+func FindPodEntity(id string, prefix string) (*corev1.Pod, error) {
+	var entity *corev1.Pod
+
+	value, err := Rdb.Get(Ctx, id+prefix).Result()
+	if err != nil {
+		panic(err)
+	}
+	err = json.Unmarshal([]byte(value), &entity)
+	if err != nil {
+		panic(err)
+	}
+	return entity, nil
+}
+
+func FindTopoEntity(id string, prefix string) (TopologyData, error) {
+	var entity TopologyData
+
+	value, err := Rdb.Get(Ctx, id+prefix).Result()
+	if err != nil {
+		// return fmt.Errorf("fail to get value for key in DB %s", err)
+		panic(err)
+	}
+	err = json.Unmarshal([]byte(value), &entity)
+	if err != nil {
+		// return fmt.Errorf("fail to get value for key in DB %s", err)
+		panic(err)
+	}
+	return entity, nil
 }
 
 func GetAllValuesWithKeyPrefix(prefix string) (map[string]string, error) {
@@ -96,7 +129,7 @@ func getKeys(prefix string) ([]string, error) {
 		var err error
 		keys, cursor, err := Rdb.Scan(Ctx, cursor, prefix, count).Result()
 		if err != nil {
-			return nil, fmt.Errorf("Scan db error '%s' when retriving key '%s' keys", err, prefix)
+			return nil, nil
 		}
 
 		allkeys = append(allkeys, keys...)

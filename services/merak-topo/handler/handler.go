@@ -1,12 +1,11 @@
 package handler
 
 import (
-	"strconv"
-
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 
 	"fmt"
 
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -27,17 +26,18 @@ import (
 // ---through k8s deployment
 
 var (
-	Topo       database.TopologyData
-	Vlinks     []database.Vlink
-	Vnodes     []database.Vnode
-	cgw_num    int = 2
-	count      int = 250
-	k          int = 0 // subnet starting number
-	topo_count int = 1
+	Topo    database.TopologyData
+	Vlinks  []database.Vlink
+	Vnodes  []database.Vnode
+	cgw_num int = 2
+	count   int = 250
+	k       int = 0 // subnet starting number
 )
 
 //function CREATE
-func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cidr string) error {
+func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cidr string) ([]*pb.InternalComputeInfo, error) {
+
+	var C_nodes []*pb.InternalComputeInfo
 
 	// topo-gen
 	var ovs_tor_device = []string{"tor-0"}
@@ -74,9 +74,6 @@ func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca
 
 	fmt.Println("======== Pairing links ==== ")
 
-	Topo.Topology_id = "topo:" + strconv.FormatInt(int64(topo_count), 10)
-	topo_count = topo_count + 1
-
 	Links_gen(Topo_nodes)
 	// fmt.Printf("The topology links are : %+v. \n", Topo_links)
 
@@ -89,15 +86,28 @@ func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca
 
 	err := Topo_deploy(k8client, Topo)
 	if err != nil {
-		return fmt.Errorf("topology deployment error %s", err)
+		return C_nodes, fmt.Errorf("topology deployment error %s", err)
 	}
 
-	return nil
+	fmt.Println("======== Save topo to redis =====")
+	err = Topo_save(k8client, Topo)
+	if err != nil {
+		return C_nodes, fmt.Errorf("save topo to redis error %s", err)
+	}
+
+	fmt.Println("========= Get compute nodes information after deployment=====")
+
+	C_nodes, err = Comput_node_info(k8client, Topo)
+
+	if err != nil {
+		return C_nodes, fmt.Errorf("get compute nodes info error %s", err)
+	}
+	return C_nodes, nil
 }
 
-func Delete(k8client *kubernetes.Clientset, topo database.TopologyData) error {
+func Delete(k8client *kubernetes.Clientset, topo_id string) error {
 
-	err := Topo_delete(k8client, Topo)
+	err := Topo_delete(k8client, topo_id)
 	if err != nil {
 		return fmt.Errorf("topology delete fails %s", err)
 	}
@@ -105,7 +115,28 @@ func Delete(k8client *kubernetes.Clientset, topo database.TopologyData) error {
 
 }
 
-func Update() {
-	//
+func Subtest(k8client *kubernetes.Clientset, topo_id string) error {
+
+	topo_data, err := database.FindTopoEntity(topo_id, "")
+
+	if err != nil {
+		return fmt.Errorf("failed to retrieve topology data from DB %s", err)
+	}
+
+	for _, node := range topo_data.Vnodes {
+
+		pod, err := database.FindPodEntity(node.Name, "-pod")
+
+		if err != nil {
+			return fmt.Errorf("failed to retrieve pod data from DB %s", err)
+		}
+
+		err = Pod_info(k8client, pod)
+		if err != nil {
+			return fmt.Errorf("failed to query pod compute node info from K8s %s", err)
+		}
+
+	}
+	return nil
 
 }
