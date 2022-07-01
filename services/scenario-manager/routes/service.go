@@ -123,8 +123,7 @@ func UpdateService(c *fiber.Ctx) error {
 		c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
 	}
 
-	service.Name = updateService.Name
-	service.Services = updateService.Services
+	utils.EntityUpdateCheck(utils.UpdateChecker, &service, &updateService)
 	service.UpdatedAt = time.Now()
 
 	database.Set(utils.KEY_PREFIX_SERVICE+id, &service)

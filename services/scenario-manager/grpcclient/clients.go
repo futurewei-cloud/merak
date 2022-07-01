@@ -30,7 +30,7 @@ func TopologyClient(topopb *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage,
 	var conn *grpc.ClientConn
 
 	addr := constants.TOPLOGY_GRPC_SERVER_ADDRESS + ":" + strconv.Itoa(constants.TOPLOGY_GRPC_SERVER_PORT)
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 		logger.Log.Errorf("can not connect to %s", err)

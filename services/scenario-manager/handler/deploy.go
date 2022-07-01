@@ -62,7 +62,10 @@ func TopologyHandler(s *entities.Scenario, action entities.EventName) (*pb.Retur
 	if err != nil || responseTopo.ReturnCode == pb.ReturnCode_FAILED {
 		topology.Status = entities.STATUS_FAILED
 		database.Set(utils.KEY_PREFIX_TOPOLOGY+topology.Id, &topology)
-		return nil, fmt.Errorf("deploy topology failed, Error = '%s', return = '%s'", err.Error(), responseTopo.ReturnMessage)
+		if responseTopo != nil {
+			return nil, fmt.Errorf("deploy topology failed, Error = '%s', return = '%s'", err.Error(), responseTopo.ReturnMessage)
+		}
+		return nil, fmt.Errorf("deploy topology failed, Error = '%s'", err.Error())
 	}
 
 	if action == entities.EVENT_DEPLOY {
@@ -151,7 +154,10 @@ func NetworkHandler(s *entities.Scenario, action entities.EventName) (*pb.Return
 	if err != nil || responseNetwork.ReturnCode == pb.ReturnCode_FAILED {
 		network.Status = entities.STATUS_FAILED
 		database.Set(utils.KEY_PREFIX_NETWORK+network.Id, &network)
-		return nil, fmt.Errorf("deploy network failed, Error = '%s', return = '%s'", err.Error(), responseNetwork.ReturnMessage)
+		if responseNetwork != nil {
+			return nil, fmt.Errorf("deploy network failed, Error = '%s', return = '%s'", err.Error(), responseNetwork.ReturnMessage)
+		}
+		return nil, fmt.Errorf("deploy network failed, Error = '%s'", err.Error())
 	}
 
 	if action == entities.EVENT_DEPLOY {
@@ -236,10 +242,13 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.Return
 
 	responseCompute, err := grpcclient.ComputeClient(&computeconf)
 
-	if err != nil || responseCompute.ReturnCode == pb.ReturnCode_FAILED {
+	if err != nil || (responseCompute != nil && responseCompute.ReturnCode == pb.ReturnCode_FAILED) {
 		compute.Status = entities.STATUS_FAILED
 		database.Set(utils.KEY_PREFIX_COMPUTE+compute.Id, &compute)
-		return nil, fmt.Errorf("deploy compute failed, Error = '%s', return = '%s'", err.Error(), responseCompute.ReturnMessage)
+		if responseCompute != nil {
+			return nil, fmt.Errorf("deploy compute failed, Error = '%s', return = '%s'", err.Error(), responseCompute.ReturnMessage)
+		}
+		return nil, fmt.Errorf("deploy compute failed, Error = '%s'", err.Error())
 	}
 
 	if action == entities.EVENT_DEPLOY {

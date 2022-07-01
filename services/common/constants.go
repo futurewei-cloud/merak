@@ -11,5 +11,4 @@ const (
 	NETWORK_GRPC_SERVER_PORT    = 40053
 	NETWORK_GRPC_SERVER_ADDRESS = "merak-network-service.merak.svc.cluster.local"
 	AGENT_GRPC_SERVER_PORT      = 40054
-	AGENT_GRPC_SERVER_ADDRESS   = "merak-agent-service.merak.svc.cluster.local"
 )
