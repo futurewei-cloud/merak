@@ -18,10 +18,10 @@ var (
 
 func ConnectDatabase() error {
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:30053",
-		Username: "default",
-		Password: "redispw",
-		DB:       0,
+		Addr: "10.213.43.224:30053",
+		//Username: "default",
+		//Password: "redispw",
+		DB: 0,
 	})
 
 	if err := client.Ping(Ctx).Err(); err != nil {

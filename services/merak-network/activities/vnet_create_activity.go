@@ -115,9 +115,10 @@ func doAttachRouter(routerId string, subnetId string) error {
 	log.Println("doAttachRouter done")
 	return nil
 }
-func doSg(sg *pb.InternalSecurityGroupInfo) string {
+func doSg(sg *pb.InternalSecurityGroupInfo, sgID string) string {
 	log.Println("doSg")
 	sgBody := entities.SgStruct{Sg: entities.SgBody{
+		Id:                 sgID,
 		Description:        "sg Description",
 		Name:               "YM_sample_sg",
 		ProjectId:          sg.ProjectId,
@@ -178,7 +179,8 @@ func VnetCreate(ctx context.Context, network *pb.InternalNetworkInfo, wg *sync.W
 
 	//doing security group
 	for i := 0; i < int(network.NumberOfSecurityGroups); i++ {
-		sgId := doSg(network.SecurityGroups[i])
+		sgId := utils.GenUUID()
+		go doSg(network.SecurityGroups[i], sgId)
 		returnNetworkMessage.SecurityGroupIds = append(returnNetworkMessage.SecurityGroupIds, sgId)
 		log.Printf("sgId: %s", sgId)
 	}
