@@ -1,3 +1,9 @@
+# Merak namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: merak-agent
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
