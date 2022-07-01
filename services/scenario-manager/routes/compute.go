@@ -124,13 +124,7 @@ func UpdateCompute(c *fiber.Ctx) error {
 		c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
 	}
 
-	compute.Name = updateCompute.Name
-	compute.NumberOfComputeNodes = updateCompute.NumberOfComputeNodes
-	compute.NumberOfVmPerVpc = updateCompute.NumberOfVmPerVpc
-	compute.NumberOfPortPerVm = updateCompute.NumberOfPortPerVm
-	compute.VmDeployType = updateCompute.VmDeployType
-	compute.Scheduler = updateCompute.Scheduler
-	compute.VPCInfo = updateCompute.VPCInfo
+	utils.EntityUpdateCheck(utils.UpdateChecker, &compute, &updateCompute)
 	compute.UpdatedAt = time.Now()
 
 	database.Set(utils.KEY_PREFIX_COMPUTE+id, &compute)
