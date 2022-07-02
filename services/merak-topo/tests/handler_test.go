@@ -22,7 +22,7 @@ func TestTopologyHandler(t *testing.T) {
 	rack_num := 1
 	aca_per_rack := 2
 	data_plane_cidr := "10.200.0.0/16"
-	// topo_id := "topo0001"
+	topo_id := "1234560001"
 
 	// redis init check-- pingpong test
 
@@ -36,7 +36,7 @@ func TestTopologyHandler(t *testing.T) {
 		fmt.Printf("connect to DB error %s", err1)
 	}
 
-	err2 := handler.Create(k8client, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), data_plane_cidr, &returnMessage)
+	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), data_plane_cidr, &returnMessage)
 	if err2 != nil {
 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Create Topology."
@@ -47,12 +47,31 @@ func TestTopologyHandler(t *testing.T) {
 
 	}
 
-	fmt.Printf("///// Return Message //// %v", &returnMessage)
+	fmt.Printf("///// CREATE Return Message //// %v", &returnMessage)
 
-	// err = handler.Delete(k8client,topo_id)
-	// if err !=nil {
-	// 	fmt.Errorf("delete topology error %s", err)
+	err3 := handler.Info(k8client, topo_id, &returnMessage)
+
+	if err3 != nil {
+		returnMessage.ReturnCode = pb.ReturnCode_FAILED
+		returnMessage.ReturnMessage = "Fail to Info Topology."
+
+	} else {
+		returnMessage.ReturnCode = pb.ReturnCode_OK
+		returnMessage.ReturnMessage = "Topology Info Query Done."
+	}
+
+	fmt.Printf("///// INFO Return Message //// %v", &returnMessage)
+
+	// err4 := handler.Delete(k8client, topo_id)
+	// if err4 != nil {
+	// 	returnMessage.ReturnCode = pb.ReturnCode_FAILED
+	// 	returnMessage.ReturnMessage = "Fail to Delete Topology."
+	// } else {
+	// 	returnMessage.ReturnCode = pb.ReturnCode_OK
+	// 	returnMessage.ReturnMessage = "Topology Delete Done."
 	// }
+
+	// fmt.Printf("///// DELETE Return Message //// %v", &returnMessage)
 
 	// handler.Subtest(k8client, topo_id)
 

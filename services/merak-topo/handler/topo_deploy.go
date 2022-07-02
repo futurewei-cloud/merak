@@ -184,13 +184,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 
 		}
 
-		//save yaml file during deployment processes
-
 	}
-
-	// save comput node data
-
-	// var comput_nodes *pb.InternalComputeInfo
 
 	return nil
 
@@ -241,13 +235,7 @@ func Pod_info(k8client *kubernetes.Clientset, pod *corev1.Pod) error {
 
 }
 
-func Topo_delete(k8client *kubernetes.Clientset, topo_id string) error {
-
-	topo_data, err := database.FindTopoEntity(topo_id, "")
-
-	if err != nil {
-		return fmt.Errorf("failed to get topology data from DB %s", err)
-	}
+func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData) error {
 
 	config := ctrl.GetConfigOrDie()
 	dclient, err := dynamic.NewForConfig(config)
@@ -256,17 +244,17 @@ func Topo_delete(k8client *kubernetes.Clientset, topo_id string) error {
 		return fmt.Errorf("failed to create dynamic client %s", err)
 	}
 
-	for _, node := range topo_data.Vnodes {
+	for _, node := range topo.Vnodes {
 
-		err := k8client.CoreV1().Pods("default").Delete(Ctx, node.Name, metav1.DeleteOptions{})
+		err_del := k8client.CoreV1().Pods("default").Delete(Ctx, node.Name, metav1.DeleteOptions{})
 
-		if err != nil {
-			return fmt.Errorf("delete pod container error %s", err)
+		if err_del != nil {
+			return fmt.Errorf("delete pod container error %s", err_del)
 		}
 
-		err = DeleteTopologyClasses(dclient, node.Name)
-		if err != nil {
-			return fmt.Errorf("delete pod topology error %s", err)
+		err_del_t := DeleteTopologyClasses(dclient, node.Name)
+		if err_del_t != nil {
+			return fmt.Errorf("delete pod topology error %s", err_del_t)
 		}
 	}
 	return nil
@@ -278,17 +266,22 @@ func Topo_save(k8client *kubernetes.Clientset, topo database.TopologyData) error
 	topo_id := topo.Topology_id
 	pods_status, err := Topo_pod_check(k8client, topo)
 	if err != nil {
-		return fmt.Errorf("check topology pod error %s", err)
+		return fmt.Errorf("fail to check pods status %s", err)
+	}
+	fmt.Println(pods_status)
+
+	err_db := database.SetValue(topo_id, topo)
+	if err_db != nil {
+		return fmt.Errorf("fail to save in db %s", err_db)
 	}
 
-	if pods_status {
-		fmt.Println("All pods are created")
-		database.SetValue(topo_id, topo)
-	} else {
-		fmt.Println("Pods are pending")
-	}
-
-	return err
+	// if pods_status {
+	// 	err := database.SetValue(topo_id, topo)
+	// 	if err != nil {
+	// 		return fmt.Errorf("fail to save in db %s", err)
+	// 	}
+	// }
+	return nil
 }
 
 func Topo_pod_check(k8client *kubernetes.Clientset, topo database.TopologyData) (bool, error) {
@@ -307,58 +300,9 @@ func Topo_pod_check(k8client *kubernetes.Clientset, topo database.TopologyData) 
 		if res.Status.Phase != "Running" {
 			s = false
 		}
-		fmt.Printf("Get information of node %v: %v", node.Name, res.Status)
-
 	}
 	return s, nil
 }
 
-// func Comput_node_info(k8client *kubernetes.Clientset, topo database.TopologyData, cnodes []*pb.InternalComputeInfo) error {
-// 	var cnode pb.InternalComputeInfo
-
-// 	for _, node := range topo.Vnodes {
-
 // 		res, err := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
-
-// 		if err != nil {
-// 			return fmt.Errorf("get pod error %s", err)
-// 		}
-// 		if res.Status.Phase == "Running" && res.Labels["Type"] == "vhost" {
-// 			cnode.Name = res.Name
-// 			cnode.Id = string(res.UID)
-// 			// cnode.HostIP = res.Status.HostIP
-// 			cnode.Ip = res.Status.PodIP
-// 			cnode.Mac = ""
-// 			cnode.Veth = ""
-// 			cnode.OperationType = pb.OperationType_INFO
-// 			cnodes = append(cnodes, &cnode)
-
-// 		}
-// 	}
-// 	return nil
-
-// var cnodes []*pb.InternalComputeInfo
-// var cnode *pb.InternalComputeInfo
-
 // out, err := k8client.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
-// if err != nil {
-// 	return cnodes, fmt.Errorf("get pod data error %s", err)
-// }
-
-// for i := range out.Items {
-
-// 	if out.Items[i].Labels["Type"] == "vhost" {
-// 		cnode.Name = out.Items[i].Name
-// 		cnode.Id = string(out.Items[i].UID)
-// 		// cnode.HostIP = out.Items[i].Status.HostIP
-// 		cnode.Ip = out.Items[i].Status.PodIP
-// 		cnode.Mac = ""
-// 		cnode.Veth = ""
-// 		cnode.OperationType = 2
-// 		cnodes = append(cnodes, cnode)
-
-// 	}
-// }
-// return cnodes, nil
-
-// }

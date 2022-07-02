@@ -36,7 +36,7 @@ var (
 )
 
 //function CREATE
-func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cidr string, returnMessage *pb.ReturnTopologyMessage) error {
+func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cidr string, returnMessage *pb.ReturnTopologyMessage) error {
 
 	// topo-gen
 
@@ -78,7 +78,7 @@ func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca
 	// fmt.Printf("The topology links are : %+v. \n", Topo_links)
 
 	fmt.Println("======== Generate topology data ==== ")
-
+	Topo.Topology_id = topo_id
 	Topo.Vlinks = Topo_links
 	Topo.Vnodes = Topo_nodes
 
@@ -107,7 +107,6 @@ func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca
 		} else {
 			// if res.Status.Phase == "Running" && res.Labels["Type"] == "vhost" {
 			if res.Labels["Type"] == "vhost" {
-
 				cnode.Name = res.Name
 				cnode.Id = string(res.UID)
 				// cnode.HostIP = res.Status.HostIP
@@ -116,28 +115,57 @@ func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca
 				cnode.Veth = ""
 				cnode.OperationType = pb.OperationType_INFO
 				returnMessage.ComputeNodes = append(returnMessage.ComputeNodes, &cnode)
-
 			}
 		}
+	}
+	return nil
+}
 
+func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.ReturnTopologyMessage) error {
+
+	topo, err := database.FindTopoEntity(topo_id, "")
+
+	if err != nil {
+		return fmt.Errorf("query topology_id error %s", err)
 	}
 
-	// err2 := Comput_node_info(k8client, Topo, C_nodes)
+	for _, node := range topo.Vnodes {
+		var cnode pb.InternalComputeInfo
 
-	// if err2 != nil {
-	// 	return fmt.Errorf("get compute nodes info error %s", err2)
-	// }
+		res, err := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
+
+		if err != nil {
+			return fmt.Errorf("get pod error %s", err)
+		} else {
+			// if res.Status.Phase == "Running" && res.Labels["Type"] == "vhost" {
+			if res.Labels["Type"] == "vhost" {
+				cnode.Name = res.Name
+				cnode.Id = string(res.UID)
+				// cnode.HostIP = res.Status.HostIP
+				cnode.Ip = res.Status.PodIP
+				cnode.Mac = ""
+				cnode.Veth = ""
+				cnode.OperationType = pb.OperationType_INFO
+				returnMessage.ComputeNodes = append(returnMessage.ComputeNodes, &cnode)
+			}
+		}
+	}
 	return nil
 }
 
 func Delete(k8client *kubernetes.Clientset, topo_id string) error {
+	topo, err_db := database.FindTopoEntity(topo_id, "")
 
-	err := Topo_delete(k8client, topo_id)
+	if err_db != nil {
+		return fmt.Errorf("query topology_id error %s", err_db)
+	}
+
+	err := Topo_delete(k8client, topo)
 	if err != nil {
 		return fmt.Errorf("topology delete fails %s", err)
 	}
-	return nil
 
+	return nil
 }
 
 func Subtest(k8client *kubernetes.Clientset, topo_id string) error {
