@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/futurewei-cloud/merak/services/scenario-manager/entities"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -16,11 +17,11 @@ var (
 	Rdb    *redis.Client
 )
 
-func ConnectDatabase() error {
+func ConnectDatabase(cfg *entities.AppConfig) error {
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:55000",
-		Username: "default",
-		Password: "redispw",
+		Addr:     cfg.DBHost + ":" + cfg.DBPort,
+		Username: cfg.DBUser,
+		Password: cfg.DBPass,
 		DB:       0,
 	})
 
@@ -88,22 +89,16 @@ func GetAllValuesWithKeyPrefix(prefix string) (map[string]string, error) {
 
 func getKeys(prefix string) ([]string, error) {
 	var allkeys []string
-	var cursor uint64
-	count := int64(10)
 
-	for {
-		var keys []string
-		var err error
-		keys, cursor, err := Rdb.Scan(Ctx, cursor, prefix, count).Result()
-		if err != nil {
-			return nil, fmt.Errorf("scan db error '%s' when retriving key '%s' keys", err, prefix)
-		}
-
-		allkeys = append(allkeys, keys...)
-		if cursor == 0 {
-			break
-		}
+	iter := Rdb.Scan(Ctx, 0, prefix, 0).Iterator()
+	for iter.Next(Ctx) {
+		allkeys = append(allkeys, iter.Val())
 	}
+
+	if err := iter.Err(); err != nil {
+		return nil, fmt.Errorf("scan db error '%s' when retriving key '%s' keys", err, prefix)
+	}
+
 	return allkeys, nil
 }
 

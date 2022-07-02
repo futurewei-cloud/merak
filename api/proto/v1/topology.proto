@@ -85,6 +85,7 @@ message ReturnTopologyMessage {
     ReturnCode return_code = 1;
     string return_message = 2;
     repeated InternalComputeInfo compute_nodes = 3;
+    repeated InternalHostInfo hosts = 4;
 }
 
 service MerakTopologyService {

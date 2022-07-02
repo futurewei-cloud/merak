@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/futurewei-cloud/merak/services/scenario-manager/entities"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -22,11 +23,17 @@ func ReturnResponseMessage(status string, message string, data interface{}) map[
 
 func UpdateChecker(src interface{}, upt interface{}) interface{} {
 	switch src := src.(type) {
-	case string:
+	case string, entities.ServiceStatus:
 		if upt != "" {
 			return upt
 		}
 		return src
+		// case []entities.Service:
+		// 	rv := reflect.TypeOf(upt)
+		// 	if rv.NumField() < 0 {
+		// 		return upt
+		// 	}
+		// 	return src
 	}
 	return src
 }

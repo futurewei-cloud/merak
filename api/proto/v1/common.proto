@@ -37,6 +37,12 @@ message InternalServiceInfo {
   string where_to_run = 10;
 }
 
+message InternalHostInfo {
+  string ip = 1;
+  repeated string routing_rules = 2;
+  string status = 3;
+}
+
 message InternalComputeInfo {
   OperationType operation_type = 1;
   string id = 2;
@@ -44,6 +50,7 @@ message InternalComputeInfo {
   string ip = 4;
   string mac = 5;
   string veth = 6;
+  string status = 7;
 }
 
 message InternalSubnetInfo {

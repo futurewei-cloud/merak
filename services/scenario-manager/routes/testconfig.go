@@ -124,8 +124,7 @@ func UpdateTestConfig(c *fiber.Ctx) error {
 		c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
 	}
 
-	test.Name = updateTest.Name
-	test.Tests = updateTest.Tests
+	utils.EntityUpdateCheck(utils.UpdateChecker, &test, &updateTest)
 	test.UpdatedAt = time.Now()
 
 	database.Set(utils.KEY_PREFIX_TEST+id, &test)

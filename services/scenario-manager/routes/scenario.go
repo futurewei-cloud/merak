@@ -11,6 +11,7 @@ import (
 	"github.com/futurewei-cloud/merak/services/scenario-manager/database"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/entities"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/handler"
+	"github.com/futurewei-cloud/merak/services/scenario-manager/logger"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
 	"github.com/gofiber/fiber/v2"
 )
@@ -54,36 +55,39 @@ func ScenarioActoins(c *fiber.Ctx) error {
 			var returnTopo *pb.ReturnTopologyMessage
 			returnTopo, err := handler.TopologyHandler(&scenario, sa.Action)
 			if err != nil || returnTopo.ReturnCode == pb.ReturnCode_FAILED {
-				//return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
 				sa.Status = entities.STATUS_FAILED
 				scenarioStatus = entities.STATUS_FAILED
+				logger.Log.Errorf("'%s' topology failed: %s", sa.Action, err.Error())
 			} else {
 				sa.Status = entities.STATUS_DONE
 				scenarioStatus = entities.STATUS_DONE
+				logger.Log.Infof("'%s' topology done.", sa.Action)
 			}
 		}
 		if strings.ToLower(sa.ServiceName) == "network" {
 			var returnNetwork *pb.ReturnNetworkMessage
 			returnNetwork, err := handler.NetworkHandler(&scenario, sa.Action)
 			if err != nil || returnNetwork.ReturnCode == pb.ReturnCode_FAILED {
-				//return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
 				sa.Status = entities.STATUS_FAILED
 				scenarioStatus = entities.STATUS_FAILED
+				logger.Log.Errorf("'%s' network failed: %s", sa.Action, err.Error())
 			} else {
 				sa.Status = entities.STATUS_DONE
 				scenarioStatus = entities.STATUS_DONE
+				logger.Log.Infof("'%s' topology done.", sa.Action)
 			}
 		}
 		if strings.ToLower(sa.ServiceName) == "compute" {
 			var returnCompute *pb.ReturnMessage
 			returnCompute, err := handler.ComputeHanlder(&scenario, sa.Action)
 			if err != nil || returnCompute.ReturnCode == pb.ReturnCode_FAILED {
-				//return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
 				sa.Status = entities.STATUS_FAILED
 				scenarioStatus = entities.STATUS_FAILED
+				logger.Log.Errorf("'%s' compute failed: %s", sa.Action, err.Error())
 			} else {
 				sa.Status = entities.STATUS_DONE
 				scenarioStatus = entities.STATUS_DONE
+				logger.Log.Infof("'%s' topology done.", sa.Action)
 			}
 		}
 	}
@@ -92,6 +96,9 @@ func ScenarioActoins(c *fiber.Ctx) error {
 	scenario.UpdatedAt = time.Now()
 	database.Set(utils.KEY_PREFIX_SCENARIO+scenario.Id, &scenario)
 
+	if scenario.Status == entities.STATUS_FAILED {
+		return c.Status(http.StatusInternalServerError).JSON(utils.ReturnResponseMessage("FAILED", "Scenario Action Failed.", scenarioAction))
+	}
 	return c.Status(http.StatusOK).JSON(utils.ReturnResponseMessage("OK", "Action on the scenario.", scenarioAction))
 }
 

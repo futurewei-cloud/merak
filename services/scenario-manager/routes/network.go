@@ -124,14 +124,7 @@ func UpdateNetwork(c *fiber.Ctx) error {
 		c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
 	}
 
-	network.Name = updateNetwork.Name
-	network.NumberOfVPCS = updateNetwork.NumberOfVPCS
-	network.NumberOfSubnetPerVpc = updateNetwork.NumberOfSubnetPerVpc
-	network.NumberOfSecurityGroups = updateNetwork.NumberOfSecurityGroups
-	network.Vpcs = updateNetwork.Vpcs
-	network.Routers = updateNetwork.Routers
-	network.Gateways = updateNetwork.Gateways
-	network.SecurityGroups = updateNetwork.SecurityGroups
+	utils.EntityUpdateCheck(utils.UpdateChecker, &network, &updateNetwork)
 	network.UpdatedAt = time.Now()
 
 	database.Set(utils.KEY_PREFIX_NETWORK+id, &network)
