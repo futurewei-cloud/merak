@@ -39,6 +39,9 @@ docker-all:
 # Agent
 	docker build -t phudtran/merak-agent:dev -f docker/agent.Dockerfile .
 	docker push phudtran/merak-agent:dev
+# Test
+	docker build -t phudtran/test-merak:dev -f docker/test.merak.Dockerfile .
+	docker push phudtran/test-merak:dev
 
 docker-compute:
 	make all

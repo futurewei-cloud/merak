@@ -21,13 +21,13 @@ func Create(ctx workflow.Context) (pb.ReturnMessage, error) {
 	if err != nil {
 		logger.Error("VmCreate failed! %s\n", err)
 		return pb.ReturnMessage{
-			ReturnCode:    pb.ReturnCode_FAILED,
+			ReturnCode:    result.GetReturnCode(),
 			ReturnMessage: result.GetReturnMessage(),
 		}, err
 	}
 	logger.Info("VmCreate workflow completed.%s\n")
 	return pb.ReturnMessage{
-		ReturnCode:    result.ReturnCode,
+		ReturnCode:    result.GetReturnCode(),
 		ReturnMessage: result.GetReturnMessage(),
 	}, nil
 }

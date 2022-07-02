@@ -157,7 +157,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		log.Println("Workflow result:", result.ReturnMessage)
 		return &pb.ReturnMessage{
 			ReturnMessage: result.GetReturnMessage(),
-			ReturnCode:    result.ReturnCode,
+			ReturnCode:    result.GetReturnCode(),
 		}, err
 
 	case pb.OperationType_UPDATE:

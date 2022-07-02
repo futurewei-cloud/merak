@@ -101,7 +101,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
-		log.Println("Response Code :", resp.StatusCode)
+		log.Println("Response code from Alcor", resp.StatusCode)
 
 		respBodyByte, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -245,7 +245,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Creating bridge device")
-		cmd = exec.Command("bash", "-c", "ip link add name bridge "+in.Name+" type bridge")
+		cmd = exec.Command("bash", "-c", "ip link add name bridge"+in.Name+" type bridge")
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to ceate bridge! " + string(stdout))
@@ -256,7 +256,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Adding veth to bridge")
-		cmd = exec.Command("bash", "-c", "ip link set out"+in.Name+" master bridge "+in.Name)
+		cmd = exec.Command("bash", "-c", "ip link set out"+in.Name+" master bridge"+in.Name)
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to add veth to bridge! " + string(stdout))
@@ -267,7 +267,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Adding TAP device to bridge")
-		cmd = exec.Command("bash", "-c", "ip link set "+tapName+" master bridge "+in.Name)
+		cmd = exec.Command("bash", "-c", "ip link set "+tapName+" master bridge"+in.Name)
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to add tap to bridge " + string(stdout))
@@ -278,7 +278,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Bringing bridge up")
-		cmd = exec.Command("bash", "-c", "ip link set dev bridge "+in.Name+" up")
+		cmd = exec.Command("bash", "-c", "ip link set dev bridge"+in.Name+" up")
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to bring up bridge " + string(stdout))
@@ -326,10 +326,20 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 		jsonStringBody := string(body[:])
 		log.Println("Sending body to Alcor: \n", jsonStringBody)
-		resp, err = http.Post("http://"+constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
+		req, err := http.NewRequest(http.MethodPut, "http://"+constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports/"+portID, bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json; charset=utf-8")
 		if err != nil {
 			return &pb.ReturnMessage{
 				ReturnMessage: "Failed send Update Port request to Alcor!",
+				ReturnCode:    pb.ReturnCode_FAILED,
+			}, err
+		}
+		client := &http.Client{}
+		resp, err = client.Do(req)
+		if err != nil {
+			log.Println("Failed to update port to Alcor!: \n", jsonStringBody)
+			return &pb.ReturnMessage{
+				ReturnMessage: "Failed update port!",
 				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
@@ -340,6 +350,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
+		log.Println("Response code from Alcor", resp.StatusCode)
 		log.Println("Response from Alcor Update Port: ", string(respBodyByte[:]))
 		return &pb.ReturnMessage{
 			ReturnMessage: "Create Success",
