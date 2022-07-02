@@ -16,7 +16,7 @@ import (
 func main() {
 
 	// Start plugin
-	cmd := exec.Command("bash", "c", "service rsyslog restart && /etc/init.d/openvswitch-switch restart && /merak/services/merak-agent/plugins/alcor-control-agent/build/bin/AlcorControlAgent -d -a "+constants.ALCOR_ADDRESS+" -p 30014")
+	cmd := exec.Command("bash", "-c", "service rsyslog restart && /etc/init.d/openvswitch-switch restart && /merak-bin/AlcorControlAgent -d -a "+constants.ALCOR_ADDRESS+" -p 30014")
 	cmd.Dir = "/"
 	err := cmd.Start()
 	if err != nil {

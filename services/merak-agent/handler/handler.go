@@ -68,7 +68,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		return &pb.ReturnMessage{
 			ReturnMessage: "Info Unimplemented",
 			ReturnCode:    pb.ReturnCode_FAILED,
-		}, errors.New("Info Unimplemented")
+		}, errors.New("info unimplemented")
 
 	case pb.OperationType_CREATE:
 		log.Println("Operation Create")
@@ -94,7 +94,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 		log.Println("Sending body to Alcor: \n", string(body[:]))
-		resp, err := http.Post(constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
+		resp, err := http.Post("http://"+constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
 		if err != nil {
 			return &pb.ReturnMessage{
 				ReturnMessage: "Failed to send create minimal port to Alcor!",
@@ -190,7 +190,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Setting MTU probing")
-		cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name, " sysctl -w net.ipv4.tcp_mtu_probing=2")
+		cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" sysctl -w net.ipv4.tcp_mtu_probing=2")
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to set MTU probing! " + string(stdout))
@@ -289,7 +289,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Bringing Tap device up")
-		cmd = exec.Command("bash", "-c", "ip link set dev "+tapName, " up")
+		cmd = exec.Command("bash", "-c", "ip link set dev "+tapName+" up")
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to bring up tap device " + string(stdout))
@@ -326,7 +326,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 		jsonStringBody := string(body[:])
 		log.Println("Sending body to Alcor: \n", jsonStringBody)
-		resp, err = http.Post(constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
+		resp, err = http.Post("http://"+constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
 		if err != nil {
 			return &pb.ReturnMessage{
 				ReturnMessage: "Failed send Update Port request to Alcor!",
@@ -352,7 +352,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		return &pb.ReturnMessage{
 			ReturnMessage: "Update Unimplemented",
 			ReturnCode:    pb.ReturnCode_FAILED,
-		}, errors.New("Update Unimplemented")
+		}, errors.New("update unimplemented")
 
 	case pb.OperationType_DELETE:
 
@@ -360,13 +360,13 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		return &pb.ReturnMessage{
 			ReturnMessage: "Delete Unimplemented",
 			ReturnCode:    pb.ReturnCode_FAILED,
-		}, errors.New("Delete Unimplemented")
+		}, errors.New("delete unimplemented")
 
 	default:
 		log.Println("Unknown Operation")
 		return &pb.ReturnMessage{
 			ReturnMessage: "Unknown Operation",
 			ReturnCode:    pb.ReturnCode_FAILED,
-		}, errors.New("Unknown Operatio")
+		}, errors.New("unknown operation")
 	}
 }

@@ -10,7 +10,8 @@ ENV PATH "$PATH:/usr/local/go/bin"
 
 # ACA
 WORKDIR /
-COPY services/merak-agent/plugins/alcor-control-agent/build/bin/AlcorControlAgent /AlcorControlAgent
+RUN mkdir -p /merak-bin
+COPY services/merak-agent/plugins/alcor-control-agent/build/bin/AlcorControlAgent /merak-bin/AlcorControlAgent
 COPY services/merak-agent/plugins/alcor-control-agent/build/aca-machine-init.sh /aca-machine-init.sh
 RUN apt install -y git make bash gcc libc-dev openvswitch-switch=2.9.8-0ubuntu0.18.04.2 libevent-dev rsyslog
 RUN ./aca-machine-init.sh

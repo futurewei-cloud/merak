@@ -52,7 +52,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		return &pb.ReturnMessage{
 			ReturnMessage: "Info Unimplemented",
 			ReturnCode:    pb.ReturnCode_FAILED,
-		}, errors.New("Info Unimplemented")
+		}, errors.New("info unimplemented")
 
 	case pb.OperationType_CREATE:
 		workflowOptions = client.StartWorkflowOptions{
@@ -170,7 +170,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		return &pb.ReturnMessage{
 			ReturnMessage: "Update Unimplemented",
 			ReturnCode:    pb.ReturnCode_FAILED,
-		}, errors.New("Update Unimplemented")
+		}, errors.New("update unimplemented")
 
 	case pb.OperationType_DELETE:
 		workflowOptions = client.StartWorkflowOptions{
@@ -182,13 +182,13 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		return &pb.ReturnMessage{
 			ReturnMessage: "Delete Unimplemented",
 			ReturnCode:    pb.ReturnCode_FAILED,
-		}, errors.New("Delete Unimplemented")
+		}, errors.New("delete unimplemented")
 
 	default:
 		log.Println("Unknown Operation")
 		return &pb.ReturnMessage{
 			ReturnMessage: "Unknown Operation",
 			ReturnCode:    pb.ReturnCode_FAILED,
-		}, errors.New("Unknown Operation")
+		}, errors.New("unknown operation")
 	}
 }
