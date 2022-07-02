@@ -26,6 +26,7 @@ func TestGrpcClient(t *testing.T) {
 	client := pb.NewMerakComputeServiceClient(conn)
 
 	var ip string = ""
+	var hostname string = ""
 
 	pod0 := pb.InternalVMPod{
 		OperationType: pb.OperationType_CREATE,
@@ -70,7 +71,7 @@ func TestGrpcClient(t *testing.T) {
 	pod := pb.InternalComputeInfo{
 		OperationType: pb.OperationType_CREATE,
 		Id:            "1",
-		Name:          "test",
+		Name:          hostname,
 		Ip:            ip,
 		Mac:           "aa:bb:cc:dd:ee",
 		Veth:          "test",

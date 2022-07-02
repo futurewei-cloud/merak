@@ -70,13 +70,14 @@ func VmCreate(ctx context.Context) (*pb.ReturnMessage, error) {
 				Gw:            common.RedisClient.HGet(ctx, vmID, "gw").Val(),
 				Sg:            common.RedisClient.HGet(ctx, vmID, "sg").Val(),
 				Cidr:          common.RedisClient.HGet(ctx, vmID, "cidr").Val(),
+				Hostname:      common.RedisClient.HGet(ctx, vmID, "hostname").Val(),
 			}
 			resp, err := client.PortHandler(ctx, &port)
 			if err != nil {
-				logger.Error("Unable create vm ID " + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage())
+				logger.Error("Unable create vm ID " + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage() + "\n")
 				return &pb.ReturnMessage{
 					ReturnCode:    pb.ReturnCode_FAILED,
-					ReturnMessage: "Unable create vm at" + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage(),
+					ReturnMessage: "Unable to create VM at" + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage(),
 				}, err
 			}
 			logger.Info("Response from agent at address: " + resp.GetReturnMessage())
