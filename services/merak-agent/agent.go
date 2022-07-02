@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"os/exec"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
@@ -18,7 +17,6 @@ func main() {
 	// Start plugin
 	cmd := exec.Command("/bin/bash", "/merak/tools/start-aca.sh")
 	cmd.Dir = "/"
-	cmd.Stdout = os.Stdout
 	err := cmd.Start()
 	if err != nil {
 		log.Fatal(err)
