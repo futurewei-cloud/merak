@@ -1,0 +1,47 @@
+# Merak namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: merak
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scenario-manager-service
+  namespace: merak
+spec:
+  selector:
+    app: scenario-manager
+  ports:
+    - name: http
+      port: 9090
+      targetPort: 3000
+      nodePort: 3000
+  type: NodePort
+---
+# Merak Scenario-Manager Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scenario-manager
+  namespace: merak
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: scenario-manager
+  template:
+    metadata:
+      labels:
+        app: scenario-manager
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: scenario-manager
+        image: cjchung4849/scenario-manager:dev
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 3000
