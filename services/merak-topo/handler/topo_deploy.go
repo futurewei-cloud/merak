@@ -10,7 +10,7 @@ import (
 
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 	// logrus "github.com/sirupsen/logrus"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -125,10 +125,14 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 
 		//// create pods
 		var newPod *corev1.Pod
+		l := make(map[string]string)
+
 		if strings.Contains(node.Name, "vhost") {
+			l["Type"] = "vhost"
 			newPod = &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: node.Name,
+					Name:   node.Name,
+					Labels: l,
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
@@ -137,9 +141,11 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 				},
 			}
 		} else if strings.Contains(node.Name, "vswitch") || strings.Contains(node.Name, "tor") {
+			l["Type"] = "vswitch"
 			newPod = &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: node.Name,
+					Name:   node.Name,
+					Labels: l,
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
@@ -148,9 +154,12 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 				},
 			}
 		} else if strings.Contains(node.Name, "cgw") {
+			l["Type"] = "configgw"
+
 			newPod = &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: node.Name,
+					Name:   node.Name,
+					Labels: l,
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
@@ -304,38 +313,52 @@ func Topo_pod_check(k8client *kubernetes.Clientset, topo database.TopologyData) 
 	return s, nil
 }
 
-func Comput_node_info(k8client *kubernetes.Clientset, topo database.TopologyData) ([]*pb.InternalComputeInfo, error) {
+// func Comput_node_info(k8client *kubernetes.Clientset, topo database.TopologyData, cnodes []*pb.InternalComputeInfo) error {
+// 	var cnode pb.InternalComputeInfo
 
-	var cnodes []*pb.InternalComputeInfo
-	var cnode *pb.InternalComputeInfo
+// 	for _, node := range topo.Vnodes {
 
-	for _, node := range topo.Vnodes {
+// 		res, err := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
 
-		res, err := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
+// 		if err != nil {
+// 			return fmt.Errorf("get pod error %s", err)
+// 		}
+// 		if res.Status.Phase == "Running" && res.Labels["Type"] == "vhost" {
+// 			cnode.Name = res.Name
+// 			cnode.Id = string(res.UID)
+// 			// cnode.HostIP = res.Status.HostIP
+// 			cnode.Ip = res.Status.PodIP
+// 			cnode.Mac = ""
+// 			cnode.Veth = ""
+// 			cnode.OperationType = pb.OperationType_INFO
+// 			cnodes = append(cnodes, &cnode)
 
-		if err != nil {
-			return cnodes, fmt.Errorf("get pod error %s", err)
-		}
-		if res.Status.Phase == "Running" {
+// 		}
+// 	}
+// 	return nil
 
-			// out, _ := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
-			out, err1 := k8client.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
-			if err1 != nil {
-				return cnodes, fmt.Errorf("get pod data error %s", err)
-			}
+// var cnodes []*pb.InternalComputeInfo
+// var cnode *pb.InternalComputeInfo
 
-			for i := range out.Items {
+// out, err := k8client.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
+// if err != nil {
+// 	return cnodes, fmt.Errorf("get pod data error %s", err)
+// }
 
-				cnode.Name = out.Items[i].Status.NominatedNodeName
-				cnode.Id = out.Items[i].Status.HostIP
-				// cnode.HostIP = out.Items[i].Status.HostIP
-				cnode.Ip = out.Items[i].Status.PodIP
-				cnode.Mac = ""
-				cnode.Veth = ""
-				cnode.OperationType = 2
-				cnodes = append(cnodes, cnode)
-			}
-		}
-	}
-	return cnodes, nil
-}
+// for i := range out.Items {
+
+// 	if out.Items[i].Labels["Type"] == "vhost" {
+// 		cnode.Name = out.Items[i].Name
+// 		cnode.Id = string(out.Items[i].UID)
+// 		// cnode.HostIP = out.Items[i].Status.HostIP
+// 		cnode.Ip = out.Items[i].Status.PodIP
+// 		cnode.Mac = ""
+// 		cnode.Veth = ""
+// 		cnode.OperationType = 2
+// 		cnodes = append(cnodes, cnode)
+
+// 	}
+// }
+// return cnodes, nil
+
+// }

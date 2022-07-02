@@ -8,9 +8,9 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
+	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 	"github.com/futurewei-cloud/merak/services/merak-topo/handler"
 	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
-	"github.com/futurewei-cloud/merak/services/scenario-manager/database"
 )
 
 var (
@@ -19,7 +19,6 @@ var (
 	returnMessage = pb.ReturnTopologyMessage{
 		ReturnCode:    pb.ReturnCode_FAILED,
 		ReturnMessage: "Unintialized",
-		ComputeNodes:  []*pb.InternalComputeInfo{},
 	}
 )
 
@@ -30,41 +29,54 @@ type Server struct {
 func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
 	log.Printf("Received on TopologyHandler %s", in)
 
-	var C_nodes []*pb.InternalComputeInfo
-
 	k8client, err := utils.K8sClient()
 	if err != nil {
 		return nil, fmt.Errorf("create k8s client error %s", err.Error())
 	}
 
+	err1 := database.ConnectDatabase()
+	if err1 != nil {
+		fmt.Printf("connect to DB error %s", err1)
+	}
+
 	// Operation&Return
 	switch op := in.OperationType; op {
 	case pb.OperationType_INFO:
+
+		///
+		// query  based on 1) topology_id  2) the k8s cluster
+
 		//Parse input
-		returnMessage.ReturnCode = pb.ReturnCode_OK
-		returnMessage.ReturnMessage = "Show Topology Information."
+		// returnMessage.ReturnCode = pb.ReturnCode_OK
+		// returnMessage.ReturnMessage = "Show Topology Information."
 
-		// db get function
+		// // db get function
 
-		key_name := in.Config.Name
+		// key_name := in.Config.Name
 
-		key_topo_id := in.Config.TopologyId
+		// key_topo_id := in.Config.TopologyId
 
-		if key_name != "" {
-			data, err := database.GetAllValuesWithKeyPrefix(key_name)
-			if err != nil {
-				return nil, fmt.Errorf("get topology by name from DB %s", err)
-			}
-			fmt.Printf("Topology with Name %v has these information %+v \n", key_name, data)
-		}
+		// if key_name != "" {
+		// 	data, err := database.GetAllValuesWithKeyPrefix(key_name)
+		// 	if err != nil {
+		// 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
+		// 		returnMessage.ReturnMessage = "Fail to get value from DB."
+		// 		returnMessage.ComputeNodes=C_nodes
 
-		if key_topo_id != "" {
-			data, err := database.GetAllValuesWithKeyPrefix(key_topo_id)
-			if err != nil {
-				return nil, fmt.Errorf("get topology by topology_id from DB %s", err)
-			}
-			fmt.Printf("Topology with Topology_id %v has these information %+v \n", key_topo_id, data)
-		}
+		// 	} else {
+		// 		returnMessage.ReturnCode = pb.ReturnCode_OK
+		// 		returnMessage.ReturnMessage = "Show Topology Info."
+		// 		// returnMessage.ComputeNodes=C_nodes
+		// 	}
+		// }
+
+		// if key_topo_id != "" {
+		// 	data, err := database.GetAllValuesWithKeyPrefix(key_topo_id)
+		// 	if err != nil {
+		// 		return nil, fmt.Errorf("get topology by topology_id from DB %s", err)
+		// 	}
+		// 	fmt.Printf("Topology with Topology_id %v has these information %+v \n", key_topo_id, data)
+		// }
 
 		// for loop to save info into msg
 
@@ -81,7 +93,7 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 			returnMessage.ReturnCode = pb.ReturnCode_FAILED
 			returnMessage.ReturnMessage = "Must provide a valid data plane cider, aca number, aca per rack number and rack number"
-			returnMessage.ComputeNodes = C_nodes
+			// returnMessage.ComputeNodes = _nodes
 
 			return &returnMessage, nil
 
@@ -102,29 +114,21 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			//
 		default:
 			// pb.TopologyType_TREE
-			C_nodes, err = handler.Create(k8client, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), data_plane_cidr)
+			err_create := handler.Create(k8client, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), data_plane_cidr, &returnMessage)
 
 			//return topology message-- compute info
 
-			if err != nil {
-				fmt.Printf("The created topology fails %s", err)
+			if err_create != nil {
+				returnMessage.ReturnCode = pb.ReturnCode_FAILED
+				returnMessage.ReturnMessage = "Fail to Create Topology."
+
 			} else {
-				fmt.Printf("The created topology is completed")
+				returnMessage.ReturnCode = pb.ReturnCode_OK
+				returnMessage.ReturnMessage = "Success to create topology"
 			}
+			return &returnMessage, err_create
 
 		}
-
-		returnMessage.ReturnCode = pb.ReturnCode_OK
-		returnMessage.ReturnMessage = "Topology Deployed."
-		returnMessage.ComputeNodes = C_nodes
-
-		// query based on name and topology_id
-
-		// for loop to save info into msg
-
-		// db get function
-
-		// returnMessage.ComputeNodes
 
 	case pb.OperationType_DELETE:
 		// delete topology
@@ -144,7 +148,7 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 		log.Println("Unknown Operation")
 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "TopologyHandler: Unknown Operation"
-		return &returnMessage, nil
+
 	}
 
 	return &returnMessage, nil

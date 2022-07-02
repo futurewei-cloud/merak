@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -35,11 +36,10 @@ var (
 )
 
 //function CREATE
-func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cidr string) ([]*pb.InternalComputeInfo, error) {
-
-	var C_nodes []*pb.InternalComputeInfo
+func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca_per_rack uint32, data_plane_cidr string, returnMessage *pb.ReturnTopologyMessage) error {
 
 	// topo-gen
+
 	var ovs_tor_device = []string{"tor-0"}
 	ip_num := int(aca_num) + cgw_num
 
@@ -86,23 +86,48 @@ func Create(k8client *kubernetes.Clientset, aca_num uint32, rack_num uint32, aca
 
 	err := Topo_deploy(k8client, Topo)
 	if err != nil {
-		return C_nodes, fmt.Errorf("topology deployment error %s", err)
+		return fmt.Errorf("topology deployment error %s", err)
 	}
 
 	fmt.Println("======== Save topo to redis =====")
-	err = Topo_save(k8client, Topo)
-	if err != nil {
-		return C_nodes, fmt.Errorf("save topo to redis error %s", err)
+	err1 := Topo_save(k8client, Topo)
+	if err1 != nil {
+		return fmt.Errorf("save topo to redis error %s", err1)
 	}
 
 	fmt.Println("========= Get compute nodes information after deployment=====")
 
-	C_nodes, err = Comput_node_info(k8client, Topo)
+	for _, node := range Topo.Vnodes {
+		var cnode pb.InternalComputeInfo
 
-	if err != nil {
-		return C_nodes, fmt.Errorf("get compute nodes info error %s", err)
+		res, err := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
+
+		if err != nil {
+			return fmt.Errorf("get pod error %s", err)
+		} else {
+			// if res.Status.Phase == "Running" && res.Labels["Type"] == "vhost" {
+			if res.Labels["Type"] == "vhost" {
+
+				cnode.Name = res.Name
+				cnode.Id = string(res.UID)
+				// cnode.HostIP = res.Status.HostIP
+				cnode.Ip = res.Status.PodIP
+				cnode.Mac = ""
+				cnode.Veth = ""
+				cnode.OperationType = pb.OperationType_INFO
+				returnMessage.ComputeNodes = append(returnMessage.ComputeNodes, &cnode)
+
+			}
+		}
+
 	}
-	return C_nodes, nil
+
+	// err2 := Comput_node_info(k8client, Topo, C_nodes)
+
+	// if err2 != nil {
+	// 	return fmt.Errorf("get compute nodes info error %s", err2)
+	// }
+	return nil
 }
 
 func Delete(k8client *kubernetes.Clientset, topo_id string) error {
@@ -139,4 +164,30 @@ func Subtest(k8client *kubernetes.Clientset, topo_id string) error {
 	}
 	return nil
 
+}
+
+func Testapi(k8client *kubernetes.Clientset, topo database.TopologyData) ([]*pb.InternalComputeInfo, error) {
+	var cnodes []*pb.InternalComputeInfo
+	var cnode *pb.InternalComputeInfo
+
+	for _, node := range topo.Vnodes {
+
+		res, err := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
+
+		if err != nil {
+			return cnodes, fmt.Errorf("get pod error %s", err)
+		}
+		if res.Status.Phase == "Running" && res.Labels["Type"] == "vhost" {
+			cnode.Name = res.Name
+			cnode.Id = string(res.UID)
+			// cnode.HostIP = out.Items[i].Status.HostIP
+			cnode.Ip = res.Status.PodIP
+			cnode.Mac = ""
+			cnode.Veth = ""
+			cnode.OperationType = 2
+			cnodes = append(cnodes, cnode)
+
+		}
+	}
+	return cnodes, nil
 }
