@@ -19,7 +19,7 @@ docker-build:
 docker-all:
 >>>>>>> Initial agent
 # Compute
-	make proto
+	make all
 	docker build -t phudtran/merak-compute:dev -f docker/compute.Dockerfile .
 	docker build -t phudtran/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
 	docker push phudtran/merak-compute:dev
@@ -29,14 +29,14 @@ docker-all:
 	docker push phudtran/merak-agent:dev
 
 docker-compute:
-	make proto
+	make all
 	docker build -t phudtran/merak-compute:dev -f docker/compute.Dockerfile .
 	docker build -t phudtran/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
 	docker push phudtran/merak-compute:dev
 	docker push phudtran/merak-compute-vm-worker:dev
 
 docker-agent:
-	make proto
+	make all
 	docker build -t phudtran/merak-agent:dev -f docker/agent.Dockerfile .
 	docker push phudtran/merak-agent:dev
 
@@ -46,4 +46,5 @@ test:
 clean:
 	rm api/proto/v1/merak/*.pb.go
 	rm services/merak-compute/build/*
+	rm services/merak-agent/build/*
 	rm services/scenario-manager/build/*
