@@ -8,6 +8,7 @@ import (
 	"os/exec"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-agent/handler"
 	"google.golang.org/grpc"
 )
@@ -15,7 +16,7 @@ import (
 func main() {
 
 	// Start plugin
-	cmd := exec.Command("/bin/bash", "/merak/tools/start-aca.sh")
+	cmd := exec.Command("bash", "c", "service rsyslog restart && /etc/init.d/openvswitch-switch restart && /merak/services/merak-agent/plugins/alcor-control-agent/build/bin/AlcorControlAgent -d -a "+constants.ALCOR_ADDRESS+" -p 30014")
 	cmd.Dir = "/"
 	err := cmd.Start()
 	if err != nil {

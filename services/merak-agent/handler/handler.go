@@ -94,7 +94,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 		log.Println("Sending body to Alcor: \n", string(body[:]))
-		resp, err := http.Post("http://10.213.43.224:"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
+		resp, err := http.Post(constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
 		if err != nil {
 			return &pb.ReturnMessage{
 				ReturnMessage: "Failed to send create minimal port to Alcor!",
@@ -147,7 +147,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Creating veth pair")
-		cmd = exec.Command("bash", "-c", "ip link add in "+in.Name+" type veth peer name out "+in.Name)
+		cmd = exec.Command("bash", "-c", "ip link add in"+in.Name+" type veth peer name out"+in.Name)
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Inner and outer veth creation failed! " + string(stdout))
@@ -157,7 +157,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 		log.Println("Moving veth to namespace")
-		cmd = exec.Command("bash", "-c", "ip link set in "+in.Name+" netns "+in.Name)
+		cmd = exec.Command("bash", "-c", "ip link set in"+in.Name+" netns "+in.Name)
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Move veth into namespace failed! " + string(stdout))
@@ -168,7 +168,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Assigning IP address to veth device")
-		cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" ip addr add "+ip+"/"+strings.Split(in.Cidr, "/")[1]+" dev in "+in.Name)
+		cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" ip addr add "+ip+"/"+strings.Split(in.Cidr, "/")[1]+" dev in"+in.Name)
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to give inner veth IP! " + string(stdout))
@@ -179,7 +179,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Bringing inner veth up")
-		cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" ip link set dev "+in.Name+" up")
+		cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" ip link set dev in"+in.Name+" up")
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed bring up inner veth! " + string(stdout))
@@ -201,7 +201,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Bringing up outer veth")
-		cmd = exec.Command("bash", "-c", "ip link set dev out "+in.Name+" up")
+		cmd = exec.Command("bash", "-c", "ip link set dev out"+in.Name+" up")
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to bring up outer veth!  " + string(stdout))
@@ -223,7 +223,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Assigning MAC address to veth")
-		cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" ifconfig  in "+in.Name+" hw ether "+mac)
+		cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" ifconfig in"+in.Name+" hw ether "+mac)
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Assign mac! " + string(stdout))
@@ -256,7 +256,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Adding veth to bridge")
-		cmd = exec.Command("bash", "-c", "ip link set out "+in.Name+" master bridge "+in.Name)
+		cmd = exec.Command("bash", "-c", "ip link set out"+in.Name+" master bridge "+in.Name)
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to add veth to bridge! " + string(stdout))
@@ -267,7 +267,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Adding TAP device to bridge")
-		cmd = exec.Command("bash", "-c", "ip link set "+tapName, " master bridge "+in.Name)
+		cmd = exec.Command("bash", "-c", "ip link set "+tapName+" master bridge "+in.Name)
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to add tap to bridge " + string(stdout))
@@ -326,7 +326,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 		jsonStringBody := string(body[:])
 		log.Println("Sending body to Alcor: \n", jsonStringBody)
-		resp, err = http.Post("http://10.213.43.224:"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
+		resp, err = http.Post(constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
 		if err != nil {
 			return &pb.ReturnMessage{
 				ReturnMessage: "Failed send Update Port request to Alcor!",
