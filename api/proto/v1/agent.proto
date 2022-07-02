@@ -18,4 +18,5 @@ message InternalPortConfig {
     string gw = 8;
     string sg = 9;
     string cidr = 10;
+    string hostname = 11;
 }

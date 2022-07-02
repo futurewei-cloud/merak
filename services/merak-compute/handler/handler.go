@@ -115,6 +115,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 							"sg", in.Config.VmDeploy.Secgroups[0],
 							"hostIP", pod.Ip,
 							"hostmac", pod.Mac,
+							"hostname", pod.Name,
 						).Err(); err != nil {
 							return &pb.ReturnMessage{
 								ReturnMessage: "Unable add VM to DB Hash Map",
