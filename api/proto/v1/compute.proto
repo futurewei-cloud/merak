@@ -57,3 +57,20 @@ message InternalComputeConfigInfo {
 message InternalComputeExtraInfo {
     string info = 1;
 }
+
+message InternalVMInfo {
+    string id = 1;
+    string name = 2;
+    string ip = 3;
+    string vpc_id = 4;
+    string subnet_id = 5;
+    string security_group_id = 6;
+    string default_gateway = 7;
+    string status = 8;
+}
+
+message ReturnComputeMessage {
+    ReturnCode return_code = 1;
+    string return_message = 2;
+    repeated InternalVMInfo vms = 3;
+}

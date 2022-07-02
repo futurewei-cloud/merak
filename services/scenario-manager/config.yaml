@@ -1,0 +1,7 @@
+db_host: localhost
+db_port: 55000
+db_user: default
+db_pass: redispw
+log_level: debug
+use_syslog: false
+grpc_timeout: 10

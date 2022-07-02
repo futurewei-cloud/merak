@@ -124,15 +124,7 @@ func UpdateTopology(c *fiber.Ctx) error {
 		c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", err.Error(), nil))
 	}
 
-	topology.Name = updateTopology.Name
-	topology.NumberOfVhosts = updateTopology.NumberOfVhosts
-	topology.NumberOfRacks = updateTopology.NumberOfRacks
-	topology.TopoType = updateTopology.TopoType
-	topology.DataPlaneCidr = updateTopology.DataPlaneCidr
-	topology.NumberOfGateways = updateTopology.NumberOfGateways
-	topology.GatewayIPs = updateTopology.GatewayIPs
-	topology.VNodes = updateTopology.VNodes
-	topology.VLinks = updateTopology.VLinks
+	utils.EntityUpdateCheck(utils.UpdateChecker, &topology, &updateTopology)
 	topology.UpdatedAt = time.Now()
 
 	database.Set(utils.KEY_PREFIX_TOPOLOGY+id, &topology)
