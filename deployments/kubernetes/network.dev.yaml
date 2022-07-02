@@ -1,0 +1,99 @@
+# Merak namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: merak
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: merak-network-service
+  namespace: merak
+spec:
+  selector:
+    app: merak-network
+  ports:
+    - protocol: TCP
+      name: grpc
+      port: 40053
+      targetPort: network-grpc
+  type: ClusterIP
+---
+# Merak Compute Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: merak-network
+  namespace: merak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: merak-network
+  template:
+    metadata:
+      labels:
+        app: merak-network
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: merak-network
+        image: yanmo96/merak-network:latest
+        ports:
+          - containerPort: 40053
+            name: network-grpc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: network-redis-main
+  namespace: merak
+  labels:
+    app: redis
+    role: main
+    tier: backend
+spec:
+  ports:
+    - protocol: TCP
+      port: 30053
+      targetPort: network-redis
+  selector:
+    app: redis
+    role: main
+    tier: backend
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-main
+  namespace: merak
+  labels:
+    app: redis
+    role: main
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: main
+        tier: backend
+    spec:
+      containers:
+        - name: main
+          image: "redis:7.0.0"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          ports:
+            - containerPort: 6379
+              name: network-redis
