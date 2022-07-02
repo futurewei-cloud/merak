@@ -85,7 +85,7 @@ func VmCreate(ctx context.Context) (*pb.ReturnMessage, error) {
 	}
 
 	return &pb.ReturnMessage{
-		ReturnCode:    pb.ReturnCode_FAILED,
+		ReturnCode:    pb.ReturnCode_OK,
 		ReturnMessage: "Success!",
 	}, nil
 }
