@@ -21,12 +21,12 @@ enum ReturnCode {
 
 enum Status {
   NONE = 0;
-	DEPLOYING = 1;
+  DEPLOYING = 1;
   READY = 2;
-	DELETING = 3;
-	UPDATING = 4;
-	ERROR = 5;
-	DONE = 6;
+  DELETING = 3;
+  UPDATING = 4;
+  ERROR = 5;
+  DONE = 6;
 }
 
 message ReturnMessage {
