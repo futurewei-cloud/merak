@@ -346,7 +346,7 @@ func TestPutOperations(t *testing.T) {
 
 		// Test input
 		route string
-		body  map[string]string
+		body  map[string]interface{}
 
 		// Expected output
 		expectedError bool
@@ -361,10 +361,26 @@ func TestPutOperations(t *testing.T) {
 		// 	expectedCode:  200,
 		// 	expectedBody:  "OK",
 		// },
+		// {
+		// 	description:   "put a service",
+		// 	route:         "/api/service-config/508eecdd9d474fc388119601cc31e1c7",
+		// 	body:          map[string]string{"name": "service-test-2"},
+		// 	expectedError: false,
+		// 	expectedCode:  200,
+		// 	expectedBody:  "OK",
+		// },
 		{
-			description:   "put a service",
-			route:         "/api/service-config/508eecdd9d474fc388119601cc31e1c7",
-			body:          map[string]string{"name": "service-test-2"},
+			description: "put a topology",
+			route:       "/api/topologies/25203a13695a488bb4441bacb1251f2c",
+			body: map[string]interface{}{
+				"name":             "topology-test-2",
+				"status":           "NONE",
+				"number_of_vhosts": 10,
+				"number_of_racks":  2,
+				"vhosts_per_rack":  5,
+				"data_plane_cidr":  "10.200.0.0/16",
+				"vnodes":           []interface{}{map[string]interface{}{"name": "p1", "type": "vhost", "nics": []interface{}{map[string]interface{}{"name": "eth0", "ip": "10.0.0.1"}}}},
+				"vlinks":           []interface{}{map[string]interface{}{"name": "v1", "from": "p1", "to": "p2"}}},
 			expectedError: false,
 			expectedCode:  200,
 			expectedBody:  "OK",
