@@ -19,6 +19,16 @@ enum ReturnCode {
   FAILED = 1;
 }
 
+enum Status {
+  NONE = 0;
+	DEPLOYING = 1;
+  READY = 2;
+	DELETING = 3;
+	UPDATING = 4;
+	ERROR = 5;
+	DONE = 6;
+}
+
 message ReturnMessage {
   ReturnCode return_code = 1;
   string return_message = 2;
@@ -40,7 +50,7 @@ message InternalServiceInfo {
 message InternalHostInfo {
   string ip = 1;
   repeated string routing_rules = 2;
-  string status = 3;
+  Status status = 3;
 }
 
 message InternalComputeInfo {
@@ -50,7 +60,7 @@ message InternalComputeInfo {
   string ip = 4;
   string mac = 5;
   string veth = 6;
-  string status = 7;
+  Status status = 7;
 }
 
 message InternalSubnetInfo {
