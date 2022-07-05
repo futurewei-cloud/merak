@@ -28,14 +28,64 @@ func UpdateChecker(src interface{}, upt interface{}) interface{} {
 			return upt
 		}
 		return src
-		// case []entities.Service:
-		// 	rv := reflect.TypeOf(upt)
-		// 	if rv.NumField() < 0 {
-		// 		return upt
-		// 	}
-		// 	return src
+	case int, uint, uint32:
+		if upt != 0 {
+			return upt
+		}
+		return src
+	case []string:
+		if len(upt.([]string)) > 0 {
+			return upt
+		}
+		return src
+	case []entities.Service:
+		if len(upt.([]entities.Service)) > 0 {
+			return upt
+		}
+		return src
+	case []entities.Image:
+		if len(upt.([]entities.Image)) > 0 {
+			return upt
+		}
+		return src
+	case []entities.VNode:
+		if len(upt.([]entities.VNode)) > 0 {
+			return upt
+		}
+		return src
+	case []entities.VLink:
+		if len(upt.([]entities.VLink)) > 0 {
+			return upt
+		}
+		return src
+	case []entities.VPCInfo:
+		if len(upt.([]entities.VPCInfo)) > 0 {
+			return upt
+		}
+		return src
+	case []entities.Router:
+		if len(upt.([]entities.Router)) > 0 {
+			return upt
+		}
+		return src
+	case []entities.Gateway:
+		if len(upt.([]entities.Gateway)) > 0 {
+			return upt
+		}
+		return src
+	case []entities.SecurityGroup:
+		if len(upt.([]entities.SecurityGroup)) > 0 {
+			return upt
+		}
+		return src
+	case []entities.Test:
+		if len(upt.([]entities.Test)) > 0 {
+			return upt
+		}
+		return src
+	default:
+		return src
 	}
-	return src
 }
 
 func EntityUpdateCheck(check func(interface{}, interface{}) interface{}, origin interface{}, update interface{}) {
