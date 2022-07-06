@@ -10,22 +10,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// grpc client
-
-// Call operation.Create()
-// --- Generete topology yaml file based on topology type
-
-// Call operation.SaveTopo()
-// ----Save topology yaml file
-
-// Call operation.ConfigTopo()
-// ---generate pod topology
-// ---generate pod specification
-
-// Call operation. DeployTopo()
-// ---through k8s pod creation
-// ---through k8s deployment
-
 var (
 	Topo    database.TopologyData
 	Vlinks  []database.Vlink
@@ -184,7 +168,7 @@ func Subtest(k8client *kubernetes.Clientset, topo_id string) error {
 			return fmt.Errorf("failed to retrieve pod data from DB %s", err)
 		}
 
-		err = Pod_info(k8client, pod)
+		err = Pod_query(k8client, pod)
 		if err != nil {
 			return fmt.Errorf("failed to query pod compute node info from K8s %s", err)
 		}
@@ -219,3 +203,8 @@ func Testapi(k8client *kubernetes.Clientset, topo database.TopologyData) ([]*pb.
 	}
 	return cnodes, nil
 }
+
+// func testHostIP (k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.ReturnTopologyMessage) error{
+// 	re, err2 := k8client.CoreV1().Nodes().List(Ctx, )
+
+// }

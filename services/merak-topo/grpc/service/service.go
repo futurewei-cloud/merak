@@ -29,7 +29,7 @@ type Server struct {
 func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
 	log.Printf("Received on TopologyHandler %s", in)
 
-	k8client, err := utils.K8sClient()
+	k8client, err := utils.K8sClient() // config.yaml- sm
 	if err != nil {
 		return nil, fmt.Errorf("create k8s client error %s", err.Error())
 	}

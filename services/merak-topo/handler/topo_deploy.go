@@ -11,6 +11,7 @@ import (
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 	// logrus "github.com/sirupsen/logrus"
 
+	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -20,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 
 	"k8s.io/client-go/tools/remotecommand"
 )
@@ -190,17 +190,17 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 
 }
 
-func Pod_info(k8client *kubernetes.Clientset, pod *corev1.Pod) error {
+func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod) error {
 
 	ip := "10.200.99.11"
 	command := "arp " + ip
 	// command2 := "arp " + ip
 	cmd := []string{
-		"sh",
+		"bash",
 		"-c",
 		command,
 	}
-	req := k8client.CoreV1().RESTClient().Post().Resource("pods").Name(pod.Name).Namespace(pod.ObjectMeta.Namespace).SubResource("exec") // .Param("container", containerName)
+	req := k8client.CoreV1().RESTClient().Post().Resource("pods").Name(pod.Name).Namespace(pod.Namespace).SubResource("exec") // .Param("container", containerName)
 	scheme := runtime.NewScheme()
 	if err := corev1.AddToScheme(scheme); err != nil {
 		panic(err.Error())
@@ -212,10 +212,16 @@ func Pod_info(k8client *kubernetes.Clientset, pod *corev1.Pod) error {
 		Stderr: true,
 		TTY:    false,
 		// Container: containerName,
-		Container: pod.Name,
+		Container: pod.Spec.Containers[0].Name,
 		Command:   cmd,
 	}, parameterCodec)
-	exec, err := remotecommand.NewSPDYExecutor(&rest.Config{}, "POST", req.URL())
+
+	config, err_config := utils.K8sConfig()
+	if err_config != nil {
+		return fmt.Errorf(err_config.Error())
+	}
+
+	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
 	if err != nil {
 		panic(err.Error())
 	}
@@ -274,13 +280,6 @@ func Topo_save(k8client *kubernetes.Clientset, topo database.TopologyData) error
 	if err_db != nil {
 		return fmt.Errorf("fail to save in db %s", err_db)
 	}
-
-	// if pods_status {
-	// 	err := database.SetValue(topo_id, topo)
-	// 	if err != nil {
-	// 		return fmt.Errorf("fail to save in db %s", err)
-	// 	}
-	// }
 	return nil
 }
 

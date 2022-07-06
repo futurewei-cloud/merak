@@ -18,19 +18,18 @@ func main() {
 	//grpc server init check
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *service.Port))
 	if err != nil {
-		log.Fatalln("ERROR: Failed to listen", err)
+		log.Fatalln("ERROR: Fail to listen", err)
 	}
 	gRPCServer := grpc.NewServer()
 	pb.RegisterMerakTopologyServiceServer(gRPCServer, &service.Server{})
 
 	log.Printf("Starting gRPC server. Listening at %v", lis.Addr())
 	if err := gRPCServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Fatalf("fail to serve: %v", err)
 	}
 
-	//grpc client
-
-	// redis init check-- pingpong test
-	err = database.ConnectDatabase()
+	if err := database.ConnectDatabase(); err != nil {
+		log.Fatalf("fail to connect db: %v", err)
+	}
 
 }
