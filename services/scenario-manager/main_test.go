@@ -277,6 +277,46 @@ func TestScenarioActions(t *testing.T) {
 	//utils.AssertEqual(t, test.expectedBody, string(body), test.description)
 }
 
+func TestSAGetTopology(t *testing.T) {
+	var sa entities.ScenarioAction
+	sa.ScenarioId = "d6f044df409d4836930ee88b540b2610"
+	var ssa entities.ServiceAction
+	ssa.ServiceName = "topology"
+	ssa.Action = "CHECK"
+	sa.Services = append(sa.Services, ssa)
+
+	// Setup the app as it is done in the main function
+	app := Setup()
+
+	reqbody, _ := json.Marshal(sa)
+	req, _ := http.NewRequest(
+		"POST",
+		"/api/scenarios/actions",
+		bytes.NewReader(reqbody),
+	)
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform the request plain with the app.
+	// The -1 disables request latency.
+	res, err := app.Test(req, -1)
+
+	// verify that no error occured, that is not expected
+	utils.AssertEqual(t, false, err != nil, "deploy a scenario")
+
+	// Verify if the status code is as expected
+	utils.AssertEqual(t, 200, res.StatusCode, "deploy a scenario")
+
+	// Read the response body
+	//body, err := ioutil.ReadAll(res.Body)
+
+	// Reading the response body should work everytime, such that
+	// the err variable should be nil
+	// utils.AssertEqual(t, nil, err, test.description)
+
+	// Verify, that the reponse body equals the expected body
+	//utils.AssertEqual(t, test.expectedBody, string(body), test.description)
+}
+
 func TestGetScenarios(t *testing.T) {
 	tests := []struct {
 		description string
@@ -346,7 +386,7 @@ func TestPutOperations(t *testing.T) {
 
 		// Test input
 		route string
-		body  map[string]string
+		body  map[string]interface{}
 
 		// Expected output
 		expectedError bool
@@ -362,9 +402,17 @@ func TestPutOperations(t *testing.T) {
 		// 	expectedBody:  "OK",
 		// },
 		{
-			description:   "put a service",
-			route:         "/api/service-config/508eecdd9d474fc388119601cc31e1c7",
-			body:          map[string]string{"name": "service-test-2"},
+			description: "put a topology",
+			route:       "/api/topologies/25203a13695a488bb4441bacb1251f2c",
+			body: map[string]interface{}{
+				"name":             "topology-test-2",
+				"status":           "NONE",
+				"number_of_vhosts": 10,
+				"number_of_racks":  2,
+				"vhosts_per_rack":  5,
+				"data_plane_cidr":  "10.200.0.0/16",
+				"vnodes":           []interface{}{map[string]interface{}{"name": "p1", "type": "vhost", "nics": []interface{}{map[string]interface{}{"name": "eth0", "ip": "10.0.0.1"}}}},
+				"vlinks":           []interface{}{map[string]interface{}{"name": "v1", "from": "p1", "to": "p2"}}},
 			expectedError: false,
 			expectedCode:  200,
 			expectedBody:  "OK",
