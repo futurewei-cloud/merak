@@ -66,7 +66,7 @@ message InternalVMInfo {
     string subnet_id = 5;
     string security_group_id = 6;
     string default_gateway = 7;
-    string status = 8;
+    Status status = 8;
 }
 
 message ReturnComputeMessage {
