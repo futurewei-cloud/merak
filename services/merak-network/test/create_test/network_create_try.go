@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	addr = flag.String("addr", "localhost:40054", "the address to connect to")
+	addr = flag.String("addr", "localhost:40053", "the address to connect to")
 	name = flag.String("name", defaultName, "Name to greet")
 )
 
@@ -167,7 +167,7 @@ func main() {
 	c := pb.NewMerakNetworkServiceClient(conn)
 
 	// Contact the server and print out its response.
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
 	r, err := c.NetConfigHandler(ctx, &testInternalNetConfigInfo)
@@ -175,5 +175,5 @@ func main() {
 		log.Fatalf("could not greet: %v", err)
 	}
 	//log.Printf("Greeting: %s", r.GetMessage())
-	log.Printf("Greeting: %s", r.ReturnMessage)
+	log.Printf("Return: %s", r)
 }

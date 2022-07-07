@@ -36,13 +36,27 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 	log.Printf("Received on NetworkHandler %s", in)
 	log.Printf("OP type %s", in.GetOperationType())
 
+	netConfigId := in.Config.GetNetconfigId()
+
 	wg := new(sync.WaitGroup)
+	//var wg sync.WaitGroup
 	// Parse input
 
 	//switch op := in.OperationType; op {
 	switch op := in.GetOperationType(); op {
 	case pb.OperationType_INFO:
+		ctx := context.TODO()
 		log.Println("Info")
+		networkInfoReturn := make(chan *pb.ReturnNetworkMessage)
+		wg.Add(1)
+		go activities.VnetInfo(ctx, netConfigId, wg, networkInfoReturn)
+		//wg.Wait()
+		time.Sleep(5 * time.Second)
+		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
+		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_INFO"
+		returnNetworkMessage := <-networkInfoReturn
+		log.Printf("returnNetworkMessage %s", returnNetworkMessage)
+		return returnNetworkMessage, nil
 	case pb.OperationType_CREATE:
 		ctx := context.TODO()
 		// services
@@ -61,7 +75,7 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		wg.Add(1)
 		networkReturn := make(chan *pb.ReturnNetworkMessage)
 		//go activities.VnetCreate(ctx, in.Config.Network, wg, networkReturn)
-		go activities.VnetCreate(ctx, in.Config.GetNetwork(), wg, networkReturn)
+		go activities.VnetCreate(ctx, netConfigId, in.Config.GetNetwork(), wg, networkReturn)
 
 		//// storage info
 		//for _, storage := range in.Config.Storage {
@@ -73,7 +87,7 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		//}
 		log.Println("Before Wait")
 		//wg.Wait()
-		time.Sleep(15 * time.Second)
+		time.Sleep(5 * time.Second)
 		log.Println("After Wait")
 
 		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK

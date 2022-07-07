@@ -43,7 +43,7 @@ func doVPC(vpc *pb.InternalVpcInfo) (vpcId string) {
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.VpcReturn
 	json.Unmarshal([]byte(returnMessage), &returnJson)
-	database.Set(utils.VPC+returnJson.Network.ID, returnMessage)
+	database.Set(utils.VPC+returnJson.Network.ID, returnJson.Network)
 	log.Printf("returnJson : %+v", returnJson)
 	log.Println("doVPC done")
 	return returnJson.Network.ID
@@ -63,7 +63,7 @@ func doSubnet(subnet *pb.InternalSubnetInfo, vpcId string) (subnetId string) {
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.SubnetReturn
 	json.Unmarshal([]byte(returnMessage), &returnJson)
-	database.Set(utils.SUBNET+returnJson.Subnet.ID, returnMessage)
+	database.Set(utils.SUBNET+returnJson.Subnet.ID, returnJson.Subnet)
 	log.Printf("returnJson : %+v", returnJson)
 	log.Println("doVPC done")
 	return returnJson.Subnet.ID
@@ -95,7 +95,7 @@ func doRouter(vpcId string) (routerId string) {
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.RouterReturn
 	json.Unmarshal([]byte(returnMessage), &returnJson)
-	database.Set(utils.Router+returnJson.Router.ID, returnMessage)
+	database.Set(utils.Router+returnJson.Router.ID, returnJson.Router)
 	log.Printf("returnJson : %+v", returnJson)
 	log.Println("doRouter done")
 	return returnJson.Router.ID
@@ -132,13 +132,13 @@ func doSg(sg *pb.InternalSecurityGroupInfo, sgID string) string {
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.SgReturn
 	json.Unmarshal([]byte(returnMessage), &returnJson)
-	database.Set(utils.SECURITYGROUP+returnJson.SecurityGroup.ID, returnMessage)
+	database.Set(utils.SECURITYGROUP+returnJson.SecurityGroup.ID, returnJson.SecurityGroup)
 	log.Printf("returnJson : %+v", returnJson)
 	log.Println("doSg done")
 	return returnJson.SecurityGroup.ID
 }
 
-func VnetCreate(ctx context.Context, network *pb.InternalNetworkInfo, wg *sync.WaitGroup, returnMessage chan *pb.ReturnNetworkMessage) (string, error) {
+func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNetworkInfo, wg *sync.WaitGroup, returnMessage chan *pb.ReturnNetworkMessage) (string, error) {
 	log.Println("VnetCreate")
 	//defer wg.Done()
 	// TODO may want to separate bellow sections to different function, and use `go` and `wg` to improve overall speed
@@ -146,29 +146,33 @@ func VnetCreate(ctx context.Context, network *pb.InternalNetworkInfo, wg *sync.W
 	// Doing vpc and subnet
 
 	var vpcId string
+	var vpcIds []string
 	subnetCiderIdMap := make(map[string]string)
-	for i := 0; i < int(network.NumberOfVpcs); i++ {
-		vpcId = doVPC(network.Vpcs[i])
+	for _, vpc := range network.Vpcs {
+		//for i := 0; i < int(network.NumberOfVpcs); i++ {
+		vpcId = doVPC(vpc)
+		vpcIds = append(vpcIds, vpcId)
 		var returnInfo []*pb.InternalVpcInfo
 
 		var subnetInfo []*pb.InternalSubnetInfo
-		for j := 0; j < int(network.NumberOfSubnetPerVpc); j++ {
+		for _, subnet := range vpc.Subnets {
+			//for j := 0; j < int(network.NumberOfSubnetPerVpc); j++ {
 			//subnetId := utils.GenUUID()
-			subnetId := doSubnet(network.Vpcs[i].Subnets[j], vpcId)
-			subnetCiderIdMap[network.Vpcs[i].Subnets[j].SubnetCidr] = subnetId
+			subnetId := doSubnet(subnet, vpcId)
+			subnetCiderIdMap[subnet.SubnetCidr] = subnetId
 			log.Printf("subnetCiderIdMap %s", subnetCiderIdMap)
 			currentSubnet := pb.InternalSubnetInfo{
 				SubnetId:   subnetId,
-				SubnetCidr: network.Vpcs[i].Subnets[j].SubnetCidr,
-				SubnetGw:   network.Vpcs[i].Subnets[j].SubnetGw,
-				NumberVms:  network.Vpcs[i].Subnets[j].NumberVms,
+				SubnetCidr: subnet.SubnetCidr,
+				SubnetGw:   subnet.SubnetGw,
+				NumberVms:  subnet.NumberVms,
 			}
 			subnetInfo = append(subnetInfo, &currentSubnet)
 		}
 		currentVPC := pb.InternalVpcInfo{
 			VpcId:     vpcId,
-			TenantId:  network.Vpcs[i].TenantId,
-			ProjectId: network.Vpcs[i].ProjectId,
+			TenantId:  vpc.TenantId,
+			ProjectId: vpc.ProjectId,
 			Subnets:   subnetInfo,
 		}
 		//returnInfo = append(returnInfo, &currentVPC)
@@ -192,6 +196,7 @@ func VnetCreate(ctx context.Context, network *pb.InternalNetworkInfo, wg *sync.W
 			doAttachRouter(routerId, subnetCiderIdMap[subnet])
 		}
 	}
+	database.Set(utils.NETCONFIG+netConfigId, &returnNetworkMessage)
 	returnMessage <- &returnNetworkMessage
 	log.Printf("&returnNetworkMessage %s", &returnNetworkMessage)
 	defer wg.Done()

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/go-redis/redis/v8"
@@ -18,10 +19,10 @@ var (
 
 func ConnectDatabase() error {
 	client := redis.NewClient(&redis.Options{
-		Addr: "10.213.43.224:30053",
-		//Username: "default",
-		//Password: "redispw",
-		DB: 0,
+		Addr:     "localhost:55000",
+		Username: "default",
+		Password: "redispw",
+		DB:       0,
 	})
 
 	if err := client.Ping(Ctx).Err(); err != nil {
@@ -46,8 +47,10 @@ func Set(key string, val interface{}) error {
 }
 
 func Get(key string) (string, error) {
+	log.Printf("DB GET %s", key)
 	val, err := Rdb.Get(Ctx, key).Result()
 	if err != nil {
+		log.Println("DB Get Issue")
 		return "", err
 	}
 	return val, nil

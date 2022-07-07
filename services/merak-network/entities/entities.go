@@ -1,5 +1,11 @@
 package entities
 
+type NetconfigIds struct {
+	ID              string   `json:"ID"`
+	VpcId           []string `json:"vpc_id"`
+	SubnetId        []string `json:"subnet_id"`
+	SecurityGroupId []string `json:"security_group_id"`
+}
 type VpcBody struct {
 	AdminStateUp        bool   `json:"admin_state_up"`
 	RevisionNumber      int    `json:"revision_number"`
@@ -65,6 +71,52 @@ type VpcReturn struct {
 		Subnets                 interface{}   `json:"subnets"`
 	} `json:"network"`
 }
+type VpcReturnDB struct {
+	Default     bool   `json:"default"`
+	ID          string `json:"id"`
+	ProjectID   string `json:"project_id"`
+	TenantID    string `json:"tenant_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Cidr        string `json:"cidr"`
+	Routes      []struct {
+		Destination       string `json:"destination"`
+		Target            string `json:"target"`
+		Priority          int    `json:"priority"`
+		AssociatedType    string `json:"associatedType"`
+		AssociatedTableID string `json:"associatedTableId"`
+		ID                string `json:"id"`
+		ProjectID         string `json:"project_id"`
+		TenantID          string `json:"tenant_id"`
+		Name              string `json:"name"`
+		Description       string `json:"description"`
+	} `json:"routes"`
+	Router                  interface{}   `json:"router"`
+	AdminStateUp            bool          `json:"admin_state_up"`
+	DNSDomain               string        `json:"dns_domain"`
+	Mtu                     int           `json:"mtu"`
+	PortSecurityEnabled     bool          `json:"port_security_enabled"`
+	ProviderNetworkType     string        `json:"provider:network_type"`
+	ProviderPhysicalNetwork interface{}   `json:"provider:physical_network"`
+	ProviderSegmentationID  int           `json:"provider:segmentation_id"`
+	RouterExternal          bool          `json:"router:external"`
+	Segments                interface{}   `json:"segments"`
+	Shared                  bool          `json:"shared"`
+	VlanTransparent         bool          `json:"vlan_transparent"`
+	IsDefault               bool          `json:"is_default"`
+	AvailabilityZoneHints   interface{}   `json:"availability_zone_hints"`
+	AvailabilityZones       []string      `json:"availability_zones"`
+	QosPolicyID             interface{}   `json:"qos_policy_id"`
+	RevisionNumber          int           `json:"revision_number"`
+	Status                  string        `json:"status"`
+	Tags                    []interface{} `json:"tags"`
+	CreatedAt               string        `json:"created_at"`
+	UpdatedAt               string        `json:"updated_at"`
+	Ipv4AddressScope        interface{}   `json:"ipv4_address_scope"`
+	Ipv6AddressScope        interface{}   `json:"ipv6_address_scope"`
+	L2Adjacency             interface{}   `json:"l2_adjacency"`
+	Subnets                 interface{}   `json:"subnets"`
+}
 
 type SgBody struct {
 	CreateAt           string   `json:"create_at"`
@@ -104,6 +156,30 @@ type SgReturn struct {
 		CreateAt string `json:"create_at"`
 		UpdateAt string `json:"update_at"`
 	} `json:"security_group"`
+}
+type SgReturnDB struct {
+	ID                 string `json:"id"`
+	ProjectID          string `json:"project_id"`
+	TenantID           string `json:"tenant_id"`
+	Name               string `json:"name"`
+	Description        string `json:"description"`
+	SecurityGroupRules []struct {
+		ID              string      `json:"id"`
+		ProjectID       string      `json:"project_id"`
+		TenantID        string      `json:"tenant_id"`
+		Name            string      `json:"name"`
+		Description     string      `json:"description"`
+		SecurityGroupID string      `json:"security_group_id"`
+		RemoteGroupID   interface{} `json:"remote_group_id"`
+		Direction       string      `json:"direction"`
+		RemoteIPPrefix  interface{} `json:"remote_ip_prefix"`
+		Protocol        interface{} `json:"protocol"`
+		PortRangeMax    interface{} `json:"port_range_max"`
+		PortRangeMin    interface{} `json:"port_range_min"`
+		Ethertype       string      `json:"ethertype"`
+	} `json:"security_group_rules"`
+	CreateAt string `json:"create_at"`
+	UpdateAt string `json:"update_at"`
 }
 
 type SubnetBody struct {
@@ -167,6 +243,56 @@ type SubnetReturn struct {
 		CreatedAt            string        `json:"created_at"`
 		UpdatedAt            string        `json:"updated_at"`
 	} `json:"subnet"`
+}
+type SubnetReturnDB struct {
+	ID                string      `json:"id"`
+	ProjectID         string      `json:"project_id"`
+	TenantID          string      `json:"tenant_id"`
+	Name              string      `json:"name"`
+	Description       interface{} `json:"description"`
+	NetworkID         string      `json:"network_id"`
+	Cidr              string      `json:"cidr"`
+	AvailabilityZone  interface{} `json:"availability_zone"`
+	GatewayIP         string      `json:"gateway_ip"`
+	GatewayPortID     string      `json:"gatewayPortId"`
+	GatewayPortDetail struct {
+		GatewayMacAddress string `json:"gateway_macAddress"`
+		GatewayPortID     string `json:"gateway_port_id"`
+	} `json:"gateway_port_detail"`
+	AttachedRouterID  interface{}   `json:"attached_router_id"`
+	PortDetail        interface{}   `json:"port_detail"`
+	EnableDhcp        bool          `json:"enable_dhcp"`
+	PrimaryDNS        interface{}   `json:"primary_dns"`
+	SecondaryDNS      interface{}   `json:"secondary_dns"`
+	DNSList           interface{}   `json:"dns_list"`
+	IPVersion         int           `json:"ip_version"`
+	IPV4RangeID       string        `json:"ipV4_rangeId"`
+	IPV6RangeID       interface{}   `json:"ipV6_rangeId"`
+	Ipv6AddressMode   interface{}   `json:"ipv6_address_mode"`
+	Ipv6RaMode        interface{}   `json:"ipv6_ra_mode"`
+	RevisionNumber    int           `json:"revision_number"`
+	SegmentID         interface{}   `json:"segment_id"`
+	Shared            interface{}   `json:"shared"`
+	SortDir           interface{}   `json:"sort_dir"`
+	SortKey           interface{}   `json:"sort_key"`
+	SubnetpoolID      interface{}   `json:"subnetpool_id"`
+	DNSPublishFixedIP bool          `json:"dns_publish_fixed_ip"`
+	Tags              []interface{} `json:"tags"`
+	TagsAny           interface{}   `json:"tags-any"`
+	NotTags           interface{}   `json:"not-tags"`
+	NotTagsAny        interface{}   `json:"not-tags-any"`
+	Fields            interface{}   `json:"fields"`
+	DNSNameservers    []interface{} `json:"dns_nameservers"`
+	AllocationPools   []struct {
+		Start string `json:"start"`
+		End   string `json:"end"`
+	} `json:"allocation_pools"`
+	HostRoutes           []interface{} `json:"host_routes"`
+	Prefixlen            interface{}   `json:"prefixlen"`
+	UseDefaultSubnetPool bool          `json:"use_default_subnet_pool"`
+	ServiceTypes         []interface{} `json:"service_types"`
+	CreatedAt            string        `json:"created_at"`
+	UpdatedAt            string        `json:"updated_at"`
 }
 
 type RouterExternalGatewayInfo struct {

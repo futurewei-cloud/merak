@@ -3,7 +3,6 @@ package activities
 import (
 	"context"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
-	"github.com/futurewei-cloud/merak/services/merak-network/http"
 	"log"
 	"strings"
 	"sync"
@@ -34,11 +33,11 @@ func DoServices(ctx context.Context, services []*pb.InternalServiceInfo, wg *syn
 	log.Printf("runSequenceMap %s", runSequenceMap)
 	for i := 0; i < numberOfService; i++ {
 		log.Printf("Each run", idServiceMap[runId])
-		returnMessage, returnErr := http.RequestCall(idServiceMap[runId].Url, "POST", idServiceMap[runId].Parameters)
-		if returnErr != nil {
-			log.Fatalf("returnErr %s", returnErr)
-		}
-		log.Printf("returnMessage %s", returnMessage)
+		//returnMessage, returnErr := http.RequestCall(idServiceMap[runId].Url, "POST", idServiceMap[runId].Parameters)
+		//if returnErr != nil {
+		//	log.Fatalf("returnErr %s", returnErr)
+		//}
+		//log.Printf("returnMessage %s", returnMessage)
 
 		runId = runSequenceMap[runId]
 	}
