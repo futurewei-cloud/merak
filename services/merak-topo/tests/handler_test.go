@@ -24,8 +24,6 @@ func TestTopologyCreate(t *testing.T) {
 	data_plane_cidr := "10.200.0.0/16"
 	topo_id := "1234560001"
 
-	// redis init check-- pingpong test
-
 	k8client, err := utils.K8sClient()
 	if err != nil {
 		fmt.Printf("create k8s client error %s", err)
@@ -55,8 +53,6 @@ func TestTopologyInfo(t *testing.T) {
 
 	topo_id := "1234560001"
 
-	// redis init check-- pingpong test
-
 	k8client, err := utils.K8sClient()
 	if err != nil {
 		fmt.Printf("create k8s client error %s", err)
@@ -71,11 +67,11 @@ func TestTopologyInfo(t *testing.T) {
 
 	if err3 != nil {
 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
-		returnMessage.ReturnMessage = "Fail to Info Topology."
+		returnMessage.ReturnMessage = "Topology Info Fails"
 
 	} else {
 		returnMessage.ReturnCode = pb.ReturnCode_OK
-		returnMessage.ReturnMessage = "Topology Info Query Done."
+		returnMessage.ReturnMessage = "Topology Info Passes."
 	}
 
 	fmt.Printf("///// INFO Return Message //// %v", &returnMessage)
@@ -85,8 +81,6 @@ func TestTopologyInfo(t *testing.T) {
 func TestTopologyDelete(t *testing.T) {
 
 	topo_id := "1234560001"
-
-	// redis init check-- pingpong test
 
 	k8client, err := utils.K8sClient()
 	if err != nil {
@@ -111,7 +105,7 @@ func TestTopologyDelete(t *testing.T) {
 
 }
 
-func TestK8sCommand(t *testing.T) {
+func TestQueryMac(t *testing.T) {
 
 	topo_id := "1234560001"
 
@@ -127,7 +121,29 @@ func TestK8sCommand(t *testing.T) {
 		fmt.Printf("connect to DB error %s", err1)
 	}
 
-	err2 := handler.Subtest(k8client, topo_id)
+	err2 := handler.QueryMac(k8client, topo_id)
+
+	if err != nil {
+		fmt.Printf("err on running k8s command %s", err2)
+	}
+
+}
+
+func TestQueryHostNode(t *testing.T) {
+
+	topo_id := "1234560001"
+
+	k8client, err := utils.K8sClient()
+	if err != nil {
+		fmt.Printf("create k8s client error %s", err)
+	}
+
+	err1 := database.ConnectDatabase()
+	if err1 != nil {
+		fmt.Printf("connect to DB error %s", err1)
+	}
+
+	err2 := handler.QueryHostNode(k8client, topo_id)
 
 	if err != nil {
 		fmt.Printf("err on running k8s command %s", err2)
@@ -141,8 +157,6 @@ func TestTopologyHandler(t *testing.T) {
 	aca_per_rack := 2
 	data_plane_cidr := "10.200.0.0/16"
 	topo_id := "1234560001"
-
-	// redis init check-- pingpong test
 
 	k8client, err := utils.K8sClient()
 	if err != nil {

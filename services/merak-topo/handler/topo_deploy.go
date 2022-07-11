@@ -142,6 +142,17 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 			}
 		} else if strings.Contains(node.Name, "vswitch") || strings.Contains(node.Name, "tor") {
 			l["Type"] = "vswitch"
+			var sc corev1.SecurityContext
+			pri := true
+			sc.Privileged = &pri
+			allow_pri := true
+			sc.AllowPrivilegeEscalation = &allow_pri
+			var capab corev1.Capabilities
+
+			capab.Add = append(capab.Add, "NET_ADMIN")
+			capab.Add = append(capab.Add, "SYS_TIME")
+			sc.Capabilities = &capab
+
 			newPod = &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:   node.Name,
@@ -149,7 +160,14 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{Name: "vswitch", Image: OVS_IMAGE, Command: []string{"sleep", "100000"}},
+						{
+							Name:  "vswitch",
+							Image: OVS_IMAGE,
+							Args:  []string{"service rsyslog restart; /etc/init.d/openvswitch-switch restart; sleep infinity"},
+							// add ovs setup commands
+							Command:         []string{"/bin/sh", "-c"},
+							SecurityContext: &sc,
+						},
 					},
 				},
 			}
@@ -179,7 +197,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 		} else {
 			err = database.SetValue(node.Name+"-pod", newPod)
 			if err != nil {
-				log.Fatalf("fail to save topology in DB %s", err)
+				log.Fatalf("fail: save topology in DB %s", err)
 			}
 
 		}
@@ -190,20 +208,12 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 
 }
 
-func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod) error {
+func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod, cmd []string) (string, error) {
 
-	ip := "10.200.99.11"
-	command := "arp " + ip
-	// command2 := "arp " + ip
-	cmd := []string{
-		"bash",
-		"-c",
-		command,
-	}
-	req := k8client.CoreV1().RESTClient().Post().Resource("pods").Name(pod.Name).Namespace(pod.Namespace).SubResource("exec") // .Param("container", containerName)
+	req := k8client.CoreV1().RESTClient().Post().Resource("pods").Name(pod.Name).Namespace("default").SubResource("exec") // .Param("container", containerName)
 	scheme := runtime.NewScheme()
-	if err := corev1.AddToScheme(scheme); err != nil {
-		panic(err.Error())
+	if err1 := corev1.AddToScheme(scheme); err1 != nil {
+		return " ", fmt.Errorf("fail: addtoscheme %s", err1.Error())
 	}
 	parameterCodec := runtime.NewParameterCodec(scheme)
 	req.VersionedParams(&corev1.PodExecOptions{
@@ -218,26 +228,28 @@ func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod) error {
 
 	config, err_config := utils.K8sConfig()
 	if err_config != nil {
-		return fmt.Errorf(err_config.Error())
+		return " ", fmt.Errorf("fail: k8sconfig %s", err_config.Error())
 	}
 
-	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
-	if err != nil {
-		panic(err.Error())
+	exec, err2 := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
+	if err2 != nil {
+		return " ", fmt.Errorf("fail: newspdyexecutor %s", err2.Error())
 	}
 	var stdout, stderr bytes.Buffer
-	err = exec.Stream(remotecommand.StreamOptions{
+	err3 := exec.Stream(remotecommand.StreamOptions{
 		Stdin:  nil,
 		Stdout: &stdout,
 		Stderr: &stderr,
 		Tty:    false,
 	})
-	if err != nil {
-		panic(err.Error())
+	if err3 != nil {
+		return " ", fmt.Errorf("fail: stream %s", err3.Error())
 	}
+
 	log.Printf("Output from pod: %v", stdout.String())
 	log.Printf("Error from pod: %v", stderr.String())
-	return nil
+
+	return stdout.String(), nil
 
 }
 
