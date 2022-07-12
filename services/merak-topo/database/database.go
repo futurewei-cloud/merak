@@ -21,7 +21,7 @@ func ConnectDatabase() error {
 	client := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
-		DB:       3,  // use default DB
+		DB:       2,  // use default DB
 	})
 
 	if err := client.Ping(Ctx).Err(); err != nil {
@@ -95,8 +95,8 @@ func FindTopoEntity(id string, prefix string) (TopologyData, error) {
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		// return fmt.Errorf("fail to get value for key in DB %s", err)
-		panic(err)
+		return entity, fmt.Errorf("fail to get value for key in DB %s", err)
+		// panic(err)
 	}
 	err = json.Unmarshal([]byte(value), &entity)
 	if err != nil {
@@ -119,27 +119,38 @@ func GetAllValuesWithKeyPrefix(prefix string) (map[string]string, error) {
 	return values, nil
 }
 
-func getKeys(prefix string) ([]string, error) {
-	var allkeys []string
-	var cursor uint64
-	count := int64(10)
-
-	for {
-		var keys []string
-		var err error
-		keys, cursor, err := Rdb.Scan(Ctx, cursor, prefix, count).Result()
-		if err != nil {
-			return nil, nil
-		}
-
-		allkeys = append(allkeys, keys...)
-		if cursor == 0 {
-			break
-		}
+func DeleteAllValuesWithKeyPrefix(prefix string) error {
+	keys, err := getKeys(fmt.Sprintf("%s*", prefix))
+	if err != nil {
+		return fmt.Errorf("fail to get keys with the prefix %s", err)
 	}
-	return allkeys, nil
+
+	for _, key := range keys {
+
+		err := Del(key)
+		if err != nil {
+			return fmt.Errorf("fail to remove key %v in DB %s", key, err)
+		}
+
+	}
+
+	return nil
 }
 
+func getKeys(prefix string) ([]string, error) {
+	var allkeys []string
+
+	iter := Rdb.Scan(Ctx, 0, prefix, 0).Iterator()
+	for iter.Next(Ctx) {
+		allkeys = append(allkeys, iter.Val())
+	}
+
+	if err := iter.Err(); err != nil {
+		return nil, fmt.Errorf("scan db error '%s' when retriving key '%s' keys", err, prefix)
+	}
+
+	return allkeys, nil
+}
 func getKeyAndValueMap(keys []string, prefix string) (map[string]string, error) {
 	values := make(map[string]string)
 	for _, key := range keys {
@@ -154,3 +165,6 @@ func getKeyAndValueMap(keys []string, prefix string) (map[string]string, error) 
 	}
 	return values, nil
 }
+
+// pod:uid     pod info
+// topo:topo_id     topoinfo

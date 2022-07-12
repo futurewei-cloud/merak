@@ -15,11 +15,6 @@ import (
 
 var (
 	Port = flag.Int("port", constants.TOPLOGY_GRPC_SERVER_PORT, "The server port")
-
-	returnMessage = pb.ReturnTopologyMessage{
-		ReturnCode:    pb.ReturnCode_FAILED,
-		ReturnMessage: "Unintialized",
-	}
 )
 
 type Server struct {
@@ -28,6 +23,8 @@ type Server struct {
 
 func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
 	log.Printf("Received on TopologyHandler %s", in)
+
+	var returnMessage pb.ReturnTopologyMessage
 
 	k8client, err := utils.K8sClient() // config.yaml- sm
 	if err != nil {
@@ -41,12 +38,15 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 	// Operation&Return
 	switch op := in.OperationType; op {
+
 	case pb.OperationType_INFO:
 
 		// query  based on topology_id
+		aca_num := int(in.Config.GetNumberOfVhosts())
+		cgw_num := int(in.Config.GetNumberOfGateways())
 
 		if in.Config.GetTopologyId() != "" {
-			err_info := handler.Info(k8client, in.Config.GetTopologyId(), &returnMessage)
+			err_info := handler.Info(k8client, in.Config.GetTopologyId(), (aca_num + cgw_num), &returnMessage)
 			if err_info != nil {
 				returnMessage.ReturnCode = pb.ReturnCode_FAILED
 				returnMessage.ReturnMessage = "INFO fails to query on topology id."
@@ -65,13 +65,13 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 		rack_num := in.Config.GetNumberOfRacks()
 		aca_per_rack := in.Config.GetVhostPerRack()
 		data_plane_cidr := in.Config.GetDataPlaneCidr()
+		cgw_num := in.Config.GetNumberOfGateways()
 		topo_id := in.Config.GetTopologyId()
 
 		if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 {
 
 			returnMessage.ReturnCode = pb.ReturnCode_FAILED
 			returnMessage.ReturnMessage = "Must provide a valid data plane cider, aca number, aca per rack number and rack number"
-			// returnMessage.ComputeNodes = _nodes
 
 			return &returnMessage, nil
 
@@ -92,18 +92,16 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			//
 		default:
 			// pb.TopologyType_TREE
-			err_create := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), data_plane_cidr, &returnMessage)
+			err_create := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
 
 			//return topology message-- compute info
 
 			if err_create != nil {
 				returnMessage.ReturnCode = pb.ReturnCode_FAILED
 				returnMessage.ReturnMessage = "Fail to Create Topology."
-
 			} else {
 				returnMessage.ReturnCode = pb.ReturnCode_OK
 				returnMessage.ReturnMessage = "Success to create topology"
-
 			}
 			return &returnMessage, err_create
 
@@ -129,7 +127,6 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 		log.Println("Unknown Operation")
 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "TopologyHandler: Unknown Operation"
-
 	}
 
 	return &returnMessage, nil
@@ -137,5 +134,6 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 func (s *Server) TestHandler(ctx context.Context, in *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
 	log.Printf("Received on TopologyHandler %s", in)
+	var returnMessage pb.ReturnTopologyMessage
 	return &returnMessage, nil
 }

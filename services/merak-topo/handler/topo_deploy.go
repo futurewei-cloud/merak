@@ -105,6 +105,11 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 
 	nodes := topo.Vnodes
 
+	ovs_set, err0 := ovs_config(topo, "10.97.185.48", "6653")
+	if err0 != nil {
+		return fmt.Errorf("fails to get ovs switch controller info %s", err0)
+	}
+
 	// dynamic client
 
 	config := ctrl.GetConfigOrDie()
@@ -163,7 +168,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 						{
 							Name:  "vswitch",
 							Image: OVS_IMAGE,
-							Args:  []string{"service rsyslog restart; /etc/init.d/openvswitch-switch restart; sleep infinity"},
+							Args:  []string{"service rsyslog restart; /etc/init.d/openvswitch-switch restart; " + ovs_set + "sleep infinity"},
 							// add ovs setup commands
 							Command:         []string{"/bin/sh", "-c"},
 							SecurityContext: &sc,
@@ -195,7 +200,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 		if err != nil {
 			return fmt.Errorf("create pod error %s", err)
 		} else {
-			err = database.SetValue(node.Name+"-pod", newPod)
+			err = database.SetValue(topo.Topology_id+"-"+node.Name+"-pod", newPod)
 			if err != nil {
 				log.Fatalf("fail: save topology in DB %s", err)
 			}
@@ -205,6 +210,33 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 	}
 
 	return nil
+
+}
+
+func ovs_config(topo database.TopologyData, ryu_ip string, ryu_port string) (string, error) {
+
+	// cmd := &exec.Cmd{
+	// 	Path:   "",
+	// 	Args:   []string{"kubectl get service -o wide |grep ryu"},
+	// 	Stdout: os.Stdout1,
+	// 	Stderr: os.Stdout1,
+	// }
+	// cmd.Start()
+	// cmd.Wait()
+	// fmt.Printf(Stdout1)
+
+	nodes := topo.Vnodes
+	ovs_set := "ovs-vsctl add-br br0; ovs-vsctl set-controller br0 tcp:" + ryu_ip + ":" + ryu_port + "; "
+
+	for _, node := range nodes {
+		for _, n := range node.Nics {
+			ovs_set = ovs_set + "ovs-vsctl add-port br0 " + n.Intf + "; "
+		}
+	}
+
+	fmt.Println(ovs_set)
+
+	return ovs_set, nil
 
 }
 
@@ -262,6 +294,12 @@ func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData) err
 		return fmt.Errorf("failed to create dynamic client %s", err)
 	}
 
+	// err_del_db := database.DeleteAllValuesWithKeyPrefix(topo.Topology_id)
+
+	// if err_del_db != nil {
+	// 	return fmt.Errorf("failed to delete topology info %s", err_del_db)
+	// }
+
 	for _, node := range topo.Vnodes {
 
 		err_del := k8client.CoreV1().Pods("default").Delete(Ctx, node.Name, metav1.DeleteOptions{})
@@ -274,6 +312,12 @@ func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData) err
 		if err_del_t != nil {
 			return fmt.Errorf("delete pod topology error %s", err_del_t)
 		}
+
+		// err_del_pod := database.Del(topo.Topology_id + "-" + node.Name + "-pod")
+		// if err_del_pod != nil {
+		// 	return fmt.Errorf("failed to delete pod config %s", err_del_pod)
+		// }
+
 	}
 	return nil
 }
@@ -282,11 +326,6 @@ func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData) err
 func Topo_save(k8client *kubernetes.Clientset, topo database.TopologyData) error {
 	// check pod status
 	topo_id := topo.Topology_id
-	pods_status, err := Topo_pod_check(k8client, topo)
-	if err != nil {
-		return fmt.Errorf("fail to check pods status %s", err)
-	}
-	fmt.Println(pods_status)
 
 	err_db := database.SetValue(topo_id, topo)
 	if err_db != nil {
@@ -295,25 +334,25 @@ func Topo_save(k8client *kubernetes.Clientset, topo database.TopologyData) error
 	return nil
 }
 
-func Topo_pod_check(k8client *kubernetes.Clientset, topo database.TopologyData) (bool, error) {
+// func Topo_pod_check(k8client *kubernetes.Clientset, topo database.TopologyData) (*corev1.PodStatus, error) {
 
-	s := true
+// 	s := true
 
-	nodes := topo.Vnodes
+// 	nodes := topo.Vnodes
 
-	for _, node := range nodes {
+// 	for _, node := range nodes {
 
-		res, err := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
+// 		res, err := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
 
-		if err != nil {
-			return false, fmt.Errorf("get pod error %s", err)
-		}
-		if res.Status.Phase != "Running" {
-			s = false
-		}
-	}
-	return s, nil
-}
+// 		if err != nil {
+// 			return nil, fmt.Errorf("get pod error %s", err)
+// 		}
+// 		if res.Status.Phase != "Running" {
+// 			s = false
+// 		}
+// 	}
+// 	return s, nil
+// }
 
 // 		res, err := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
 // out, err := k8client.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
