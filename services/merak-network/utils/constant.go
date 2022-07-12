@@ -8,6 +8,6 @@ const VPC string = "vpc:"
 const SUBNET string = "subnet:"
 const Router string = "router:"
 const SECURITYGROUP string = "securityGroup:"
-const NETCONFIG string = "netconfig"
+const NETCONFIG string = "netconfig:"
 
 const ALCORURL string = "34.210.73.167"
