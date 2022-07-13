@@ -20,7 +20,7 @@ var (
 	aca_per_rack    = 4
 	data_plane_cidr = "10.200.0.0/16"
 	topo_id         = "topo-test1"
-	cgw_num         = 1
+	cgw_num         = 3
 )
 
 func TestTopologyCreate(t *testing.T) {

@@ -19,7 +19,8 @@ var (
 
 func ConnectDatabase() error {
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		// Addr:     "localhost:6379",
+		Addr:     "10.213.43.101:55001",
 		Password: "", // no password set
 		DB:       2,  // use default DB
 	})

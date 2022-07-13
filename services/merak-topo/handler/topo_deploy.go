@@ -103,9 +103,11 @@ func NewTopologyClass(name string, links []map[string]interface{}) *unstructured
 
 func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) error {
 
+	var k8snodes []string
+
 	nodes := topo.Vnodes
 
-	ovs_set, err0 := ovs_config(topo, "10.97.185.48", "6653")
+	ovs_set, err0 := ovs_config(topo, "10.104.141.189", "6653")
 	if err0 != nil {
 		return fmt.Errorf("fails to get ovs switch controller info %s", err0)
 	}
@@ -115,7 +117,18 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 	config := ctrl.GetConfigOrDie()
 	dclient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		return fmt.Errorf("failed to create dynamic client %s", err)
+		return fmt.Errorf("fails to create dynamic client %s", err)
+	}
+
+	k_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	if err1 != nil {
+		return fmt.Errorf("fails to query k8s nodes info %s", err1)
+	}
+
+	for _, s := range k_nodes.Items {
+		if s.Spec.Taints == nil {
+			k8snodes = append(k8snodes, s.Name)
+		}
 	}
 
 	for _, node := range nodes {
@@ -179,6 +192,8 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 		} else if strings.Contains(node.Name, "cgw") {
 			l["Type"] = "configgw"
 
+			log.Printf("assign cgw to node %v", k8snodes[0])
+
 			newPod = &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:   node.Name,
@@ -188,21 +203,24 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 					Containers: []corev1.Container{
 						{Name: "cgw", Image: GW_IMAGE, Command: []string{"sleep", "100000"}},
 					},
+					NodeName: k8snodes[0],
 				},
 			}
+			k8snodes = k8snodes[1:]
+			log.Printf("unassigned nodes %v", k8snodes)
 
 		} else {
 			return errors.New("no image for this device, please upload the image before create topology")
 		}
 
-		_, err = k8client.CoreV1().Pods("default").Create(Ctx, newPod, metav1.CreateOptions{})
+		_, err_create := k8client.CoreV1().Pods("default").Create(Ctx, newPod, metav1.CreateOptions{})
 
-		if err != nil {
-			return fmt.Errorf("create pod error %s", err)
+		if err_create != nil {
+			return fmt.Errorf("create pod error %s", err_create)
 		} else {
-			err = database.SetValue(topo.Topology_id+"-"+node.Name+"-pod", newPod)
-			if err != nil {
-				log.Fatalf("fail: save topology in DB %s", err)
+			err_db := database.SetValue(topo.Topology_id+"-"+node.Name+"-pod", newPod)
+			if err_db != nil {
+				log.Fatalf("fail: save topology in DB %s", err_db)
 			}
 
 		}
