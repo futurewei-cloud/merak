@@ -1,5 +1,7 @@
 .DS_Store
 *.pb.go
 vendor
+.vscode
 services/merak-compute/build/*
+services/merak-agent/build/*
 services/scenario-manager/build/*

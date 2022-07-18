@@ -1,0 +1,28 @@
+# Merak namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: merak-agent
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: merak-agent
+  namespace: merak-agent
+spec:
+  selector:
+    matchLabels:
+      app: merak-agent
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: merak-agent
+    spec:
+      containers:
+      - name: merak-agent
+        image: phudtran/merak-agent:dev
+        securityContext:
+            privileged: true
+        ports:
+        - containerPort: 40054

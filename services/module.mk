@@ -1,6 +1,6 @@
 module := services
 
-submodules := merak-compute scenario-manager
+submodules := proto merak-compute scenario-manager merak-agent
 -include $(patsubst %, $(module)/%/module.mk, $(submodules))
 
 all:: $(submodules)

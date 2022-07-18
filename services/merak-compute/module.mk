@@ -1,8 +1,8 @@
 module := merak-compute
 
-merak.compute:: main vm-worker
+merak-compute: compute vm-worker
 
-main:
-	go build -o services/merak-compute/build/merak-compute services/merak-compute/compute.go
+compute:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o services/merak-compute/build/merak-compute services/merak-compute/compute.go
 vm-worker:
-	go build -o services/merak-compute/build/merak-compute-vm-worker services/merak-compute/workers/vm/worker.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o services/merak-compute/build/merak-compute-vm-worker services/merak-compute/workers/worker.go
