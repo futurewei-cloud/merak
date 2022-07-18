@@ -38,6 +38,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		InitialInterval:    common.TEMPORAL_RETRY_INTERVAL,
 		BackoffCoefficient: common.TEMPORAL_BACKOFF,
 		MaximumInterval:    common.TEMPORAL_MAX_INTERVAL,
+		MaximumAttempts:    common.TEMPORAL_MAX_ATTEMPT,
 	}
 
 	// Parse input

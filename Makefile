@@ -54,4 +54,5 @@ test:
 clean:
 	rm api/proto/v1/merak/*.pb.go
 	rm services/merak-compute/build/*
+	rm services/merak-agent/build/*
 	rm services/scenario-manager/build/*
