@@ -5,16 +5,17 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
+	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
 func Create(ctx workflow.Context) (pb.ReturnMessage, error) {
 	retrypolicy := &temporal.RetryPolicy{
-		InitialInterval:    time.Second,
-		BackoffCoefficient: 1,
-		MaximumInterval:    1,
-		MaximumAttempts:    1,
+		InitialInterval:    common.TEMPORAL_RETRY_INTERVAL,
+		BackoffCoefficient: common.TEMPORAL_BACKOFF,
+		MaximumInterval:    common.TEMPORAL_MAX_INTERVAL,
+		MaximumAttempts:    common.TEMPORAL_MAX_ATTEMPT,
 	}
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 1 * time.Second,
