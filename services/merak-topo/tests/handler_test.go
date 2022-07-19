@@ -15,20 +15,15 @@ var (
 		ReturnCode:    pb.ReturnCode_FAILED,
 		ReturnMessage: "Unintialized",
 	}
-	aca_num         = 4
-	rack_num        = 1
-	aca_per_rack    = 4
+	aca_num         = 50
+	rack_num        = 5
+	aca_per_rack    = 10
 	data_plane_cidr = "10.200.0.0/16"
-	topo_id         = "topo-test1"
-	cgw_num         = 3
+	topo_id         = "000111222"
+	cgw_num         = 2
 )
 
 func TestTopologyCreate(t *testing.T) {
-	// aca_num := 10
-	// rack_num := 2
-	// aca_per_rack := 5
-	// data_plane_cidr := "10.200.0.0/16"
-	// topo_id := "1234560002"
 
 	k8client, err := utils.K8sClient()
 	if err != nil {

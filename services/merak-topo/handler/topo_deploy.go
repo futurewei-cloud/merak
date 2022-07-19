@@ -107,11 +107,6 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 
 	nodes := topo.Vnodes
 
-	ovs_set, err0 := ovs_config(topo, "10.104.141.189", "6653")
-	if err0 != nil {
-		return fmt.Errorf("fails to get ovs switch controller info %s", err0)
-	}
-
 	// dynamic client
 
 	config := ctrl.GetConfigOrDie()
@@ -159,6 +154,11 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 				},
 			}
 		} else if strings.Contains(node.Name, "vswitch") || strings.Contains(node.Name, "tor") {
+			ovs_set, err0 := ovs_config(topo, node.Name, "10.97.185.48", "6653")
+			if err0 != nil {
+				return fmt.Errorf("fails to get ovs switch controller info %s", err0)
+			}
+
 			l["Type"] = "vswitch"
 			var sc corev1.SecurityContext
 			pri := true
@@ -231,7 +231,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 
 }
 
-func ovs_config(topo database.TopologyData, ryu_ip string, ryu_port string) (string, error) {
+func ovs_config(topo database.TopologyData, node_name string, ryu_ip string, ryu_port string) (string, error) {
 
 	// cmd := &exec.Cmd{
 	// 	Path:   "",
@@ -247,12 +247,16 @@ func ovs_config(topo database.TopologyData, ryu_ip string, ryu_port string) (str
 	ovs_set := "ovs-vsctl add-br br0; ovs-vsctl set-controller br0 tcp:" + ryu_ip + ":" + ryu_port + "; "
 
 	for _, node := range nodes {
-		for _, n := range node.Nics {
-			ovs_set = ovs_set + "ovs-vsctl add-port br0 " + n.Intf + "; "
+		if node.Name == node_name {
+			for _, n := range node.Nics {
+				ovs_set = ovs_set + "ovs-vsctl add-port br0 " + n.Intf + "; "
+			}
+
 		}
+
 	}
 
-	fmt.Println(ovs_set)
+	log.Println(ovs_set)
 
 	return ovs_set, nil
 
@@ -341,7 +345,7 @@ func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData) err
 }
 
 // save topology to redis
-func Topo_save(k8client *kubernetes.Clientset, topo database.TopologyData) error {
+func Topo_save(topo database.TopologyData) error {
 	// check pod status
 	topo_id := topo.Topology_id
 

@@ -102,7 +102,7 @@ func Ips_gen(ip_num int, k int, count int, data_plane_cidr string) []string {
 	return ips
 }
 
-func Node_port_gen(intf_num int, dev_list []string, dev_type string, ips []string, ip_flag bool) []string {
+func Node_port_gen(intf_num int, dev_list []string, ips []string, ip_flag bool) []string {
 
 	var port database.Vport
 

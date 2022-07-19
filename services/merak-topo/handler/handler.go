@@ -53,10 +53,10 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	aca_intf_num := 1
 	ngw_intf_num := 1
 
-	Node_port_gen(rack_intf_num, rack_device, "vswitch", ips, false)
-	ips_1 := Node_port_gen(aca_intf_num, aca_device, "vhost", ips, true)
-	Node_port_gen(tor_intf_num, ovs_tor_device, "tor", ips, false)
-	Node_port_gen(ngw_intf_num, ngw_device, "cgw", ips_1, true)
+	ips_1 := Node_port_gen(aca_intf_num, aca_device, ips, true)
+	Node_port_gen(ngw_intf_num, ngw_device, ips_1, true)
+	Node_port_gen(rack_intf_num, rack_device, ips, false)
+	Node_port_gen(tor_intf_num, ovs_tor_device, ips, false)
 
 	fmt.Printf("The topology nodes are : %+v. \n", Topo_nodes)
 
@@ -70,17 +70,17 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	topo.Vlinks = Topo_links
 	topo.Vnodes = Topo_nodes
 
+	fmt.Println("======== Save topo to redis =====")
+	err1 := Topo_save(topo)
+	if err1 != nil {
+		return fmt.Errorf("save topo to redis error %s", err1)
+	}
+
 	fmt.Println("======== Topology Deployment ==== ")
 
 	err := Topo_deploy(k8client, topo)
 	if err != nil {
 		return fmt.Errorf("topology deployment error %s", err)
-	}
-
-	fmt.Println("======== Save topo to redis =====")
-	err1 := Topo_save(k8client, topo)
-	if err1 != nil {
-		return fmt.Errorf("save topo to redis error %s", err1)
 	}
 
 	fmt.Println("========= Get k8s host nodes information after deployment=====")
