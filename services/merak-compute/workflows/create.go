@@ -12,10 +12,10 @@ import (
 
 func Create(ctx workflow.Context) (pb.ReturnMessage, error) {
 	retrypolicy := &temporal.RetryPolicy{
-		InitialInterval:    common.TEMPORAL_RETRY_INTERVAL,
-		BackoffCoefficient: common.TEMPORAL_BACKOFF,
-		MaximumInterval:    common.TEMPORAL_MAX_INTERVAL,
-		MaximumAttempts:    common.TEMPORAL_MAX_ATTEMPT,
+		InitialInterval:    common.TEMPORAL_ACTIVITY_RETRY_INTERVAL,
+		BackoffCoefficient: common.TEMPORAL_ACTIVITY_BACKOFF,
+		MaximumInterval:    common.TEMPORAL_ACTIVITY_MAX_INTERVAL,
+		MaximumAttempts:    common.TEMPORAL_ACTIVITY_MAX_ATTEMPT,
 	}
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 1 * time.Second,
