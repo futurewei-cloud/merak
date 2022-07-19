@@ -35,19 +35,22 @@ type Server struct {
 func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
 	log.Println("Received on ComputeHandler", in)
 	retrypolicy := &temporal.RetryPolicy{
-		InitialInterval:    common.TEMPORAL_RETRY_INTERVAL,
-		BackoffCoefficient: common.TEMPORAL_BACKOFF,
-		MaximumInterval:    common.TEMPORAL_MAX_INTERVAL,
-		MaximumAttempts:    common.TEMPORAL_MAX_ATTEMPT,
+		InitialInterval:    common.TEMPORAL_WF_RETRY_INTERVAL,
+		BackoffCoefficient: common.TEMPORAL_WF_BACKOFF,
+		MaximumInterval:    common.TEMPORAL_WF_MAX_INTERVAL,
+		MaximumAttempts:    common.TEMPORAL_WF_MAX_ATTEMPT,
 	}
 
 	// Parse input
 	switch op := in.OperationType; op {
 	case pb.OperationType_INFO:
 		workflowOptions = client.StartWorkflowOptions{
-			ID:          common.VM_INFO_WORKFLOW_ID,
-			TaskQueue:   common.VM_TASK_QUEUE,
-			RetryPolicy: retrypolicy,
+			ID:                       common.VM_INFO_WORKFLOW_ID,
+			TaskQueue:                common.VM_TASK_QUEUE,
+			WorkflowTaskTimeout:      common.TEMPORAL_WF_TASK_TIMEOUT,
+			WorkflowExecutionTimeout: common.TEMPORAL_WF_EXEC_TIMEOUT,
+			WorkflowRunTimeout:       common.TEMPORAL_WF_RUN_TIMEOUT,
+			RetryPolicy:              retrypolicy,
 		}
 		log.Println("Info Unimplemented")
 		return &pb.ReturnMessage{
