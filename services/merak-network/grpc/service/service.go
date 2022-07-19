@@ -38,8 +38,8 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 
 	netConfigId := in.Config.GetNetconfigId()
 
-	wg := new(sync.WaitGroup)
-	//var wg sync.WaitGroup
+	//wg := new(sync.WaitGroup)
+	var wg sync.WaitGroup
 	// Parse input
 
 	//switch op := in.OperationType; op {
@@ -49,7 +49,7 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		log.Println("Info")
 		networkInfoReturn := make(chan *pb.ReturnNetworkMessage)
 		wg.Add(1)
-		go activities.VnetInfo(ctx, netConfigId, wg, networkInfoReturn)
+		go activities.VnetInfo(ctx, netConfigId, &wg, networkInfoReturn)
 		//wg.Wait()
 		time.Sleep(5 * time.Second)
 		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
@@ -63,19 +63,19 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		log.Println(in.Config.Services)
 		wg.Add(1)
 		//go activities.DoServices(ctx, in.Config.Services, wg)
-		go activities.DoServices(ctx, in.Config.GetServices(), wg)
+		go activities.DoServices(ctx, in.Config.GetServices(), &wg)
 
 		//compute info done
 		log.Println(in.Config.Computes)
 		wg.Add(1)
 		//go activities.RegisterNode(ctx, in.Config.Computes, wg)
-		go activities.RegisterNode(ctx, in.Config.GetComputes(), wg)
+		go activities.RegisterNode(ctx, in.Config.GetComputes(), &wg)
 		//network info done
 		log.Println(in.Config.Network)
 		wg.Add(1)
 		networkReturn := make(chan *pb.ReturnNetworkMessage)
 		//go activities.VnetCreate(ctx, in.Config.Network, wg, networkReturn)
-		go activities.VnetCreate(ctx, netConfigId, in.Config.GetNetwork(), wg, networkReturn)
+		go activities.VnetCreate(ctx, netConfigId, in.Config.GetNetwork(), &wg, networkReturn)
 
 		//// storage info
 		//for _, storage := range in.Config.Storage {
@@ -99,6 +99,17 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		log.Println("Update")
 	case pb.OperationType_DELETE:
 		log.Println("Delete")
+		ctx := context.TODO()
+		networkInfoReturn := make(chan *pb.ReturnNetworkMessage)
+		wg.Add(1)
+		go activities.VnetDelete(ctx, netConfigId, &wg, networkInfoReturn)
+		//wg.Wait()
+		time.Sleep(5 * time.Second)
+		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
+		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_DELETE"
+		returnNetworkMessage := <-networkInfoReturn
+		log.Printf("returnNetworkMessage %s", returnNetworkMessage)
+		return returnNetworkMessage, nil
 	default:
 		log.Println("Unknown Operation")
 		returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED

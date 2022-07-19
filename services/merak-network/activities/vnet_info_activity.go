@@ -19,7 +19,6 @@ func VnetInfo(ctx context.Context, netConfigId string, wg *sync.WaitGroup, retur
 		return "", err
 	}
 	log.Printf("VnetInfo %s", values)
-	log.Printf("returnMessage %s", returnMessage)
 	var returnJson *pb.ReturnNetworkMessage
 	json.Unmarshal([]byte(values), &returnJson)
 	log.Printf("returnMessage %s", returnJson)

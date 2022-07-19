@@ -19,20 +19,20 @@ func DoServices(ctx context.Context, services []*pb.InternalServiceInfo, wg *syn
 	numberOfService := 0
 	for _, service := range services {
 		if service.WhereToRun == "network" {
-			idServiceMap[service.Id] = service
+			idServiceMap[service.Name] = service
 			if service.WhenToRun != "INIT" {
 				log.Printf("WhenToRun %s", service.WhenToRun)
-				if strings.ReplaceAll(strings.Split(service.WhenToRun, ":")[1], " ", "") == "AFTER" {
-					runSequenceMap[strings.ReplaceAll(strings.Split(service.WhenToRun, ":")[1], " ", "")] = service.Id
+				if strings.ReplaceAll(strings.Split(service.WhenToRun, ":")[0], " ", "") == "AFTER" {
+					runSequenceMap[strings.Split(service.WhenToRun, ":")[1]] = service.Name
 					log.Printf("numberOfService %s", numberOfService)
 				}
-				if strings.ReplaceAll(strings.Split(service.WhenToRun, ":")[1], " ", "") == "BEFORE" {
-					runSequenceMap[service.Id] = strings.ReplaceAll(strings.Split(service.WhenToRun, ":")[1], " ", "")
+				if strings.ReplaceAll(strings.Split(service.WhenToRun, ":")[0], " ", "") == "BEFORE" {
+					runSequenceMap[service.Name] = strings.Split(service.WhenToRun, ":")[1]
 					log.Printf("numberOfService %s", numberOfService)
 				}
 			}
 			if service.WhenToRun == "INIT" {
-				runIds = append(runIds, service.Id)
+				runIds = append(runIds, service.Name)
 			}
 			numberOfService++
 		}
