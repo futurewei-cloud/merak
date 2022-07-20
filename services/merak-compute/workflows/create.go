@@ -1,8 +1,6 @@
 package create
 
 import (
-	"time"
-
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
@@ -18,7 +16,7 @@ func Create(ctx workflow.Context) (pb.ReturnMessage, error) {
 		MaximumAttempts:    common.TEMPORAL_ACTIVITY_MAX_ATTEMPT,
 	}
 	ao := workflow.ActivityOptions{
-		StartToCloseTimeout: 1 * time.Second,
+		StartToCloseTimeout: common.TEMPORAL_ACTIVITE_TIMEOUT,
 		RetryPolicy:         retrypolicy,
 	}
 

@@ -325,7 +325,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 		jsonStringBody := string(body[:])
-		log.Println("Sending body to Alcor: \n", jsonStringBody)
+		log.Println("Creating request with body: \n", jsonStringBody)
 		req, err := http.NewRequest(http.MethodPut, "http://"+constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports/"+portID, bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json; charset=utf-8")
 		if err != nil {
@@ -335,8 +335,11 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
+
+		log.Println("Sending request to Alcor")
 		client := &http.Client{}
 		resp, err = client.Do(req)
+		log.Println("Response code from Alcor", resp.StatusCode)
 		if err != nil {
 			log.Println("Failed to update port to Alcor!: \n", jsonStringBody)
 			return &pb.ReturnMessage{
@@ -344,7 +347,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
-		log.Println("Response code from Alcor", resp.StatusCode)
+
 		return &pb.ReturnMessage{
 			ReturnMessage: "Create Success",
 			ReturnCode:    pb.ReturnCode_OK,
