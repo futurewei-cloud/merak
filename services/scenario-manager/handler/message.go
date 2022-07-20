@@ -108,8 +108,8 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 	conf.MessageType = pb.MessageType_FULL
 
 	if serviceConf != nil {
-		var servicePb pb.InternalServiceInfo
 		for _, service := range serviceConf.Services {
+			var servicePb pb.InternalServiceInfo
 			if strings.ToUpper(service.WhereToRun) == utils.MERAK_NETWORK {
 				servicePb.OperationType = actionToOperation(action)
 				servicePb.Id = service.Id
@@ -134,15 +134,15 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 	netPb.NumberOfSubnetPerVpc = uint32(netconf.NumberOfSubnetPerVpc)
 	netPb.NumberOfSecurityGroups = uint32(netconf.NumberOfSecurityGroups)
 
-	var vpcPb pb.InternalVpcInfo
 	for _, vpc := range netconf.Vpcs {
+		var vpcPb pb.InternalVpcInfo
 		vpcPb.VpcId = vpc.VpcId
 		vpcPb.TenantId = vpc.TenantId
 		vpcPb.ProjectId = vpc.ProjectId
 		vpcPb.VpcCidr = vpc.VpcCidr
 
-		var subnetPb pb.InternalSubnetInfo
 		for _, subnet := range vpc.SubnetInfo {
+			var subnetPb pb.InternalSubnetInfo
 			subnetPb.SubnetId = subnet.SubnetId
 			subnetPb.SubnetCidr = subnet.SubnetCidr
 			subnetPb.SubnetGw = subnet.SubnetGateway
@@ -151,8 +151,8 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 		netPb.Vpcs = append(netPb.Vpcs, &vpcPb)
 	}
 
-	var routerPb pb.InternalRouterInfo
 	for _, router := range netconf.Routers {
+		var routerPb pb.InternalRouterInfo
 		routerPb.OperationType = actionToOperation(action)
 		routerPb.Id = router.Id
 		routerPb.Name = router.Name
@@ -160,8 +160,8 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 		netPb.Routers = append(netPb.Routers, &routerPb)
 	}
 
-	var gatewayPb pb.InternalGatewayInfo
 	for _, gateway := range netconf.Gateways {
+		var gatewayPb pb.InternalGatewayInfo
 		gatewayPb.OperationType = actionToOperation(action)
 		gatewayPb.Id = gateway.Id
 		gatewayPb.Name = gateway.Name
@@ -169,15 +169,15 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 		netPb.Gateways = append(netPb.Gateways, &gatewayPb)
 	}
 
-	var sgPb pb.InternalSecurityGroupInfo
 	for _, sg := range netconf.SecurityGroups {
+		var sgPb pb.InternalSecurityGroupInfo
 		sgPb.OperationType = actionToOperation(action)
 		sgPb.Id = sg.Id
 		sgPb.Name = sg.Name
 		sgPb.ApplyTo = sg.ApplyTo
 
-		var sgRulePb pb.InternalSecurityGroupRulelnfo
 		for _, rule := range sg.Rules {
+			var sgRulePb pb.InternalSecurityGroupRulelnfo
 			sgRulePb.OperationType = actionToOperation(action)
 			sgRulePb.Id = rule.Id
 			sgRulePb.Name = rule.Name
@@ -193,7 +193,7 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 	}
 
 	conf.Network = &netPb
-	conf.Computes = topoReturn.ComputeNodes
+	conf.Computes = topoReturn.GetComputeNodes()
 	netconfPb.Config = &conf
 
 	return nil
@@ -219,8 +219,8 @@ func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entit
 
 	conf.VmDeploy = &vmDeployPb
 
-	var servicePb pb.InternalServiceInfo
 	for _, service := range serviceConf.Services {
+		var servicePb pb.InternalServiceInfo
 		if strings.ToUpper(service.WhereToRun) == utils.MERAK_COMPUTE || strings.ToUpper(service.WhereToRun) == utils.MERAK_AGENT {
 			servicePb.OperationType = pb.OperationType_CREATE
 			servicePb.Id = service.Id

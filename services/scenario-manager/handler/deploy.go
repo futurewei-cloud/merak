@@ -8,7 +8,9 @@ import (
 	"github.com/futurewei-cloud/merak/services/scenario-manager/database"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/entities"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/grpcclient"
+	"github.com/futurewei-cloud/merak/services/scenario-manager/logger"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
+	"github.com/golang/protobuf/proto"
 )
 
 func TopologyHandler(s *entities.Scenario, action entities.EventName) (*pb.ReturnTopologyMessage, error) {
@@ -51,6 +53,7 @@ func TopologyHandler(s *entities.Scenario, action entities.EventName) (*pb.Retur
 	if err := constructTopologyMessage(&topology, &topoconf, action); err != nil {
 		return nil, errors.New("topology protobuf message error")
 	}
+	logger.Log.Debugf("constructTopologyMessage: %s", proto.MarshalTextString(&topoconf))
 
 	if action != entities.EVENT_CHECK {
 		topology.Status = actionToStatus(action)
@@ -67,6 +70,7 @@ func TopologyHandler(s *entities.Scenario, action entities.EventName) (*pb.Retur
 		}
 		return nil, fmt.Errorf("deploy topology failed, Error = '%s'", err.Error())
 	}
+	logger.Log.Debugf("responseTopoMessage: %s", proto.MarshalTextString(responseTopo))
 
 	if action == entities.EVENT_DEPLOY {
 		topology.Status = entities.STATUS_READY
@@ -144,6 +148,8 @@ func NetworkHandler(s *entities.Scenario, action entities.EventName) (*pb.Return
 		}
 	}
 
+	logger.Log.Debugf("constructNetConfMessage: %s", proto.MarshalTextString(&netconf))
+
 	if action != entities.EVENT_CHECK {
 		network.Status = actionToStatus(action)
 		database.Set(utils.KEY_PREFIX_NETWORK+network.Id, &network)
@@ -159,6 +165,8 @@ func NetworkHandler(s *entities.Scenario, action entities.EventName) (*pb.Return
 		}
 		return nil, fmt.Errorf("deploy network failed, Error = '%s'", err.Error())
 	}
+
+	logger.Log.Debugf("responseNetworkMessage: %s", proto.MarshalTextString(responseNetwork))
 
 	if action == entities.EVENT_DEPLOY {
 		network.Status = entities.STATUS_READY
@@ -235,6 +243,8 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.Return
 		}
 	}
 
+	logger.Log.Debugf("constructComputeMessage: %s", proto.MarshalTextString(&computeconf))
+
 	if action != entities.EVENT_CHECK {
 		compute.Status = actionToStatus(action)
 		database.Set(utils.KEY_PREFIX_COMPUTE+compute.Id, &compute)
@@ -250,6 +260,8 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.Return
 		}
 		return nil, fmt.Errorf("deploy compute failed, Error = '%s'", err.Error())
 	}
+
+	logger.Log.Debugf("responseComputeMessage: %s", proto.MarshalTextString(responseCompute))
 
 	if action == entities.EVENT_DEPLOY {
 		compute.Status = entities.STATUS_READY
