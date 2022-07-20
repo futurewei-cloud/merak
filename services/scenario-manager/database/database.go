@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/futurewei-cloud/merak/services/scenario-manager/entities"
+	"github.com/futurewei-cloud/merak/services/scenario-manager/logger"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -41,6 +42,7 @@ func Set(key string, val interface{}) error {
 
 	err = Rdb.Set(Ctx, key, jsonVal, 0).Err()
 	if err != nil {
+		logger.Log.Errorf("database SET %s VALUE %s failed %s", key, jsonVal, err.Error())
 		return err
 	}
 	return nil
@@ -49,6 +51,7 @@ func Set(key string, val interface{}) error {
 func Get(key string) (string, error) {
 	val, err := Rdb.Get(Ctx, key).Result()
 	if err != nil {
+		logger.Log.Errorf("database GET %s failed %s", key, err)
 		return "", err
 	}
 	return val, nil
@@ -96,6 +99,7 @@ func getKeys(prefix string) ([]string, error) {
 	}
 
 	if err := iter.Err(); err != nil {
+		logger.Log.Errorf("database scan keys %s failed %s", prefix, err)
 		return nil, fmt.Errorf("scan db error '%s' when retriving key '%s' keys", err, prefix)
 	}
 
@@ -107,6 +111,7 @@ func getKeyAndValueMap(keys []string, prefix string) (map[string]string, error) 
 	for _, key := range keys {
 		value, err := Rdb.Get(Ctx, key).Result()
 		if err != nil {
+			logger.Log.Errorf("database scan keys %s failed %s", prefix, err)
 			return nil, fmt.Errorf("get value error '%s' when retriving key '%s' keys", err, prefix)
 		}
 
