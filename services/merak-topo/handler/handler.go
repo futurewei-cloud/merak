@@ -53,22 +53,30 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	aca_intf_num := 1
 	ngw_intf_num := 1
 
-	ips_1 := Node_port_gen(aca_intf_num, aca_device, ips, true)
-	Node_port_gen(ngw_intf_num, ngw_device, ips_1, true)
-	Node_port_gen(rack_intf_num, rack_device, ips, false)
-	Node_port_gen(tor_intf_num, ovs_tor_device, ips, false)
+	fmt.Println("======== Generate topology data ==== ")
 
-	fmt.Printf("The topology nodes are : %+v. \n", Topo_nodes)
+	topo.Topology_id = topo_id
+
+	topo_nodes, ips_1 := Node_port_gen(aca_intf_num, aca_device, ips, true)
+	nodes, _ := Node_port_gen(ngw_intf_num, ngw_device, ips_1, true)
+	topo_nodes = append(topo_nodes, nodes...)
+	nodes_s, _ := Node_port_gen(rack_intf_num, rack_device, ips, false)
+	topo_nodes = append(topo_nodes, nodes_s...)
+	nodes_t, _ := Node_port_gen(tor_intf_num, ovs_tor_device, ips, false)
+	topo_nodes = append(topo_nodes, nodes_t...)
+
+	fmt.Printf("The topology nodes are : %+v. \n", topo_nodes)
+
+	topo.Vnodes = topo_nodes
 
 	fmt.Println("======== Pairing links ==== ")
 
-	Links_gen(Topo_nodes)
-	// fmt.Printf("The topology links are : %+v. \n", Topo_links)
+	topo_links := Links_gen(topo_nodes)
 
-	fmt.Println("======== Generate topology data ==== ")
-	topo.Topology_id = topo_id
-	topo.Vlinks = Topo_links
-	topo.Vnodes = Topo_nodes
+	fmt.Printf("The topology links are : %v. \n", topo_links)
+
+	fmt.Printf("The topology total links are : %v. \n", len(topo_links))
+	topo.Vlinks = topo_links
 
 	fmt.Println("======== Save topo to redis =====")
 	err1 := Topo_save(topo)
@@ -85,13 +93,13 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 	fmt.Println("========= Get k8s host nodes information after deployment=====")
 
-	nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	hostnodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 
 	if err1 != nil {
 		return fmt.Errorf("failed to list k8s host nodes info %s", err1)
 	}
 
-	for _, s := range nodes.Items {
+	for _, s := range hostnodes.Items {
 		var hnode pb.InternalHostInfo
 
 		node_yaml, err2 := k8client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})

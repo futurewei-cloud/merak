@@ -26,7 +26,7 @@ func ConnectDatabase() error {
 	})
 
 	if err := client.Ping(Ctx).Err(); err != nil {
-		return err
+		return fmt.Errorf("fail to connect DB %s", err)
 	}
 
 	Rdb = client
@@ -82,11 +82,11 @@ func FindPodEntity(id string, prefix string) (*corev1.Pod, error) {
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("fail to find pod %s", err)
 	}
 	err = json.Unmarshal([]byte(value), &entity)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	return entity, nil
 }
@@ -102,7 +102,7 @@ func FindTopoEntity(id string, prefix string) (TopologyData, error) {
 	err = json.Unmarshal([]byte(value), &entity)
 	if err != nil {
 		// return fmt.Errorf("fail to get value for key in DB %s", err)
-		panic(err)
+		return entity, fmt.Errorf("fail to unmarsh value for key in DB %s", err)
 	}
 	return entity, nil
 }

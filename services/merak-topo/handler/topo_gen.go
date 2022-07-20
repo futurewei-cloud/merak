@@ -10,10 +10,10 @@ import (
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 )
 
-var (
-	Topo_links []database.Vlink
-	Topo_nodes []database.Vnode
-)
+// var (
+// 	Topo_links []database.Vlink
+// 	Topo_nodes []database.Vnode
+// )
 
 //function methods
 
@@ -102,9 +102,10 @@ func Ips_gen(ip_num int, k int, count int, data_plane_cidr string) []string {
 	return ips
 }
 
-func Node_port_gen(intf_num int, dev_list []string, ips []string, ip_flag bool) []string {
+func Node_port_gen(intf_num int, dev_list []string, ips []string, ip_flag bool) ([]database.Vnode, []string) {
 
 	var port database.Vport
+	var nodes []database.Vnode
 
 	for _, dev := range dev_list {
 		var node database.Vnode
@@ -133,9 +134,9 @@ func Node_port_gen(intf_num int, dev_list []string, ips []string, ip_flag bool) 
 		// node.Name = dev + ":" + node.Id
 		node.Name = dev
 		node.Nics = nics
-		Topo_nodes = append(Topo_nodes, node)
+		nodes = append(nodes, node)
 	}
-	return ips
+	return nodes, ips
 }
 
 func config_sclink(link database.Vlink) map[string]interface{} {
@@ -188,9 +189,10 @@ func link_gen(src_name string, dst_name string, snic database.Nic, dnic database
 
 }
 
-func Links_gen(Topo_nodes []database.Vnode) {
-	src_nodes := Topo_nodes
-	dst_nodes := Topo_nodes
+func Links_gen(topo_nodes []database.Vnode) []database.Vlink {
+	src_nodes := topo_nodes
+	dst_nodes := topo_nodes
+	var topo_links []database.Vlink
 
 	picked_intf := []string{}
 
@@ -221,15 +223,15 @@ func Links_gen(Topo_nodes []database.Vnode) {
 									paired = true
 									// fmt.Printf("==dst Intf == %v \n", dnic.Intf)
 									link := link_gen(node_name, dst_name, snic, dnic)
-									Topo_links = append(Topo_links, link)
+									topo_links = append(topo_links, link)
 
 									s_clink := config_sclink(link)
-									s_clink["uid"] = len(Topo_nodes[i].Flinks)
-									Topo_nodes[i].Flinks = append(Topo_nodes[i].Flinks, s_clink)
+									s_clink["uid"] = len(topo_links)
+									topo_nodes[i].Flinks = append(topo_nodes[i].Flinks, s_clink)
 
 									d_clink := config_dclink(link)
-									d_clink["uid"] = len(Topo_nodes[j].Flinks)
-									Topo_nodes[j].Flinks = append(Topo_nodes[j].Flinks, d_clink)
+									d_clink["uid"] = len(topo_links)
+									topo_nodes[j].Flinks = append(topo_nodes[j].Flinks, d_clink)
 
 								}
 							}
@@ -269,15 +271,15 @@ func Links_gen(Topo_nodes []database.Vnode) {
 									// fmt.Printf("==dst Intf == %v \n", dnic.Intf)
 									paired = true
 									link := link_gen(node_name, dst_name, snic, dnic)
-									Topo_links = append(Topo_links, link)
+									topo_links = append(topo_links, link)
 
 									s_clink := config_sclink(link)
-									s_clink["uid"] = len(Topo_nodes[i].Flinks)
-									Topo_nodes[i].Flinks = append(Topo_nodes[i].Flinks, s_clink)
+									s_clink["uid"] = len(topo_links)
+									topo_nodes[i].Flinks = append(topo_nodes[i].Flinks, s_clink)
 
 									d_clink := config_dclink(link)
-									d_clink["uid"] = len(Topo_nodes[j].Flinks)
-									Topo_nodes[j].Flinks = append(Topo_nodes[j].Flinks, d_clink)
+									d_clink["uid"] = len(topo_links)
+									topo_nodes[j].Flinks = append(topo_nodes[j].Flinks, d_clink)
 
 								}
 							}
@@ -290,5 +292,6 @@ func Links_gen(Topo_nodes []database.Vnode) {
 		}
 
 	}
+	return topo_links
 
 }

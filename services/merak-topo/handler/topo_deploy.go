@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
@@ -136,9 +137,43 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 			return fmt.Errorf("failed to create runtime class %s", err)
 		}
 
+		/// Init Container
+		// init_container = client.V1Container(name=f"init-{self.name}")
+		//     init_container.image = "networkop/init-wait:latest"
+		//     init_container.image_pull_policy = "IfNotPresent"
+		//     init_container.args = [f"{len(self.interfaces)+1}", f"{self.sleep}"]
+		// var init_container corev1.Container
+
+		interface_num := len(node.Nics) + 1
+
+		init_container := corev1.Container{
+			Name:            "init-" + node.Name,
+			Image:           "networkop/init-wait:latest",
+			ImagePullPolicy: "IfNotPresent",
+			Args:            []string{strconv.Itoa(interface_num), "0"},
+		}
+
+		init_containers := []corev1.Container{}
+		init_containers = append(init_containers, init_container)
+
+		var grace_period = int64(0)
+
 		//// create pods
 		var newPod *corev1.Pod
 		l := make(map[string]string)
+		l["App"] = node.Name
+		l["Topo"] = "topology"
+
+		var sc corev1.SecurityContext
+		pri := true
+		sc.Privileged = &pri
+		allow_pri := true
+		sc.AllowPrivilegeEscalation = &allow_pri
+		var capab corev1.Capabilities
+
+		capab.Add = append(capab.Add, "NET_ADMIN")
+		capab.Add = append(capab.Add, "SYS_TIME")
+		sc.Capabilities = &capab
 
 		if strings.Contains(node.Name, "vhost") {
 			l["Type"] = "vhost"
@@ -148,28 +183,27 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 					Labels: l,
 				},
 				Spec: corev1.PodSpec{
+					InitContainers: init_containers,
 					Containers: []corev1.Container{
-						{Name: "vhost", Image: ACA_IMAGE, Command: []string{"sleep", "100000"}},
+						{
+							Name:            "vhost",
+							Image:           ACA_IMAGE,
+							ImagePullPolicy: "IfNotPresent",
+							Command:         []string{"sleep", "100000"},
+							SecurityContext: &sc,
+						},
 					},
+					TerminationGracePeriodSeconds: &grace_period,
 				},
 			}
 		} else if strings.Contains(node.Name, "vswitch") || strings.Contains(node.Name, "tor") {
-			ovs_set, err0 := ovs_config(topo, node.Name, "10.97.185.48", "6653")
+
+			ovs_set, err0 := ovs_config(topo, node.Name, "10.98.182.92", "6653")
 			if err0 != nil {
 				return fmt.Errorf("fails to get ovs switch controller info %s", err0)
 			}
 
 			l["Type"] = "vswitch"
-			var sc corev1.SecurityContext
-			pri := true
-			sc.Privileged = &pri
-			allow_pri := true
-			sc.AllowPrivilegeEscalation = &allow_pri
-			var capab corev1.Capabilities
-
-			capab.Add = append(capab.Add, "NET_ADMIN")
-			capab.Add = append(capab.Add, "SYS_TIME")
-			sc.Capabilities = &capab
 
 			newPod = &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
@@ -177,16 +211,19 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 					Labels: l,
 				},
 				Spec: corev1.PodSpec{
+					InitContainers: init_containers,
 					Containers: []corev1.Container{
 						{
-							Name:  "vswitch",
-							Image: OVS_IMAGE,
-							Args:  []string{"service rsyslog restart; /etc/init.d/openvswitch-switch restart; " + ovs_set + "sleep infinity"},
+							Name:            "vswitch",
+							Image:           OVS_IMAGE,
+							ImagePullPolicy: "IfNotPresent",
+							Args:            []string{"service rsyslog restart; /etc/init.d/openvswitch-switch restart; " + ovs_set + "sleep infinity"},
 							// add ovs setup commands
 							Command:         []string{"/bin/sh", "-c"},
 							SecurityContext: &sc,
 						},
 					},
+					TerminationGracePeriodSeconds: &grace_period,
 				},
 			}
 		} else if strings.Contains(node.Name, "cgw") {
@@ -200,10 +237,18 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 					Labels: l,
 				},
 				Spec: corev1.PodSpec{
+					InitContainers: init_containers,
 					Containers: []corev1.Container{
-						{Name: "cgw", Image: GW_IMAGE, Command: []string{"sleep", "100000"}},
+						{
+							Name:            "cgw",
+							Image:           GW_IMAGE,
+							ImagePullPolicy: "IfNotPresent",
+							Command:         []string{"sleep", "100000"},
+							SecurityContext: &sc,
+						},
 					},
-					NodeName: k8snodes[0],
+					NodeName:                      k8snodes[0],
+					TerminationGracePeriodSeconds: &grace_period,
 				},
 			}
 			k8snodes = k8snodes[1:]

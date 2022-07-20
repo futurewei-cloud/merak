@@ -32,4 +32,6 @@ func main() {
 		log.Fatalf("fail to connect db: %v", err)
 	}
 
+	log.Printf("DB connected")
+
 }
