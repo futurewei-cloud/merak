@@ -14,7 +14,6 @@ import (
 	"github.com/futurewei-cloud/merak/services/scenario-manager/logger"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gogo/protobuf/proto"
 )
 
 //Function for doing some actions for a scenario
@@ -63,7 +62,7 @@ func ScenarioActoins(c *fiber.Ctx) error {
 				sa.Status = entities.STATUS_DONE
 				scenarioStatus = entities.STATUS_DONE
 				logger.Log.Infof("'%s' topology done.", sa.Action)
-				logger.Log.Debugf("returnTopo for action %s : %s", sa.Action, proto.MarshalTextString(returnTopo))
+				logger.Log.Infof("returnTopo for action %s : %s", sa.Action, returnTopo)
 			}
 		}
 		if strings.ToLower(sa.ServiceName) == "network" {
@@ -77,7 +76,7 @@ func ScenarioActoins(c *fiber.Ctx) error {
 				sa.Status = entities.STATUS_DONE
 				scenarioStatus = entities.STATUS_DONE
 				logger.Log.Infof("'%s' topology done.", sa.Action)
-				logger.Log.Debugf("returnNetwork for action %s : %s", sa.Action, proto.MarshalTextString(returnNetwork))
+				logger.Log.Infof("returnNetwork for action %s : %s", sa.Action, returnNetwork)
 			}
 		}
 		if strings.ToLower(sa.ServiceName) == "compute" {
@@ -91,7 +90,7 @@ func ScenarioActoins(c *fiber.Ctx) error {
 				sa.Status = entities.STATUS_DONE
 				scenarioStatus = entities.STATUS_DONE
 				logger.Log.Infof("'%s' topology done.", sa.Action)
-				logger.Log.Debugf("returnNetwork for action %s : %s", sa.Action, proto.MarshalTextString(returnCompute))
+				logger.Log.Infof("returnNetwork for action %s : %s", sa.Action, returnCompute)
 			}
 		}
 	}

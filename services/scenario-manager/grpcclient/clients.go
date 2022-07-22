@@ -60,7 +60,7 @@ func (g GrpcClient) TopologyHandler(ctx context.Context, topopb *pb.InternalTopo
 		logger.Log.Errorf("Error when calling Merak-Topology: %s", err.Error())
 		return nil, fmt.Errorf("error when calling merak-topology grpc server: %s", err.Error())
 	}
-	logger.Log.Printf("Response from server: %s", response.GetReturnMessage())
+	logger.Log.Debugf("Response from Merak-topology grpc server: %s", response.GetReturnMessage())
 
 	return response, nil
 }
@@ -98,7 +98,7 @@ func (g GrpcClient) NetConfigHandler(ctx context.Context, netconfpb *pb.Internal
 		logger.Log.Errorf("Error when calling Merak-Network: %s", err)
 		return nil, fmt.Errorf("error when calling merak-network grpc server: %s", err)
 	}
-	logger.Log.Printf("Response from server: %s", response.GetReturnMessage())
+	logger.Log.Debugf("Response from Merak-Network grpc server: %s", response.GetReturnMessage())
 
 	return response, nil
 }
@@ -136,7 +136,7 @@ func (g GrpcClient) ComputeHandler(ctx context.Context, computepb *pb.InternalCo
 		logger.Log.Errorf("Error when calling Merak-Compute: %s", err)
 		return nil, fmt.Errorf("error when calling merak-compute grpc server: %s", err)
 	}
-	logger.Log.Printf("Response from server: %s", response.GetReturnMessage())
+	logger.Log.Debugf("Response from Merak-Compute grpc server: %s", response.GetReturnMessage())
 
 	return response, nil
 }

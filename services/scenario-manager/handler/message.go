@@ -146,6 +146,7 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 			subnetPb.SubnetId = subnet.SubnetId
 			subnetPb.SubnetCidr = subnet.SubnetCidr
 			subnetPb.SubnetGw = subnet.SubnetGateway
+			subnetPb.NumberVms = uint32(subnet.NumberOfVMs)
 			vpcPb.Subnets = append(vpcPb.Subnets, &subnetPb)
 		}
 		netPb.Vpcs = append(netPb.Vpcs, &vpcPb)
@@ -208,12 +209,12 @@ func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entit
 	conf.RequestId = utils.GenUUID()
 	conf.ComputeConfigId = compute.Id
 	conf.MessageType = pb.MessageType_FULL
-	conf.Pods = topoReturn.ComputeNodes
+	conf.Pods = topoReturn.GetComputeNodes()
 
 	var vmDeployPb pb.InternalVMDeployInfo
 	vmDeployPb.OperationType = pb.OperationType_CREATE
-	vmDeployPb.Vpcs = netReturn.Vpcs
-	vmDeployPb.Secgroups = netReturn.SecurityGroupIds
+	vmDeployPb.Vpcs = netReturn.GetVpcs()
+	vmDeployPb.Secgroups = netReturn.GetSecurityGroupIds()
 	vmDeployPb.DeployType = getVMDeployType(compute.VmDeployType)
 	vmDeployPb.Scheduler = getVMDeployScheduler(compute.Scheduler)
 

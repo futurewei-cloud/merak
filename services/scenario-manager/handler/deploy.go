@@ -10,7 +10,6 @@ import (
 	"github.com/futurewei-cloud/merak/services/scenario-manager/grpcclient"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/logger"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
-	"github.com/golang/protobuf/proto"
 )
 
 func TopologyHandler(s *entities.Scenario, action entities.EventName) (*pb.ReturnTopologyMessage, error) {
@@ -53,7 +52,7 @@ func TopologyHandler(s *entities.Scenario, action entities.EventName) (*pb.Retur
 	if err := constructTopologyMessage(&topology, &topoconf, action); err != nil {
 		return nil, errors.New("topology protobuf message error")
 	}
-	logger.Log.Debugf("constructTopologyMessage: %s", proto.MarshalTextString(&topoconf))
+	logger.Log.Infof("constructTopologyMessage: %s", &topoconf)
 
 	if action != entities.EVENT_CHECK {
 		topology.Status = actionToStatus(action)
@@ -63,14 +62,16 @@ func TopologyHandler(s *entities.Scenario, action entities.EventName) (*pb.Retur
 	responseTopo, err := grpcclient.TopologyClient(&topoconf)
 
 	if err != nil || responseTopo.ReturnCode == pb.ReturnCode_FAILED {
-		topology.Status = entities.STATUS_FAILED
-		database.Set(utils.KEY_PREFIX_TOPOLOGY+topology.Id, &topology)
+		if action != entities.EVENT_CHECK {
+			topology.Status = entities.STATUS_FAILED
+			database.Set(utils.KEY_PREFIX_TOPOLOGY+topology.Id, &topology)
+		}
 		if responseTopo != nil {
 			return nil, fmt.Errorf("deploy topology failed, Error = '%s', return = '%s'", err.Error(), responseTopo.ReturnMessage)
 		}
 		return nil, fmt.Errorf("deploy topology failed, Error = '%s'", err.Error())
 	}
-	logger.Log.Debugf("responseTopoMessage: %s", proto.MarshalTextString(responseTopo))
+	logger.Log.Infof("responseTopoMessage: %s", responseTopo)
 
 	if action == entities.EVENT_DEPLOY {
 		topology.Status = entities.STATUS_READY
@@ -148,7 +149,7 @@ func NetworkHandler(s *entities.Scenario, action entities.EventName) (*pb.Return
 		}
 	}
 
-	logger.Log.Debugf("constructNetConfMessage: %s", proto.MarshalTextString(&netconf))
+	logger.Log.Infof("constructNetConfMessage: %s", &netconf)
 
 	if action != entities.EVENT_CHECK {
 		network.Status = actionToStatus(action)
@@ -158,15 +159,17 @@ func NetworkHandler(s *entities.Scenario, action entities.EventName) (*pb.Return
 	responseNetwork, err := grpcclient.NetworkClient(&netconf)
 
 	if err != nil || responseNetwork.ReturnCode == pb.ReturnCode_FAILED {
-		network.Status = entities.STATUS_FAILED
-		database.Set(utils.KEY_PREFIX_NETWORK+network.Id, &network)
+		if action != entities.EVENT_CHECK {
+			network.Status = entities.STATUS_FAILED
+			database.Set(utils.KEY_PREFIX_NETWORK+network.Id, &network)
+		}
 		if responseNetwork != nil {
 			return nil, fmt.Errorf("deploy network failed, Error = '%s', return = '%s'", err.Error(), responseNetwork.ReturnMessage)
 		}
 		return nil, fmt.Errorf("deploy network failed, Error = '%s'", err.Error())
 	}
 
-	logger.Log.Debugf("responseNetworkMessage: %s", proto.MarshalTextString(responseNetwork))
+	logger.Log.Infof("responseNetworkMessage: %s", responseNetwork)
 
 	if action == entities.EVENT_DEPLOY {
 		network.Status = entities.STATUS_READY
@@ -236,14 +239,17 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.Return
 			return nil, errors.New("netconfig protobuf message error")
 		}
 
-		for _, n := range returnNetwork.Vpcs {
-			for _, s := range n.Subnets {
-				s.NumberVms = uint32(compute.NumberOfVmPerVpc) / uint32(compute.NumberOfComputeNodes) / uint32(len(n.Subnets))
+		for _, n := range returnNetwork.GetVpcs() {
+			for _, s := range n.GetSubnets() {
+				if compute.NumberOfComputeNodes != 0 && len(n.GetSubnets()) != 0 {
+					s.NumberVms = uint32(compute.NumberOfVmPerVpc) / uint32(compute.NumberOfComputeNodes) / uint32(len(n.GetSubnets()))
+				}
 			}
 		}
+		logger.Log.Infof("after returnNetworkMessage: %s", returnNetwork)
 	}
 
-	logger.Log.Debugf("constructComputeMessage: %s", proto.MarshalTextString(&computeconf))
+	logger.Log.Infof("constructComputeMessage: %s", &computeconf)
 
 	if action != entities.EVENT_CHECK {
 		compute.Status = actionToStatus(action)
@@ -253,15 +259,17 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.Return
 	responseCompute, err := grpcclient.ComputeClient(&computeconf)
 
 	if err != nil || (responseCompute != nil && responseCompute.ReturnCode == pb.ReturnCode_FAILED) {
-		compute.Status = entities.STATUS_FAILED
-		database.Set(utils.KEY_PREFIX_COMPUTE+compute.Id, &compute)
+		if action != entities.EVENT_CHECK {
+			compute.Status = entities.STATUS_FAILED
+			database.Set(utils.KEY_PREFIX_COMPUTE+compute.Id, &compute)
+		}
 		if responseCompute != nil {
 			return nil, fmt.Errorf("deploy compute failed, Error = '%s', return = '%s'", err.Error(), responseCompute.ReturnMessage)
 		}
 		return nil, fmt.Errorf("deploy compute failed, Error = '%s'", err.Error())
 	}
 
-	logger.Log.Debugf("responseComputeMessage: %s", proto.MarshalTextString(responseCompute))
+	logger.Log.Infof("responseComputeMessage: %s", responseCompute)
 
 	if action == entities.EVENT_DEPLOY {
 		compute.Status = entities.STATUS_READY
