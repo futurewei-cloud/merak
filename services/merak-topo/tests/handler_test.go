@@ -10,45 +10,45 @@ import (
 	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
 )
 
-// var (
-// 	returnMessage = pb.ReturnTopologyMessage{
-// 		ReturnCode:    pb.ReturnCode_FAILED,
-// 		ReturnMessage: "Unintialized",
-// 	}
-// 	aca_num         = 15
-// 	rack_num        = 3
-// 	aca_per_rack    = 5
-// 	data_plane_cidr = "10.200.10.0/16"
-// 	topo_id         = "20"
-// 	cgw_num         = 2
-// )
+var (
+	returnMessage = pb.ReturnTopologyMessage{
+		ReturnCode:    pb.ReturnCode_FAILED,
+		ReturnMessage: "Unintialized",
+	}
+	aca_num         = 20
+	rack_num        = 5
+	aca_per_rack    = 4
+	data_plane_cidr = "10.200.0.0/16"
+	topo_id         = "e1ebeb86995a485ea83de1fb2d78106c"
+	cgw_num         = 6
+)
 
-// func TestTopologyCreate(t *testing.T) {
+func TestTopologyCreate(t *testing.T) {
 
-// 	k8client, err := utils.K8sClient()
-// 	if err != nil {
-// 		fmt.Printf("create k8s client error %s", err)
-// 	}
+	k8client, err := utils.K8sClient()
+	if err != nil {
+		fmt.Printf("create k8s client error %s", err)
+	}
 
-// 	err1 := database.ConnectDatabase()
-// 	if err1 != nil {
-// 		fmt.Printf("connect to DB error %s", err1)
-// 	}
+	err1 := database.ConnectDatabase()
+	if err1 != nil {
+		fmt.Printf("connect to DB error %s", err1)
+	}
 
-// 	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
-// 	if err2 != nil {
-// 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
-// 		returnMessage.ReturnMessage = "Fail to Create Topology."
+	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
+	if err2 != nil {
+		returnMessage.ReturnCode = pb.ReturnCode_FAILED
+		returnMessage.ReturnMessage = "Fail to Create Topology."
 
-// 	} else {
-// 		returnMessage.ReturnCode = pb.ReturnCode_OK
-// 		returnMessage.ReturnMessage = "Topology Deployed."
+	} else {
+		returnMessage.ReturnCode = pb.ReturnCode_OK
+		returnMessage.ReturnMessage = "Topology Deployed."
 
-// 	}
+	}
 
-// 	fmt.Printf("///// CREATE Return Message //// %v", &returnMessage)
+	fmt.Printf("///// CREATE Return Message //// %v", &returnMessage)
 
-// }
+}
 
 func TestTopologyInfo(t *testing.T) {
 

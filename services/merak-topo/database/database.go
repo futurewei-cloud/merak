@@ -19,10 +19,10 @@ var (
 
 func ConnectDatabase() error {
 	client := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-		// Addr:     "10.213.43.224:55001",
+		// Addr: "localhost:6379",
+		Addr:     "10.213.43.77:55001",
 		Password: "", // no password set
-		DB:       8,  // use default DB
+		DB:       4,  // use default DB
 	})
 
 	if err := client.Ping(Ctx).Err(); err != nil {
@@ -73,6 +73,20 @@ func FindEntity(id string, prefix string, entity interface{}) (interface{}, erro
 	err = json.Unmarshal([]byte(value), &entity)
 	if err != nil {
 		return "fail to unmarshal value in DB", err
+	}
+	return entity, nil
+}
+
+func FindIPEntity(id string, prefix string) ([]string, error) {
+	var entity []string
+
+	value, err := Rdb.Get(Ctx, id+prefix).Result()
+	if err != nil {
+		return nil, fmt.Errorf("fail to find pod %s", err)
+	}
+	err = json.Unmarshal([]byte(value), &entity)
+	if err != nil {
+		return nil, err
 	}
 	return entity, nil
 }

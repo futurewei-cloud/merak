@@ -45,6 +45,8 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 		aca_num := int(in.Config.GetNumberOfVhosts())
 		cgw_num := int(in.Config.GetNumberOfGateways())
 
+		log.Printf("========INFO-- parsed topology id %v==========", in.Config.GetTopologyId())
+
 		if in.Config.GetTopologyId() != "" {
 			err_info := handler.Info(k8client, in.Config.GetTopologyId(), (aca_num + cgw_num), &returnMessage)
 			if err_info != nil {
@@ -55,6 +57,11 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 				returnMessage.ReturnCode = pb.ReturnCode_OK
 				returnMessage.ReturnMessage = "INFO successes to query on topology id."
 			}
+
+			log.Printf("return message %v", returnMessage.ReturnMessage)
+			log.Printf("return code %v", returnMessage.ReturnCode)
+			log.Printf("return compute node %+v", returnMessage.ComputeNodes)
+			log.Printf("return host node %v", returnMessage.Hosts)
 		}
 
 	case pb.OperationType_CREATE:
@@ -103,6 +110,11 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 				returnMessage.ReturnCode = pb.ReturnCode_OK
 				returnMessage.ReturnMessage = "Success to create topology"
 			}
+			log.Printf("return message %v", returnMessage.ReturnMessage)
+			log.Printf("return code %v", returnMessage.ReturnCode)
+			log.Printf("return compute node %+v", returnMessage.ComputeNodes)
+			log.Printf("return host node %v", returnMessage.Hosts)
+
 			return &returnMessage, err_create
 
 		}
@@ -120,6 +132,9 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			returnMessage.ReturnCode = pb.ReturnCode_OK
 			returnMessage.ReturnMessage = "Success to Delete Topology"
 		}
+
+		log.Printf("return message %v", returnMessage.ReturnMessage)
+		log.Printf("return code %v", returnMessage.ReturnCode)
 
 	case pb.OperationType_UPDATE:
 		// update topology

@@ -189,16 +189,16 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 							Name:            "vhost",
 							Image:           ACA_IMAGE,
 							ImagePullPolicy: "IfNotPresent",
-							Command:         []string{"sleep", "100000"},
+							// Command:         []string{},
 							SecurityContext: &sc,
 						},
 					},
 					TerminationGracePeriodSeconds: &grace_period,
 				},
 			}
-		} else if strings.Contains(node.Name, "vswitch") || strings.Contains(node.Name, "tor") {
+		} else if strings.Contains(node.Name, "vswitch") || strings.Contains(node.Name, "core") {
 
-			ovs_set, err0 := ovs_config(topo, node.Name, "10.98.182.92", "6653")
+			ovs_set, err0 := ovs_config(topo, node.Name, "10.213.43.77", "6653")
 			if err0 != nil {
 				return fmt.Errorf("fails to get ovs switch controller info %s", err0)
 			}
@@ -263,7 +263,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 		if err_create != nil {
 			return fmt.Errorf("create pod error %s", err_create)
 		} else {
-			err_db := database.SetValue(topo.Topology_id+"-"+node.Name+"-pod", newPod)
+			err_db := database.SetValue(topo.Topology_id+":"+node.Name, newPod)
 			if err_db != nil {
 				log.Fatalf("fail: save topology in DB %s", err_db)
 			}

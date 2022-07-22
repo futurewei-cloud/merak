@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-const K8SAPIURL string = "https://10.213.43.224:6443"
+const K8SAPIURL string = "https://10.213.43.77:6443"
 const K8SCONFIGPATH string = "/etc/kubernetes/admin.conf"
 
 func K8sClient() (*kubernetes.Clientset, error) {

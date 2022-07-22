@@ -74,7 +74,7 @@ func ip_gen_sub(upper int, k1 int, data_plane_cidr string) []string {
 	return ips_gen
 }
 
-func Ips_gen(ip_num int, k int, count int, data_plane_cidr string) []string {
+func Ips_gen(topo_id string, ip_num int, k int, count int, data_plane_cidr string) []string {
 	var ips = []string{}
 	left := ip_num - count
 	//k-- subnet starting number
@@ -132,6 +132,7 @@ func Node_port_gen(intf_num int, dev_list []string, ips []string, ip_flag bool) 
 
 		node.Id = GenUUID()
 		// node.Name = dev + ":" + node.Id
+		// node.Name = strings.Split(dev, "-")[0] + strings.Split(node.Id, "-")[0] + strings.Split(dev, "-")[1]
 		node.Name = dev
 		node.Nics = nics
 		nodes = append(nodes, node)
@@ -199,7 +200,7 @@ func Links_gen(topo_nodes []database.Vnode) []database.Vlink {
 	for i, s := range src_nodes {
 		node_name := strings.Split(s.Name, ":")[0]
 
-		if strings.Contains(node_name, "tor") {
+		if strings.Contains(node_name, "core") {
 
 			var paired_nodes []string
 			for _, snic := range s.Nics {
