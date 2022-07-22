@@ -79,7 +79,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 				constants.COMPUTE_REDIS_NODE_MAP,
 				"id", pod.Id,
 				"name", pod.Name,
-				"ip", pod.Ip,
+				"ip", pod.ContainerIp,
 				"mac", pod.Mac,
 				"veth", pod.Veth,
 			).Err(); err != nil {
@@ -95,21 +95,21 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 				pod.Id,
 			).Err(); err != nil {
 				return &pb.ReturnMessage{
-					ReturnMessage: "Unable add pod to DB Hash Set",
+					ReturnMessage: "Unable to add pod to DB Hash Set",
 					ReturnCode:    pb.ReturnCode_FAILED,
 				}, err
 			}
 
 			// Currently 1 VM = 1 Port.
 			// Generate VMs
-			for _, vpc := range in.Config.VmDeploy.Vpcs {
-				for _, subnet := range vpc.Subnets {
-					for j := 0; j < int(subnet.NumberVms); j++ {
+			for i, vpc := range in.Config.VmDeploy.Vpcs {
+				for j, subnet := range vpc.Subnets {
+					for k := 0; j < int(subnet.NumberVms); j++ {
 						if err := RedisClient.HSet(
 							ctx,
-							pod.Id+strconv.Itoa(j),
-							"id", pod.Id+strconv.Itoa(j),
-							"name", pod.Id+strconv.Itoa(j),
+							pod.Id+strconv.Itoa(i)+strconv.Itoa(j)+strconv.Itoa(k),
+							"id", pod.Id+strconv.Itoa(i)+strconv.Itoa(j)+strconv.Itoa(k),
+							"name", "v"+strconv.Itoa(i)+strconv.Itoa(j)+strconv.Itoa(k),
 							"vpc", vpc.VpcId,
 							"tenantID", vpc.TenantId,
 							"projectID", vpc.ProjectId,
@@ -117,7 +117,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 							"cidr", subnet.SubnetCidr,
 							"gw", subnet.SubnetGw,
 							"sg", in.Config.VmDeploy.Secgroups[0],
-							"hostIP", pod.Ip,
+							"hostIP", pod.ContainerIp,
 							"hostmac", pod.Mac,
 							"hostname", pod.Name,
 						).Err(); err != nil {
@@ -126,14 +126,14 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 								ReturnCode:    pb.ReturnCode_FAILED,
 							}, err
 						}
-						log.Println("Added VM " + pod.Id + strconv.Itoa(j) + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(j) + " of " + strconv.Itoa(int(subnet.NumberVms)))
-						if err := RedisClient.LPush(ctx, pod.Id, pod.Id+strconv.Itoa(j)).Err(); err != nil {
+						log.Println("Added VM " + pod.Id + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k) + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k) + " of " + strconv.Itoa(int(subnet.NumberVms)))
+						if err := RedisClient.LPush(ctx, pod.Id, pod.Id+strconv.Itoa(i)+strconv.Itoa(j)+strconv.Itoa(k)).Err(); err != nil {
 							return &pb.ReturnMessage{
 								ReturnMessage: "Unable add VM to pod list",
 								ReturnCode:    pb.ReturnCode_FAILED,
 							}, err
 						}
-						log.Println("Added pod -> vm mapping " + pod.Id + strconv.Itoa(j))
+						log.Println("Added pod -> vm mapping " + pod.Id + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k))
 					}
 				}
 			}

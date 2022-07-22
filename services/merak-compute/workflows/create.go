@@ -16,7 +16,7 @@ func Create(ctx workflow.Context) (pb.ReturnMessage, error) {
 		MaximumAttempts:    common.TEMPORAL_ACTIVITY_MAX_ATTEMPT,
 	}
 	ao := workflow.ActivityOptions{
-		StartToCloseTimeout: common.TEMPORAL_ACTIVITE_TIMEOUT,
+		StartToCloseTimeout: common.TEMPORAL_ACTIVITY_TIMEOUT,
 		RetryPolicy:         retrypolicy,
 	}
 
