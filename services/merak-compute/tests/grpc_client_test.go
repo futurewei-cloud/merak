@@ -28,18 +28,28 @@ func TestGrpcClient(t *testing.T) {
 	var ip string = ""
 	var hostname string = ""
 
+	var ip1 string = ""
+	var hostname1 string = ""
+
 	pod0 := pb.InternalVMPod{
 		OperationType: pb.OperationType_CREATE,
 		PodIp:         ip,
 		Subnets:       []string{"subnet1"},
-		NumOfVm:       1,
+		NumOfVm:       10,
+	}
+
+	pod11 := pb.InternalVMPod{
+		OperationType: pb.OperationType_CREATE,
+		PodIp:         ip,
+		Subnets:       []string{"subnet1"},
+		NumOfVm:       10,
 	}
 
 	subnets := pb.InternalSubnetInfo{
 		SubnetId:   "8182a4d4-ffff-4ece-b3f0-8d36e3d88000",
 		SubnetCidr: "10.0.1.0/24",
 		SubnetGw:   "10.0.1.1",
-		NumberVms:  1,
+		NumberVms:  10,
 	}
 	vpc := pb.InternalVpcInfo{
 		VpcId:     "9192a4d4-ffff-4ece-b3f0-8d36e3d88001",
@@ -53,7 +63,7 @@ func TestGrpcClient(t *testing.T) {
 		Vpcs:          []*pb.InternalVpcInfo{&vpc},
 		Secgroups:     []string{"3dda2801-d675-4688-a63f-dcda8d111111"},
 		Scheduler:     pb.VMScheduleType_SEQUENTIAL,
-		DeployMethod:  []*pb.InternalVMPod{&pod0},
+		DeployMethod:  []*pb.InternalVMPod{&pod0, &pod11},
 	}
 
 	service := pb.InternalServiceInfo{
@@ -76,13 +86,23 @@ func TestGrpcClient(t *testing.T) {
 		Mac:           "aa:bb:cc:dd:ee",
 		Veth:          "test",
 	}
+
+	pod1 := pb.InternalComputeInfo{
+		OperationType: pb.OperationType_CREATE,
+		Id:            "1",
+		Name:          hostname1,
+		Ip:            ip1,
+		Mac:           "aa:bb:cc:dd:ee",
+		Veth:          "test",
+	}
+
 	computeConfig := pb.InternalComputeConfiguration{
 		FormatVersion:   1,
 		RevisionNumber:  1,
 		RequestId:       "test",
 		ComputeConfigId: "test",
 		MessageType:     pb.MessageType_FULL,
-		Pods:            []*pb.InternalComputeInfo{&pod},
+		Pods:            []*pb.InternalComputeInfo{&pod, &pod1},
 		VmDeploy:        &deploy,
 		Services:        []*pb.InternalServiceInfo{&service},
 		ExtraInfo:       &pb.InternalComputeExtraInfo{Info: "test"},

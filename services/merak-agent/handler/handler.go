@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
@@ -102,7 +103,12 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 		log.Println("Response code from Alcor", resp.StatusCode)
-
+		if resp.StatusCode != constants.HTTP_CREATE_SUCCESS {
+			return &pb.ReturnMessage{
+				ReturnMessage: "Failed to create minimal port! Response Code: " + strconv.Itoa(resp.StatusCode),
+				ReturnCode:    pb.ReturnCode_FAILED,
+			}, err
+		}
 		respBodyByte, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return &pb.ReturnMessage{
@@ -325,7 +331,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 		jsonStringBody := string(body[:])
-		log.Println("Creating request with body: \n", jsonStringBody)
+		log.Println("Creating update_port request with body: \n", jsonStringBody)
 		req, err := http.NewRequest(http.MethodPut, "http://"+constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports/"+portID, bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json; charset=utf-8")
 		if err != nil {
@@ -336,14 +342,22 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 
-		log.Println("Sending request to Alcor")
-		client := &http.Client{}
+		log.Println("Sending update_port request to Alcor")
+		client := &http.Client{
+			Timeout: 5 * time.Second,
+		}
 		resp, err = client.Do(req)
-		log.Println("Response code from Alcor", resp.StatusCode)
 		if err != nil {
 			log.Println("Failed to update port to Alcor!: \n", jsonStringBody)
 			return &pb.ReturnMessage{
 				ReturnMessage: "Failed update port!",
+				ReturnCode:    pb.ReturnCode_FAILED,
+			}, err
+		}
+		log.Println("Response code from Alcor", resp.StatusCode)
+		if resp.StatusCode != constants.HTTP_OK {
+			return &pb.ReturnMessage{
+				ReturnMessage: "Failed to update_port! Response Code: " + strconv.Itoa(resp.StatusCode),
 				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}

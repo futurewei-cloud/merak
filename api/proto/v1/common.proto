@@ -60,7 +60,8 @@ message InternalComputeInfo {
   string ip = 4;
   string mac = 5;
   string veth = 6;
-  Status status = 7;
+  string container_ip = 7;
+  Status status = 8;
 }
 
 message InternalSubnetInfo {

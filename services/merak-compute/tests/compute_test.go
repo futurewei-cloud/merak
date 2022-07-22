@@ -50,14 +50,21 @@ func TestGrpc(t *testing.T) {
 		OperationType: pb.OperationType_CREATE,
 		PodIp:         ip,
 		Subnets:       []string{"subnet0", "subnet1"},
-		NumOfVm:       1,
+		NumOfVm:       10,
+	}
+
+	pod1 := pb.InternalVMPod{
+		OperationType: pb.OperationType_CREATE,
+		PodIp:         ip,
+		Subnets:       []string{"subnet0", "subnet1"},
+		NumOfVm:       10,
 	}
 
 	subnets := pb.InternalSubnetInfo{
 		SubnetId:   "1",
 		SubnetCidr: "10.0.0.0/16",
 		SubnetGw:   "10.0.0.1",
-		NumberVms:  2,
+		NumberVms:  10,
 	}
 	vpc := pb.InternalVpcInfo{
 		VpcId:   "1",
@@ -69,7 +76,7 @@ func TestGrpc(t *testing.T) {
 		Vpcs:          []*pb.InternalVpcInfo{&vpc},
 		Secgroups:     []string{"test1", "test2"},
 		Scheduler:     pb.VMScheduleType_SEQUENTIAL,
-		DeployMethod:  []*pb.InternalVMPod{&pod0},
+		DeployMethod:  []*pb.InternalVMPod{&pod0, &pod1},
 	}
 
 	service := pb.InternalServiceInfo{
