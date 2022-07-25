@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	"github.com/go-redis/redis/v8"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -93,6 +94,34 @@ func FindIPEntity(id string, prefix string) ([]string, error) {
 
 func FindPodEntity(id string, prefix string) (*corev1.Pod, error) {
 	var entity *corev1.Pod
+
+	value, err := Rdb.Get(Ctx, id+prefix).Result()
+	if err != nil {
+		return nil, fmt.Errorf("fail to find pod %s", err)
+	}
+	err = json.Unmarshal([]byte(value), &entity)
+	if err != nil {
+		return nil, err
+	}
+	return entity, nil
+}
+
+func FindHostNode(id string, prefix string) ([]*pb.InternalHostInfo, error) {
+	var entity []*pb.InternalHostInfo
+
+	value, err := Rdb.Get(Ctx, id+prefix).Result()
+	if err != nil {
+		return nil, fmt.Errorf("fail to find pod %s", err)
+	}
+	err = json.Unmarshal([]byte(value), &entity)
+	if err != nil {
+		return nil, err
+	}
+	return entity, nil
+}
+
+func FindComputenode(id string, prefix string) ([]*pb.InternalComputeInfo, error) {
+	var entity []*pb.InternalComputeInfo
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {

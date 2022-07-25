@@ -31,7 +31,7 @@ var (
 	ACA_IMAGE = "phudtran/merak-agent:dev"
 	OVS_IMAGE = "yanmo96/ovs_only:latest"
 	GW_IMAGE  = "yanmo96/aca_build_standard:v2"
-	RYU_IP    = "10.213.43.224"
+	RYU_IP    = "10.213.43.77"
 	RYU_PORT  = "6653"
 	Ctx       = context.Background()
 

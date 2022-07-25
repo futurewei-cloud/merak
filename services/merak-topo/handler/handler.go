@@ -95,14 +95,42 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	// go Topo_deploy(k8client, topo)
 
 	fmt.Println("========= Get k8s host nodes information after deployment=====")
-	var hosts []*pb.InternalHostInfo
-	err_k8shostnode := get_k8s_hostnode(k8client, hosts)
-	if err_k8shostnode != nil {
-		return fmt.Errorf("fail to get k8s cluster host node info %s", err_k8shostnode)
+
+	k8s_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+
+	if err1 != nil {
+		return fmt.Errorf("failed to list k8s host nodes info %s", err1)
 	}
 
-	returnMessage.Hosts = hosts
-	err_db := database.SetValue(topo_id+":k8sclusterhostnodes", hosts)
+	for _, s := range k8s_nodes.Items {
+		var hnode pb.InternalHostInfo
+
+		node_yaml, err2 := k8client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})
+		if err2 != nil {
+			return fmt.Errorf("failed to get k8s host node info %s", err2)
+		}
+
+		for _, c := range s.Status.Conditions {
+			if c.Type == corev1.NodeReady {
+				hnode.Status = pb.Status_READY
+				log.Printf(s.Name + " status " + string(c.Type))
+				break
+			}
+
+		}
+
+		for _, res := range node_yaml.Status.Addresses {
+			if res.Type == "InternalIP" {
+				hnode.Ip = res.Address
+				log.Printf(s.Name + " InternalIP " + string(hnode.Ip))
+				break
+			}
+		}
+
+		returnMessage.Hosts = append(returnMessage.Hosts, &hnode)
+
+	}
+	err_db := database.SetValue(topo_id+":k8sclusterhostnodes", returnMessage.Hosts)
 	if err_db != nil {
 		return fmt.Errorf("fail to save k8s cluster host node to DB %s", err_db)
 	}
@@ -160,165 +188,36 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 		}
 	}
 
+	err_db2 := database.SetValue(topo_id+":computnode", returnMessage.ComputeNodes)
+	if err_db2 != nil {
+		return fmt.Errorf("fail to save k8s cluster host node to DB %s", err_db2)
+	}
+
 	return nil
 }
 
-// func get_computenode_info(client *kubernetes.Clientset, topo_id string, aca_num int, computenodes []*pb.InternalComputeInfo) error {
-// 	topo, err := database.FindTopoEntity(topo_id, "")
-
-// 	if err != nil {
-// 		return fmt.Errorf("query topology_id error %s", err)
-// 	}
-
-// 	log.Printf("=========INFO find topo based on topo_id ===========")
-
-// 	err3 := QueryMac(client, topo_id, aca_num)
-
-// 	if err3 != nil {
-// 		return fmt.Errorf("query mac error %s", err3)
-// 	}
-
-// 	log.Printf("=========INFO get mac addresses ===========")
-
-// 	for _, node := range topo.Vnodes {
-// 		var cnode pb.InternalComputeInfo
-
-// 		res, err := client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
-
-// 		if err != nil {
-// 			return fmt.Errorf("get pod error %s", err)
-// 		} else {
-// 			// if res.Status.Phase == "Running" && res.Labels["Type"] == "vhost" {
-// 			if res.Labels["Type"] == "vhost" {
-// 				cnode.Name = res.Name
-// 				cnode.Id = string(res.UID)
-
-// 				for _, n := range topo.Vnodes {
-// 					if n.Name == res.Name {
-// 						cnode.Ip = strings.Split(n.Nics[len(n.Nics)-1].Ip, "/")[0]
-// 						cnode.Veth = n.Nics[len(n.Nics)-1].Intf
-// 						cnode.ContainerIp = res.Status.PodIP
-// 						break
-// 					}
-// 				}
-
-// 				mac, err := database.Get(topo_id + ":" + cnode.Ip)
-// 				cnode.Mac = strings.Trim(mac, "\"")
-// 				// add DB structure to save mac, ip for a k8s cluster
-
-// 				if err != nil {
-// 					return fmt.Errorf("fail to get mac from db %s", err)
-// 				}
-
-// 				cnode.OperationType = pb.OperationType_INFO
-// 				if res.Status.Phase == "Running" {
-// 					cnode.Status = pb.Status_READY
-// 				}
-// 				log.Printf(cnode.Name + " status " + string(cnode.Status))
-// 				computenodes = append(computenodes, &cnode)
-// 			}
-
-// 			log.Printf("=========INFO get compute nodes information ===========")
-// 		}
-// 	}
-
-// 	return nil
-// }
-
-func get_k8s_hostnode(k8client *kubernetes.Clientset, hosts []*pb.InternalHostInfo) error {
-	hostnodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-
-	if err1 != nil {
-		return fmt.Errorf("failed to list k8s host nodes info %s", err1)
-	}
-
-	for _, s := range hostnodes.Items {
-		var hnode pb.InternalHostInfo
-
-		node_yaml, err2 := k8client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})
-		if err2 != nil {
-			return fmt.Errorf("failed to get k8s host node info %s", err2)
-		}
-
-		for _, c := range s.Status.Conditions {
-			if c.Type == corev1.NodeReady {
-				hnode.Status = pb.Status_READY
-				break
-			}
-		}
-
-		for _, res := range node_yaml.Status.Addresses {
-			if res.Type == "InternalIP" {
-				hnode.Ip = res.Address
-				break
-			}
-		}
-
-		hosts = append(hosts, &hnode)
-
-	}
-	return nil
-}
-
-func Info(k8client *kubernetes.Clientset, topo_id string, aca_num int, returnMessage *pb.ReturnTopologyMessage) error {
-
+func Update_computenode_info(client *kubernetes.Clientset, topo_id string, aca_num int) error {
 	topo, err := database.FindTopoEntity(topo_id, "")
+	var computenodes []*pb.InternalComputeInfo
 
 	if err != nil {
 		return fmt.Errorf("query topology_id error %s", err)
 	}
 
-	log.Printf("=========INFO find topo based on topo_id ===========")
+	log.Printf("=========Get topo based on topo_id ===========")
 
-	nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-
-	if err1 != nil {
-		return fmt.Errorf("failed to list k8s host nodes info %s", err1)
-	}
-
-	for _, s := range nodes.Items {
-		var hnode pb.InternalHostInfo
-
-		node_yaml, err2 := k8client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})
-		if err2 != nil {
-			return fmt.Errorf("failed to get k8s host node info %s", err2)
-		}
-
-		for _, c := range s.Status.Conditions {
-			if c.Type == corev1.NodeReady {
-				hnode.Status = pb.Status_READY
-				log.Printf(s.Name + " status " + string(c.Type))
-				break
-			}
-
-		}
-
-		for _, res := range node_yaml.Status.Addresses {
-			if res.Type == "InternalIP" {
-				hnode.Ip = res.Address
-				log.Printf(s.Name + " InternalIP " + string(hnode.Ip))
-				break
-			}
-		}
-
-		returnMessage.Hosts = append(returnMessage.Hosts, &hnode)
-
-	}
-
-	log.Printf("=========INFO get host informations ===========")
-
-	err3 := QueryMac(k8client, topo_id, aca_num)
+	err3 := QueryMac(client, topo_id, aca_num)
 
 	if err3 != nil {
 		return fmt.Errorf("query mac error %s", err3)
 	}
 
-	log.Printf("=========INFO get mac addresses ===========")
+	log.Printf("=========Update mac addresses ===========")
 
 	for _, node := range topo.Vnodes {
 		var cnode pb.InternalComputeInfo
 
-		res, err := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
+		res, err := client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
 
 		if err != nil {
 			return fmt.Errorf("get pod error %s", err)
@@ -346,19 +245,79 @@ func Info(k8client *kubernetes.Clientset, topo_id string, aca_num int, returnMes
 				}
 
 				cnode.OperationType = pb.OperationType_INFO
-
-				if res.Status.Phase == "Running" {
+				if res.Status.ContainerStatuses[len(res.Status.ContainerStatuses)-1].Ready {
 					cnode.Status = pb.Status_READY
 				} else {
 					cnode.Status = pb.Status_DEPLOYING
 				}
 				log.Printf(cnode.Name + " status " + string(cnode.Status))
-				returnMessage.ComputeNodes = append(returnMessage.ComputeNodes, &cnode)
+				computenodes = append(computenodes, &cnode)
 			}
 
-			log.Printf("=========INFO get compute nodes information ===========")
+			log.Printf("=========Update compute nodes information ===========")
 		}
 	}
+
+	err_db2 := database.SetValue(topo_id+":computnode", computenodes)
+	if err_db2 != nil {
+		return fmt.Errorf("fail to save k8s cluster host node to DB %s", err_db2)
+	}
+
+	return nil
+}
+
+// func get_k8s_hostnode(k8client *kubernetes.Clientset, hosts []*pb.InternalHostInfo) error {
+// 	hostnodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+
+// 	if err1 != nil {
+// 		return fmt.Errorf("failed to list k8s host nodes info %s", err1)
+// 	}
+
+// 	for _, s := range hostnodes.Items {
+// 		var hnode pb.InternalHostInfo
+
+// 		node_yaml, err2 := k8client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})
+// 		if err2 != nil {
+// 			return fmt.Errorf("failed to get k8s host node info %s", err2)
+// 		}
+
+// 		for _, c := range s.Status.Conditions {
+// 			if c.Type == corev1.NodeReady {
+// 				hnode.Status = pb.Status_READY
+// 				break
+// 			}
+// 		}
+
+// 		for _, res := range node_yaml.Status.Addresses {
+// 			if res.Type == "InternalIP" {
+// 				hnode.Ip = res.Address
+// 				break
+// 			}
+// 		}
+
+// 		hosts = append(hosts, &hnode)
+
+// 	}
+// 	return nil
+// }
+
+func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.ReturnTopologyMessage) error {
+
+	hosts, err_check := database.FindHostNode(topo_id+":k8sclusterhostnodes", "")
+	if err_check != nil {
+		return fmt.Errorf("fail to find return message host nodes info %s", err_check)
+	}
+
+	returnMessage.Hosts = hosts
+
+	log.Printf("=========INFO get host informations ===========")
+
+	compute_nodes, err_check2 := database.FindComputenode(topo_id+":computnode", "")
+	if err_check2 != nil {
+		return fmt.Errorf("fail to find return message compute nodes info %s", err_check2)
+	}
+
+	returnMessage.ComputeNodes = compute_nodes
 
 	return nil
 }

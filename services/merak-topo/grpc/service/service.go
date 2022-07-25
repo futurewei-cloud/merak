@@ -42,13 +42,17 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 	case pb.OperationType_INFO:
 
 		// query  based on topology_id
-		aca_num := int(in.Config.GetNumberOfVhosts())
-		cgw_num := int(in.Config.GetNumberOfGateways())
+		// aca_num := int(in.Config.GetNumberOfVhosts())
+		// cgw_num := int(in.Config.GetNumberOfGateways())
 
-		log.Printf("========INFO-- parsed topology id %v==========", in.Config.GetTopologyId())
+		topo_id := in.Config.GetTopologyId()
+		aca_num := in.Config.GetNumberOfVhosts()
+		cgw_num := in.Config.GetNumberOfGateways()
+
+		handler.Update_computenode_info(k8client, topo_id, int(aca_num+cgw_num))
 
 		if in.Config.GetTopologyId() != "" {
-			err_info := handler.Info(k8client, in.Config.GetTopologyId(), (aca_num + cgw_num), &returnMessage)
+			err_info := handler.Info(k8client, in.Config.GetTopologyId(), &returnMessage)
 			if err_info != nil {
 				returnMessage.ReturnCode = pb.ReturnCode_FAILED
 				returnMessage.ReturnMessage = "INFO fails to query on topology id."
@@ -116,7 +120,6 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			log.Printf("return host node %v", returnMessage.Hosts)
 
 			return &returnMessage, err_create
-
 		}
 
 	case pb.OperationType_DELETE:

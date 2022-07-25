@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"log"
 	"testing"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
@@ -16,10 +17,10 @@ var (
 		ReturnMessage: "Unintialized",
 	}
 	aca_num         = 20
-	rack_num        = 5
-	aca_per_rack    = 4
+	rack_num        = 2
+	aca_per_rack    = 10
 	data_plane_cidr = "10.200.0.0/16"
-	topo_id         = "e1ebeb86995a485ea83de1fb2d78106c"
+	topo_id         = "topo1"
 	cgw_num         = 6
 )
 
@@ -27,12 +28,12 @@ func TestTopologyCreate(t *testing.T) {
 
 	k8client, err := utils.K8sClient()
 	if err != nil {
-		fmt.Printf("create k8s client error %s", err)
+		log.Printf("create k8s client error %s", err)
 	}
 
 	err1 := database.ConnectDatabase()
 	if err1 != nil {
-		fmt.Printf("connect to DB error %s", err1)
+		log.Printf("connect to DB error %s", err1)
 	}
 
 	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
@@ -46,7 +47,12 @@ func TestTopologyCreate(t *testing.T) {
 
 	}
 
-	fmt.Printf("///// CREATE Return Message //// %v", &returnMessage)
+	log.Printf("///// CREATE Return Message //// %v", &returnMessage)
+
+	err3 := handler.Update_computenode_info(k8client, topo_id, (aca_num + rack_num))
+	if err3 != nil {
+		log.Printf("fail to update compute node info %s", err3)
+	}
 
 }
 
@@ -65,7 +71,7 @@ func TestTopologyInfo(t *testing.T) {
 		fmt.Printf("connect to DB error %s", err1)
 	}
 
-	err3 := handler.Info(k8client, topo_id, (aca_num + cgw_num), &returnMessage)
+	err3 := handler.Info(k8client, topo_id, &returnMessage)
 
 	if err3 != nil {
 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
@@ -176,7 +182,7 @@ func TestTopologyHandler(t *testing.T) {
 
 	fmt.Printf("///// CREATE Return Message //// %v", &returnMessage)
 
-	err3 := handler.Info(k8client, topo_id, (aca_num + cgw_num), &returnMessage)
+	err3 := handler.Info(k8client, topo_id, &returnMessage)
 
 	if err3 != nil {
 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
