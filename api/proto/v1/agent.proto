@@ -2,9 +2,10 @@ syntax="proto3";
 package merak;
 option go_package = "merak/";
 import "common.proto";
+import "compute.proto";
 
 service MerakAgentService {
-    rpc PortHandler (InternalPortConfig) returns (ReturnMessage) {}
+    rpc PortHandler (InternalPortConfig) returns (ReturnComputeMessage) {}
 }
 
 message InternalPortConfig {

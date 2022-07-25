@@ -32,7 +32,7 @@ type Server struct {
 	pb.UnimplementedMerakComputeServiceServer
 }
 
-func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
+func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
 	log.Println("Received on ComputeHandler", in)
 	retrypolicy := &temporal.RetryPolicy{
 		InitialInterval:    common.TEMPORAL_WF_RETRY_INTERVAL,
@@ -53,7 +53,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			RetryPolicy:              retrypolicy,
 		}
 		log.Println("Info Unimplemented")
-		return &pb.ReturnMessage{
+		return &pb.ReturnComputeMessage{
 			ReturnMessage: "Info Unimplemented",
 			ReturnCode:    pb.ReturnCode_FAILED,
 		}, errors.New("info unimplemented")
@@ -83,7 +83,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 				"mac", pod.Mac,
 				"veth", pod.Veth,
 			).Err(); err != nil {
-				return &pb.ReturnMessage{
+				return &pb.ReturnComputeMessage{
 					ReturnMessage: "Unable add pod to DB Hash Map",
 					ReturnCode:    pb.ReturnCode_FAILED,
 				}, err
@@ -94,7 +94,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 				constants.COMPUTE_REDIS_NODE_IP_SET,
 				pod.Id,
 			).Err(); err != nil {
-				return &pb.ReturnMessage{
+				return &pb.ReturnComputeMessage{
 					ReturnMessage: "Unable to add pod to DB Hash Set",
 					ReturnCode:    pb.ReturnCode_FAILED,
 				}, err
@@ -121,14 +121,14 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 							"hostmac", pod.Mac,
 							"hostname", pod.Name,
 						).Err(); err != nil {
-							return &pb.ReturnMessage{
+							return &pb.ReturnComputeMessage{
 								ReturnMessage: "Unable add VM to DB Hash Map",
 								ReturnCode:    pb.ReturnCode_FAILED,
 							}, err
 						}
 						log.Println("Added VM " + pod.Id + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k) + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k) + " of " + strconv.Itoa(int(subnet.NumberVms)))
 						if err := RedisClient.LPush(ctx, pod.Id, pod.Id+strconv.Itoa(i)+strconv.Itoa(j)+strconv.Itoa(k)).Err(); err != nil {
-							return &pb.ReturnMessage{
+							return &pb.ReturnComputeMessage{
 								ReturnMessage: "Unable add VM to pod list",
 								ReturnCode:    pb.ReturnCode_FAILED,
 							}, err
@@ -140,11 +140,11 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 
 		}
 		// Start VM Create Workflow
-		var result pb.ReturnMessage
+		var result pb.ReturnComputeMessage
 		log.Println("Executing VM Create Workflow!")
 		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create)
 		if err != nil {
-			return &pb.ReturnMessage{
+			return &pb.ReturnComputeMessage{
 				ReturnMessage: "Unable to execute workflow",
 				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
@@ -154,15 +154,17 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		// Sync get results of workflow
 		err = we.Get(context.Background(), &result)
 		if err != nil {
-			return &pb.ReturnMessage{
+			return &pb.ReturnComputeMessage{
 				ReturnMessage: result.GetReturnMessage(),
 				ReturnCode:    pb.ReturnCode_FAILED,
+				Vms:           result.GetVms(),
 			}, err
 		}
 		log.Println("Workflow result:", result.ReturnMessage)
-		return &pb.ReturnMessage{
+		return &pb.ReturnComputeMessage{
 			ReturnMessage: result.GetReturnMessage(),
 			ReturnCode:    result.GetReturnCode(),
+			Vms:           result.GetVms(),
 		}, err
 
 	case pb.OperationType_UPDATE:
@@ -172,7 +174,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			RetryPolicy: retrypolicy,
 		}
 		log.Println("Update Unimplemented")
-		return &pb.ReturnMessage{
+		return &pb.ReturnComputeMessage{
 			ReturnMessage: "Update Unimplemented",
 			ReturnCode:    pb.ReturnCode_FAILED,
 		}, errors.New("update unimplemented")
@@ -184,14 +186,14 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			RetryPolicy: retrypolicy,
 		}
 		log.Println("Delete Unimplemented")
-		return &pb.ReturnMessage{
+		return &pb.ReturnComputeMessage{
 			ReturnMessage: "Delete Unimplemented",
 			ReturnCode:    pb.ReturnCode_FAILED,
 		}, errors.New("delete unimplemented")
 
 	default:
 		log.Println("Unknown Operation")
-		return &pb.ReturnMessage{
+		return &pb.ReturnComputeMessage{
 			ReturnMessage: "Unknown Operation",
 			ReturnCode:    pb.ReturnCode_FAILED,
 		}, errors.New("unknown operation")

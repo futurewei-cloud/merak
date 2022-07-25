@@ -13,24 +13,25 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func VmCreate(ctx context.Context) (*pb.ReturnMessage, error) {
+func VmCreate(ctx context.Context) (*pb.ReturnComputeMessage, error) {
 	logger := activity.GetLogger(ctx)
 	//logger = log.With(logger)
 	ids := common.RedisClient.SMembers(ctx, constants.COMPUTE_REDIS_NODE_IP_SET)
 	if ids.Err() != nil {
 		logger.Error("Unable get node IDs from redis", ids.Err())
 
-		return &pb.ReturnMessage{
+		return &pb.ReturnComputeMessage{
 			ReturnCode:    pb.ReturnCode_FAILED,
 			ReturnMessage: "Unable get node IDs from redis",
 		}, ids.Err()
 	}
+	vms := []*pb.InternalVMInfo{}
 	logger.Info("Success in getting Node IDs! " + ids.String())
 	for _, podID := range ids.Val() {
 		vmIDsList := common.RedisClient.LRange(ctx, podID, 0, -1)
 		if vmIDsList.Err() != nil {
 			logger.Error("Unable get node vmIDsList from redis", vmIDsList.Err())
-			return &pb.ReturnMessage{
+			return &pb.ReturnComputeMessage{
 				ReturnCode:    pb.ReturnCode_FAILED,
 				ReturnMessage: "Unable get node vmIDsList from redis",
 			}, vmIDsList.Err()
@@ -54,7 +55,7 @@ func VmCreate(ctx context.Context) (*pb.ReturnMessage, error) {
 			vm := common.RedisClient.HGetAll(ctx, vmID)
 			if vm.Err() != nil {
 				logger.Error("Unable get node VM from redis for vmID "+vmID, vm.Err())
-				return &pb.ReturnMessage{
+				return &pb.ReturnComputeMessage{
 					ReturnCode:    pb.ReturnCode_FAILED,
 					ReturnMessage: "Unable get node VM from redis for vmID " + vmID,
 				}, vm.Err()
@@ -72,21 +73,21 @@ func VmCreate(ctx context.Context) (*pb.ReturnMessage, error) {
 				Cidr:          common.RedisClient.HGet(ctx, vmID, "cidr").Val(),
 				Hostname:      common.RedisClient.HGet(ctx, vmID, "hostname").Val(),
 			}
-			resp, err := client.PortHandler(ctx, &port)
-			if err != nil {
-				logger.Error("Unable create vm ID " + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage() + "\n")
-				return &pb.ReturnMessage{
-					ReturnCode:    pb.ReturnCode_FAILED,
-					ReturnMessage: "Unable to create VM at" + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage(),
-				}, err
-			}
-			logger.Info("Response from agent at address: " + resp.GetReturnMessage())
-			defer conn.Close()
+			go func(vmID string) {
+				resp, err := client.PortHandler(ctx, &port)
+				if err != nil {
+					logger.Error("Unable create vm ID " + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage() + "\n")
+				}
+				vms = append(vms, resp.GetVms()[0])
+				logger.Info("Response from agent at address: " + resp.GetReturnMessage())
+				defer conn.Close()
+			}(vmID)
 		}
 	}
 
-	return &pb.ReturnMessage{
+	return &pb.ReturnComputeMessage{
 		ReturnCode:    pb.ReturnCode_OK,
 		ReturnMessage: "Success!",
+		Vms:           vms,
 	}, nil
 }

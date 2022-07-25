@@ -19,7 +19,7 @@ import (
 	"strconv"
 	"time"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/logger"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"

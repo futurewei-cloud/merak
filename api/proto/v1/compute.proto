@@ -16,8 +16,8 @@ option go_package = "merak/";
 import "common.proto";
 
 service MerakComputeService {
-    rpc ComputeHandler (InternalComputeConfigInfo) returns (ReturnMessage) {}
-    rpc TestHandler (InternalComputeConfigInfo) returns (ReturnMessage) {}
+    rpc ComputeHandler (InternalComputeConfigInfo) returns (ReturnComputeMessage) {}
+    rpc TestHandler (InternalComputeConfigInfo) returns (ReturnComputeMessage) {}
 }
 
 enum VMDeployType {
