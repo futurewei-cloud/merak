@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/activity"
@@ -21,17 +23,18 @@ func VmCreate(ctx context.Context) (*pb.ReturnMessage, error) {
 		logger.Error("Unable get node IDs from redis", ids.Err())
 
 		return &pb.ReturnMessage{
-			ReturnCode:    pb.ReturnCode_FAILED,
+			ReturnCode:    common_pb.ReturnCode_FAILED,
 			ReturnMessage: "Unable get node IDs from redis",
 		}, ids.Err()
 	}
+	vms := []*pb.InternalVMInfo{}
 	logger.Info("Success in getting Node IDs! " + ids.String())
 	for _, podID := range ids.Val() {
 		vmIDsList := common.RedisClient.LRange(ctx, podID, 0, -1)
 		if vmIDsList.Err() != nil {
 			logger.Error("Unable get node vmIDsList from redis", vmIDsList.Err())
 			return &pb.ReturnMessage{
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				ReturnMessage: "Unable get node vmIDsList from redis",
 			}, vmIDsList.Err()
 		}
@@ -48,20 +51,20 @@ func VmCreate(ctx context.Context) (*pb.ReturnMessage, error) {
 			if err != nil {
 				logger.Info("Failed to dial gRPC server address: "+agent_address.String(), err)
 			}
-			client := pb.NewMerakAgentServiceClient(conn)
+			client := agent_pb.NewMerakAgentServiceClient(conn)
 
 			logger.Info("Looking up ID " + vmID)
 			vm := common.RedisClient.HGetAll(ctx, vmID)
 			if vm.Err() != nil {
 				logger.Error("Unable get node VM from redis for vmID "+vmID, vm.Err())
 				return &pb.ReturnMessage{
-					ReturnCode:    pb.ReturnCode_FAILED,
+					ReturnCode:    common_pb.ReturnCode_FAILED,
 					ReturnMessage: "Unable get node VM from redis for vmID " + vmID,
 				}, vm.Err()
 			}
 			logger.Info("Sending to agent " + vm.String())
-			port := pb.InternalPortConfig{
-				OperationType: pb.OperationType_CREATE,
+			port := agent_pb.InternalPortConfig{
+				OperationType: common_pb.OperationType_CREATE,
 				Name:          common.RedisClient.HGet(ctx, vmID, "name").Val(),
 				Vpcid:         common.RedisClient.HGet(ctx, vmID, "vpc").Val(),
 				Tenantid:      common.RedisClient.HGet(ctx, vmID, "tenantID").Val(),
@@ -72,21 +75,21 @@ func VmCreate(ctx context.Context) (*pb.ReturnMessage, error) {
 				Cidr:          common.RedisClient.HGet(ctx, vmID, "cidr").Val(),
 				Hostname:      common.RedisClient.HGet(ctx, vmID, "hostname").Val(),
 			}
-			resp, err := client.PortHandler(ctx, &port)
-			if err != nil {
-				logger.Error("Unable create vm ID " + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage() + "\n")
-				return &pb.ReturnMessage{
-					ReturnCode:    pb.ReturnCode_FAILED,
-					ReturnMessage: "Unable to create VM at" + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage(),
-				}, err
-			}
-			logger.Info("Response from agent at address: " + resp.GetReturnMessage())
-			defer conn.Close()
+			go func() {
+				resp, err := client.PortHandler(ctx, &port)
+				if err != nil {
+					logger.Error("Unable create vm ID " + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage() + "\n")
+				}
+				vms = append(vms, resp.GetReturnVms()[0])
+				logger.Info("Response from agent at address: " + resp.GetReturnMessage())
+				defer conn.Close()
+			}()
 		}
 	}
 
 	return &pb.ReturnMessage{
-		ReturnCode:    pb.ReturnCode_OK,
+		ReturnCode:    common_pb.ReturnCode_OK,
 		ReturnMessage: "Success!",
+		ReturnVms:     vms,
 	}, nil
 }

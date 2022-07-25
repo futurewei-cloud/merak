@@ -4,7 +4,35 @@ modules := services
 all:: services proto
 
 proto:
-	protoc --go_out=api/proto/v1/ --go-grpc_out=api/proto/v1/ -I api/proto/v1/ api/proto/v1/*.proto
+	protoc --go_out=api/proto/v1/compute \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=api/proto/v1/compute \
+	--go-grpc_opt=paths=source_relative \
+	-I api/proto/v1/ api/proto/v1/compute.proto
+
+	protoc --go_out=api/proto/v1/common \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=api/proto/v1/common \
+	--go-grpc_opt=paths=source_relative \
+	-I api/proto/v1/ api/proto/v1/common.proto
+
+	protoc --go_out=api/proto/v1/network \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=api/proto/v1/network \
+	--go-grpc_opt=paths=source_relative \
+	-I api/proto/v1/ api/proto/v1/network.proto
+
+	protoc --go_out=api/proto/v1/topology \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=api/proto/v1/topology \
+	--go-grpc_opt=paths=source_relative \
+	-I api/proto/v1/ api/proto/v1/topology.proto
+
+	protoc --go_out=api/proto/v1/agent \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=api/proto/v1/agent \
+	--go-grpc_opt=paths=source_relative \
+	-I api/proto/v1/ api/proto/v1/agent.proto
 
 deploy-dev:
 	kubectl apply -f deployments/kubernetes/compute.dev.yaml
@@ -40,7 +68,11 @@ test:
 	go test -v services/merak-compute/tests/compute_test.go
 
 clean:
-	rm api/proto/v1/merak/*.pb.go
-	rm services/merak-compute/build/*
-	rm services/merak-agent/build/*
-	rm services/scenario-manager/build/*
+	rm -rf api/proto/v1/*.pb.go
+	rm -rf api/proto/v1/common/*.pb.go
+	rm -rf api/proto/v1/agent/*.pb.go
+	rm -rf api/proto/v1/compute/*.pb.go
+	rm -rf services/merak-compute/build/*
+	rm -rf services/merak-agent/build/*
+	rm -rf services/scenario-manager/build/*
+

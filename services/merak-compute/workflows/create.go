@@ -1,7 +1,7 @@
 package create
 
 import (
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/temporal"

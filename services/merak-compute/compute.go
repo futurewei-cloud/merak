@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/handler"
 	"github.com/go-redis/redis/v9"

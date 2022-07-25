@@ -1,7 +1,7 @@
 syntax="proto3";
-package merak;
-option go_package = "merak/";
+package topology;
 import "common.proto";
+option go_package = "github.com/futurewei-cloud/merak/api/proto/v1/topology;topology";
 
 enum TopologyType {
     SINGLE = 0;
@@ -20,14 +20,14 @@ enum VNodeType {
 }
 
 message InternalVNicInfo {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     string id = 2;
     string name = 3;
     string ip = 4;
 }
 
 message InternalVNodeInfo {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     string id = 2;
     string name = 3;
     VNodeType type = 4;
@@ -35,7 +35,7 @@ message InternalVNodeInfo {
 }
 
 message InternalVLinkInfo {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     string id = 2;
     string name = 3;
     string src = 4;
@@ -43,7 +43,7 @@ message InternalVLinkInfo {
 }
 
 message InternalTopologyImage {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     string id = 2;
     string name = 3;
     VNodeType type = 4;
@@ -56,7 +56,7 @@ message InternalTopologyConfiguration {
     uint32 format_version = 1;
     uint32 revision_number = 2;
     string request_id = 3;
-    MessageType message_type = 4;
+    common.MessageType message_type = 4;
     string topology_id = 5;
     string name = 6;
     TopologyType topology_type = 7;
@@ -66,14 +66,14 @@ message InternalTopologyConfiguration {
     string data_plane_cidr = 11;
     uint32 number_of_gateways = 12;
     repeated string gateway_ips = 13;
-    repeated InternalTopologyImage images = 14; 
+    repeated InternalTopologyImage images = 14;
     repeated InternalVNodeInfo vnodes = 15;
     repeated InternalVLinkInfo vlinks = 16;
     InternalTopologyExtraInfo extra_info = 17;
 }
 
 message InternalTopologyInfo {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     InternalTopologyConfiguration config = 2;
 }
 
@@ -82,10 +82,10 @@ message InternalTopologyExtraInfo {
 }
 
 message ReturnTopologyMessage {
-    ReturnCode return_code = 1;
+    common.ReturnCode return_code = 1;
     string return_message = 2;
-    repeated InternalComputeInfo compute_nodes = 3;
-    repeated InternalHostInfo hosts = 4;
+    repeated common.InternalComputeInfo compute_nodes = 3;
+    repeated common.InternalHostInfo hosts = 4;
 }
 
 service MerakTopologyService {

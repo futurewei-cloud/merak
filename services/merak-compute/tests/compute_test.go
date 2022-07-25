@@ -7,7 +7,8 @@ import (
 	"net"
 	"testing"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	"github.com/futurewei-cloud/merak/services/merak-compute/handler"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -47,40 +48,42 @@ func TestGrpc(t *testing.T) {
 	fmt.Scanln(&ip)
 
 	pod0 := pb.InternalVMPod{
-		OperationType: pb.OperationType_CREATE,
+		OperationType: common_pb.OperationType_CREATE,
 		PodIp:         ip,
 		Subnets:       []string{"subnet0", "subnet1"},
 		NumOfVm:       10,
 	}
 
 	pod1 := pb.InternalVMPod{
-		OperationType: pb.OperationType_CREATE,
+		OperationType: common_pb.OperationType_CREATE,
 		PodIp:         ip,
 		Subnets:       []string{"subnet0", "subnet1"},
 		NumOfVm:       10,
 	}
 
-	subnets := pb.InternalSubnetInfo{
+	subnets := common_pb.InternalSubnetInfo{
 		SubnetId:   "1",
 		SubnetCidr: "10.0.0.0/16",
 		SubnetGw:   "10.0.0.1",
 		NumberVms:  10,
 	}
-	vpc := pb.InternalVpcInfo{
-		VpcId:   "1",
-		Subnets: []*pb.InternalSubnetInfo{&subnets},
+	vpc := common_pb.InternalVpcInfo{
+		VpcId:     "9192a4d4-ffff-4ece-b3f0-8d36e3d88001",
+		Subnets:   []*common_pb.InternalSubnetInfo{&subnets},
+		ProjectId: "123456789",
+		TenantId:  "123456789",
 	}
 	deploy := pb.InternalVMDeployInfo{
-		OperationType: pb.OperationType_CREATE,
+		OperationType: common_pb.OperationType_CREATE,
 		DeployType:    pb.VMDeployType_UNIFORM,
-		Vpcs:          []*pb.InternalVpcInfo{&vpc},
+		Vpcs:          []*common_pb.InternalVpcInfo{&vpc},
 		Secgroups:     []string{"test1", "test2"},
 		Scheduler:     pb.VMScheduleType_SEQUENTIAL,
 		DeployMethod:  []*pb.InternalVMPod{&pod0, &pod1},
 	}
 
-	service := pb.InternalServiceInfo{
-		OperationType: pb.OperationType_CREATE,
+	service := common_pb.InternalServiceInfo{
+		OperationType: common_pb.OperationType_CREATE,
 		Id:            "2",
 		Name:          "test",
 		Cmd:           "create",
@@ -91,8 +94,8 @@ func TestGrpc(t *testing.T) {
 		WhenToRun:     "now",
 		WhereToRun:    "here",
 	}
-	pod := pb.InternalComputeInfo{
-		OperationType: pb.OperationType_CREATE,
+	pod := common_pb.InternalComputeInfo{
+		OperationType: common_pb.OperationType_CREATE,
 		Id:            "1",
 		Name:          "test",
 		Ip:            ip,
@@ -104,15 +107,15 @@ func TestGrpc(t *testing.T) {
 		RevisionNumber:  1,
 		RequestId:       "test",
 		ComputeConfigId: "test",
-		MessageType:     pb.MessageType_FULL,
-		Pods:            []*pb.InternalComputeInfo{&pod},
+		MessageType:     common_pb.MessageType_FULL,
+		Pods:            []*common_pb.InternalComputeInfo{&pod},
 		VmDeploy:        &deploy,
-		Services:        []*pb.InternalServiceInfo{&service},
+		Services:        []*common_pb.InternalServiceInfo{&service},
 		ExtraInfo:       &pb.InternalComputeExtraInfo{Info: "test"},
 	}
 
 	compute_info := pb.InternalComputeConfigInfo{
-		OperationType: pb.OperationType_CREATE,
+		OperationType: common_pb.OperationType_CREATE,
 		Config:        &computeConfig,
 	}
 

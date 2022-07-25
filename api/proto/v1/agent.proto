@@ -1,14 +1,15 @@
 syntax="proto3";
-package merak;
-option go_package = "merak/";
+package agent;
+option go_package = "github.com/futurewei-cloud/merak/api/proto/v1/agent;agent";
 import "common.proto";
+import "compute.proto";
 
 service MerakAgentService {
-    rpc PortHandler (InternalPortConfig) returns (ReturnMessage) {}
+    rpc PortHandler (InternalPortConfig) returns (compute.ReturnMessage) {}
 }
 
 message InternalPortConfig {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     string id = 2;
     string name = 3;
     string vpcid = 4;

@@ -1,6 +1,6 @@
 syntax="proto3";
-package merak;
-option go_package = "merak/";
+package common;
+option go_package = "github.com/futurewei-cloud/merak/api/proto/v1/common;common";
 
 enum OperationType {
     INFO = 0;
