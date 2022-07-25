@@ -31,6 +31,8 @@ var (
 	ACA_IMAGE = "phudtran/merak-agent:dev"
 	OVS_IMAGE = "yanmo96/ovs_only:latest"
 	GW_IMAGE  = "yanmo96/aca_build_standard:v2"
+	RYU_IP    = "10.213.43.224"
+	RYU_PORT  = "6653"
 	Ctx       = context.Background()
 
 	namespace        = "default"
@@ -93,7 +95,7 @@ func NewTopologyClass(name string, links []map[string]interface{}) *unstructured
 			"apiVersion": "networkop.co.uk/v1beta1",
 			"metadata": map[string]interface{}{
 				"name":      name,
-				"namespace": "default",
+				"namespace": namespace,
 			},
 			"spec": map[string]interface{}{
 				"links": links,
@@ -137,13 +139,6 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 			return fmt.Errorf("failed to create runtime class %s", err)
 		}
 
-		/// Init Container
-		// init_container = client.V1Container(name=f"init-{self.name}")
-		//     init_container.image = "networkop/init-wait:latest"
-		//     init_container.image_pull_policy = "IfNotPresent"
-		//     init_container.args = [f"{len(self.interfaces)+1}", f"{self.sleep}"]
-		// var init_container corev1.Container
-
 		interface_num := len(node.Nics) + 1
 
 		init_container := corev1.Container{
@@ -175,6 +170,22 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 		capab.Add = append(capab.Add, "SYS_TIME")
 		sc.Capabilities = &capab
 
+		var tol []corev1.Toleration
+		var t1 corev1.Toleration
+		var t2 corev1.Toleration
+
+		var sec int64
+		t1.Key = "node.kubernetes.io/not-ready"
+		t2.Key = "node.kubernetes.io/unreachable"
+		t1.Effect = "NoExecute"
+		t2.Effect = "NoExecute"
+		sec = 6000
+		t1.TolerationSeconds = &sec
+		t2.TolerationSeconds = &sec
+
+		tol = append(tol, t1)
+		tol = append(tol, t2)
+
 		if strings.Contains(node.Name, "vhost") {
 			l["Type"] = "vhost"
 			newPod = &corev1.Pod{
@@ -193,12 +204,15 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 							SecurityContext: &sc,
 						},
 					},
+					// Affinity: ,
+					RestartPolicy:                 "OnFailure",
 					TerminationGracePeriodSeconds: &grace_period,
+					Tolerations:                   tol,
 				},
 			}
 		} else if strings.Contains(node.Name, "vswitch") || strings.Contains(node.Name, "core") {
 
-			ovs_set, err0 := ovs_config(topo, node.Name, "10.213.43.77", "6653")
+			ovs_set, err0 := ovs_config(topo, node.Name, RYU_IP, RYU_PORT)
 			if err0 != nil {
 				return fmt.Errorf("fails to get ovs switch controller info %s", err0)
 			}
@@ -218,12 +232,14 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 							Image:           OVS_IMAGE,
 							ImagePullPolicy: "IfNotPresent",
 							Args:            []string{"service rsyslog restart; /etc/init.d/openvswitch-switch restart; " + ovs_set + "sleep infinity"},
-							// add ovs setup commands
 							Command:         []string{"/bin/sh", "-c"},
 							SecurityContext: &sc,
 						},
 					},
+					RestartPolicy: "OnFailure",
+					// Affinity: ,
 					TerminationGracePeriodSeconds: &grace_period,
+					Tolerations:                   tol,
 				},
 			}
 		} else if strings.Contains(node.Name, "cgw") {
@@ -247,8 +263,10 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 							SecurityContext: &sc,
 						},
 					},
+					RestartPolicy:                 "OnFailure",
 					NodeName:                      k8snodes[0],
 					TerminationGracePeriodSeconds: &grace_period,
+					Tolerations:                   tol,
 				},
 			}
 			k8snodes = k8snodes[1:]
@@ -277,16 +295,6 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 }
 
 func ovs_config(topo database.TopologyData, node_name string, ryu_ip string, ryu_port string) (string, error) {
-
-	// cmd := &exec.Cmd{
-	// 	Path:   "",
-	// 	Args:   []string{"kubectl get service -o wide |grep ryu"},
-	// 	Stdout: os.Stdout1,
-	// 	Stderr: os.Stdout1,
-	// }
-	// cmd.Start()
-	// cmd.Wait()
-	// fmt.Printf(Stdout1)
 
 	nodes := topo.Vnodes
 	ovs_set := "ovs-vsctl add-br br0; ovs-vsctl set-controller br0 tcp:" + ryu_ip + ":" + ryu_port + "; "
@@ -361,11 +369,11 @@ func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData) err
 		return fmt.Errorf("failed to create dynamic client %s", err)
 	}
 
-	// err_del_db := database.DeleteAllValuesWithKeyPrefix(topo.Topology_id)
+	err_del_db := database.DeleteAllValuesWithKeyPrefix(topo.Topology_id)
 
-	// if err_del_db != nil {
-	// 	return fmt.Errorf("failed to delete topology info %s", err_del_db)
-	// }
+	if err_del_db != nil {
+		return fmt.Errorf("failed to delete topology info %s", err_del_db)
+	}
 
 	for _, node := range topo.Vnodes {
 

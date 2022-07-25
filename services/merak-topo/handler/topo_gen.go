@@ -74,28 +74,22 @@ func ip_gen_sub(upper int, k1 int, data_plane_cidr string) []string {
 	return ips_gen
 }
 
-func Ips_gen(topo_id string, ip_num int, k int, count int, data_plane_cidr string) []string {
+func Ips_gen(topo_id string, ip_num int, data_plane_cidr string) []string {
+	var count int = 250
 	var ips = []string{}
-	left := ip_num - count
-	//k-- subnet starting number
 
 	t := int(ip_num / count)
 
 	if t == 0 {
-		ips = ip_gen_sub(ip_num, k, data_plane_cidr)
-	} else if t == 1 {
-		ips = ip_gen_sub(count, k, data_plane_cidr)
-		if left > 0 {
-			ips = append(ips, ip_gen_sub(left, k+1, data_plane_cidr)...)
-		}
+		ips = ip_gen_sub(ip_num, 0, data_plane_cidr)
 	} else {
-		ips = ip_gen_sub(count, k, data_plane_cidr)
-		for iter := 1; iter <= t; iter++ {
-			ips = append(ips, ip_gen_sub(count, k+iter, data_plane_cidr)...)
+		ips = ip_gen_sub(count, 0, data_plane_cidr)
+		for iter := 1; iter < t; iter++ {
+			ips = append(ips, ip_gen_sub(count, iter, data_plane_cidr)...)
 		}
-		left = ip_num - t*count
+		left := ip_num - t*count
 		if left > 0 {
-			ips = append(ips, ip_gen_sub(left, k+t+1, data_plane_cidr)...)
+			ips = append(ips, ip_gen_sub(left, t, data_plane_cidr)...)
 		}
 	}
 
