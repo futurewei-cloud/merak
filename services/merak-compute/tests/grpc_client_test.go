@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

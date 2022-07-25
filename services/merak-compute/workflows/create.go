@@ -1,7 +1,7 @@
 package create
 
 import (
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/temporal"
@@ -31,11 +31,13 @@ func Create(ctx workflow.Context) (pb.ReturnMessage, error) {
 		return pb.ReturnMessage{
 			ReturnCode:    result.GetReturnCode(),
 			ReturnMessage: result.GetReturnMessage(),
+			ReturnVms:     result.GetReturnVms(),
 		}, err
 	}
 	logger.Info("VmCreate workflow completed.%s\n")
 	return pb.ReturnMessage{
 		ReturnCode:    result.GetReturnCode(),
 		ReturnMessage: result.GetReturnMessage(),
+		ReturnVms:     result.GetReturnVms(),
 	}, nil
 }

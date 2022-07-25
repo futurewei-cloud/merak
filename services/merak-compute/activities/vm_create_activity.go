@@ -75,7 +75,7 @@ func VmCreate(ctx context.Context) (*pb.ReturnMessage, error) {
 				Cidr:          common.RedisClient.HGet(ctx, vmID, "cidr").Val(),
 				Hostname:      common.RedisClient.HGet(ctx, vmID, "hostname").Val(),
 			}
-			go func() {
+			go func(vmID string) {
 				resp, err := client.PortHandler(ctx, &port)
 				if err != nil {
 					logger.Error("Unable create vm ID " + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage() + "\n")
@@ -83,7 +83,7 @@ func VmCreate(ctx context.Context) (*pb.ReturnMessage, error) {
 				vms = append(vms, resp.GetReturnVms()[0])
 				logger.Info("Response from agent at address: " + resp.GetReturnMessage())
 				defer conn.Close()
-			}()
+			}(vmID)
 		}
 	}
 

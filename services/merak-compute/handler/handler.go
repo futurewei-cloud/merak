@@ -158,12 +158,14 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			return &pb.ReturnMessage{
 				ReturnMessage: result.GetReturnMessage(),
 				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnVms:     result.GetReturnVms(),
 			}, err
 		}
 		log.Println("Workflow result:", result.ReturnMessage)
 		return &pb.ReturnMessage{
 			ReturnMessage: result.GetReturnMessage(),
 			ReturnCode:    result.GetReturnCode(),
+			ReturnVms:     result.GetReturnVms(),
 		}, err
 
 	case common_pb.OperationType_UPDATE:
