@@ -10,7 +10,7 @@ import (
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
-	create "github.com/futurewei-cloud/merak/services/merak-compute/workflows"
+	create "github.com/futurewei-cloud/merak/services/merak-compute/workflows/create"
 	"github.com/go-redis/redis/v9"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
@@ -29,7 +29,7 @@ var TemporalClient client.Client
 var RedisClient redis.Client
 
 type Server struct {
-	pb.UnimplementedMerakComputeServiceServer
+	compute_pb.UnimplementedMerakComputeServiceServer
 }
 
 func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
@@ -52,11 +52,33 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			WorkflowRunTimeout:       common.TEMPORAL_WF_RUN_TIMEOUT,
 			RetryPolicy:              retrypolicy,
 		}
-		log.Println("Info Unimplemented")
-		return &pb.ReturnComputeMessage{
-			ReturnMessage: "Info Unimplemented",
-			ReturnCode:    pb.ReturnCode_FAILED,
-		}, errors.New("info unimplemented")
+		// Start VM Info Workflow
+		var result compute_pb.ReturnMessage
+		log.Println("Executing VM Info Workflow!")
+		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create)
+		if err != nil {
+			return &compute_pb.ReturnMessage{
+				ReturnMessage: "Unable to execute workflow",
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+			}, err
+		}
+		log.Println("Started workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
+
+		// Sync get results of workflow
+		err = we.Get(context.Background(), &result)
+		if err != nil {
+			return &compute_pb.ReturnMessage{
+				ReturnMessage: result.GetReturnMessage(),
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnVms:     result.GetReturnVms(),
+			}, err
+		}
+		log.Println("Workflow result:", result.ReturnMessage)
+		return &compute_pb.ReturnMessage{
+			ReturnMessage: result.GetReturnMessage(),
+			ReturnCode:    result.GetReturnCode(),
+			ReturnVms:     result.GetReturnVms(),
+		}, err
 
 	case pb.OperationType_CREATE:
 		workflowOptions = client.StartWorkflowOptions{
@@ -105,11 +127,23 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			for i, vpc := range in.Config.VmDeploy.Vpcs {
 				for j, subnet := range vpc.Subnets {
 					for k := 0; j < int(subnet.NumberVms); j++ {
+						vmID := pod.Id + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
+						suffix := strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
+						if err := RedisClient.SAdd(
+							ctx,
+							constants.COMPUTE_REDIS_VM_SET,
+							vmID,
+						).Err(); err != nil {
+							return &compute_pb.ReturnMessage{
+								ReturnMessage: "Unable to VM to DB Hash Set",
+								ReturnCode:    common_pb.ReturnCode_FAILED,
+							}, err
+						}
 						if err := RedisClient.HSet(
 							ctx,
-							pod.Id+strconv.Itoa(i)+strconv.Itoa(j)+strconv.Itoa(k),
-							"id", pod.Id+strconv.Itoa(i)+strconv.Itoa(j)+strconv.Itoa(k),
-							"name", "v"+strconv.Itoa(i)+strconv.Itoa(j)+strconv.Itoa(k),
+							vmID,
+							"id", vmID,
+							"name", "v"+suffix,
 							"vpc", vpc.VpcId,
 							"tenantID", vpc.TenantId,
 							"projectID", vpc.ProjectId,
@@ -126,14 +160,14 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 								ReturnCode:    pb.ReturnCode_FAILED,
 							}, err
 						}
-						log.Println("Added VM " + pod.Id + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k) + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k) + " of " + strconv.Itoa(int(subnet.NumberVms)))
-						if err := RedisClient.LPush(ctx, pod.Id, pod.Id+strconv.Itoa(i)+strconv.Itoa(j)+strconv.Itoa(k)).Err(); err != nil {
+						log.Println("Added VM " + vmID + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k) + " of " + strconv.Itoa(int(subnet.NumberVms)))
+						if err := RedisClient.LPush(ctx, pod.Id, vmID).Err(); err != nil {
 							return &pb.ReturnComputeMessage{
 								ReturnMessage: "Unable add VM to pod list",
 								ReturnCode:    pb.ReturnCode_FAILED,
 							}, err
 						}
-						log.Println("Added pod -> vm mapping " + pod.Id + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k))
+						log.Println("Added pod -> vm mapping " + vmID)
 					}
 				}
 			}

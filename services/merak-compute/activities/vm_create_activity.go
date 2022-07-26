@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	compute_pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
@@ -25,7 +26,7 @@ func VmCreate(ctx context.Context) (*pb.ReturnComputeMessage, error) {
 			ReturnMessage: "Unable get node IDs from redis",
 		}, ids.Err()
 	}
-	vms := []*pb.InternalVMInfo{}
+	vms := []*compute_pb.InternalVMInfo{}
 	logger.Info("Success in getting Node IDs! " + ids.String())
 	for _, podID := range ids.Val() {
 		vmIDsList := common.RedisClient.LRange(ctx, podID, 0, -1)
@@ -78,7 +79,18 @@ func VmCreate(ctx context.Context) (*pb.ReturnComputeMessage, error) {
 				if err != nil {
 					logger.Error("Unable create vm ID " + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage() + "\n")
 				}
-				vms = append(vms, resp.GetVms()[0])
+				vm := resp.GetReturnVms()
+				if len(vm) > 0 {
+					logger.Info("Appending VM ", vm)
+					vms = append(vms, vm[0])
+					common.RedisClient.HSet(ctx,
+						vmID,
+						"ip",
+						vm[0].Ip,
+						"status",
+						vm[0].Status,
+					)
+				}
 				logger.Info("Response from agent at address: " + resp.GetReturnMessage())
 				defer conn.Close()
 			}(vmID)
