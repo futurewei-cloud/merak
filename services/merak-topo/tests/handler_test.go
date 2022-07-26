@@ -16,11 +16,11 @@ var (
 		ReturnCode:    pb.ReturnCode_FAILED,
 		ReturnMessage: "Unintialized",
 	}
-	aca_num         = 20
-	rack_num        = 2
-	aca_per_rack    = 10
+	aca_num         = 48
+	rack_num        = 4
+	aca_per_rack    = 12
 	data_plane_cidr = "10.200.0.0/16"
-	topo_id         = "topo1"
+	topo_id         = "1topo"
 	cgw_num         = 6
 )
 
@@ -49,17 +49,14 @@ func TestTopologyCreate(t *testing.T) {
 
 	log.Printf("///// CREATE Return Message //// %v", &returnMessage)
 
-	err3 := handler.Update_computenode_info(k8client, topo_id, (aca_num + rack_num))
-	if err3 != nil {
-		log.Printf("fail to update compute node info %s", err3)
-	}
+	// err3 := handler.UpdateComputenodeInfo(k8client, topo_id)
+	// if err3 != nil {
+	// 	log.Printf("fail to update compute node info %s", err3)
+	// }
 
 }
 
 func TestTopologyInfo(t *testing.T) {
-
-	// topo_id := "1234560002"
-	// aca_num := 10
 
 	k8client, err := utils.K8sClient()
 	if err != nil {
@@ -70,6 +67,11 @@ func TestTopologyInfo(t *testing.T) {
 	if err1 != nil {
 		fmt.Printf("connect to DB error %s", err1)
 	}
+
+	// err2 := handler.UpdateComputenodeInfo(k8client, topo_id, &returnMessage)
+	// if err2 != nil {
+	// 	log.Printf("fail to update compute node info %s", err2)
+	// }
 
 	err3 := handler.Info(k8client, topo_id, &returnMessage)
 
@@ -90,12 +92,12 @@ func TestTopologyDelete(t *testing.T) {
 
 	k8client, err := utils.K8sClient()
 	if err != nil {
-		fmt.Printf("create k8s client error %s", err)
+		log.Printf("create k8s client error %s", err)
 	}
 
 	err1 := database.ConnectDatabase()
 	if err1 != nil {
-		fmt.Printf("connect to DB error %s", err1)
+		log.Printf("connect to DB error %s", err1)
 	}
 
 	err4 := handler.Delete(k8client, topo_id)
@@ -107,7 +109,7 @@ func TestTopologyDelete(t *testing.T) {
 		returnMessage.ReturnMessage = "Topology Delete Done."
 	}
 
-	fmt.Printf("///// DELETE Return Message //// %v", &returnMessage)
+	log.Printf("///// DELETE Return Message //// %v", &returnMessage)
 
 }
 

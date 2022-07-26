@@ -41,15 +41,12 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 	case pb.OperationType_INFO:
 
-		// query  based on topology_id
-		// aca_num := int(in.Config.GetNumberOfVhosts())
-		// cgw_num := int(in.Config.GetNumberOfGateways())
+		// topo_id := in.Config.GetTopologyId()
 
-		topo_id := in.Config.GetTopologyId()
-		aca_num := in.Config.GetNumberOfVhosts()
-		cgw_num := in.Config.GetNumberOfGateways()
-
-		handler.Update_computenode_info(k8client, topo_id, int(aca_num+cgw_num))
+		// err := handler.UpdateComputenodeInfo(k8client, topo_id, &returnMessage)
+		// if err != nil {
+		// 	log.Printf("fail to update compute node info %s", err)
+		// }
 
 		if in.Config.GetTopologyId() != "" {
 			err_info := handler.Info(k8client, in.Config.GetTopologyId(), &returnMessage)

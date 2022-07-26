@@ -353,8 +353,8 @@ func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod, cmd []string) (s
 		return " ", fmt.Errorf("fail: stream %s", err3.Error())
 	}
 
-	log.Printf("Output from pod: %v", stdout.String())
-	log.Printf("Error from pod: %v", stderr.String())
+	// log.Printf("Output from pod: %v", stdout.String())
+	// log.Printf("Error from pod: %v", stderr.String())
 
 	return stdout.String(), nil
 
