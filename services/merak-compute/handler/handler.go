@@ -11,6 +11,7 @@ import (
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	create "github.com/futurewei-cloud/merak/services/merak-compute/workflows/create"
+	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/info"
 	"github.com/go-redis/redis/v9"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
@@ -55,7 +56,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		// Start VM Info Workflow
 		var result compute_pb.ReturnMessage
 		log.Println("Executing VM Info Workflow!")
-		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create)
+		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, info.Info)
 		if err != nil {
 			return &compute_pb.ReturnMessage{
 				ReturnMessage: "Unable to execute workflow",
