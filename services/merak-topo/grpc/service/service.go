@@ -8,6 +8,7 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
+	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 	"github.com/futurewei-cloud/merak/services/merak-topo/handler"
 	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
 )
@@ -30,10 +31,10 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 		return nil, fmt.Errorf("create k8s client error %s", err.Error())
 	}
 
-	// err1 := database.ConnectDatabase()
-	// if err1 != nil {
-	// 	fmt.Printf("connect to DB error %s", err1)
-	// }
+	err1 := database.ConnectDatabase()
+	if err1 != nil {
+		fmt.Printf("connect to DB error %s", err1)
+	}
 
 	// Operation&Return
 	switch op := in.OperationType; op {
