@@ -72,7 +72,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*c
 		SubnetId:        in.Subnetid,
 		SecurityGroupId: in.Sg,
 		DefaultGateway:  in.Gw,
-		Status:          common_pb.Status_DEPLOYING,
+		Status:          common_pb.Status_ERROR,
 	}
 
 	// Parse input

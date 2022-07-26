@@ -1,14 +1,14 @@
 package create
 
 import (
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
+	compute_pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
-func Create(ctx workflow.Context) (pb.ReturnMessage, error) {
+func Create(ctx workflow.Context) (compute_pb.ReturnMessage, error) {
 	retrypolicy := &temporal.RetryPolicy{
 		InitialInterval:    common.TEMPORAL_ACTIVITY_RETRY_INTERVAL,
 		BackoffCoefficient: common.TEMPORAL_ACTIVITY_BACKOFF,
@@ -23,19 +23,19 @@ func Create(ctx workflow.Context) (pb.ReturnMessage, error) {
 	ctx = workflow.WithActivityOptions(ctx, ao)
 	logger := workflow.GetLogger(ctx)
 	//logger = log.With(logger)
-	var result pb.ReturnMessage
+	var result compute_pb.ReturnMessage
 	logger.Info("VmCreate starting workflow.")
 	err := workflow.ExecuteActivity(ctx, activities.VmCreate).Get(ctx, &result)
 	if err != nil {
 		logger.Error("VmCreate failed! %s\n", err)
-		return pb.ReturnMessage{
+		return compute_pb.ReturnMessage{
 			ReturnCode:    result.GetReturnCode(),
 			ReturnMessage: result.GetReturnMessage(),
 			ReturnVms:     result.GetReturnVms(),
 		}, err
 	}
 	logger.Info("VmCreate workflow completed.%s\n")
-	return pb.ReturnMessage{
+	return compute_pb.ReturnMessage{
 		ReturnCode:    result.GetReturnCode(),
 		ReturnMessage: result.GetReturnMessage(),
 		ReturnVms:     result.GetReturnVms(),
