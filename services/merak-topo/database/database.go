@@ -5,7 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+
 	"strings"
+
+	"github.com/golang/protobuf/proto"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	"github.com/go-redis/redis/v8"
@@ -44,6 +48,38 @@ func SetValue(key string, val interface{}) error {
 		return fmt.Errorf("fail to save value in DB %s", err)
 	}
 
+	return nil
+}
+
+func SetPbReturnValue(key string, val *pb.ReturnTopologyMessage) error {
+	j, err := proto.Marshal(val)
+	if err != nil {
+		return fmt.Errorf("fail to save value in DB %s", err)
+	}
+	err = Rdb.Set(Ctx, key, j, 0).Err()
+	if err != nil {
+		return fmt.Errorf("fail to save value in DB %s", err)
+	}
+
+	return nil
+}
+
+func GetPbReturnValue(id string, prefix string, entity *pb.ReturnTopologyMessage) error {
+
+	if (id + prefix) == "" {
+		log.Println("get key is empty")
+		return fmt.Errorf("get key is empty")
+	}
+	value, err := Rdb.Get(Ctx, id+prefix).Result()
+	if err != nil {
+		log.Printf("fail to get value for key in DB %s", err.Error())
+		return fmt.Errorf("fail to get value for key in DB %s", err.Error())
+	}
+	err = proto.Unmarshal([]byte(value), entity)
+	if err != nil {
+		log.Printf("fail to unmarshal in DB %s", err.Error())
+		return fmt.Errorf("fail to unmarshal in DB %s", err.Error())
+	}
 	return nil
 }
 

@@ -130,10 +130,6 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 		returnMessage.Hosts = append(returnMessage.Hosts, &hnode)
 
 	}
-	err_db := database.SetValue(topo_id+":k8sclusterhostnodes", returnMessage.Hosts)
-	if err_db != nil {
-		return fmt.Errorf("fail to save k8s cluster host node to DB %s", err_db)
-	}
 
 	fmt.Println("========= Return deployed compute nodes information =====")
 
@@ -159,9 +155,10 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 	}
 
-	err_db2 := database.SetValue(topo_id+":initialcomputenode", returnMessage.ComputeNodes)
+	err_db2 := database.SetPbReturnValue(topo_id+":initialreturn", returnMessage)
 	if err_db2 != nil {
-		return fmt.Errorf("fail to save k8s cluster host node to DB %s", err_db2)
+		log.Printf("fail to save return msg to DB %s", err_db2.Error())
+		return fmt.Errorf("fail to save return msg to DB %s", err_db2)
 	}
 
 	return nil
@@ -175,6 +172,41 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 	}
 
 	log.Printf("=========Get topo based on topo_id ===========")
+
+	k8s_nodes, err1 := client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+
+	if err1 != nil {
+		return fmt.Errorf("failed to list k8s host nodes info %s", err1)
+	}
+
+	for _, s := range k8s_nodes.Items {
+		var hnode pb.InternalHostInfo
+
+		node_yaml, err2 := client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})
+		if err2 != nil {
+			return fmt.Errorf("failed to get k8s host node info %s", err2)
+		}
+
+		for _, c := range s.Status.Conditions {
+			if c.Type == corev1.NodeReady {
+				hnode.Status = pb.Status_READY
+				log.Printf(s.Name + " status " + string(c.Type))
+				break
+			}
+
+		}
+
+		for _, res := range node_yaml.Status.Addresses {
+			if res.Type == "InternalIP" {
+				hnode.Ip = res.Address
+				log.Printf(s.Name + " InternalIP " + string(hnode.Ip))
+				break
+			}
+		}
+
+		returnMessage.Hosts = append(returnMessage.Hosts, &hnode)
+
+	}
 
 	err3 := QueryMac(client, topo_id)
 
@@ -232,8 +264,9 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 		}
 	}
 
-	err_db2 := database.SetValue(topo_id+":updatecomputenode", returnMessage.ComputeNodes)
+	err_db2 := database.SetPbReturnValue(topo_id+":updateReturnmsg", returnMessage)
 	if err_db2 != nil {
+		log.Printf("fail to save k8s cluster host node to DB %s", err_db2)
 		return fmt.Errorf("fail to save k8s cluster host node to DB %s", err_db2)
 	}
 	return nil
@@ -276,26 +309,17 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 
 func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.ReturnTopologyMessage) error {
 
-	hosts, err_check := database.FindHostNode(topo_id+":k8sclusterhostnodes", "")
-	if err_check != nil {
-		return fmt.Errorf("fail to find return message host nodes info %s", err_check)
-	}
-
-	returnMessage.Hosts = hosts
-
-	log.Printf("=========INFO get host informations ===========")
-
 	err := UpdateComputenodeInfo(k8client, topo_id, returnMessage)
 	if err != nil {
 		return fmt.Errorf("fail to update compute nodes info %s", err)
 	}
 
-	// compute_nodes, err_check2 := database.FindComputenode(topo_id+":updatecomputnode", "")
-	// if err_check2 != nil {
-	// 	return fmt.Errorf("fail to find return message compute nodes info %s", err_check2)
-	// }
+	log.Printf("after updating compute node info: %s", returnMessage)
 
-	// returnMessage.ComputeNodes = compute_nodes
+	err_check2 := database.GetPbReturnValue(topo_id+":updateReturnmsg", "", returnMessage)
+	if err_check2 != nil {
+		return fmt.Errorf("fail to find return message compute nodes info %s", err_check2)
+	}
 
 	return nil
 }
