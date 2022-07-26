@@ -75,7 +75,7 @@ func ScenarioActoins(c *fiber.Ctx) error {
 			} else {
 				sa.Status = entities.STATUS_DONE
 				scenarioStatus = entities.STATUS_DONE
-				logger.Log.Infof("'%s' topology done.", sa.Action)
+				logger.Log.Infof("'%s' network done.", sa.Action)
 				logger.Log.Infof("returnNetwork for action %s : %s", sa.Action, returnNetwork)
 			}
 		}
@@ -89,8 +89,8 @@ func ScenarioActoins(c *fiber.Ctx) error {
 			} else {
 				sa.Status = entities.STATUS_DONE
 				scenarioStatus = entities.STATUS_DONE
-				logger.Log.Infof("'%s' topology done.", sa.Action)
-				logger.Log.Infof("returnNetwork for action %s : %s", sa.Action, returnCompute)
+				logger.Log.Infof("'%s' compute done.", sa.Action)
+				logger.Log.Infof("returnCompute for action %s : %s", sa.Action, returnCompute)
 			}
 		}
 	}

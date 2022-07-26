@@ -19,12 +19,12 @@ func TopologyHandler(s *entities.Scenario, action entities.EventName) (*pb.Retur
 	}
 
 	if action == entities.EVENT_DEPLOY && topology.Status != entities.STATUS_NONE {
-		return nil, fmt.Errorf("topology '%s' is '%s' now)", topology.Id, topology.Status)
+		return nil, fmt.Errorf("topology '%s' is '%s' now", topology.Id, topology.Status)
 	}
 
 	if action == entities.EVENT_DELETE {
 		if topology.Status != entities.STATUS_FAILED && topology.Status != entities.STATUS_READY {
-			return nil, fmt.Errorf("topology '%s' is '%s' now)", topology.Id, topology.Status)
+			return nil, fmt.Errorf("topology '%s' is '%s' now", topology.Id, topology.Status)
 		}
 	}
 
@@ -67,7 +67,7 @@ func TopologyHandler(s *entities.Scenario, action entities.EventName) (*pb.Retur
 			database.Set(utils.KEY_PREFIX_TOPOLOGY+topology.Id, &topology)
 		}
 		if responseTopo != nil {
-			return nil, fmt.Errorf("deploy topology failed, Error = '%s', return = '%s'", err.Error(), responseTopo.ReturnMessage)
+			return nil, fmt.Errorf("deploy topology failed, return = '%s'", responseTopo.ReturnMessage)
 		}
 		return nil, fmt.Errorf("deploy topology failed, Error = '%s'", err.Error())
 	}
@@ -105,12 +105,12 @@ func NetworkHandler(s *entities.Scenario, action entities.EventName) (*pb.Return
 	}
 
 	if action == entities.EVENT_DEPLOY && network.Status != entities.STATUS_NONE {
-		return nil, fmt.Errorf("network '%s' is '%s' now)", network.Id, network.Status)
+		return nil, fmt.Errorf("network '%s' is '%s' now", network.Id, network.Status)
 	}
 
 	if action == entities.EVENT_DELETE {
 		if network.Status != entities.STATUS_FAILED && network.Status != entities.STATUS_READY {
-			return nil, fmt.Errorf("network '%s' is '%s' now)", network.Id, network.Status)
+			return nil, fmt.Errorf("network '%s' is '%s' now", network.Id, network.Status)
 		}
 	}
 
@@ -164,7 +164,7 @@ func NetworkHandler(s *entities.Scenario, action entities.EventName) (*pb.Return
 			database.Set(utils.KEY_PREFIX_NETWORK+network.Id, &network)
 		}
 		if responseNetwork != nil {
-			return nil, fmt.Errorf("deploy network failed, Error = '%s', return = '%s'", err.Error(), responseNetwork.ReturnMessage)
+			return nil, fmt.Errorf("deploy network failed, return = '%s'", responseNetwork.ReturnMessage)
 		}
 		return nil, fmt.Errorf("deploy network failed, Error = '%s'", err.Error())
 	}
@@ -191,11 +191,11 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.Return
 	}
 
 	if compute.Status != entities.STATUS_NONE {
-		return nil, fmt.Errorf("compute config '%s' is '%s' now)", compute.Id, compute.Status)
+		return nil, fmt.Errorf("compute config '%s' is '%s' now", compute.Id, compute.Status)
 	}
 
 	if action == entities.EVENT_DEPLOY && compute.Status != entities.STATUS_NONE {
-		return nil, fmt.Errorf("compute '%s' is '%s' now)", compute.Id, compute.Status)
+		return nil, fmt.Errorf("compute '%s' is '%s' now", compute.Id, compute.Status)
 	}
 
 	if action == entities.EVENT_DELETE {
@@ -264,7 +264,7 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.Return
 			database.Set(utils.KEY_PREFIX_COMPUTE+compute.Id, &compute)
 		}
 		if responseCompute != nil {
-			return nil, fmt.Errorf("deploy compute failed, Error = '%s', return = '%s'", err.Error(), responseCompute.ReturnMessage)
+			return nil, fmt.Errorf("deploy compute failed, return = '%s'", responseCompute.ReturnMessage)
 		}
 		return nil, fmt.Errorf("deploy compute failed, Error = '%s'", err.Error())
 	}
