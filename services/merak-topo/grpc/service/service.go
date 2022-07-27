@@ -52,11 +52,11 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			err_info := handler.Info(k8client, in.Config.GetTopologyId(), &returnMessage)
 			if err_info != nil {
 				returnMessage.ReturnCode = pb.ReturnCode_FAILED
-				returnMessage.ReturnMessage = "INFO fails to query on topology id."
+				returnMessage.ReturnMessage = "INFO fails."
 
 			} else {
 				returnMessage.ReturnCode = pb.ReturnCode_OK
-				returnMessage.ReturnMessage = "INFO successes to query on topology id."
+				returnMessage.ReturnMessage = "INFO successes."
 			}
 
 			log.Printf("return message %v", returnMessage.ReturnMessage)

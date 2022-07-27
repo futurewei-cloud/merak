@@ -171,7 +171,7 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 		return fmt.Errorf("query topology_id error %s", err)
 	}
 
-	log.Printf("=========Get topo based on topo_id ===========")
+	log.Printf("updatecomputenode:=========Get topo based on topo_id ===========")
 
 	k8s_nodes, err1 := client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 
@@ -214,7 +214,7 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 		return fmt.Errorf("query mac error %s", err3)
 	}
 
-	log.Printf("=========Update mac addresses ===========")
+	log.Printf("updatecomputenode:=========Update mac addresses ===========")
 
 	for _, node := range topo.Vnodes {
 		var cnode pb.InternalComputeInfo
@@ -240,29 +240,35 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 
 				cnode.Ip = strings.Split(node.Nics[len(node.Nics)-1].Ip, "/")[0]
 				cnode.Veth = node.Nics[len(node.Nics)-1].Intf
-				cnode.ContainerIp = res.Status.PodIP
+				if res.Status.PodIP != "" {
+					cnode.ContainerIp = res.Status.PodIP
+				} else {
+					log.Printf("pod ip is not ready %v", res.Name)
+				}
 
 				mac, err := database.Get(topo_id + ":" + cnode.Ip)
-				cnode.Mac = strings.Trim(mac, "\"")
-				// add DB structure to save mac, ip for a k8s cluster
-
 				if err != nil {
-					return fmt.Errorf("fail to get mac from db %s", err)
+					log.Printf("updatecomputenode: mac address is not available")
+				} else {
+					cnode.Mac = strings.Trim(mac, "\"")
+					cnode.OperationType = pb.OperationType_INFO
 				}
 
-				cnode.OperationType = pb.OperationType_INFO
-				if res.Status.ContainerStatuses[len(res.Status.ContainerStatuses)-1].Ready {
-					cnode.Status = pb.Status_READY
+				if len(res.Status.ContainerStatuses) == 0 {
+					log.Printf("updatecomputenode: container status is not available %v", res.Name)
 				} else {
-					cnode.Status = pb.Status_DEPLOYING
+					if res.Status.ContainerStatuses[len(res.Status.ContainerStatuses)-1].Ready {
+						cnode.Status = pb.Status_READY
+					} else {
+						cnode.Status = pb.Status_DEPLOYING
+					}
 				}
-				// log.Printf(cnode.Name + " status " + string(cnode.Status))
 				returnMessage.ComputeNodes = append(returnMessage.ComputeNodes, &cnode)
 			}
-			log.Printf("=========Update compute nodes information ===========")
-
 		}
 	}
+
+	log.Printf("updatecomputenode:=========Update compute nodes information ===========")
 
 	err_db2 := database.SetPbReturnValue(topo_id+":updateReturnmsg", returnMessage)
 	if err_db2 != nil {
