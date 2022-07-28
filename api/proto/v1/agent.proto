@@ -20,4 +20,6 @@ message InternalPortConfig {
     string sg = 9;
     string cidr = 10;
     string hostname = 11;
+    string remoteid = 12; //Delete only
+    string deviceid = 13; //Delete only
 }

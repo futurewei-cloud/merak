@@ -10,8 +10,9 @@ import (
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
-	create "github.com/futurewei-cloud/merak/services/merak-compute/workflows/create"
-	info "github.com/futurewei-cloud/merak/services/merak-compute/workflows/info"
+	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/create"
+	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/delete"
+	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/info"
 	"github.com/go-redis/redis/v9"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
@@ -61,8 +62,10 @@ func main() {
 	w := worker.New(c, common.VM_TASK_QUEUE, worker.Options{})
 	w.RegisterWorkflow(create.Create)
 	w.RegisterWorkflow(info.Info)
+	w.RegisterWorkflow(delete.Delete)
 	w.RegisterActivity(activities.VmCreate)
 	w.RegisterActivity(activities.VmInfo)
+	w.RegisterActivity(activities.VmDelete)
 	log.Println("Registered VM Workflows and activities.")
 	log.Println("Starting VM Worker.")
 	err = w.Run(worker.InterruptCh())
