@@ -12,6 +12,7 @@ import (
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	create "github.com/futurewei-cloud/merak/services/merak-compute/workflows/create"
+	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/delete"
 	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/info"
 	"github.com/go-redis/redis/v9"
 	"go.temporal.io/sdk/client"
@@ -100,7 +101,6 @@ func (s *Server) ComputeHandler(ctx context.Context, in *compute_pb.InternalComp
 		for _, pod := range in.Config.Pods {
 			if err := RedisClient.HSet(
 				ctx,
-				constants.COMPUTE_REDIS_NODE_MAP,
 				"id", pod.Id,
 				"name", pod.Name,
 				"ip", pod.ContainerIp,
@@ -221,11 +221,30 @@ func (s *Server) ComputeHandler(ctx context.Context, in *compute_pb.InternalComp
 			TaskQueue:   common.VM_TASK_QUEUE,
 			RetryPolicy: retrypolicy,
 		}
-		log.Println("Delete Unimplemented")
+		var result compute_pb.ReturnMessage
+		log.Println("Executing VM Delete Workflow!")
+		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, delete.Delete)
+		if err != nil {
+			return &compute_pb.ReturnMessage{
+				ReturnMessage: "Unable to execute workflow",
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+			}, err
+		}
+		log.Println("Started workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
+
+		// Sync get results of workflow
+		err = we.Get(context.Background(), &result)
+		if err != nil {
+			return &compute_pb.ReturnMessage{
+				ReturnMessage: result.GetReturnMessage(),
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+			}, err
+		}
+		log.Println("Workflow result:", result.ReturnMessage)
 		return &compute_pb.ReturnMessage{
-			ReturnMessage: "Delete Unimplemented",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, errors.New("delete unimplemented")
+			ReturnMessage: result.GetReturnMessage(),
+			ReturnCode:    result.GetReturnCode(),
+		}, err
 
 	default:
 		log.Println("Unknown Operation")

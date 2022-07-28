@@ -72,19 +72,13 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*c
 		SubnetId:        in.Subnetid,
 		SecurityGroupId: in.Sg,
 		DefaultGateway:  in.Gw,
+		DeviceId:        "",
+		RemoteId:        "",
 		Status:          common_pb.Status_ERROR,
 	}
 
 	// Parse input
 	switch op := in.OperationType; op {
-	case common_pb.OperationType_INFO:
-		log.Println("Info Unimplemented")
-		return &compute_pb.ReturnMessage{
-			ReturnMessage: "Info Unimplemented",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-			ReturnVms:     []*compute_pb.InternalVMInfo{&vmInfo},
-		}, errors.New("info unimplemented")
-
 	case common_pb.OperationType_CREATE:
 		log.Println("Operation Create")
 
@@ -148,8 +142,9 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*c
 				ReturnVms:     []*compute_pb.InternalVMInfo{&vmInfo},
 			}, err
 		}
-		tapName := "tap" + gjson.Get(string(respBody), "port.id").Str[:11]
-
+		tapName := "tap" + portID[:11]
+		vmInfo.DeviceId = tapName
+		vmInfo.RemoteId = portID
 		// Create Device
 		log.Println("OVS setup")
 		cmd := exec.Command("bash", "-c", "ovs-vsctl add-port br-int "+tapName+" --  set Interface "+tapName+" type=internal")
@@ -419,7 +414,73 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*c
 
 	case common_pb.OperationType_DELETE:
 
-		log.Println("Delete Unimplemented")
+		log.Println("Operation Delete")
+		log.Println("Send Delete Port Request to Alcor")
+
+		req, err := http.NewRequest(http.MethodDelete, "http://"+constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports/"+in.Remoteid, bytes.NewBuffer(nil))
+		req.Header.Set("Content-Type", "application/json; charset=utf-8")
+		if err != nil {
+			log.Println("Failed send Delete Port request to Alcor!", err)
+			return &compute_pb.ReturnMessage{
+				ReturnMessage: "Failed send Delete Port request to Alcor!",
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+			}, err
+		}
+
+		log.Println("Sending update_port request to Alcor")
+		client := &http.Client{
+			Timeout: 5 * time.Second,
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Println("Failed to delete port to Alcor!")
+			return &compute_pb.ReturnMessage{
+				ReturnMessage: "Failed Delete port!",
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+			}, err
+		}
+		log.Println("Response code from Alcor", resp.StatusCode)
+		if resp.StatusCode != constants.HTTP_OK {
+			return &compute_pb.ReturnMessage{
+				ReturnMessage: "Failed to Delete Port ! Response Code: " + strconv.Itoa(resp.StatusCode),
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+			}, err
+		}
+
+		log.Println("Deleting Namespace")
+		cmd := exec.Command("bash", "-c", "ip netns delete "+in.Name)
+		stdout, err := cmd.Output()
+		if err != nil {
+			log.Println("Namespace deletion failed! " + string(stdout))
+			return &compute_pb.ReturnMessage{
+				ReturnMessage: "Namespace deletion failed! " + string(stdout),
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+			}, err
+		}
+		log.Println("Deleting bridge device")
+		cmd = exec.Command("bash", "-c", "ip link delete bridge"+in.Name)
+		stdout, err = cmd.Output()
+		if err != nil {
+			log.Println("Bridge deletion failed! " + string(stdout))
+			return &compute_pb.ReturnMessage{
+				ReturnMessage: "Bridge deletion failed! " + string(stdout),
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+			}, err
+		}
+
+		tapName := "tap" + in.Remoteid[:11]
+		log.Println("Deleting TAP device " + tapName)
+		cmd = exec.Command("bash", "-c", "ip tuntap delete name "+tapName+" mode tap")
+		stdout, err = cmd.Output()
+		if err != nil {
+			log.Println("Failed to delete tap " + string(stdout))
+			return &compute_pb.ReturnMessage{
+				ReturnMessage: "Failed to delete tap " + string(stdout),
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnVms:     []*compute_pb.InternalVMInfo{&vmInfo},
+			}, err
+		}
+
 		return &compute_pb.ReturnMessage{
 			ReturnMessage: "Delete Unimplemented",
 			ReturnCode:    common_pb.ReturnCode_FAILED,
