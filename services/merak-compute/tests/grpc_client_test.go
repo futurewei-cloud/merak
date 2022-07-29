@@ -73,6 +73,7 @@ func TestGrpcClient(t *testing.T) {
 		Id:            "1",
 		Name:          hostname,
 		Ip:            ip,
+		ContainerIp:   ip,
 		Mac:           "aa:bb:cc:dd:ee",
 		Veth:          "test",
 	}
