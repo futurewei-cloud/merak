@@ -52,20 +52,19 @@ docker-build:
 	docker build -t phudtran/merak-agent:dev -f docker/agent.Dockerfile .
 	docker push phudtran/merak-agent:dev
 
-docker-compute:
+compute-main:
 	make proto
-	docker build -t phudtran/merak-compute:dev -f docker/compute.Dockerfile .
-	docker build -t phudtran/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
-	docker push phudtran/merak-compute:dev
-	docker push phudtran/merak-compute-vm-worker:dev
+	make compute && make vm-worker && make agent
+	docker build -t phudtran/merak-compute:main -f docker/compute.Dockerfile .
+	docker build -t phudtran/merak-compute-vm-worker:main -f docker/compute-vm-worker.Dockerfile .
+	docker push phudtran/merak-compute:main
+	docker push phudtran/merak-compute-vm-worker:main
+	docker build -t phudtran/merak-agent:main -f docker/agent.Dockerfile .
+	docker push phudtran/merak-agent:main
 
-docker-agent:
-	make proto
-	docker build -t phudtran/merak-agent:dev -f docker/agent.Dockerfile .
-	docker push phudtran/merak-agent:dev
-
-test:
-	go test -v services/merak-compute/tests/compute_test.go
+compute-test:
+	docker build -t phudtran/test-merak:dev -f docker/test.merak.Dockerfile .
+	docker push phudtran/test-merak:dev
 
 clean:
 	rm -rf api/proto/v1/*.pb.go

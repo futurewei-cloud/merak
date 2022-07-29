@@ -29,7 +29,7 @@ func VmDelete(ctx context.Context) (*compute_pb.ReturnMessage, error) {
 	logger.Info("Success in getting Pod IDs! " + ids.String())
 	var agent_address strings.Builder
 	for _, podID := range ids.Val() {
-		vmIDsList := common.RedisClient.LRange(ctx, podID, 0, -1)
+		vmIDsList := common.RedisClient.LRange(ctx, "l"+podID, 0, -1)
 		if vmIDsList.Err() != nil {
 			logger.Error("Unable get node vmIDsList from redis", vmIDsList.Err())
 			return &compute_pb.ReturnMessage{
@@ -57,12 +57,17 @@ func VmDelete(ctx context.Context) (*compute_pb.ReturnMessage, error) {
 			}
 			resp, err := client.PortHandler(ctx, &port)
 			if err != nil {
-				logger.Error("Unable create vm ID " + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage() + "\n")
+				logger.Error("Unable Delete vm ID " + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage() + "\n")
+				return &compute_pb.ReturnMessage{
+					ReturnCode:    common_pb.ReturnCode_FAILED,
+					ReturnMessage: "Unable Delete vm ID " + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage() + "\n",
+				}, nil
 			}
 		}
 	}
 	common.RedisClient.FlushAll(ctx)
 	return &compute_pb.ReturnMessage{
-		ReturnCode: common_pb.ReturnCode_OK,
+		ReturnCode:    common_pb.ReturnCode_OK,
+		ReturnMessage: "Success!",
 	}, nil
 }

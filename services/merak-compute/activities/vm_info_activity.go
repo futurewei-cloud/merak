@@ -25,15 +25,7 @@ func VmInfo(ctx context.Context) (*compute_pb.ReturnMessage, error) {
 	vms := []*compute_pb.InternalVMInfo{}
 	logger.Info("Success in getting VM IDs! " + ids.String())
 	for _, vmID := range ids.Val() {
-		vmIDsList := common.RedisClient.LRange(ctx, vmID, 0, -1)
-		if vmIDsList.Err() != nil {
-			logger.Error("Unable get node vmIDsList from redis", vmIDsList.Err())
-			return &compute_pb.ReturnMessage{
-				ReturnCode:    common_pb.ReturnCode_FAILED,
-				ReturnMessage: "Unable get node vmIDsList from redis",
-			}, vmIDsList.Err()
-		}
-		logger.Info("VM Ids " + vmIDsList.String() + "\n")
+		logger.Info("Found VM ID: " + vmID + "\n")
 		vm := compute_pb.InternalVMInfo{
 			Name:            common.RedisClient.HGet(ctx, vmID, "name").Val(),
 			VpcId:           common.RedisClient.HGet(ctx, vmID, "vpc").Val(),

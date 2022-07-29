@@ -2,7 +2,6 @@ package test
 
 import (
 	"context"
-	"log"
 	"strconv"
 	"strings"
 	"testing"
@@ -29,28 +28,18 @@ func TestGrpcClient(t *testing.T) {
 	var ip string = ""
 	var hostname string = ""
 
-	var ip1 string = ""
-	var hostname1 string = ""
-
 	pod0 := pb.InternalVMPod{
 		OperationType: common_pb.OperationType_CREATE,
 		PodIp:         ip,
 		Subnets:       []string{"subnet1"},
-		NumOfVm:       10,
-	}
-
-	pod11 := pb.InternalVMPod{
-		OperationType: common_pb.OperationType_CREATE,
-		PodIp:         ip,
-		Subnets:       []string{"subnet1"},
-		NumOfVm:       10,
+		NumOfVm:       1,
 	}
 
 	subnets := common_pb.InternalSubnetInfo{
 		SubnetId:   "8182a4d4-ffff-4ece-b3f0-8d36e3d88000",
 		SubnetCidr: "10.0.1.0/24",
 		SubnetGw:   "10.0.1.1",
-		NumberVms:  10,
+		NumberVms:  1,
 	}
 	vpc := common_pb.InternalVpcInfo{
 		VpcId:     "9192a4d4-ffff-4ece-b3f0-8d36e3d88001",
@@ -64,7 +53,7 @@ func TestGrpcClient(t *testing.T) {
 		Vpcs:          []*common_pb.InternalVpcInfo{&vpc},
 		Secgroups:     []string{"3dda2801-d675-4688-a63f-dcda8d111111"},
 		Scheduler:     pb.VMScheduleType_SEQUENTIAL,
-		DeployMethod:  []*pb.InternalVMPod{&pod0, &pod11},
+		DeployMethod:  []*pb.InternalVMPod{&pod0},
 	}
 
 	service := common_pb.InternalServiceInfo{
@@ -88,22 +77,13 @@ func TestGrpcClient(t *testing.T) {
 		Veth:          "test",
 	}
 
-	pod1 := common_pb.InternalComputeInfo{
-		OperationType: common_pb.OperationType_CREATE,
-		Id:            "1",
-		Name:          hostname1,
-		Ip:            ip1,
-		Mac:           "aa:bb:cc:dd:ee",
-		Veth:          "test",
-	}
-
 	computeConfig := pb.InternalComputeConfiguration{
 		FormatVersion:   1,
 		RevisionNumber:  1,
 		RequestId:       "test",
 		ComputeConfigId: "test",
 		MessageType:     common_pb.MessageType_FULL,
-		Pods:            []*common_pb.InternalComputeInfo{&pod, &pod1},
+		Pods:            []*common_pb.InternalComputeInfo{&pod},
 		VmDeploy:        &deploy,
 		Services:        []*common_pb.InternalServiceInfo{&service},
 		ExtraInfo:       &pb.InternalComputeExtraInfo{Info: "test"},
@@ -114,12 +94,28 @@ func TestGrpcClient(t *testing.T) {
 		Config:        &computeConfig,
 	}
 
+	// Test Create
 	resp, err := client.ComputeHandler(ctx, &compute_info)
 	if err != nil {
-		t.Fatalf("Compute Handler failed: %v", err)
+		t.Fatalf("Compute Handler Create failed: %v", err)
 	}
-	log.Printf("Response: %+v", resp)
+	t.Logf("Response: %+v", resp.ReturnMessage)
 
-	t.Logf("Response: %+v", resp)
+	// Test Info
+	compute_info.OperationType = common_pb.OperationType_INFO
+	resp, err = client.ComputeHandler(ctx, &compute_info)
+	if err != nil {
+		t.Fatalf("Compute Handler Info failed: %v", err)
+	}
+	t.Logf("Response: %+v", resp.ReturnMessage)
+
+	// Test Delete
+	compute_info.OperationType = common_pb.OperationType_DELETE
+	resp, err = client.ComputeHandler(ctx, &compute_info)
+	if err != nil {
+		t.Fatalf("Compute Handler Delete failed: %v", err)
+	}
+	t.Logf("Response: %+v", resp.ReturnMessage)
+
 	defer conn.Close()
 }

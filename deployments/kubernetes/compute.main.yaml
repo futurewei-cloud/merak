@@ -1,0 +1,131 @@
+# Merak namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: merak
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: merak-compute-service
+  namespace: merak
+spec:
+  selector:
+    app: merak-compute
+  ports:
+    - protocol: TCP
+      name: grpc
+      port: 40051
+      targetPort: compute-grpc
+  type: ClusterIP
+---
+# Merak Compute Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: merak-compute
+  namespace: merak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: merak-compute
+  template:
+    metadata:
+      labels:
+        app: merak-compute
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: merak-compute
+        image: phudtran/merak-compute:main
+        ports:
+          - containerPort: 40051
+            name: compute-grpc
+        env:
+        - name: "TEMPORAL"
+          value: "temporaltest-frontend.default.svc.cluster.local"
+---
+# Merak Compute VM Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: merak-compute-vm-worker
+  namespace: merak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: merak-compute-vm-worker
+  template:
+    metadata:
+      labels:
+        app: merak-compute-vm-worker
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: merak-compute-vm-worker
+        image: phudtran/merak-compute-vm-worker:main
+        env:
+        - name: "TEMPORAL"
+          value: "temporaltest-frontend.default.svc.cluster.local"
+# Single Redis Leader.
+# TODO: Add followers and follower service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: compute-redis-main
+  namespace: merak
+  labels:
+    app: redis
+    role: main
+    tier: backend
+spec:
+  ports:
+  - protocol: TCP
+    port: 30051
+    targetPort: compute-redis
+  selector:
+    app: redis
+    role: main
+    tier: backend
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-main
+  namespace: merak
+  labels:
+    app: redis
+    role: main
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: main
+        tier: backend
+    spec:
+      containers:
+      - name: main
+        image: "redis:7.0.0"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 6379
+          name: compute-redis

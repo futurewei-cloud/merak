@@ -101,7 +101,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *compute_pb.InternalComp
 		for _, pod := range in.Config.Pods {
 			if err := RedisClient.HSet(
 				ctx,
-				"id", pod.Id,
+				pod.Id,
 				"name", pod.Name,
 				"ip", pod.ContainerIp,
 				"mac", pod.Mac,
@@ -137,7 +137,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *compute_pb.InternalComp
 							vmID,
 						).Err(); err != nil {
 							return &compute_pb.ReturnMessage{
-								ReturnMessage: "Unable to VM to DB Hash Set",
+								ReturnMessage: "Unable to add VM to DB Hash Set",
 								ReturnCode:    common_pb.ReturnCode_FAILED,
 							}, err
 						}
@@ -156,6 +156,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *compute_pb.InternalComp
 							"hostIP", pod.ContainerIp,
 							"hostmac", pod.Mac,
 							"hostname", pod.Name,
+							"status", "0",
 						).Err(); err != nil {
 							return &compute_pb.ReturnMessage{
 								ReturnMessage: "Unable add VM to DB Hash Map",
@@ -163,7 +164,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *compute_pb.InternalComp
 							}, err
 						}
 						log.Println("Added VM " + vmID + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k) + " of " + strconv.Itoa(int(subnet.NumberVms)))
-						if err := RedisClient.LPush(ctx, pod.Id, vmID).Err(); err != nil {
+						if err := RedisClient.LPush(ctx, "l"+pod.Id, vmID).Err(); err != nil {
 							return &compute_pb.ReturnMessage{
 								ReturnMessage: "Unable add VM to pod list",
 								ReturnCode:    common_pb.ReturnCode_FAILED,

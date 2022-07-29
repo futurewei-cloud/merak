@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: merak-agent
-        image: phudtran/merak-agent:dev
+        image: phudtran/merak-agent:main
         securityContext:
             privileged: true
         ports:
