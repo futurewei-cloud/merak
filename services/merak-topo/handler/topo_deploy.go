@@ -28,7 +28,9 @@ import (
 
 var (
 	// ACA_IMAGE = "phudtran/aca:latest"
-	ACA_IMAGE = "phudtran/merak-agent:dev"
+	// ACA_IMAGE = "phudtran/merak-agent:dev"
+	// ACA_IMAGE = "cjchung4849/aca:dev-268"
+	ACA_IMAGE = "cjchung4849/aca:p.268"
 	OVS_IMAGE = "yanmo96/ovs_only:latest"
 	GW_IMAGE  = "yanmo96/aca_build_standard:v2"
 	RYU_IP    = "10.213.43.77"
@@ -159,6 +161,9 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 		l["App"] = node.Name
 		l["Topo"] = "topology"
 
+		anno := make(map[string]string)
+		anno["linkerd.io/inject"] = "enabled"
+
 		var sc corev1.SecurityContext
 		pri := true
 		sc.Privileged = &pri
@@ -186,12 +191,15 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 		tol = append(tol, t1)
 		tol = append(tol, t2)
 
+		var aff corev1.Affinity
+
 		if strings.Contains(node.Name, "vhost") {
 			l["Type"] = "vhost"
 			newPod = &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:   node.Name,
 					Labels: l,
+					// Annotations: anno,
 				},
 				Spec: corev1.PodSpec{
 					InitContainers: init_containers,
@@ -200,11 +208,13 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 							Name:            "vhost",
 							Image:           ACA_IMAGE,
 							ImagePullPolicy: "IfNotPresent",
-							// Command:         []string{},
+							Args:            []string{"service rsyslog restart; /etc/init.d/openvswitch-switch restart; sleep infinity"},
+							Command:         []string{"/bin/sh", "-c"},
 							SecurityContext: &sc,
 						},
 					},
-					// Affinity: ,
+
+					Affinity:                      &aff,
 					RestartPolicy:                 "OnFailure",
 					TerminationGracePeriodSeconds: &grace_period,
 					Tolerations:                   tol,
@@ -269,8 +279,11 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 					Tolerations:                   tol,
 				},
 			}
-			k8snodes = k8snodes[1:]
-			log.Printf("unassigned nodes %v", k8snodes)
+			if len(k8snodes) > 1 {
+				k8snodes = k8snodes[1:]
+				log.Printf("unassigned nodes %v", k8snodes)
+
+			}
 
 		} else {
 			return errors.New("no image for this device, please upload the image before create topology")
