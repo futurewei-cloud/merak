@@ -18,11 +18,12 @@ import (
 )
 
 //function CREATE
-func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, cgw_num uint32, data_plane_cidr string, returnMessage *pb.ReturnTopologyMessage) error {
+func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, cgw_num uint32, data_plane_cidr string, ovs_layer1_num uint32, rack_per_layer1 uint32, returnMessage *pb.ReturnTopologyMessage) error {
 
 	var topo database.TopologyData
 
 	var ovs_tor_device = []string{"core-0"}
+
 	ip_num := int(aca_num) + int(cgw_num)
 
 	log.Println("=== parse done == ")
@@ -31,6 +32,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	log.Printf("Vhost number is: %v\n", aca_num)
 
 	fmt.Println("======== Generate device list ==== ")
+	ovs_layer_device := Pod_name(int(ovs_layer1_num), "ovs")
 	rack_device := Pod_name(int(rack_num), "vswitch")
 	aca_device := Pod_name(int(aca_num), "vhost")
 	ngw_device := Pod_name(int(cgw_num), "cgw")
@@ -41,7 +43,9 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 	fmt.Println("======== Generate device nodes ==== ")
 	rack_intf_num := int(aca_per_rack) + 1
-	tor_intf_num := int(rack_num) + int(cgw_num)
+	// ovslayer1_intf_num := int((rack_num +cgw_num)/10)
+	ovslayer1_intf_num := int(rack_per_layer1)
+	tor_intf_num := int(ovs_layer1_num)
 	aca_intf_num := 1
 	ngw_intf_num := 1
 
@@ -63,6 +67,8 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	topo_nodes = append(topo_nodes, nodes...)
 	nodes_s, _ := Node_port_gen(rack_intf_num, rack_device, ips, false)
 	topo_nodes = append(topo_nodes, nodes_s...)
+	nodes_layer1, _ := Node_port_gen(ovslayer1_intf_num, ovs_layer_device, ips, false)
+	topo_nodes = append(topo_nodes, nodes_layer1...)
 	nodes_t, _ := Node_port_gen(tor_intf_num, ovs_tor_device, ips, false)
 	topo_nodes = append(topo_nodes, nodes_t...)
 

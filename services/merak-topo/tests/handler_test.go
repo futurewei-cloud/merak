@@ -16,9 +16,11 @@ var (
 		ReturnCode:    pb.ReturnCode_FAILED,
 		ReturnMessage: "Unintialized",
 	}
-	aca_num         = 48
-	rack_num        = 4
-	aca_per_rack    = 12
+	aca_num         = 8
+	rack_num        = 2
+	aca_per_rack    = 4
+	ovs_layer1_num  = 2
+	rack_per_layer1 = 4
 	data_plane_cidr = "10.200.0.0/16"
 	topo_id         = "1topo"
 	cgw_num         = 6
@@ -36,7 +38,7 @@ func TestTopologyCreate(t *testing.T) {
 		log.Printf("connect to DB error %s", err1)
 	}
 
-	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
+	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, uint32(ovs_layer1_num), uint32(rack_per_layer1), &returnMessage)
 	if err2 != nil {
 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Create Topology."
@@ -171,7 +173,7 @@ func TestTopologyHandler(t *testing.T) {
 		fmt.Printf("connect to DB error %s", err1)
 	}
 
-	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
+	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, uint32(ovs_layer1_num), uint32(rack_per_layer1), &returnMessage)
 	if err2 != nil {
 		returnMessage.ReturnCode = pb.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Create Topology."

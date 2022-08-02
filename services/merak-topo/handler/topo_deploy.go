@@ -27,15 +27,17 @@ import (
 )
 
 var (
-	// ACA_IMAGE = "phudtran/aca:latest"
+	ACA_IMAGE = "phudtran/aca:latest"
+	// ACA_IMAGE = "yanmo96/aca_build_standard:v3"
 	// ACA_IMAGE = "phudtran/merak-agent:dev"
 	// ACA_IMAGE = "cjchung4849/aca:dev-268"
-	ACA_IMAGE = "cjchung4849/aca:p.268"
+	// ACA_IMAGE = "cjchung4849/aca:p.268"
 	OVS_IMAGE = "yanmo96/ovs_only:latest"
 	GW_IMAGE  = "yanmo96/aca_build_standard:v2"
-	RYU_IP    = "10.213.43.77"
-	RYU_PORT  = "6653"
-	Ctx       = context.Background()
+	// GW_IMAGE = "yanmo96/ym-gateway:latest"
+	RYU_IP   = "10.213.43.77"
+	RYU_PORT = "6653"
+	Ctx      = context.Background()
 
 	namespace        = "default"
 	topologyClassGVR = schema.GroupVersionResource{
@@ -220,7 +222,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 					Tolerations:                   tol,
 				},
 			}
-		} else if strings.Contains(node.Name, "vswitch") || strings.Contains(node.Name, "core") {
+		} else if strings.Contains(node.Name, "vswitch") || strings.Contains(node.Name, "core") || strings.Contains(node.Name, "ovs") {
 
 			ovs_set, err0 := ovs_config(topo, node.Name, RYU_IP, RYU_PORT)
 			if err0 != nil {
