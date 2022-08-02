@@ -59,25 +59,19 @@ type updatePort struct {
 	BindingHostID string `json:"binding:host_id"`
 }
 
-func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*pb.ReturnComputeMessage, error) {
+func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
 	log.Println("Received on PortHandler", in)
 
-	vmInfo := pb.InternalVMInfo{
-		Id:              in.Id,
-		Name:            in.Name,
-		Ip:              "",
-		VpcId:           in.Vpcid,
-		SubnetId:        in.Subnetid,
-		SecurityGroupId: in.Sg,
-		DefaultGateway:  in.Gw,
-		DeviceId:        "",
-		RemoteId:        "",
-		Status:          common_pb.Status_ERROR,
+	vmInfo := pb.ReturnPortInfo{
+		Ip:       "",
+		Deviceid: "",
+		Remoteid: "",
+		Status:   pb.Status_ERROR,
 	}
 
-	// Parse input
+	// Parse input d
 	switch op := in.OperationType; op {
-	case common_pb.OperationType_CREATE:
+	case pb.OperationType_CREATE:
 		log.Println("Operation Create")
 
 		log.Println("Create Minimal Port")
@@ -95,35 +89,35 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 
 		body, err := json.Marshal(minimalPortBody)
 		if err != nil {
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to marshal json!",
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 		log.Println("Sending body to Alcor: \n", string(body[:]))
 		resp, err := http.Post("http://"+constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
 		if err != nil {
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to send create minimal port to Alcor!",
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 		log.Println("Response code from Alcor", resp.StatusCode)
 		if resp.StatusCode != constants.HTTP_CREATE_SUCCESS {
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to create minimal port! Response Code: " + strconv.Itoa(resp.StatusCode),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 		respBodyByte, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to parse response",
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 		respBody := string(respBodyByte[:])
@@ -134,25 +128,25 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		portID := gjson.Get(string(respBody), "port.id").Str
 		vmInfo.Ip = ip
 		if constants.ALCOR_PORT_ID_SUBSTRING_LENGTH >= len(portID) {
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Port ID from Alcor too short",
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 		tapName := "tap" + portID[:11]
-		vmInfo.DeviceId = tapName
-		vmInfo.RemoteId = portID
+		vmInfo.Deviceid = tapName
+		vmInfo.Remoteid = portID
 		// Create Device
 		log.Println("OVS setup")
 		cmd := exec.Command("bash", "-c", "ovs-vsctl add-port br-int "+tapName+" --  set Interface "+tapName+" type=internal")
 		stdout, err := cmd.Output()
 		if err != nil {
 			log.Println("ovs-vsctl failed! " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "ovs-vsctl failed! " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 		log.Println("Creating Namespace")
@@ -160,10 +154,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Namespace creation failed! " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Namespace creation failed! " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -172,10 +166,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Inner and outer veth creation failed! " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Inner and outer veth creation failed! " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 		log.Println("Moving veth to namespace")
@@ -183,10 +177,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Move veth into namespace failed! " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Move veth into namespace failed! " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -195,10 +189,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to give inner veth IP! " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to give inner veth IP! " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -207,10 +201,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed bring up inner veth! " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed bring up inner veth! " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -219,10 +213,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to set MTU probing! " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to set MTU probing! " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -231,10 +225,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to bring up outer veth!  " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to bring up outer veth!  " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -243,10 +237,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to bring up loopback! " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to bring up loopback! " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -255,10 +249,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Assign mac! " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Assign mac! " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -267,10 +261,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed add default gw! " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed add default gw! " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -279,10 +273,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to create bridge! " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to create bridge! " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -291,10 +285,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to add veth to bridge! " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to add veth to bridge! " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -303,10 +297,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to add tap to bridge " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to add tap to bridge " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -315,10 +309,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to bring up bridge " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to bring up bridge " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -327,10 +321,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to bring up tap device " + string(stdout))
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to bring up tap device " + string(stdout),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 		log.Println("Successfully created devices!")
@@ -354,10 +348,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 
 		body, err = json.Marshal(updatePortBody)
 		if err != nil {
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to marshal json!",
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 		jsonStringBody := string(body[:])
@@ -366,10 +360,10 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		req.Header.Set("Content-Type", "application/json; charset=utf-8")
 		if err != nil {
 			log.Println("Failed send Update Port request to Alcor!", err)
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed send Update Port request to Alcor!",
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 
@@ -380,34 +374,34 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		resp, err = client.Do(req)
 		if err != nil {
 			log.Println("Failed to update port to Alcor!: \n", jsonStringBody)
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed update port!",
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 		log.Println("Response code from Alcor", resp.StatusCode)
 		if resp.StatusCode != constants.HTTP_OK {
-			return &pb.ReturnComputeMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to update_port! Response Code: " + strconv.Itoa(resp.StatusCode),
 				ReturnCode:    pb.ReturnCode_FAILED,
-				Vms:           []*pb.InternalVMInfo{&vmInfo},
+				Port:          &vmInfo,
 			}, err
 		}
 		vmInfo.Status = pb.Status_DONE
-		return &pb.ReturnComputeMessage{
+		return &pb.AgentReturnInfo{
 			ReturnMessage: "Create Success",
 			ReturnCode:    pb.ReturnCode_OK,
-			Vms:           []*pb.InternalVMInfo{&vmInfo},
+			Port:          &vmInfo,
 		}, nil
 
 	case pb.OperationType_UPDATE:
 
 		log.Println("Update Unimplemented")
-		return &pb.ReturnComputeMessage{
+		return &pb.AgentReturnInfo{
 			ReturnMessage: "Update Unimplemented",
 			ReturnCode:    pb.ReturnCode_FAILED,
-			Vms:           []*pb.InternalVMInfo{&vmInfo},
+			Port:          &vmInfo,
 		}, errors.New("update unimplemented")
 
 	case pb.OperationType_DELETE:
@@ -419,9 +413,9 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		req.Header.Set("Content-Type", "application/json; charset=utf-8")
 		if err != nil {
 			log.Println("Failed send Delete Port request to Alcor!", err)
-			return &compute_pb.ReturnMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed send Delete Port request to Alcor!",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
 
@@ -432,16 +426,16 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		resp, err := client.Do(req)
 		if err != nil {
 			log.Println("Failed to delete port to Alcor!")
-			return &compute_pb.ReturnMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed Delete port!",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
 		log.Println("Response code from Alcor", resp.StatusCode)
 		if resp.StatusCode != constants.HTTP_OK {
-			return &compute_pb.ReturnMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to Delete Port ! Response Code: " + strconv.Itoa(resp.StatusCode),
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
 
@@ -450,9 +444,9 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err := cmd.Output()
 		if err != nil {
 			log.Println("Namespace deletion failed! " + string(stdout))
-			return &compute_pb.ReturnMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Namespace deletion failed! " + string(stdout),
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
 		log.Println("Deleting bridge device")
@@ -460,9 +454,9 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Bridge deletion failed! " + string(stdout))
-			return &compute_pb.ReturnMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Bridge deletion failed! " + string(stdout),
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
 
@@ -472,25 +466,24 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to delete tap " + string(stdout))
-			return &compute_pb.ReturnMessage{
+			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to delete tap " + string(stdout),
-				ReturnCode:    common_pb.ReturnCode_FAILED,
-				ReturnVms:     []*compute_pb.InternalVMInfo{&vmInfo},
+				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
 
-		return &compute_pb.ReturnMessage{
+		return &pb.AgentReturnInfo{
 			ReturnMessage: "Delete Unimplemented",
 			ReturnCode:    pb.ReturnCode_FAILED,
-			Vms:           []*pb.InternalVMInfo{&vmInfo},
+			Port:          &vmInfo,
 		}, errors.New("delete unimplemented")
 
 	default:
 		log.Println("Unknown Operation")
-		return &pb.ReturnComputeMessage{
+		return &pb.AgentReturnInfo{
 			ReturnMessage: "Unknown Operation",
 			ReturnCode:    pb.ReturnCode_FAILED,
-			Vms:           []*pb.InternalVMInfo{&vmInfo},
+			Port:          &vmInfo,
 		}, errors.New("unknown operation")
 	}
 }

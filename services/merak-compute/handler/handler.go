@@ -31,7 +31,7 @@ var TemporalClient client.Client
 var RedisClient redis.Client
 
 type Server struct {
-	compute_pb.UnimplementedMerakComputeServiceServer
+	pb.UnimplementedMerakComputeServiceServer
 }
 
 func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
@@ -55,13 +55,13 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			RetryPolicy:              retrypolicy,
 		}
 		// Start VM Info Workflow
-		var result compute_pb.ReturnMessage
+		var result pb.ReturnComputeMessage
 		log.Println("Executing VM Info Workflow!")
 		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, info.Info)
 		if err != nil {
-			return &compute_pb.ReturnMessage{
+			return &pb.ReturnComputeMessage{
 				ReturnMessage: "Unable to execute workflow",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
 		log.Println("Started workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
@@ -69,17 +69,17 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		// Sync get results of workflow
 		err = we.Get(context.Background(), &result)
 		if err != nil {
-			return &compute_pb.ReturnMessage{
+			return &pb.ReturnComputeMessage{
 				ReturnMessage: result.GetReturnMessage(),
-				ReturnCode:    common_pb.ReturnCode_FAILED,
-				ReturnVms:     result.GetReturnVms(),
+				ReturnCode:    pb.ReturnCode_FAILED,
+				Vms:           result.GetVms(),
 			}, err
 		}
 		log.Println("Workflow result:", result.ReturnMessage)
-		return &compute_pb.ReturnMessage{
+		return &pb.ReturnComputeMessage{
 			ReturnMessage: result.GetReturnMessage(),
 			ReturnCode:    result.GetReturnCode(),
-			ReturnVms:     result.GetReturnVms(),
+			Vms:           result.GetVms(),
 		}, err
 
 	case pb.OperationType_CREATE:
@@ -135,9 +135,9 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 							constants.COMPUTE_REDIS_VM_SET,
 							vmID,
 						).Err(); err != nil {
-							return &compute_pb.ReturnMessage{
+							return &pb.ReturnComputeMessage{
 								ReturnMessage: "Unable to VM to DB Hash Set",
-								ReturnCode:    common_pb.ReturnCode_FAILED,
+								ReturnCode:    pb.ReturnCode_FAILED,
 							}, err
 						}
 						if err := RedisClient.HSet(
@@ -220,13 +220,13 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			TaskQueue:   common.VM_TASK_QUEUE,
 			RetryPolicy: retrypolicy,
 		}
-		var result compute_pb.ReturnMessage
+		var result pb.ReturnComputeMessage
 		log.Println("Executing VM Delete Workflow!")
 		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, delete.Delete)
 		if err != nil {
-			return &compute_pb.ReturnMessage{
+			return &pb.ReturnComputeMessage{
 				ReturnMessage: "Unable to execute workflow",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
 		log.Println("Started workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
@@ -234,13 +234,13 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		// Sync get results of workflow
 		err = we.Get(context.Background(), &result)
 		if err != nil {
-			return &compute_pb.ReturnMessage{
+			return &pb.ReturnComputeMessage{
 				ReturnMessage: result.GetReturnMessage(),
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    pb.ReturnCode_FAILED,
 			}, err
 		}
 		log.Println("Workflow result:", result.ReturnMessage)
-		return &compute_pb.ReturnMessage{
+		return &pb.ReturnComputeMessage{
 			ReturnMessage: result.GetReturnMessage(),
 			ReturnCode:    result.GetReturnCode(),
 		}, err
