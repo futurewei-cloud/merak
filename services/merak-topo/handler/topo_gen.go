@@ -46,9 +46,9 @@ func Intf_name(dev_num int, prefix string) []string {
 	if strings.Contains(prefix, "vhost") {
 		intf_n = strings.Split(prefix, "-")[0] + strings.Split(prefix, "-")[1] + "-eth1"
 		intf_name = append(intf_name, intf_n)
-	} else if strings.Contains(prefix, "vswitch") || strings.Contains(prefix, "ovs") || strings.Contains(prefix, "core") {
+	} else if strings.Contains(prefix, "vswitch") {
 		for i := 0; i < dev_num; i++ {
-			intf_n = "eth" + strconv.FormatInt(int64(i+1), 10)
+			intf_n = "vs" + strings.Split(prefix, "-")[1] + "-eth" + strconv.FormatInt(int64(i+1), 10)
 			intf_name = append(intf_name, intf_n)
 		}
 

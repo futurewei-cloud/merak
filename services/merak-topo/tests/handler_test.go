@@ -16,9 +16,9 @@ var (
 		ReturnCode:    pb.ReturnCode_FAILED,
 		ReturnMessage: "Unintialized",
 	}
-	aca_num         = 8
+	aca_num         = 4
 	rack_num        = 2
-	aca_per_rack    = 4
+	aca_per_rack    = 2
 	ovs_layer1_num  = 2
 	rack_per_layer1 = 4
 	data_plane_cidr = "10.200.0.0/16"
