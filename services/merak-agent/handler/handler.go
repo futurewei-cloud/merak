@@ -427,7 +427,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*c
 			}, err
 		}
 
-		log.Println("Sending update_port request to Alcor")
+		log.Println("Sending delete_port request to Alcor")
 		client := &http.Client{
 			Timeout: 5 * time.Second,
 		}
