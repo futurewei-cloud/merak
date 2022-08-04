@@ -27,15 +27,15 @@ import (
 )
 
 var (
-	ACA_IMAGE = "phudtran/aca:latest"
+	// ACA_IMAGE = "phudtran/aca:latest"
 	// ACA_IMAGE = "yanmo96/aca_build_standard:v3"
-	// ACA_IMAGE = "phudtran/merak-agent:dev"
+	ACA_IMAGE = "phudtran/merak-agent:dev"
 	// ACA_IMAGE = "cjchung4849/aca:dev-268"
 	// ACA_IMAGE = "cjchung4849/aca:p.268"
 	OVS_IMAGE = "yanmo96/ovs_only:latest"
 	GW_IMAGE  = "yanmo96/aca_build_standard:v2"
 	// GW_IMAGE = "yanmo96/ym-gateway:latest"
-	RYU_IP   = "10.213.43.77"
+	RYU_IP   = "10.213.43.111"
 	RYU_PORT = "6653"
 	Ctx      = context.Background()
 
@@ -210,8 +210,8 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 							Name:            "vhost",
 							Image:           ACA_IMAGE,
 							ImagePullPolicy: "IfNotPresent",
-							Args:            []string{"service rsyslog restart; /etc/init.d/openvswitch-switch restart; sleep infinity"},
-							Command:         []string{"/bin/sh", "-c"},
+							// Args:            []string{"service rsyslog restart; /etc/init.d/openvswitch-switch restart; sleep infinity"},
+							// Command:         []string{"/bin/sh", "-c"},
 							SecurityContext: &sc,
 						},
 					},

@@ -266,7 +266,7 @@ func Links_gen(topo_nodes []database.Vnode) []database.Vlink {
 
 						dst_name := strings.Split(d.Name, ":")[0]
 
-						if (strings.Contains(dst_name, "cgw") || strings.Contains(dst_name, "vswitch")) && (!slices.Contains(paired_nodes, dst_name)) && !paired {
+						if strings.Contains(dst_name, "vswitch") && (!slices.Contains(paired_nodes, dst_name)) && !paired {
 							paired_nodes = append(paired_nodes, dst_name)
 							for _, dnic := range d.Nics {
 								if !slices.Contains(picked_intf, dnic.Intf) && !paired {
@@ -300,6 +300,53 @@ func Links_gen(topo_nodes []database.Vnode) []database.Vlink {
 	for i, s := range src_nodes {
 		node_name := strings.Split(s.Name, ":")[0]
 		if strings.Contains(node_name, "vhost") {
+
+			var paired_nodes []string
+
+			for _, snic := range s.Nics {
+				// fmt.Printf("===snic %v===\n", snic.Intf)
+				var paired = false
+				if !slices.Contains(picked_intf, snic.Intf) {
+					picked_intf = append(picked_intf, snic.Intf)
+
+					for j, d := range dst_nodes {
+
+						dst_name := strings.Split(d.Name, ":")[0]
+						if (strings.Contains(dst_name, "vswitch")) && (!slices.Contains(paired_nodes, dst_name)) && !paired {
+
+							paired_nodes = append(paired_nodes, dst_name)
+
+							for _, dnic := range d.Nics {
+								if !slices.Contains(picked_intf, dnic.Intf) && !paired {
+									picked_intf = append(picked_intf, dnic.Intf)
+									// fmt.Printf("==dst Intf == %v \n", dnic.Intf)
+									paired = true
+									link := link_gen(node_name, dst_name, snic, dnic)
+									topo_links = append(topo_links, link)
+
+									s_clink := config_sclink(link)
+									s_clink["uid"] = len(topo_links)
+									topo_nodes[i].Flinks = append(topo_nodes[i].Flinks, s_clink)
+
+									d_clink := config_dclink(link)
+									d_clink["uid"] = len(topo_links)
+									topo_nodes[j].Flinks = append(topo_nodes[j].Flinks, d_clink)
+
+								}
+							}
+						}
+					}
+				}
+
+			}
+
+		}
+
+	}
+
+	for i, s := range src_nodes {
+		node_name := strings.Split(s.Name, ":")[0]
+		if strings.Contains(node_name, "cgw") {
 
 			var paired_nodes []string
 
