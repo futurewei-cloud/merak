@@ -1,8 +1,7 @@
-db_host: localhost
-# db_host: scenario-redis-master.merak.svc.cluster.local
+db_host: scenario-redis-master.merak.svc.cluster.local
 db_port: 55000
-db_user: default
-db_pass: redispw
+db_user: 
+db_pass: 
 log_level: debug
 use_syslog: false
-grpc_timeout: 10
+grpc_timeout: 600

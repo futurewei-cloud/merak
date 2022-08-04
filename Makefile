@@ -1,17 +1,17 @@
 modules := services
 -include $(patsubst %, %/module.mk, $(modules))
 
-all:: merak-compute proto scenario-manager
+all:: services proto
 
 proto:
 	protoc --go_out=api/proto/v1/ --go-grpc_out=api/proto/v1/ -I api/proto/v1/ api/proto/v1/*.proto
 
 deploy-dev:
-	kubectl apply -f deployments/kubernetes/compute.dev.yaml
 	kubectl apply -f deployments/kubernetes/scenario.dev.yaml
 
 docker-build:
 # Scenario-Manager
+	make scenario
 	docker build -t cjchung4849/scenario-manager:dev -f docker/scenario.Dockerfile .
 	docker push cjchung4849/scenario-manager:dev
 # Compute
