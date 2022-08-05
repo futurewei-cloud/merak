@@ -2,7 +2,6 @@ package test
 
 import (
 	"context"
-	"log"
 	"strconv"
 	"strings"
 	"testing"
@@ -25,20 +24,10 @@ func TestGrpcClient(t *testing.T) {
 	}
 	client := pb.NewMerakComputeServiceClient(conn)
 
-	var ip string = ""
-	var hostname string = ""
-
-	var ip1 string = ""
-	var hostname1 string = ""
+	var ip string = "10.244.0.91"
+	var hostname string = "merak-agent-55847876d9-rp5n8"
 
 	pod0 := pb.InternalVMPod{
-		OperationType: pb.OperationType_CREATE,
-		PodIp:         ip,
-		Subnets:       []string{"subnet1"},
-		NumOfVm:       10,
-	}
-
-	pod11 := pb.InternalVMPod{
 		OperationType: pb.OperationType_CREATE,
 		PodIp:         ip,
 		Subnets:       []string{"subnet1"},
@@ -63,7 +52,7 @@ func TestGrpcClient(t *testing.T) {
 		Vpcs:          []*pb.InternalVpcInfo{&vpc},
 		Secgroups:     []string{"3dda2801-d675-4688-a63f-dcda8d111111"},
 		Scheduler:     pb.VMScheduleType_SEQUENTIAL,
-		DeployMethod:  []*pb.InternalVMPod{&pod0, &pod11},
+		DeployMethod:  []*pb.InternalVMPod{&pod0},
 	}
 
 	service := pb.InternalServiceInfo{
@@ -83,15 +72,7 @@ func TestGrpcClient(t *testing.T) {
 		Id:            "1",
 		Name:          hostname,
 		Ip:            ip,
-		Mac:           "aa:bb:cc:dd:ee",
-		Veth:          "test",
-	}
-
-	pod1 := pb.InternalComputeInfo{
-		OperationType: pb.OperationType_CREATE,
-		Id:            "1",
-		Name:          hostname1,
-		Ip:            ip1,
+		ContainerIp:   ip,
 		Mac:           "aa:bb:cc:dd:ee",
 		Veth:          "test",
 	}
@@ -102,7 +83,7 @@ func TestGrpcClient(t *testing.T) {
 		RequestId:       "test",
 		ComputeConfigId: "test",
 		MessageType:     pb.MessageType_FULL,
-		Pods:            []*pb.InternalComputeInfo{&pod, &pod1},
+		Pods:            []*pb.InternalComputeInfo{&pod},
 		VmDeploy:        &deploy,
 		Services:        []*pb.InternalServiceInfo{&service},
 		ExtraInfo:       &pb.InternalComputeExtraInfo{Info: "test"},
@@ -113,12 +94,28 @@ func TestGrpcClient(t *testing.T) {
 		Config:        &computeConfig,
 	}
 
+	// Test Create
 	resp, err := client.ComputeHandler(ctx, &compute_info)
 	if err != nil {
-		t.Fatalf("Compute Handler failed: %v", err)
+		t.Fatalf("Compute Handler Create failed: %v", err)
 	}
-	log.Printf("Response: %+v", resp)
+	t.Log("Response: ", resp.ReturnMessage)
 
-	t.Logf("Response: %+v", resp)
+	// Test Info
+	compute_info.OperationType = pb.OperationType_INFO
+	resp, err = client.ComputeHandler(ctx, &compute_info)
+	if err != nil {
+		t.Fatalf("Compute Handler Info failed: %v", err)
+	}
+	t.Log("Response: ", resp.ReturnMessage)
+
+	// Test Delete
+	compute_info.OperationType = pb.OperationType_DELETE
+	resp, err = client.ComputeHandler(ctx, &compute_info)
+	if err != nil {
+		t.Fatalf("Compute Handler Delete failed: %v", err)
+	}
+	t.Log("Response: ", resp)
+
 	defer conn.Close()
 }

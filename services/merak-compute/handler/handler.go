@@ -100,7 +100,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		for _, pod := range in.Config.Pods {
 			if err := RedisClient.HSet(
 				ctx,
-				"id", pod.Id,
+				pod.Id,
 				"name", pod.Name,
 				"ip", pod.ContainerIp,
 				"mac", pod.Mac,
@@ -155,6 +155,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 							"hostIP", pod.ContainerIp,
 							"hostmac", pod.Mac,
 							"hostname", pod.Name,
+							"status", "0",
 						).Err(); err != nil {
 							return &pb.ReturnComputeMessage{
 								ReturnMessage: "Unable add VM to DB Hash Map",
@@ -162,7 +163,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 							}, err
 						}
 						log.Println("Added VM " + vmID + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k) + " of " + strconv.Itoa(int(subnet.NumberVms)))
-						if err := RedisClient.LPush(ctx, pod.Id, vmID).Err(); err != nil {
+						if err := RedisClient.LPush(ctx, "l"+pod.Id, vmID).Err(); err != nil {
 							return &pb.ReturnComputeMessage{
 								ReturnMessage: "Unable add VM to pod list",
 								ReturnCode:    pb.ReturnCode_FAILED,

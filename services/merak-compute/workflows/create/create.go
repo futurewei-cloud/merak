@@ -34,7 +34,7 @@ func Create(ctx workflow.Context) (pb.ReturnComputeMessage, error) {
 			Vms:           result.GetVms(),
 		}, err
 	}
-	logger.Info("VmCreate workflow completed.%s\n")
+	logger.Info("VmCreate workflow completed.\n")
 	return pb.ReturnComputeMessage{
 		ReturnCode:    result.GetReturnCode(),
 		ReturnMessage: result.GetReturnMessage(),

@@ -116,10 +116,28 @@ func TestGrpc(t *testing.T) {
 		Config:        &computeConfig,
 	}
 
+	// Test Create
 	resp, err := client.ComputeHandler(ctx, &compute_info)
 	if err != nil {
-		t.Fatalf("Compute Handler failed: %v", err)
+		t.Fatalf("Compute Handler Create failed: %v", err)
 	}
+	t.Log("Response: ", resp.ReturnMessage)
 
-	log.Printf("Response: %+v", resp)
+	// Test Info
+	compute_info.OperationType = pb.OperationType_INFO
+	resp, err = client.ComputeHandler(ctx, &compute_info)
+	if err != nil {
+		t.Fatalf("Compute Handler Info failed: %v", err)
+	}
+	t.Log("Response: ", resp.ReturnMessage)
+
+	// Test Delete
+	compute_info.OperationType = pb.OperationType_DELETE
+	resp, err = client.ComputeHandler(ctx, &compute_info)
+	if err != nil {
+		t.Fatalf("Compute Handler Delete failed: %v", err)
+	}
+	t.Log("Response: ", resp)
+
+	defer conn.Close()
 }

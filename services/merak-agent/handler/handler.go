@@ -12,7 +12,6 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"time"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	constants "github.com/futurewei-cloud/merak/services/common"
@@ -68,7 +67,6 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		Remoteid: "",
 		Status:   pb.Status_ERROR,
 	}
-
 	// Parse input d
 	switch op := in.OperationType; op {
 	case pb.OperationType_CREATE:
@@ -126,7 +124,6 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		ip := gjson.Get(string(respBody), "port.fixed_ips.0.ip_address").Str
 		mac := gjson.Get(string(respBody), "port.mac_address").Str
 		portID := gjson.Get(string(respBody), "port.id").Str
-		vmInfo.Ip = ip
 		if constants.ALCOR_PORT_ID_SUBSTRING_LENGTH >= len(portID) {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Port ID from Alcor too short",
@@ -135,8 +132,12 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 		tapName := "tap" + portID[:11]
-		vmInfo.Deviceid = tapName
-		vmInfo.Remoteid = portID
+		vmInfo = pb.ReturnPortInfo{
+			Ip:       ip,
+			Deviceid: tapName,
+			Remoteid: portID,
+			Status:   pb.Status_ERROR,
+		}
 		// Create Device
 		log.Println("OVS setup")
 		cmd := exec.Command("bash", "-c", "ovs-vsctl add-port br-int "+tapName+" --  set Interface "+tapName+" type=internal")
@@ -368,9 +369,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		log.Println("Sending update_port request to Alcor")
-		client := &http.Client{
-			Timeout: 5 * time.Second,
-		}
+		client := &http.Client{}
 		resp, err = client.Do(req)
 		if err != nil {
 			log.Println("Failed to update port to Alcor!: \n", jsonStringBody)
@@ -392,7 +391,12 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Create Success",
 			ReturnCode:    pb.ReturnCode_OK,
-			Port:          &vmInfo,
+			Port: &pb.ReturnPortInfo{
+				Ip:       ip,
+				Deviceid: tapName,
+				Remoteid: portID,
+				Status:   pb.Status_DONE,
+			},
 		}, nil
 
 	case pb.OperationType_UPDATE:
@@ -401,7 +405,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Update Unimplemented",
 			ReturnCode:    pb.ReturnCode_FAILED,
-			Port:          &vmInfo,
+			Port:          nil,
 		}, errors.New("update unimplemented")
 
 	case pb.OperationType_DELETE:
@@ -419,10 +423,8 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 
-		log.Println("Sending update_port request to Alcor")
-		client := &http.Client{
-			Timeout: 5 * time.Second,
-		}
+		log.Println("Sending delete port request to Alcor", req)
+		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
 			log.Println("Failed to delete port to Alcor!")
@@ -462,7 +464,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 
 		tapName := "tap" + in.Remoteid[:11]
 		log.Println("Deleting TAP device " + tapName)
-		cmd = exec.Command("bash", "-c", "ip tuntap delete name "+tapName+" mode tap")
+		cmd = exec.Command("bash", "-c", "ovs-vsctl del-port br-int "+tapName)
 		stdout, err = cmd.Output()
 		if err != nil {
 			log.Println("Failed to delete tap " + string(stdout))
@@ -473,17 +475,15 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}
 
 		return &pb.AgentReturnInfo{
-			ReturnMessage: "Delete Unimplemented",
-			ReturnCode:    pb.ReturnCode_FAILED,
-			Port:          &vmInfo,
-		}, errors.New("delete unimplemented")
+			ReturnMessage: "Delete Success!",
+			ReturnCode:    pb.ReturnCode_OK,
+		}, nil
 
 	default:
 		log.Println("Unknown Operation")
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Unknown Operation",
 			ReturnCode:    pb.ReturnCode_FAILED,
-			Port:          &vmInfo,
 		}, errors.New("unknown operation")
 	}
 }

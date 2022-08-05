@@ -27,7 +27,7 @@ func VmDelete(ctx context.Context) (*pb.ReturnMessage, error) {
 	logger.Info("Success in getting Pod IDs! " + ids.String())
 	var agent_address strings.Builder
 	for _, podID := range ids.Val() {
-		vmIDsList := common.RedisClient.LRange(ctx, podID, 0, -1)
+		vmIDsList := common.RedisClient.LRange(ctx, "l"+podID, 0, -1)
 		if vmIDsList.Err() != nil {
 			logger.Error("Unable get node vmIDsList from redis", vmIDsList.Err())
 			return &pb.ReturnMessage{
@@ -42,6 +42,7 @@ func VmDelete(ctx context.Context) (*pb.ReturnMessage, error) {
 		conn, err := grpc.Dial(agent_address.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			logger.Info("Failed to dial gRPC server address: "+agent_address.String(), err)
+			continue
 		}
 		client := pb.NewMerakAgentServiceClient(conn)
 		logger.Info("VM Ids " + vmIDsList.String() + "\n")
@@ -53,14 +54,17 @@ func VmDelete(ctx context.Context) (*pb.ReturnMessage, error) {
 				Deviceid:      common.RedisClient.HGet(ctx, vmID, "deviceID").Val(),
 				Remoteid:      common.RedisClient.HGet(ctx, vmID, "remoteID").Val(),
 			}
+			logger.Info("Sending to agent: ", common.RedisClient.HGet(ctx, vmID, "remoteID").Val())
 			resp, err := client.PortHandler(ctx, &port)
 			if err != nil {
-				logger.Error("Unable create vm ID " + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage() + "\n")
+				logger.Error("Unable delete vm ID " + common.RedisClient.HGet(ctx, vmID, "hostIP").Val() + "Reason: " + resp.GetReturnMessage() + "\n")
+				continue
 			}
 		}
 	}
 	common.RedisClient.FlushAll(ctx)
 	return &pb.ReturnMessage{
-		ReturnCode: pb.ReturnCode_OK,
+		ReturnCode:    pb.ReturnCode_OK,
+		ReturnMessage: "Success!",
 	}, nil
 }
