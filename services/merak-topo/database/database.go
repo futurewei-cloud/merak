@@ -25,9 +25,10 @@ var (
 func ConnectDatabase() error {
 	client := redis.NewClient(&redis.Options{
 		// Addr: "localhost:6379",
-		Addr:     "10.213.43.77:55001",
+		Addr: "topo-redis-master.default.svc.cluster.local:55001",
+		// Addr:     "10.213.43.111:55001",
 		Password: "", // no password set
-		DB:       4,  // use default DB
+		DB:       0,  // use default DB
 	})
 
 	if err := client.Ping(Ctx).Err(); err != nil {

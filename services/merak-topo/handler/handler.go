@@ -44,7 +44,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	fmt.Println("======== Generate device nodes ==== ")
 	rack_intf_num := int(aca_per_rack + 1)
 	ovslayer1_intf_num := int(rack_per_layer1 + 1)
-	tor_intf_num := 1
+	tor_intf_num := int(ovs_layer1_num)
 	aca_intf_num := 1
 	ngw_intf_num := 1
 

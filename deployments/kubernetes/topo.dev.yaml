@@ -1,0 +1,118 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: merak-topo-service
+  namespace: merak
+spec:
+  selector:
+    app: merak-topo
+  ports:
+    - protocol: TCP
+      name: grpc
+      port: 40052
+      targetPort: topo-grpc
+  type: ClusterIP
+---
+# Merak Topo Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: merak-topo
+  namespace: merak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: merak-topo
+  template:
+    metadata:
+      labels:
+        app: merak-topo
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: merak-topo
+        image: zzengcs/merak-topo:dev
+        ports:
+          - containerPort: 40052
+            name: topo-grpc
+        
+---
+# Redis Deployment
+apiVersion: apps/v1  # API version
+kind: Deployment
+metadata:
+  name: topo-redis-master # Unique name for the deployment
+  labels:
+    app: topo-redis       # Labels to be applied to this deployment
+spec:
+  selector:
+    matchLabels:     # This deployment applies to the Pods matching these labels
+      app: topo-redis
+      role: master
+      tier: backend
+  replicas: 1        # Run a single pod in the deployment
+  template:          # Template for the pods that will be created by this deployment
+    metadata:
+      labels:        # Labels to be applied to the Pods in this deployment
+        app: topo-redis
+        role: master
+        tier: backend
+    spec:            # Spec for the container which will be run inside the Pod.
+      containers:
+      - name: topo-redis-master
+        image: redis
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 6379
+---        
+apiVersion: v1
+kind: Service        # Type of Kubernetes resource
+metadata:
+  name: topo-redis-master # Name of the Kubernetes resource
+  labels:            # Labels that will be applied to this resource
+    app: topo-redis
+    role: master
+    tier: backend
+spec:
+  ports:
+  - port: 55001       # Map incoming connections on port 55001 to the target port 55001 of the Pod
+    targetPort: 6379
+  selector:          # Map any Pod with the specified labels to this service
+    app: topo-redis
+    role: master
+    tier: backend
+
+# RYU controller deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ryu-deployment
+spec:
+  selector:
+    matchLabels:
+      app: ryu
+  replicas: 20
+  template:
+    metadata:
+      labels:
+        app: ryu
+    spec:
+     #hostNetwork: true
+      containers:
+      - name: ryu
+        image: osrg/ryu
+        args:
+          - ryu-manager
+          - ./ryu/ryu/app/simple_switch_13.py
+        ports:
+        - containerPort: 6653
+          name: openflow

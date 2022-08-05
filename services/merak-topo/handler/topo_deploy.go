@@ -35,7 +35,8 @@ var (
 	OVS_IMAGE = "yanmo96/ovs_only:latest"
 	GW_IMAGE  = "yanmo96/aca_build_standard:v2"
 	// GW_IMAGE = "yanmo96/ym-gateway:latest"
-	RYU_IP   = "10.213.43.111"
+	// RYU_IP   = "10.213.43.111"
+	RYU_IP   = "ryu.default.svc.cluster.local"
 	RYU_PORT = "6653"
 	Ctx      = context.Background()
 
