@@ -46,13 +46,13 @@ func Setup() *fiber.App {
 	// Parse the config
 	cfgPath, err := utils.ParseFlags()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("cannot find config.yaml: %s", err.Error())
 	}
 
 	// Create a config
 	cfg, err := utils.NewConfig(cfgPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error to create config: %s", err.Error())
 	}
 
 	// Start the log
