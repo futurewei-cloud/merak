@@ -3,3 +3,4 @@
 vendor
 services/merak-compute/build/*
 services/scenario-manager/build/*
+services/merak-topo/build/*
