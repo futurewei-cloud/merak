@@ -1,3 +1,16 @@
+/*
+MIT License
+Copyright(c) 2022 Futurewei Cloud
+    Permission is hereby granted,
+    free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+    including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+    to whom the Software is furnished to do so, subject to the following conditions:
+    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
 package database
 
 import (
@@ -8,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/futurewei-cloud/merak/services/scenario-manager/entities"
+	"github.com/futurewei-cloud/merak/services/scenario-manager/logger"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -41,6 +55,7 @@ func Set(key string, val interface{}) error {
 
 	err = Rdb.Set(Ctx, key, jsonVal, 0).Err()
 	if err != nil {
+		logger.Log.Errorf("database SET %s VALUE %s failed %s", key, jsonVal, err.Error())
 		return err
 	}
 	return nil
@@ -49,6 +64,7 @@ func Set(key string, val interface{}) error {
 func Get(key string) (string, error) {
 	val, err := Rdb.Get(Ctx, key).Result()
 	if err != nil {
+		logger.Log.Errorf("database GET %s failed %s", key, err)
 		return "", err
 	}
 	return val, nil
@@ -96,6 +112,7 @@ func getKeys(prefix string) ([]string, error) {
 	}
 
 	if err := iter.Err(); err != nil {
+		logger.Log.Errorf("database scan keys %s failed %s", prefix, err)
 		return nil, fmt.Errorf("scan db error '%s' when retriving key '%s' keys", err, prefix)
 	}
 
@@ -107,6 +124,7 @@ func getKeyAndValueMap(keys []string, prefix string) (map[string]string, error) 
 	for _, key := range keys {
 		value, err := Rdb.Get(Ctx, key).Result()
 		if err != nil {
+			logger.Log.Errorf("database scan keys %s failed %s", prefix, err)
 			return nil, fmt.Errorf("get value error '%s' when retriving key '%s' keys", err, prefix)
 		}
 

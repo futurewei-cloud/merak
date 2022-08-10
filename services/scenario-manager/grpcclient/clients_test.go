@@ -1,3 +1,15 @@
+/*
+MIT License
+Copyright(c) 2022 Futurewei Cloud
+    Permission is hereby granted,
+    free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+    including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+    to whom the Software is furnished to do so, subject to the following conditions:
+    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 package grpcclient
 
 import (
@@ -10,6 +22,7 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
+	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -64,9 +77,13 @@ func TestTopologyClient(t *testing.T) {
 	topoInfo := &pb.InternalTopologyInfo{
 		Config: topoConfig,
 	}
+	//compute := &pb.InternalComputeInfo{Id: "compute1", Name: "compute1", Ip: "10.244.0.1", Mac: "xx.xx.xx.xx.xx", Veth: "eth0", Status: pb.Status_READY}
+	//var computes []*pb.InternalComputeInfo
+	//computes = append(computes, compute)
 	topoRet := &pb.ReturnTopologyMessage{
 		ReturnCode:    pb.ReturnCode_OK,
 		ReturnMessage: "Topology protobuf message received",
+		//ComputeNodes:  computes,
 	}
 
 	tests := []struct {
@@ -102,6 +119,7 @@ func TestTopologyClient(t *testing.T) {
 			if err != nil && errors.Is(err, test.err) {
 				t.Error("error: expected", test.err, "received", err)
 			}
+			log.Printf("responseTopo: %s", proto.MarshalTextString(res))
 		})
 	}
 }

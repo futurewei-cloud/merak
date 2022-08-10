@@ -1,3 +1,16 @@
+/*
+MIT License
+Copyright(c) 2022 Futurewei Cloud
+    Permission is hereby granted,
+    free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+    including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+    to whom the Software is furnished to do so, subject to the following conditions:
+    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
 package routes
 
 import (
@@ -62,6 +75,7 @@ func ScenarioActoins(c *fiber.Ctx) error {
 				sa.Status = entities.STATUS_DONE
 				scenarioStatus = entities.STATUS_DONE
 				logger.Log.Infof("'%s' topology done.", sa.Action)
+				logger.Log.Infof("returnTopo for action %s : %s", sa.Action, returnTopo)
 			}
 		}
 		if strings.ToLower(sa.ServiceName) == "network" {
@@ -74,7 +88,8 @@ func ScenarioActoins(c *fiber.Ctx) error {
 			} else {
 				sa.Status = entities.STATUS_DONE
 				scenarioStatus = entities.STATUS_DONE
-				logger.Log.Infof("'%s' topology done.", sa.Action)
+				logger.Log.Infof("'%s' network done.", sa.Action)
+				logger.Log.Infof("returnNetwork for action %s : %s", sa.Action, returnNetwork)
 			}
 		}
 		if strings.ToLower(sa.ServiceName) == "compute" {
@@ -87,7 +102,8 @@ func ScenarioActoins(c *fiber.Ctx) error {
 			} else {
 				sa.Status = entities.STATUS_DONE
 				scenarioStatus = entities.STATUS_DONE
-				logger.Log.Infof("'%s' topology done.", sa.Action)
+				logger.Log.Infof("'%s' compute done.", sa.Action)
+				logger.Log.Infof("returnCompute for action %s : %s", sa.Action, returnCompute)
 			}
 		}
 	}
@@ -99,7 +115,8 @@ func ScenarioActoins(c *fiber.Ctx) error {
 	if scenario.Status == entities.STATUS_FAILED {
 		return c.Status(http.StatusInternalServerError).JSON(utils.ReturnResponseMessage("FAILED", "Scenario Action Failed.", scenarioAction))
 	}
-	return c.Status(http.StatusOK).JSON(utils.ReturnResponseMessage("OK", "Action on the scenario.", scenarioAction))
+
+	return c.Status(http.StatusOK).JSON(utils.ReturnResponseMessage("OK", "Action on the scenario successfully.", scenarioAction))
 }
 
 //Function for creating a scenario

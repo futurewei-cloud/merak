@@ -6,7 +6,10 @@ import socket
 import uuid
 from argparse import ArgumentParser
 from syslog import syslog
+import time
+import random 
 from time import sleep
+
 
 
 def run_cmd(cmd):
@@ -41,31 +44,35 @@ ip link set dev {bridge} up && \
 ip link set dev {tap} up' ''')
 
     return_code, text = run_cmd(script)
-    print(text)
-    print(return_code)
+    #print(text)
+    #print(return_code)
 
 
 def main():
     parser = ArgumentParser()
     description = "Parser for reading multiple subnets from command line arguments. Will use the first subnet if nothing is given"
     parser = ArgumentParser(description=description)
-    cmd = "/root/alcor-control-agent/build/bin/AlcorControlAgent -d -a 10.213.43.112 -p 30014 > /dev/null 2>&1 &"
+    cmd = "pgrep -x 'AlcorControlAge'"
     text, returncode = run_cmd(cmd)
-    print(text)
-    print(returncode)
+    if not returncode:
+        cmd = "/root/alcor-control-agent/build/bin/AlcorControlAgent -d -a 10.213.43.77 -p 30014 > /dev/null 2>&1 &"
+        text, returncode = run_cmd(cmd)
+        cmd1 = "pgrep -x 'AlcorControlAge'"
+        text, returncode = run_cmd(cmd1)
+        print("ACA is running: %s " % (returncode))
     syslog("ACA started")
     hostname = socket.gethostname()
     host_ip = socket.gethostbyname(hostname)
     syslog("Hostname is {} at IP {}".format(hostname, host_ip))
-    address = "10.213.43.112"
+    address = "10.213.43.77"
     project_id = "123456789"
-    port_name = "merak_port"
     inner_veth_name = "inner-" + uuid.uuid4().hex[-5:]
     outer_veth_name = "outer-" + uuid.uuid4().hex[-5:]
     netns = "ns-" + uuid.uuid4().hex[-5:]
+    port_name = "merak_port_" + netns
     bridge_name = "br0-" + uuid.uuid4().hex[-5:]
     main_interface_name = "eth0"
-    headers = {'Content-Type': 'application/json'}
+    headers = {'Content-Type': 'application/json', 'Accept': '*/*', 'User-Agent': 'interface_create'}
     sm_port = "30002"
     pm_port = "30006"
     vpm_port = "30001"
@@ -159,6 +166,7 @@ def main():
     json_response = response.json()
     sg_id = json_response["security_groups"][0]["id"]
     tenant_id = json_response["security_groups"][0]["tenant_id"]
+    print("tenant_id: %s, security group id: %s" % (tenant_id, sg_id))
 
 ###############GET SUBNET###############
 
@@ -176,22 +184,30 @@ def main():
     subnet_id = json_response["subnets"][0]["id"]
     subnet_ip = json_response["subnets"][0]["cidr"].split("/")[0]
 
-    i = 0
+    i = 1
     parser.add_argument("-s", "--subnets", action="store", dest="subnets",
                         type=str, nargs="*", default=[subnet_id],
                         help="Examples: -s subnet1, subnet2, subnet3")
     opts = parser.parse_args()
 
     for subnet in opts.subnets:
-        print("Creating VM in subnet: {}".format(subnet))
-
-        response = requests.get(get_network_endpoint + subnet)
+        subnet = subnet.strip()
+        print("Creating VM %d in %s ..." % (i, subnet))
+        # sleep(random.randrange(10))
+        sleep(1)
+        syslog("======== Creating VM in subnet: {}".format(subnet))
+        print("requests.get: %s" % get_network_endpoint + subnet)
+        response = requests.get(get_network_endpoint + subnet, headers=headers)
         while not response.ok:
             sleep(5)
             syslog("get_subnet response {}".format(response.text))
-            response = requests.get(get_network_endpoint + subnet)
-        json_response = response.json()
-        gateway = json_response["subnet"]["gateway_ip"]
+            response = requests.get(get_network_endpoint + subnet, headers=headers)
+        if response.ok:
+            json_response = response.json()
+            print("subnet response.text: %s" % response.text)
+            print("subnet json_response: %s" % json_response)
+            gateway = json_response['subnet']['gateway_ip']
+            print("gateway: %s" % gateway)
     ###############CREATE MINIMAL PORT###############
         create_minimal_port_body = {
             "port": {
@@ -227,15 +243,20 @@ def main():
         mac = json_response["port"]["mac_address"]
         tap_name = "tap" + json_response["port"]["id"][:11]
         port_id = json_response["port"]["id"]
+        print("VM %d port created: %s" % (i, port_id))
 
     ###############CREATE VM###############
-        netns += str(i)
-        outer_veth_name += str(i)
-        inner_veth_name += str(i)
-        bridge_name += str(i)
+        # netns += str(i)
+        netns_namespace =  netns + str(i)
+        # outer_veth_name += str(i)
+        outer_veth_name_vm = outer_veth_name + str(i)
+        # inner_veth_name += str(i)
+        inner_veth_name_vm = inner_veth_name + str(i)
+        # bridge_name += str(i)
+        bridge_name_vm = bridge_name + str(i)
         syslog("###############CREATE VM###############")
         create_virtual_instance(
-            netns, ip, mac, prefix, outer_veth_name, inner_veth_name, bridge_name, tap_name, gateway)
+            netns_namespace, ip, mac, prefix, outer_veth_name_vm, inner_veth_name_vm, bridge_name_vm, tap_name, gateway)
     ###############UPDATE PORT###############
         update_port_body = {
             "port": {
@@ -265,7 +286,12 @@ def main():
             response = requests.put(update_port_endpoint, headers=headers, verify=False,
                                     data=json.dumps(update_port_body))
 
+        if not response.ok:
+            print("VM %d port update failed" % i)
+        else:
+            print("VM %d port updated: %s." % (i, port_id))
         i += 1
+        syslog("###############UPDATE PORT Finished###############")
 
 
 main()
