@@ -96,14 +96,14 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 	case pb.OperationType_DELETE:
 		log.Println("Delete")
 		ctx := context.TODO()
-		networkInfoReturn := make(chan *pb.ReturnNetworkMessage)
+		networkDeleteReturn := make(chan *pb.ReturnNetworkMessage)
 		wg.Add(1)
-		go activities.VnetDelete(ctx, netConfigId, &wg, networkInfoReturn)
+		go activities.VnetDelete(ctx, netConfigId, &wg, networkDeleteReturn)
 		//wg.Wait()
 		time.Sleep(5 * time.Second)
 		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_DELETE"
-		returnNetworkMessage := <-networkInfoReturn
+		returnNetworkMessage := <-networkDeleteReturn
 		log.Printf("returnNetworkMessage %s", returnNetworkMessage)
 		return returnNetworkMessage, nil
 	default:
