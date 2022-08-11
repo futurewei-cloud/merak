@@ -47,6 +47,9 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 	netConfigId := in.Config.GetNetconfigId()
 
 	var wg sync.WaitGroup
+	var ifAnyFailure bool
+	ifAnyFailure = false
+	var currentError error
 
 	switch op := in.GetOperationType(); op {
 	case pb.OperationType_INFO:
@@ -61,6 +64,9 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 			var vnetInfoReturn, err = activities.VnetInfo(ctx, netConfigId)
 			if err != nil {
 				returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+				returnNetworkMessage.ReturnMessage = err.Error()
+				ifAnyFailure = true
+				currentError = err
 			}
 			networkInfoReturn <- vnetInfoReturn
 			log.Printf("networkInfoReturn: %s", networkInfoReturn)
@@ -68,8 +74,10 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 
 		returnNetworkMessage := <-networkInfoReturn
 		wg.Wait()
-		log.Println("after wg")
 		log.Printf("returnNetworkMessage %s", returnNetworkMessage)
+		if ifAnyFailure {
+			return nil, currentError
+		}
 		return returnNetworkMessage, nil
 	case pb.OperationType_CREATE:
 		ctx := context.TODO()
@@ -79,7 +87,13 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		projectId := in.Config.Network.Vpcs[0].ProjectId
 		go func() {
 			defer wg.Done()
-			activities.DoServices(ctx, in.Config.GetServices(), &wg, projectId)
+			var _, err = activities.DoServices(ctx, in.Config.GetServices(), &wg, projectId)
+			if err != nil {
+				returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+				returnNetworkMessage.ReturnMessage = err.Error()
+				ifAnyFailure = true
+				currentError = err
+			}
 		}()
 
 		//compute info done
@@ -87,7 +101,13 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			activities.RegisterNode(ctx, in.Config.GetComputes(), &wg, projectId)
+			var _, err = activities.RegisterNode(ctx, in.Config.GetComputes(), &wg, projectId)
+			if err != nil {
+				returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+				returnNetworkMessage.ReturnMessage = err.Error()
+				ifAnyFailure = true
+				currentError = err
+			}
 		}()
 		wg.Wait()
 		//network info done
@@ -99,6 +119,9 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 			var vnetCreateReturn, err = activities.VnetCreate(ctx, netConfigId, in.Config.GetNetwork(), &wg, networkReturn, projectId)
 			if err != nil {
 				returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+				returnNetworkMessage.ReturnMessage = err.Error()
+				ifAnyFailure = true
+				currentError = err
 			}
 			networkReturn <- vnetCreateReturn
 			log.Printf("networkInfoReturn: %s", vnetCreateReturn)
@@ -118,7 +141,9 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_CREATE"
 		returnNetworkMessage := <-networkReturn
 		wg.Wait()
-		log.Println("After Wait")
+		if ifAnyFailure {
+			return nil, currentError
+		}
 		log.Printf("returnNetworkMessage %s", returnNetworkMessage)
 		return returnNetworkMessage, nil
 	case pb.OperationType_UPDATE:
@@ -133,6 +158,9 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 			var vnetDeleteReturn, err = activities.VnetDelete(ctx, netConfigId, &wg, networkDeleteReturn)
 			if err != nil {
 				returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+				returnNetworkMessage.ReturnMessage = err.Error()
+				ifAnyFailure = true
+				currentError = err
 			}
 			networkDeleteReturn <- vnetDeleteReturn
 			log.Printf("networkInfoReturn: %s", vnetDeleteReturn)
@@ -141,6 +169,9 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_DELETE"
 		returnNetworkMessage := <-networkDeleteReturn
+		if ifAnyFailure {
+			return nil, currentError
+		}
 		log.Printf("returnNetworkMessage %s", returnNetworkMessage)
 		return returnNetworkMessage, nil
 	default:

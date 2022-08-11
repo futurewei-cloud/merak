@@ -34,7 +34,7 @@ var (
 	}
 )
 
-func doVPC(vpc *pb.InternalVpcInfo, projectId string) (vpcId string) {
+func doVPC(vpc *pb.InternalVpcInfo, projectId string) (vpcId string, err error) {
 	log.Println("doVPC")
 	vpcBody := entities.VpcStruct{Network: entities.VpcBody{
 		AdminStateUp:        true,
@@ -52,6 +52,7 @@ func doVPC(vpc *pb.InternalVpcInfo, projectId string) (vpcId string) {
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30001/project/"+projectId+"/vpcs", "POST", vpcBody, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
+		return "", returnErr
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.VpcReturn
@@ -59,9 +60,9 @@ func doVPC(vpc *pb.InternalVpcInfo, projectId string) (vpcId string) {
 	database.Set(utils.VPC+returnJson.Network.ID, returnJson.Network)
 	log.Printf("returnJson : %+v", returnJson)
 	log.Println("doVPC done")
-	return returnJson.Network.ID
+	return returnJson.Network.ID, nil
 }
-func doSubnet(subnet *pb.InternalSubnetInfo, vpcId string, projectId string) (subnetId string) {
+func doSubnet(subnet *pb.InternalSubnetInfo, vpcId string, projectId string) (subnetId string, err error) {
 	log.Println("doSubnet")
 	subnetBody := entities.SubnetStruct{Subnet: entities.SubnetBody{
 		Cider:     subnet.SubnetCidr,
@@ -72,6 +73,7 @@ func doSubnet(subnet *pb.InternalSubnetInfo, vpcId string, projectId string) (su
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30002/project/"+projectId+"/subnets", "POST", subnetBody, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
+		return "", returnErr
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.SubnetReturn
@@ -79,9 +81,9 @@ func doSubnet(subnet *pb.InternalSubnetInfo, vpcId string, projectId string) (su
 	database.Set(utils.SUBNET+returnJson.Subnet.ID, returnJson.Subnet)
 	log.Printf("doSubnet returnJson : %+v", returnJson)
 	log.Println("doSubnet done")
-	return returnJson.Subnet.ID
+	return returnJson.Subnet.ID, nil
 }
-func doRouter(vpcId string, projectId string) (routerId string) {
+func doRouter(vpcId string, projectId string) (routerId string, err error) {
 	log.Println("doRouter")
 	routerBody := entities.RouterStruct{Router: entities.RouterBody{
 		AdminStateUp: true,
@@ -104,6 +106,7 @@ func doRouter(vpcId string, projectId string) (routerId string) {
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30003/project/"+projectId+"/routers", "POST", routerBody, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
+		return "", returnErr
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.RouterReturn
@@ -111,7 +114,7 @@ func doRouter(vpcId string, projectId string) (routerId string) {
 	database.Set(utils.Router+returnJson.Router.ID, returnJson.Router)
 	log.Printf("returnJson : %+v", returnJson)
 	log.Println("doRouter done")
-	return returnJson.Router.ID
+	return returnJson.Router.ID, nil
 }
 func doAttachRouter(routerId string, subnetId string, projectId string) error {
 	log.Println("doAttachRouter")
@@ -120,6 +123,7 @@ func doAttachRouter(routerId string, subnetId string, projectId string) error {
 	returnMessage, returnErr := http.RequestCall(url, "PUT", attachRouterBody, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
+		return returnErr
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.AttachRouterReturn
@@ -128,7 +132,7 @@ func doAttachRouter(routerId string, subnetId string, projectId string) error {
 	log.Println("doAttachRouter done")
 	return nil
 }
-func doSg(sg *pb.InternalSecurityGroupInfo, sgID string, projectId string) string {
+func doSg(sg *pb.InternalSecurityGroupInfo, sgID string, projectId string) (string, error) {
 	log.Println("doSg")
 	sgBody := entities.SgStruct{Sg: entities.SgBody{
 		Id:                 sgID,
@@ -141,6 +145,7 @@ func doSg(sg *pb.InternalSecurityGroupInfo, sgID string, projectId string) strin
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30008/project/"+projectId+"/security-groups", "POST", sgBody, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
+		return "", returnErr
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.SgReturn
@@ -148,7 +153,7 @@ func doSg(sg *pb.InternalSecurityGroupInfo, sgID string, projectId string) strin
 	database.Set(utils.SECURITYGROUP+returnJson.SecurityGroup.ID, returnJson.SecurityGroup)
 	log.Printf("returnJson : %+v", returnJson)
 	log.Println("doSg done")
-	return returnJson.SecurityGroup.ID
+	return returnJson.SecurityGroup.ID, nil
 }
 
 func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNetworkInfo, wg *sync.WaitGroup, returnMessage chan *pb.ReturnNetworkMessage, projectId string) (*pb.ReturnNetworkMessage, error) {
@@ -162,13 +167,19 @@ func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNet
 	var vpcIds []string
 	subnetCiderIdMap := make(map[string]string)
 	for _, vpc := range network.Vpcs {
-		vpcId = doVPC(vpc, projectId)
+		vpcId, err := doVPC(vpc, projectId)
+		if err != nil {
+			return nil, err
+		}
 		vpcIds = append(vpcIds, vpcId)
 		var returnInfo []*pb.InternalVpcInfo
 
 		var subnetInfo []*pb.InternalSubnetInfo
 		for _, subnet := range vpc.Subnets {
-			subnetId := doSubnet(subnet, vpcId, projectId)
+			subnetId, err := doSubnet(subnet, vpcId, projectId)
+			if err != nil {
+				return nil, err
+			}
 			subnetCiderIdMap[subnet.SubnetCidr] = subnetId
 			log.Printf("subnetCiderIdMap %s", subnetCiderIdMap)
 			currentSubnet := pb.InternalSubnetInfo{
@@ -192,16 +203,25 @@ func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNet
 	//doing security group
 	for _, sg := range network.SecurityGroups {
 		sgId := utils.GenUUID()
-		go doSg(sg, sgId, projectId)
+		_, err := doSg(sg, sgId, projectId)
+		if err != nil {
+			return nil, err
+		}
 		returnNetworkMessage.SecurityGroupIds = append(returnNetworkMessage.SecurityGroupIds, sgId)
 		log.Printf("sgId: %s", sgId)
 	}
 
 	//doing router: create and attach subnet
 	for _, router := range network.Routers {
-		routerId := doRouter(vpcId, projectId)
+		routerId, err := doRouter(vpcId, projectId)
+		if err != nil {
+			return nil, err
+		}
 		for _, subnet := range router.Subnets {
-			doAttachRouter(routerId, subnetCiderIdMap[subnet], projectId)
+			err := doAttachRouter(routerId, subnetCiderIdMap[subnet], projectId)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	database.Set(utils.NETCONFIG+netConfigId, &returnNetworkMessage)

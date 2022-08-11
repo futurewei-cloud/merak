@@ -72,6 +72,7 @@ func DoServices(ctx context.Context, services []*pb.InternalServiceInfo, wg *syn
 				returnMessage, returnErr := http.RequestCall(idServiceMap[currentId].Url, strings.Split(idServiceMap[currentId].Parameters[0], " ")[0], payload, headers)
 				if returnErr != nil {
 					log.Printf("returnErr %s", returnErr)
+					return "", returnErr
 				}
 				log.Printf("returnMessage %s", returnMessage)
 
@@ -85,7 +86,7 @@ func DoServices(ctx context.Context, services []*pb.InternalServiceInfo, wg *syn
 				stdout, err := cmd.Output()
 				if err != nil {
 					fmt.Println(err.Error())
-					return "", nil
+					return "", err
 				}
 				log.Printf("shellCommand out: %s", string(stdout))
 				log.Println("curl service")

@@ -25,21 +25,22 @@ import (
 	"sync"
 )
 
-func getSubnetRouter(subnetId string, projectId string) (returnRouterId string) {
+func getSubnetRouter(subnetId string, projectId string) (returnRouterId string, err error) {
 	log.Println("getSubnetRouter")
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30002/project/"+projectId+"/subnets/"+subnetId, "GET", "", nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
+		return "", returnErr
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.SubnetReturn
 	json.Unmarshal([]byte(returnMessage), &returnJson)
 	log.Printf("returnJson : %s", returnJson)
 	log.Println("getSubnetRouter done")
-	return returnJson.Subnet.AttachedRouterID
+	return returnJson.Subnet.AttachedRouterID, nil
 }
 
-func removeInterfaceToNeutronRouter(subnetId string, routerId string, projectId string) (returnRouterId string) {
+func removeInterfaceToNeutronRouter(subnetId string, routerId string, projectId string) (returnRouterId string, err error) {
 	log.Println("removeInterfaceToNeutronRouter")
 	payloadBody := entities.RemoveInterfaceToNeutronRouterBody{
 		SubnetId: subnetId,
@@ -47,6 +48,7 @@ func removeInterfaceToNeutronRouter(subnetId string, routerId string, projectId 
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30003/project/"+projectId+"/routers/"+routerId+"/remove_router_interface", "PUT", payloadBody, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
+		return "", returnErr
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.RemoveInterfaceToNeutronRouterReturn
@@ -54,14 +56,15 @@ func removeInterfaceToNeutronRouter(subnetId string, routerId string, projectId 
 	log.Printf("removeInterfaceToNeutronRouter returnJson : %s", returnJson)
 	log.Println("removeInterfaceToNeutronRouter done")
 
-	return returnJson.ID
+	return returnJson.ID, nil
 }
 
-func deleteNeutronRouterByRouterId(routerId string, projectId string) (returnRouterId string) {
+func deleteNeutronRouterByRouterId(routerId string, projectId string) (returnRouterId string, err error) {
 	log.Println("deleteNeutronRouterByRouterId")
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30003/project/"+projectId+"/routers/"+routerId, "DELETE", "", nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
+		return "", returnErr
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	database.Del(utils.Router + routerId)
@@ -69,42 +72,45 @@ func deleteNeutronRouterByRouterId(routerId string, projectId string) (returnRou
 	json.Unmarshal([]byte(returnMessage), &returnJson)
 	log.Printf("deleteNeutronRouterByRouterId returnJson : %s", returnJson)
 	log.Println("deleteNeutronRouterByRouterId done")
-	return returnJson.ID
+	return returnJson.ID, nil
 }
-func deleteSubnet(subnetId string, projectId string) (returnSubnetId string) {
+func deleteSubnet(subnetId string, projectId string) (returnSubnetId string, err error) {
 	log.Println("deleteSubnet")
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30002/project/"+projectId+"/subnets/"+subnetId, "DELETE", "", nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
+		return "", returnErr
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	database.Del(utils.SUBNET + subnetId)
 	log.Println("deleteSubnet done")
-	return subnetId
+	return subnetId, nil
 }
 
-func deleteVpc(vpcId string, projectId string) (returnVpcId string) {
+func deleteVpc(vpcId string, projectId string) (returnVpcId string, err error) {
 	log.Println("deleteVpc")
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30001/project/"+projectId+"/vpcs/"+vpcId, "DELETE", "", nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
+		return "", returnErr
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	database.Del(utils.VPC + vpcId)
 	log.Println("deleteVpc done")
-	return vpcId
+	return vpcId, nil
 }
 
-func deleteSg(sgId string, projectId string) (returnVpcId string) {
+func deleteSg(sgId string, projectId string) (returnVpcId string, err error) {
 	log.Println("deleteSg")
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30008/project/"+projectId+"/security-groups/"+sgId, "DELETE", "", nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
+		return "", returnErr
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	database.Del(utils.SECURITYGROUP + sgId)
 	log.Println("deleteVpc done")
-	return sgId
+	return sgId, nil
 }
 
 func VnetDelete(ctx context.Context, netConfigId string, wg *sync.WaitGroup, returnMessage chan *pb.ReturnNetworkMessage) (*pb.ReturnNetworkMessage, error) {
@@ -125,9 +131,15 @@ func VnetDelete(ctx context.Context, netConfigId string, wg *sync.WaitGroup, ret
 		var routerIds []string
 		routerIdsMap := make(map[string]int) //to keep track if the router already been appended to routerIds
 		for _, subnet := range vpc.Subnets {
-			routerId := getSubnetRouter(subnet.SubnetId, projectId)
+			routerId, err := getSubnetRouter(subnet.SubnetId, projectId)
+			if err != nil {
+				return nil, err
+			}
 			if routerId != "" {
-				returnRouterId := removeInterfaceToNeutronRouter(subnet.SubnetId, routerId, projectId)
+				returnRouterId, err := removeInterfaceToNeutronRouter(subnet.SubnetId, routerId, projectId)
+				if err != nil {
+					return nil, err
+				}
 				if returnRouterId != routerId {
 					log.Printf("Router Subnet Interface delete fail %s", routerId)
 				}
@@ -140,7 +152,10 @@ func VnetDelete(ctx context.Context, netConfigId string, wg *sync.WaitGroup, ret
 			deleteSubnet(subnet.SubnetId, projectId)
 		}
 		for _, routerId := range routerIds {
-			returnRouterId := deleteNeutronRouterByRouterId(routerId, projectId)
+			returnRouterId, err := deleteNeutronRouterByRouterId(routerId, projectId)
+			if err != nil {
+				return nil, err
+			}
 			if returnRouterId != routerId {
 				log.Printf("Router delete fail %s", routerId)
 			}

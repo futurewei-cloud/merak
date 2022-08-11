@@ -46,6 +46,7 @@ func RegisterNode(ctx context.Context, compute []*pb.InternalComputeInfo, wg *sy
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30007/nodes/bulk", "POST", nodeInfo, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
+		return "", returnErr
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.NodeReturn
