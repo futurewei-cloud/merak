@@ -20,21 +20,20 @@ import (
 	"github.com/futurewei-cloud/merak/services/merak-network/database"
 	"github.com/futurewei-cloud/merak/services/merak-network/utils"
 	"log"
-	"sync"
 )
 
-func VnetInfo(ctx context.Context, netConfigId string, wg *sync.WaitGroup, returnMessage chan *pb.ReturnNetworkMessage) (string, error) {
-	defer wg.Done()
+func VnetInfo(ctx context.Context, netConfigId string) (*pb.ReturnNetworkMessage, error) {
+	//defer wg.Done()
 	// TODO: when query db, make sure to check if key exist first, other wise could timeout
 	log.Println("VnetInfo")
 	values, err := database.Get(utils.NETCONFIG + netConfigId)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	log.Printf("VnetInfo %s", values)
 	var returnJson *pb.ReturnNetworkMessage
 	json.Unmarshal([]byte(values), &returnJson)
 	log.Printf("returnMessage %s", returnJson)
-	returnMessage <- returnJson
-	return "VnetInfo", nil
+	//returnMessage <- returnJson
+	return returnJson, nil
 }

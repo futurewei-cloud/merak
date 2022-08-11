@@ -57,6 +57,12 @@ func DoServices(ctx context.Context, services []*pb.InternalServiceInfo, wg *syn
 	for _, eachRunId := range runIds {
 		currentId := eachRunId
 		for {
+			//returnMessage, returnErr := http.RequestCall(idServiceMap[currentId].Url, "POST", idServiceMap[currentId].Parameters)
+			//if returnErr != nil {
+			//	log.Fatalf("returnErr %s", returnErr)
+			//}
+			//log.Printf("returnMessage %s", returnMessage)
+
 			if idServiceMap[currentId].Cmd == "curl" {
 				log.Println("ssh service")
 				var headers []string

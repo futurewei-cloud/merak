@@ -151,7 +151,7 @@ func doSg(sg *pb.InternalSecurityGroupInfo, sgID string, projectId string) strin
 	return returnJson.SecurityGroup.ID
 }
 
-func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNetworkInfo, wg *sync.WaitGroup, returnMessage chan *pb.ReturnNetworkMessage, projectId string) (string, error) {
+func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNetworkInfo, wg *sync.WaitGroup, returnMessage chan *pb.ReturnNetworkMessage, projectId string) (*pb.ReturnNetworkMessage, error) {
 	log.Println("VnetCreate")
 	//defer wg.Done()
 	// TODO may want to separate bellow sections to different function, and use `go` and `wg` to improve overall speed
@@ -162,12 +162,15 @@ func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNet
 	var vpcIds []string
 	subnetCiderIdMap := make(map[string]string)
 	for _, vpc := range network.Vpcs {
+		//for i := 0; i < int(network.NumberOfVpcs); i++ {
 		vpcId = doVPC(vpc, projectId)
 		vpcIds = append(vpcIds, vpcId)
 		var returnInfo []*pb.InternalVpcInfo
 
 		var subnetInfo []*pb.InternalSubnetInfo
 		for _, subnet := range vpc.Subnets {
+			//for j := 0; j < int(network.NumberOfSubnetPerVpc); j++ {
+			//subnetId := utils.GenUUID()
 			subnetId := doSubnet(subnet, vpcId, projectId)
 			subnetCiderIdMap[subnet.SubnetCidr] = subnetId
 			log.Printf("subnetCiderIdMap %s", subnetCiderIdMap)
@@ -185,17 +188,23 @@ func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNet
 			ProjectId: vpc.ProjectId,
 			Subnets:   subnetInfo,
 		}
+		//returnInfo = append(returnInfo, &currentVPC)
 		returnNetworkMessage.Vpcs = append(returnNetworkMessage.Vpcs, &currentVPC)
+		//returnNetworkMessage.Vpcs = append(returnNetworkMessage.Vpcs, returnInfo)
 		log.Printf("VnetCreate End %s", returnInfo)
 	}
 
 	//doing security group
 	for _, sg := range network.SecurityGroups {
 		sgId := utils.GenUUID()
+		//go doSg(network.SecurityGroups[i], sgId)
 		go doSg(sg, sgId, projectId)
 		returnNetworkMessage.SecurityGroupIds = append(returnNetworkMessage.SecurityGroupIds, sgId)
 		log.Printf("sgId: %s", sgId)
 	}
+	//for _, sg := range network.SecurityGroups{
+	//
+	//}
 
 	//doing router: create and attach subnet
 	for _, router := range network.Routers {
@@ -205,8 +214,7 @@ func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNet
 		}
 	}
 	database.Set(utils.NETCONFIG+netConfigId, &returnNetworkMessage)
-	returnMessage <- &returnNetworkMessage
+	//returnMessage <- &returnNetworkMessage
 	log.Printf("&returnNetworkMessage %s", &returnNetworkMessage)
-	defer wg.Done()
-	return "VnetCreate", nil
+	return &returnNetworkMessage, nil
 }

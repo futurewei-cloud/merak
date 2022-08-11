@@ -13,6 +13,8 @@ Copyright(c) 2022 Futurewei Cloud
 
 package service
 
+//package main
+
 import (
 	"context"
 	"flag"
@@ -21,11 +23,14 @@ import (
 	"github.com/futurewei-cloud/merak/services/merak-network/activities"
 	"log"
 	"sync"
-	"time"
 )
 
 var (
 	Port = flag.Int("port", constants.NETWORK_GRPC_SERVER_PORT, "The server port")
+	//returnMessage = pb.ReturnMessage{
+	//	ReturnCode:    pb.ReturnCode_FAILED,
+	//	ReturnMessage: "Unintialized",
+	//}
 
 	returnNetworkMessage = pb.ReturnNetworkMessage{
 		ReturnCode:       pb.ReturnCode_FAILED,
@@ -44,23 +49,34 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 	log.Printf("OP type %s", in.GetOperationType())
 
 	netConfigId := in.Config.GetNetconfigId()
+	//projectId := in.Config.Network.SecurityGroups[0].ProjectId
 
 	//wg := new(sync.WaitGroup)
 	var wg sync.WaitGroup
 	// Parse input
 
+	//switch op := in.OperationType; op {
 	switch op := in.GetOperationType(); op {
 	case pb.OperationType_INFO:
 		ctx := context.TODO()
 		log.Println("Info")
+		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_INFO haha"
+		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
 		networkInfoReturn := make(chan *pb.ReturnNetworkMessage)
 		wg.Add(1)
-		go activities.VnetInfo(ctx, netConfigId, &wg, networkInfoReturn)
-		//wg.Wait()
-		time.Sleep(5 * time.Second)
-		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
-		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_INFO"
+		go func() {
+			defer wg.Done()
+			var vnetInfoReturn, err = activities.VnetInfo(ctx, netConfigId)
+			if err != nil {
+				returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+			}
+			networkInfoReturn <- vnetInfoReturn
+			log.Printf("networkInfoReturn: %s", networkInfoReturn)
+		}()
+
 		returnNetworkMessage := <-networkInfoReturn
+		wg.Wait()
+		log.Println("after wg")
 		log.Printf("returnNetworkMessage %s", returnNetworkMessage)
 		return returnNetworkMessage, nil
 	case pb.OperationType_CREATE:
@@ -68,21 +84,36 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		// services
 		log.Println(in.Config.Services)
 		wg.Add(1)
-		//go activities.DoServices(ctx, in.Config.Services, wg)
 		projectId := in.Config.Network.Vpcs[0].ProjectId
-		go activities.DoServices(ctx, in.Config.GetServices(), &wg, projectId)
+		//go activities.DoServices(ctx, in.Config.GetServices(), &wg, projectId)
+		go func() {
+			defer wg.Done()
+			activities.DoServices(ctx, in.Config.GetServices(), &wg, projectId)
+		}()
 
 		//compute info done
 		log.Println(in.Config.Computes)
 		wg.Add(1)
-		//go activities.RegisterNode(ctx, in.Config.Computes, wg)
-		go activities.RegisterNode(ctx, in.Config.GetComputes(), &wg, projectId)
+		//go activities.RegisterNode(ctx, in.Config.GetComputes(), &wg, projectId)
+		go func() {
+			defer wg.Done()
+			activities.RegisterNode(ctx, in.Config.GetComputes(), &wg, projectId)
+		}()
+		wg.Wait()
 		//network info done
 		log.Println(in.Config.Network)
 		wg.Add(1)
 		networkReturn := make(chan *pb.ReturnNetworkMessage)
-		//go activities.VnetCreate(ctx, in.Config.Network, wg, networkReturn)
-		go activities.VnetCreate(ctx, netConfigId, in.Config.GetNetwork(), &wg, networkReturn, projectId)
+		//go activities.VnetCreate(ctx, netConfigId, in.Config.GetNetwork(), &wg, networkReturn, projectId)
+		go func() {
+			defer wg.Done()
+			var vnetCreateReturn, err = activities.VnetCreate(ctx, netConfigId, in.Config.GetNetwork(), &wg, networkReturn, projectId)
+			if err != nil {
+				returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+			}
+			networkReturn <- vnetCreateReturn
+			log.Printf("networkInfoReturn: %s", vnetCreateReturn)
+		}()
 
 		//// storage info
 		//for _, storage := range in.Config.Storage {
@@ -93,13 +124,12 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		//	log.Println(extraInfo)
 		//}
 		log.Println("Before Wait")
-		//wg.Wait()
-		time.Sleep(5 * time.Second)
-		log.Println("After Wait")
 
 		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_CREATE"
 		returnNetworkMessage := <-networkReturn
+		wg.Wait()
+		log.Println("After Wait")
 		log.Printf("returnNetworkMessage %s", returnNetworkMessage)
 		return returnNetworkMessage, nil
 	case pb.OperationType_UPDATE:
@@ -109,9 +139,18 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		ctx := context.TODO()
 		networkDeleteReturn := make(chan *pb.ReturnNetworkMessage)
 		wg.Add(1)
-		go activities.VnetDelete(ctx, netConfigId, &wg, networkDeleteReturn)
-		//wg.Wait()
-		time.Sleep(5 * time.Second)
+		//go activities.VnetDelete(ctx, netConfigId, &wg, networkInfoReturn)
+		go func() {
+			defer wg.Done()
+			var vnetDeleteReturn, err = activities.VnetDelete(ctx, netConfigId, &wg, networkDeleteReturn)
+			if err != nil {
+				returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+			}
+			networkDeleteReturn <- vnetDeleteReturn
+			log.Printf("networkInfoReturn: %s", vnetDeleteReturn)
+		}()
+		wg.Wait()
+		//time.Sleep(5 * time.Second)
 		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_DELETE"
 		returnNetworkMessage := <-networkDeleteReturn

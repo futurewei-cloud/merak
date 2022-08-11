@@ -97,7 +97,7 @@ func deleteVpc(vpcId string, projectId string) (returnVpcId string) {
 
 func deleteSg(sgId string, projectId string) (returnVpcId string) {
 	log.Println("deleteSg")
-	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30001/project/"+projectId+"/security-groups/"+sgId, "DELETE", "", nil)
+	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30008/project/"+projectId+"/security-groups/"+sgId, "DELETE", "", nil)
 	if returnErr != nil {
 		log.Fatalf("returnErr %s", returnErr)
 	}
@@ -107,13 +107,36 @@ func deleteSg(sgId string, projectId string) (returnVpcId string) {
 	return sgId
 }
 
-func VnetDelete(ctx context.Context, netConfigId string, wg *sync.WaitGroup, returnMessage chan *pb.ReturnNetworkMessage) (string, error) {
-	defer wg.Done()
+//func deleteRouter(vpcId string, projectId string) (returnVpcId string) {
+//	log.Println("deleteRouter")
+//	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30003/project/"+projectId+"/vpcs/"+vpcId+"/router", "DELETE", "", nil)
+//	if returnErr != nil {
+//		log.Fatalf("returnErr %s", returnErr)
+//	}
+//	log.Printf("returnMessage %s", returnMessage)
+//	//database.Del(utils.Router + vpcId)
+//	log.Println("deleteSubnet done")
+//	return vpcId
+//}
+
+//func deleteRouteTable(subnetId string, projectId string) (returnVpcId string) {
+//	log.Println("deleteRouteTable")
+//	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30003/project/"+projectId+"/subnets/"+subnetId+"/routetable", "DELETE", "", nil)
+//	if returnErr != nil {
+//		log.Fatalf("returnErr %s", returnErr)
+//	}
+//	log.Printf("returnMessage %s", returnMessage)
+//	//database.Del(utils.Router + vpcId)
+//	log.Println("deleteSubnet done")
+//	return subnetId
+//}
+
+func VnetDelete(ctx context.Context, netConfigId string, wg *sync.WaitGroup, returnMessage chan *pb.ReturnNetworkMessage) (*pb.ReturnNetworkMessage, error) {
 	// TODO: when query db, make sure to check if key exist first, other wise could timeout
 	log.Println("VnetDelete")
 	values, err := database.Get(utils.NETCONFIG + netConfigId)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	log.Printf("VnetInfo %s", values)
 	log.Printf("returnMessage %s", returnMessage)
@@ -160,6 +183,6 @@ func VnetDelete(ctx context.Context, netConfigId string, wg *sync.WaitGroup, ret
 	json.Unmarshal([]byte(values), &returnJson)
 	log.Printf("returnMessage %s", returnJson)
 
-	returnMessage <- returnJson
-	return "VnetInfo", nil
+	//returnMessage <- returnJson
+	return returnJson, nil
 }

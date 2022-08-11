@@ -52,6 +52,5 @@ func RegisterNode(ctx context.Context, compute []*pb.InternalComputeInfo, wg *sy
 	json.Unmarshal([]byte(returnMessage), &returnJson)
 	log.Printf("returnJson : %+v", returnJson)
 	log.Println("RegisterNode done")
-	defer wg.Done()
 	return "", nil
 }
