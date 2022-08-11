@@ -51,7 +51,7 @@ func doVPC(vpc *pb.InternalVpcInfo, projectId string) (vpcId string) {
 	}}
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30001/project/"+projectId+"/vpcs", "POST", vpcBody, nil)
 	if returnErr != nil {
-		log.Fatalf("returnErr %s", returnErr)
+		log.Printf("returnErr %s", returnErr)
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.VpcReturn
@@ -71,7 +71,7 @@ func doSubnet(subnet *pb.InternalSubnetInfo, vpcId string, projectId string) (su
 	}}
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30002/project/"+projectId+"/subnets", "POST", subnetBody, nil)
 	if returnErr != nil {
-		log.Fatalf("returnErr %s", returnErr)
+		log.Printf("returnErr %s", returnErr)
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.SubnetReturn
@@ -103,7 +103,7 @@ func doRouter(vpcId string, projectId string) (routerId string) {
 	}}
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30003/project/"+projectId+"/routers", "POST", routerBody, nil)
 	if returnErr != nil {
-		log.Fatalf("returnErr %s", returnErr)
+		log.Printf("returnErr %s", returnErr)
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.RouterReturn
@@ -119,7 +119,7 @@ func doAttachRouter(routerId string, subnetId string, projectId string) error {
 	url := "http://" + utils.ALCORURL + ":30003/project/" + projectId + "/routers/" + routerId + "/add_router_interface"
 	returnMessage, returnErr := http.RequestCall(url, "PUT", attachRouterBody, nil)
 	if returnErr != nil {
-		log.Fatalf("returnErr %s", returnErr)
+		log.Printf("returnErr %s", returnErr)
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.AttachRouterReturn
@@ -140,7 +140,7 @@ func doSg(sg *pb.InternalSecurityGroupInfo, sgID string, projectId string) strin
 	}}
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30008/project/"+projectId+"/security-groups", "POST", sgBody, nil)
 	if returnErr != nil {
-		log.Fatalf("returnErr %s", returnErr)
+		log.Printf("returnErr %s", returnErr)
 	}
 	log.Printf("returnMessage %s", returnMessage)
 	var returnJson entities.SgReturn
@@ -162,15 +162,12 @@ func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNet
 	var vpcIds []string
 	subnetCiderIdMap := make(map[string]string)
 	for _, vpc := range network.Vpcs {
-		//for i := 0; i < int(network.NumberOfVpcs); i++ {
 		vpcId = doVPC(vpc, projectId)
 		vpcIds = append(vpcIds, vpcId)
 		var returnInfo []*pb.InternalVpcInfo
 
 		var subnetInfo []*pb.InternalSubnetInfo
 		for _, subnet := range vpc.Subnets {
-			//for j := 0; j < int(network.NumberOfSubnetPerVpc); j++ {
-			//subnetId := utils.GenUUID()
 			subnetId := doSubnet(subnet, vpcId, projectId)
 			subnetCiderIdMap[subnet.SubnetCidr] = subnetId
 			log.Printf("subnetCiderIdMap %s", subnetCiderIdMap)
@@ -188,23 +185,17 @@ func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNet
 			ProjectId: vpc.ProjectId,
 			Subnets:   subnetInfo,
 		}
-		//returnInfo = append(returnInfo, &currentVPC)
 		returnNetworkMessage.Vpcs = append(returnNetworkMessage.Vpcs, &currentVPC)
-		//returnNetworkMessage.Vpcs = append(returnNetworkMessage.Vpcs, returnInfo)
 		log.Printf("VnetCreate End %s", returnInfo)
 	}
 
 	//doing security group
 	for _, sg := range network.SecurityGroups {
 		sgId := utils.GenUUID()
-		//go doSg(network.SecurityGroups[i], sgId)
 		go doSg(sg, sgId, projectId)
 		returnNetworkMessage.SecurityGroupIds = append(returnNetworkMessage.SecurityGroupIds, sgId)
 		log.Printf("sgId: %s", sgId)
 	}
-	//for _, sg := range network.SecurityGroups{
-	//
-	//}
 
 	//doing router: create and attach subnet
 	for _, router := range network.Routers {
@@ -214,7 +205,6 @@ func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNet
 		}
 	}
 	database.Set(utils.NETCONFIG+netConfigId, &returnNetworkMessage)
-	//returnMessage <- &returnNetworkMessage
 	log.Printf("&returnNetworkMessage %s", &returnNetworkMessage)
 	return &returnNetworkMessage, nil
 }

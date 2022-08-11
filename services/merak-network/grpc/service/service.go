@@ -27,10 +27,6 @@ import (
 
 var (
 	Port = flag.Int("port", constants.NETWORK_GRPC_SERVER_PORT, "The server port")
-	//returnMessage = pb.ReturnMessage{
-	//	ReturnCode:    pb.ReturnCode_FAILED,
-	//	ReturnMessage: "Unintialized",
-	//}
 
 	returnNetworkMessage = pb.ReturnNetworkMessage{
 		ReturnCode:       pb.ReturnCode_FAILED,
@@ -49,13 +45,9 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 	log.Printf("OP type %s", in.GetOperationType())
 
 	netConfigId := in.Config.GetNetconfigId()
-	//projectId := in.Config.Network.SecurityGroups[0].ProjectId
 
-	//wg := new(sync.WaitGroup)
 	var wg sync.WaitGroup
-	// Parse input
 
-	//switch op := in.OperationType; op {
 	switch op := in.GetOperationType(); op {
 	case pb.OperationType_INFO:
 		ctx := context.TODO()
@@ -85,7 +77,6 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		log.Println(in.Config.Services)
 		wg.Add(1)
 		projectId := in.Config.Network.Vpcs[0].ProjectId
-		//go activities.DoServices(ctx, in.Config.GetServices(), &wg, projectId)
 		go func() {
 			defer wg.Done()
 			activities.DoServices(ctx, in.Config.GetServices(), &wg, projectId)
@@ -94,7 +85,6 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		//compute info done
 		log.Println(in.Config.Computes)
 		wg.Add(1)
-		//go activities.RegisterNode(ctx, in.Config.GetComputes(), &wg, projectId)
 		go func() {
 			defer wg.Done()
 			activities.RegisterNode(ctx, in.Config.GetComputes(), &wg, projectId)
@@ -104,7 +94,6 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		log.Println(in.Config.Network)
 		wg.Add(1)
 		networkReturn := make(chan *pb.ReturnNetworkMessage)
-		//go activities.VnetCreate(ctx, netConfigId, in.Config.GetNetwork(), &wg, networkReturn, projectId)
 		go func() {
 			defer wg.Done()
 			var vnetCreateReturn, err = activities.VnetCreate(ctx, netConfigId, in.Config.GetNetwork(), &wg, networkReturn, projectId)
@@ -139,7 +128,6 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		ctx := context.TODO()
 		networkDeleteReturn := make(chan *pb.ReturnNetworkMessage)
 		wg.Add(1)
-		//go activities.VnetDelete(ctx, netConfigId, &wg, networkInfoReturn)
 		go func() {
 			defer wg.Done()
 			var vnetDeleteReturn, err = activities.VnetDelete(ctx, netConfigId, &wg, networkDeleteReturn)
@@ -150,7 +138,6 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 			log.Printf("networkInfoReturn: %s", vnetDeleteReturn)
 		}()
 		wg.Wait()
-		//time.Sleep(5 * time.Second)
 		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_DELETE"
 		returnNetworkMessage := <-networkDeleteReturn

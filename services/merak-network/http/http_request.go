@@ -40,9 +40,6 @@ func RequestCall(url, method string, bodyIn interface{}, headers []string) (stri
 			req.Header.Add(strings.Split(header, " ")[0], strings.Split(header, " ")[1])
 		}
 	}
-	//req.Header.Set("user-agent", "golang application")
-	//req.Header.Add("foo", "bar1")
-	//req.Header.Add("foo", "bar2")
 	response, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("Got error %s", err.Error())
@@ -50,10 +47,7 @@ func RequestCall(url, method string, bodyIn interface{}, headers []string) (stri
 	defer response.Body.Close()
 	bodyBytes, _ := ioutil.ReadAll(response.Body)
 	bodyString := string(bodyBytes)
-	//log.Printf("response: %s", bodyString)
 	if response.StatusCode < 200 || response.StatusCode > 299 {
-		//log.Printf("RequestCall Fail Code %s", response.StatusCode)
-		//log.Printf("RequestCall Fail %s", bodyString)
 		log.Println("RequestCall Fail ", response.StatusCode, bodyString)
 		return "", fmt.Errorf(bodyString)
 	}

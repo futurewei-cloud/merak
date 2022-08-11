@@ -89,40 +89,6 @@ func FindEntity(id string, prefix string, entity interface{}) error {
 	return err
 }
 
-func GetAllValuesWithKeyPrefix(prefix string) (map[string]string, error) {
-	keys, err := getKeys(fmt.Sprintf("%s*", prefix))
-	if err != nil {
-		return nil, err
-	}
-
-	values, err := getKeyAndValueMap(keys, prefix)
-	if err != nil {
-		return nil, err
-	}
-	return values, nil
-}
-
-func getKeys(prefix string) ([]string, error) {
-	var allkeys []string
-	var cursor uint64
-	count := int64(10)
-
-	for {
-		var keys []string
-		var err error
-		keys, cursor, err := Rdb.Scan(Ctx, cursor, prefix, count).Result()
-		if err != nil {
-			return nil, fmt.Errorf("scan db error '%s' when retriving key '%s' keys", err, prefix)
-		}
-
-		allkeys = append(allkeys, keys...)
-		if cursor == 0 {
-			break
-		}
-	}
-	return allkeys, nil
-}
-
 func getKeyAndValueMap(keys []string, prefix string) (map[string]string, error) {
 	values := make(map[string]string)
 	for _, key := range keys {

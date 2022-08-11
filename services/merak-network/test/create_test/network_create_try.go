@@ -173,7 +173,7 @@ func main() {
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Printf("did not connect: %v", err)
 	}
 	defer conn.Close()
 	// c := pb.NewGreeterClient(conn)
@@ -185,7 +185,7 @@ func main() {
 	// r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
 	r, err := c.NetConfigHandler(ctx, &testInternalNetConfigInfo)
 	if err != nil {
-		log.Fatalf("could not greet: %v", err)
+		log.Printf("could not greet: %v", err)
 	}
 	//log.Printf("Greeting: %s", r.GetMessage())
 	log.Printf("Return: %s", r)

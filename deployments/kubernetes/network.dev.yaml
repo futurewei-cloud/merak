@@ -9,17 +9,11 @@
 #    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 #    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# Merak namespace
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: merak-network
----
 apiVersion: v1
 kind: Service
 metadata:
   name: merak-network-service
-  namespace: merak-network
+  namespace: merak
 spec:
   selector:
     app: merak-network
@@ -35,7 +29,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: merak-network
-  namespace: merak-network
+  namespace: merak
 spec:
   replicas: 1
   selector:
@@ -47,21 +41,21 @@ spec:
         app: merak-network
     spec:
       tolerations:
-      - key: "node-role.kubernetes.io/master"
-        operator: "Exists"
-        effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
       containers:
-      - name: merak-network
-        image: yanmo96/merak-network:dev
-        ports:
-          - containerPort: 40053
-            name: network-grpc
+        - name: merak-network
+          image: yanmo96/merak-network:dev
+          ports:
+            - containerPort: 40053
+              name: network-grpc
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: network-redis-main
-  namespace: merak-network
+  namespace: merak
   labels:
     app: redis
     role: main
@@ -81,7 +75,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis-main
-  namespace: merak-network
+  namespace: merak
   labels:
     app: redis
     role: main

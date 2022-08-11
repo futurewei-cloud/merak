@@ -23,7 +23,6 @@ import (
 )
 
 func VnetInfo(ctx context.Context, netConfigId string) (*pb.ReturnNetworkMessage, error) {
-	//defer wg.Done()
 	// TODO: when query db, make sure to check if key exist first, other wise could timeout
 	log.Println("VnetInfo")
 	values, err := database.Get(utils.NETCONFIG + netConfigId)
@@ -34,6 +33,5 @@ func VnetInfo(ctx context.Context, netConfigId string) (*pb.ReturnNetworkMessage
 	var returnJson *pb.ReturnNetworkMessage
 	json.Unmarshal([]byte(values), &returnJson)
 	log.Printf("returnMessage %s", returnJson)
-	//returnMessage <- returnJson
 	return returnJson, nil
 }
