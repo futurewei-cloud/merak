@@ -46,7 +46,7 @@ func main() {
 
 	log.Printf("Starting gRPC server. Listening at %v", lis.Addr())
 	if err := gRPCServer.Serve(lis); err != nil {
-		log.Printf("failed to serve: %v", err)
+		log.Fatalf("failed to serve: %v", err)
 	}
 
 	defer service.TemporalClient.Close()
