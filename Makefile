@@ -63,7 +63,7 @@ docker-network:
 
 
 .PHONY: docker-topo
-docker-topop:
+docker-topo:
 	make proto
 	make topo
 	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
