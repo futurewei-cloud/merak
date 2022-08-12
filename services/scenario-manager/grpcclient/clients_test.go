@@ -204,12 +204,12 @@ func TestNetworkClient(t *testing.T) {
 	}
 }
 
-func (*mockMerakComputeServiceServer) ComputeHandler(ctx context.Context, req *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
+func (*mockMerakComputeServiceServer) ComputeHandler(ctx context.Context, req *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
 	if req.Config.GetRequestId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "request id cannot be empty %v", req.Config.GetRequestId())
 	}
 
-	return &pb.ReturnMessage{ReturnCode: pb.ReturnCode_OK, ReturnMessage: "Compute protobuf message received"}, nil
+	return &pb.ReturnComputeMessage{ReturnCode: pb.ReturnCode_OK, ReturnMessage: "Compute protobuf message received"}, nil
 }
 
 func computeDialer() func(context.Context, string) (net.Conn, error) {
