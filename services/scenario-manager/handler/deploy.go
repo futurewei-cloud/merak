@@ -203,10 +203,6 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.Return
 		return nil, fmt.Errorf("compute config %s not found", s.ComputeConfId)
 	}
 
-	if compute.Status != entities.STATUS_NONE {
-		return nil, fmt.Errorf("compute config '%s' is '%s' now", compute.Id, compute.Status)
-	}
-
 	if action == entities.EVENT_DEPLOY && compute.Status != entities.STATUS_NONE {
 		return nil, fmt.Errorf("compute '%s' is '%s' now", compute.Id, compute.Status)
 	}
