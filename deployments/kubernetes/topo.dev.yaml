@@ -73,6 +73,7 @@ spec:
       containers:
       - name: merak-topology
         image: meraksim/merak-topo:dev
+        imagePullPolicy: Always
         ports:
           - containerPort: 40052
             name: topology-grpc

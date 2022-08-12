@@ -54,6 +54,7 @@ spec:
       containers:
       - name: merak-compute
         image: meraksim/merak-compute:dev
+        imagePullPolicy: Always
         ports:
           - containerPort: 40051
             name: compute-grpc
@@ -84,6 +85,7 @@ spec:
       containers:
       - name: merak-compute-vm-worker
         image: meraksim/merak-compute-vm-worker:dev
+        imagePullPolicy: Always
         env:
         - name: "TEMPORAL"
           value: "temporaltest-frontend.default.svc.cluster.local"

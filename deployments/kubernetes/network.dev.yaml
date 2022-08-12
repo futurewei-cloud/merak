@@ -47,6 +47,7 @@ spec:
       containers:
         - name: merak-network
           image: meraksim/merak-network:dev
+          imagePullPolicy: Always
           ports:
             - containerPort: 40053
               name: network-grpc
