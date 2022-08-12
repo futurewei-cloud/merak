@@ -63,7 +63,7 @@ docker-network:
 
 
 .PHONY: docker-topo
-docker-topop:
+docker-topo:
 	make proto
 	make topo
 	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
@@ -89,9 +89,9 @@ docker-all:
 
 .PHONY: clean
 clean:
-	rm api/proto/v1/merak/*.pb.go
-	rm services/merak-compute/build/*
-	rm services/merak-agent/build/*
-	rm services/scenario-manager/build/*
-	rm services/merak-network/build/*
-	rm services/merak-topo/build/*
+	rm -rf api/proto/v1/merak/*.pb.go
+	rm -rf services/merak-compute/build/*
+	rm -rf services/merak-agent/build/*
+	rm -rf services/scenario-manager/build/*
+	rm -rf services/merak-network/build/*
+	rm -rf services/merak-topo/build/*

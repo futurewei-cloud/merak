@@ -57,7 +57,7 @@ func ValidateConfigPath(path string) error {
 func ParseFlags() (string, error) {
 	var configPath string
 
-	flag.StringVar(&configPath, "config", "./config.yaml", "path to config file")
+	flag.StringVar(&configPath, "config", "./merak-bin/config.yaml", "path to config file")
 
 	flag.Parse()
 
