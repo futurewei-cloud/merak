@@ -12,15 +12,22 @@
 modules := services
 -include $(patsubst %, %/module.mk, $(modules))
 
-all:: services proto
+.DEFAULT_GOAL := all
+
+.PHONY: all
+all:: proto services
 
 proto:
 	protoc --go_out=api/proto/v1/ --go-grpc_out=api/proto/v1/ -I api/proto/v1/ api/proto/v1/*.proto
 
+.PHONY: deploy-dev
 deploy-dev:
 	kubectl apply -f deployments/kubernetes/scenario.dev.yaml
+	kubectl apply -f deployments/kubernetes/compute.dev.yaml
+	kubectl apply -f deployments/kubernetes/network.dev.yaml
+	kubectl apply -f deployments/kubernetes/topo.dev.yaml
 
-
+.PHONY: docker-scenario
 docker-scenario:
 # Scenario-Manager
 	make proto
@@ -28,6 +35,8 @@ docker-scenario:
 	docker build -t meraksim/scenario-manager:dev -f docker/scenario.Dockerfile .
 	docker push meraksim/scenario-manager:dev
 
+
+.PHONY: docker-compute
 docker-compute:
 	make proto
 	make compute
@@ -36,31 +45,34 @@ docker-compute:
 	docker push meraksim/merak-compute:dev
 	docker push meraksim/merak-compute-vm-worker:dev
 
+
+.PHONY: docker-agent
 docker-agent:
 	make proto
 	make agent
 	docker build -t meraksim/merak-agent:dev -f docker/agent.Dockerfile .
 	docker push meraksim/merak-agent:dev
 
+
+.PHONY: docker-network
 docker-network:
 	make proto
 	make network
 	docker build -t meraksim/merak-network:dev -f docker/network.Dockerfile .
 	docker push meraksim/merak-network:dev
 
+
+.PHONY: docker-topo
 docker-topop:
 	make proto
 	make topo
 	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
 	docker push meraksim/merak-topo:dev
 
+
+.PHONY: docker-all
 docker-all:
-	make proto
-	make topo
-	make network
-	make compute
-	make scenario
-	make agent
+	make
 	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
 	docker push meraksim/merak-topo:dev
 	docker build -t meraksim/merak-network:dev -f docker/network.Dockerfile .
@@ -74,9 +86,8 @@ docker-all:
 	docker build -t meraksim/scenario-manager:dev -f docker/scenario.Dockerfile .
 	docker push meraksim/scenario-manager:dev
 
-test:
-	go test -v services/merak-compute/tests/compute_test.go
 
+.PHONY: clean
 clean:
 	rm api/proto/v1/merak/*.pb.go
 	rm services/merak-compute/build/*
