@@ -46,7 +46,7 @@ spec:
           effect: "NoSchedule"
       containers:
         - name: merak-network
-          image: yanmo96/merak-network:dev
+          image: meraksim/merak-network:dev
           ports:
             - containerPort: 40053
               name: network-grpc

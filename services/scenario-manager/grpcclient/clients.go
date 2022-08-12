@@ -116,7 +116,7 @@ func (g GrpcClient) NetConfigHandler(ctx context.Context, netconfpb *pb.Internal
 	return response, nil
 }
 
-func ComputeClient(computepb *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
+func ComputeClient(computepb *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
 	var conn *grpc.ClientConn
 
 	addr := constants.COMPUTE_GRPC_SERVER_ADDRESS + ":" + strconv.Itoa(constants.COMPUTE_GRPC_SERVER_PORT)
@@ -137,7 +137,7 @@ func ComputeClient(computepb *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, 
 	return response, nil
 }
 
-func (g GrpcClient) ComputeHandler(ctx context.Context, computepb *pb.InternalComputeConfigInfo) (*pb.ReturnMessage, error) {
+func (g GrpcClient) ComputeHandler(ctx context.Context, computepb *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
 	client := pb.NewMerakComputeServiceClient(g.conn)
 
 	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(g.timeout))
