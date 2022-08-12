@@ -93,7 +93,7 @@ func ScenarioActoins(c *fiber.Ctx) error {
 			}
 		}
 		if strings.ToLower(sa.ServiceName) == "compute" {
-			var returnCompute *pb.ReturnMessage
+			var returnCompute *pb.ReturnComputeMessage
 			returnCompute, err := handler.ComputeHanlder(&scenario, sa.Action)
 			if err != nil || returnCompute.ReturnCode == pb.ReturnCode_FAILED {
 				sa.Status = entities.STATUS_FAILED

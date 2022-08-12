@@ -197,7 +197,7 @@ func NetworkHandler(s *entities.Scenario, action entities.EventName) (*pb.Return
 	return responseNetwork, nil
 }
 
-func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.ReturnMessage, error) {
+func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.ReturnComputeMessage, error) {
 	var compute entities.ComputeConfig
 	if err := database.FindEntity(s.ComputeConfId, utils.KEY_PREFIX_COMPUTE, &compute); err != nil {
 		return nil, fmt.Errorf("compute config %s not found", s.ComputeConfId)
