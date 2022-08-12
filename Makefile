@@ -73,18 +73,35 @@ docker-topo:
 .PHONY: docker-all
 docker-all:
 	make
-	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
-	docker push meraksim/merak-topo:dev
-	docker build -t meraksim/merak-network:dev -f docker/network.Dockerfile .
-	docker push meraksim/merak-network:dev
-	docker build -t meraksim/merak-agent:dev -f docker/agent.Dockerfile .
-	docker push meraksim/merak-agent:dev
 	docker build -t meraksim/merak-compute:dev -f docker/compute.Dockerfile .
 	docker build -t meraksim/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
+	docker build -t meraksim/merak-agent:dev -f docker/agent.Dockerfile .
+	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
+	docker build -t meraksim/merak-network:dev -f docker/network.Dockerfile .
+	docker build -t meraksim/scenario-manager:dev -f docker/scenario.Dockerfile .
 	docker push meraksim/merak-compute:dev
 	docker push meraksim/merak-compute-vm-worker:dev
-	docker build -t meraksim/scenario-manager:dev -f docker/scenario.Dockerfile .
+	docker push meraksim/merak-agent:dev
 	docker push meraksim/scenario-manager:dev
+	docker push meraksim/merak-network:dev
+	docker push meraksim/merak-topo:dev
+
+.PHONY: docker-all-ci
+docker-all-ci:
+	make
+	docker build -t meraksim/merak-compute:ci -f docker/compute.Dockerfile .
+	docker build -t meraksim/merak-compute-vm-worker:ci -f docker/compute-vm-worker.Dockerfile .
+	docker build -t meraksim/merak-topo:ci -f docker/topo.Dockerfile .
+	docker build -t meraksim/merak-network:ci -f docker/network.Dockerfile .
+	docker build -t meraksim/scenario-manager:ci -f docker/scenario.Dockerfile .
+	docker build -t meraksim/merak-agent:ci -f docker/agent.Dockerfile .
+	docker push meraksim/merak-agent:ci
+	docker push meraksim/merak-compute:ci
+	docker push meraksim/merak-compute-vm-worker:ci
+	docker push meraksim/merak-network:ci
+	docker push meraksim/merak-topo:ci
+	docker push meraksim/scenario-manager:ci
+
 
 
 .PHONY: clean
