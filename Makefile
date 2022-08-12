@@ -82,3 +82,5 @@ clean:
 	rm services/merak-compute/build/*
 	rm services/merak-agent/build/*
 	rm services/scenario-manager/build/*
+	rm services/merak-network/build/*
+	rm services/merak-topo/build/*
