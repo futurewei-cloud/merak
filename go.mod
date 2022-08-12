@@ -8,12 +8,12 @@ require (
 	github.com/tidwall/gjson v1.14.1
 	go.temporal.io/sdk v1.14.0
 	google.golang.org/grpc v1.46.2
+	google.golang.org/protobuf v1.28.0
 	k8s.io/api v0.24.3
 	k8s.io/apimachinery v0.24.3
 	k8s.io/client-go v0.24.3
 	k8s.io/utils v0.0.0-20220810061631-2e139fc3ae1e
 	sigs.k8s.io/controller-runtime v0.12.3
-	google.golang.org/protobuf v1.28.0
 )
 
 require (
@@ -43,7 +43,6 @@ require (
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/tidwall/gjson v1.14.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/yuin/gopher-lua v0.0.0-20220504180219-658193537a64 // indirect

@@ -20,24 +20,59 @@ proto:
 deploy-dev:
 	kubectl apply -f deployments/kubernetes/scenario.dev.yaml
 
+
 docker-scenario:
 # Scenario-Manager
 	make proto
 	make scenario
-	docker build -t cjchung4849/scenario-manager:dev -f docker/scenario.Dockerfile .
-	docker push cjchung4849/scenario-manager:dev
+	docker build -t meraksim/scenario-manager:dev -f docker/scenario.Dockerfile .
+	docker push meraksim/scenario-manager:dev
 
 docker-compute:
 	make proto
-	docker build -t phudtran/merak-compute:dev -f docker/compute.Dockerfile .
-	docker build -t phudtran/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
-	docker push phudtran/merak-compute:dev
-	docker push phudtran/merak-compute-vm-worker:dev
+	make compute
+	docker build -t meraksim/merak-compute:dev -f docker/compute.Dockerfile .
+	docker build -t meraksim/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
+	docker push meraksim/merak-compute:dev
+	docker push meraksim/merak-compute-vm-worker:dev
 
 docker-agent:
 	make proto
-	docker build -t phudtran/merak-agent:dev -f docker/agent.Dockerfile .
-	docker push phudtran/merak-agent:dev
+	make agent
+	docker build -t meraksim/merak-agent:dev -f docker/agent.Dockerfile .
+	docker push meraksim/merak-agent:dev
+
+docker-network:
+	make proto
+	make network
+	docker build -t meraksim/merak-network:dev -f docker/network.Dockerfile .
+	docker push meraksim/merak-network:dev
+
+docker-topop:
+	make proto
+	make topo
+	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
+	docker push meraksim/merak-topo:dev
+
+docker-all:
+	make proto
+	make topo
+	make network
+	make compute
+	make scenario
+	make agent
+	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
+	docker push meraksim/merak-topo:dev
+	docker build -t meraksim/merak-network:dev -f docker/network.Dockerfile .
+	docker push meraksim/merak-network:dev
+	docker build -t meraksim/merak-agent:dev -f docker/agent.Dockerfile .
+	docker push meraksim/merak-agent:dev
+	docker build -t meraksim/merak-compute:dev -f docker/compute.Dockerfile .
+	docker build -t meraksim/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
+	docker push meraksim/merak-compute:dev
+	docker push meraksim/merak-compute-vm-worker:dev
+	docker build -t meraksim/scenario-manager:dev -f docker/scenario.Dockerfile .
+	docker push meraksim/scenario-manager:dev
 
 test:
 	go test -v services/merak-compute/tests/compute_test.go

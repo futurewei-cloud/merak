@@ -53,7 +53,7 @@ spec:
         effect: "NoSchedule"
       containers:
       - name: merak-compute
-        image: phudtran/merak-compute:dev
+        image: meraksim/merak-compute:dev
         ports:
           - containerPort: 40051
             name: compute-grpc
@@ -83,7 +83,7 @@ spec:
         effect: "NoSchedule"
       containers:
       - name: merak-compute-vm-worker
-        image: phudtran/merak-compute-vm-worker:dev
+        image: meraksim/merak-compute-vm-worker:dev
         env:
         - name: "TEMPORAL"
           value: "temporaltest-frontend.default.svc.cluster.local"
