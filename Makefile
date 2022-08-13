@@ -14,6 +14,8 @@ modules := services
 
 .DEFAULT_GOAL := all
 
+GFLAGS = CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+
 .PHONY: all
 all:: proto services
 
