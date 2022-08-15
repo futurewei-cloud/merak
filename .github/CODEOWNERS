@@ -9,11 +9,8 @@
 #     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-module := merak-compute
-
-merak-compute: compute vm-worker
-
-compute:
-	$(GFLAGS) go build -o services/merak-compute/build/merak-compute services/merak-compute/compute.go
-vm-worker:
-	$(GFLAGS) go build -o services/merak-compute/build/merak-compute-vm-worker services/merak-compute/workers/worker.go
+services/merak-agent @phudtran @cj-chung
+services/merak-compute @phudtran @cj-chung
+services/merak-network @yanmo96 @cj-chung
+services/scenario-manager @cj-chung
+services/merak-topo @zzengcs @cj-chung

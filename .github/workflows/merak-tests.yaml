@@ -9,11 +9,30 @@
 #     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-module := merak-compute
+name: merak-ci
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: [self-hosted, merak-ci]
+    steps:
+    - uses: actions/checkout@v3
 
-merak-compute: compute vm-worker
+    - name: Build
+      run: make
 
-compute:
-	$(GFLAGS) go build -o services/merak-compute/build/merak-compute services/merak-compute/compute.go
-vm-worker:
-	$(GFLAGS) go build -o services/merak-compute/build/merak-compute-vm-worker services/merak-compute/workers/worker.go
+    - name: Build images
+      run: make docker-all-ci
+
+    - name: deploy merak
+      run: kubectl apply -f deployments/kubernetes/merak.ci.yaml
+
+### CLEAN-UP ####
+    - name: delete merak
+      run: kubectl delete -f deployments/kubernetes/merak.ci.yaml
