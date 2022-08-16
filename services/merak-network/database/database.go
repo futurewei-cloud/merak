@@ -32,7 +32,7 @@ var (
 
 func ConnectDatabase() error {
 	client := redis.NewClient(&redis.Options{
-		Addr: "network-redis-main.merak-network.svc.cluster.local:30053",
+		Addr: "network-redis-network.merak.svc.cluster.local:30053",
 		//Username: "default",
 		//Password: "redispw",
 		DB: 0,
