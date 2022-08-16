@@ -16,14 +16,17 @@ package handler
 import (
 	"strings"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	compute_pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
+	network_pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
+	topology_pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/entities"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
 )
 
-func constructTopologyMessage(topo *entities.TopologyConfig, topoPb *pb.InternalTopologyInfo, action entities.EventName) error {
+func constructTopologyMessage(topo *entities.TopologyConfig, topoPb *topology_pb.InternalTopologyInfo, action entities.EventName) error {
 	topoPb.OperationType = actionToOperation(action)
-	var conf pb.InternalTopologyConfiguration
+	var conf topology_pb.InternalTopologyConfiguration
 	conf.FormatVersion = 1
 	conf.RevisionNumber = 1
 	conf.RequestId = utils.GenUUID()
@@ -39,7 +42,7 @@ func constructTopologyMessage(topo *entities.TopologyConfig, topoPb *pb.Internal
 	conf.GatewayIps = topo.GatewayIPs
 
 	for _, image := range topo.Images {
-		var imagePb pb.InternalTopologyImage
+		var imagePb topology_pb.InternalTopologyImage
 		imagePb.OperationType = actionToOperation(action)
 		imagePb.Id = image.Id
 		imagePb.Name = image.Name
@@ -50,12 +53,12 @@ func constructTopologyMessage(topo *entities.TopologyConfig, topoPb *pb.Internal
 	}
 
 	for _, vnode := range topo.VNodes {
-		var vnodePb pb.InternalVNodeInfo
+		var vnodePb topology_pb.InternalVNodeInfo
 		vnodePb.OperationType = actionToOperation(action)
 		vnodePb.Name = vnode.Name
 		vnodePb.Type = getVNodeType(vnode.Type)
 		for _, vnic := range vnode.Nics {
-			var vnicPb pb.InternalVNicInfo
+			var vnicPb topology_pb.InternalVNicInfo
 			vnicPb.Name = vnic.Name
 			vnicPb.Ip = vnic.Ip
 			vnodePb.Vnics = append(vnodePb.Vnics, &vnicPb)
@@ -81,39 +84,39 @@ func actionToOperation(action entities.EventName) pb.OperationType {
 	}
 }
 
-func getTopoloyType(topoType string) pb.TopologyType {
+func getTopoloyType(topoType string) topology_pb.TopologyType {
 	switch strings.ToLower(topoType) {
 	case "linear":
-		return pb.TopologyType_LINEAR
+		return topology_pb.TopologyType_LINEAR
 	case "single":
-		return pb.TopologyType_SINGLE
+		return topology_pb.TopologyType_SINGLE
 	case "reversed":
-		return pb.TopologyType_REVERSED
+		return topology_pb.TopologyType_REVERSED
 	case "mesh":
-		return pb.TopologyType_MESH
+		return topology_pb.TopologyType_MESH
 	case "custom":
-		return pb.TopologyType_CUSTOM
+		return topology_pb.TopologyType_CUSTOM
 	default:
-		return pb.TopologyType_TREE
+		return topology_pb.TopologyType_TREE
 	}
 }
 
-func getVNodeType(vnodeType string) pb.VNodeType {
+func getVNodeType(vnodeType string) topology_pb.VNodeType {
 	switch strings.ToLower(vnodeType) {
 	case "vswitch":
-		return pb.VNodeType_VSWITCH
+		return topology_pb.VNodeType_VSWITCH
 	case "vrouter":
-		return pb.VNodeType_VROUTER
+		return topology_pb.VNodeType_VROUTER
 	case "vgateway":
-		return pb.VNodeType_VGATEWAY
+		return topology_pb.VNodeType_VGATEWAY
 	default:
-		return pb.VNodeType_VHOST
+		return topology_pb.VNodeType_VHOST
 	}
 }
 
-func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entities.ServiceConfig, topoReturn *pb.ReturnTopologyMessage, netconfPb *pb.InternalNetConfigInfo, action entities.EventName) error {
+func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entities.ServiceConfig, topoReturn *topology_pb.ReturnTopologyMessage, netconfPb *network_pb.InternalNetConfigInfo, action entities.EventName) error {
 	netconfPb.OperationType = actionToOperation(action)
-	var conf pb.InternalNetConfigConfiguration
+	var conf network_pb.InternalNetConfigConfiguration
 	conf.FormatVersion = 1
 	conf.RevisionNumber = 1
 	conf.RequestId = utils.GenUUID()
@@ -139,7 +142,7 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 		}
 	}
 
-	var netPb pb.InternalNetworkInfo
+	var netPb network_pb.InternalNetworkInfo
 	netPb.OperationType = actionToOperation(action)
 	netPb.Id = netconf.Id
 	netPb.Name = netconf.Name
@@ -166,7 +169,7 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 	}
 
 	for _, router := range netconf.Routers {
-		var routerPb pb.InternalRouterInfo
+		var routerPb network_pb.InternalRouterInfo
 		routerPb.OperationType = actionToOperation(action)
 		routerPb.Id = router.Id
 		routerPb.Name = router.Name
@@ -175,7 +178,7 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 	}
 
 	for _, gateway := range netconf.Gateways {
-		var gatewayPb pb.InternalGatewayInfo
+		var gatewayPb network_pb.InternalGatewayInfo
 		gatewayPb.OperationType = actionToOperation(action)
 		gatewayPb.Id = gateway.Id
 		gatewayPb.Name = gateway.Name
@@ -184,14 +187,14 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 	}
 
 	for _, sg := range netconf.SecurityGroups {
-		var sgPb pb.InternalSecurityGroupInfo
+		var sgPb network_pb.InternalSecurityGroupInfo
 		sgPb.OperationType = actionToOperation(action)
 		sgPb.Id = sg.Id
 		sgPb.Name = sg.Name
 		sgPb.ApplyTo = sg.ApplyTo
 
 		for _, rule := range sg.Rules {
-			var sgRulePb pb.InternalSecurityGroupRulelnfo
+			var sgRulePb network_pb.InternalSecurityGroupRulelnfo
 			sgRulePb.OperationType = actionToOperation(action)
 			sgRulePb.Id = rule.Id
 			sgRulePb.Name = rule.Name
@@ -213,10 +216,10 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 	return nil
 }
 
-func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entities.ServiceConfig, topoReturn *pb.ReturnTopologyMessage, netReturn *pb.ReturnNetworkMessage, computePb *pb.InternalComputeConfigInfo, action entities.EventName) error {
+func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entities.ServiceConfig, topoReturn *topology_pb.ReturnTopologyMessage, netReturn *network_pb.ReturnNetworkMessage, computePb *compute_pb.InternalComputeConfigInfo, action entities.EventName) error {
 	computePb.OperationType = pb.OperationType_CREATE
 
-	var conf pb.InternalComputeConfiguration
+	var conf compute_pb.InternalComputeConfiguration
 	conf.FormatVersion = 1
 	conf.RevisionNumber = 1
 	conf.RequestId = utils.GenUUID()
@@ -224,7 +227,7 @@ func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entit
 	conf.MessageType = pb.MessageType_FULL
 	conf.Pods = topoReturn.GetComputeNodes()
 
-	var vmDeployPb pb.InternalVMDeployInfo
+	var vmDeployPb compute_pb.InternalVMDeployInfo
 	vmDeployPb.OperationType = pb.OperationType_CREATE
 	vmDeployPb.Vpcs = netReturn.GetVpcs()
 	vmDeployPb.Secgroups = netReturn.GetSecurityGroupIds()
@@ -255,28 +258,28 @@ func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entit
 	return nil
 }
 
-func getVMDeployType(deploy string) pb.VMDeployType {
+func getVMDeployType(deploy string) compute_pb.VMDeployType {
 	switch strings.ToLower(deploy) {
 	case "assign":
-		return pb.VMDeployType_ASSIGN
+		return compute_pb.VMDeployType_ASSIGN
 	case "skew":
-		return pb.VMDeployType_SKEW
+		return compute_pb.VMDeployType_SKEW
 	case "random":
-		return pb.VMDeployType_RANDOM
+		return compute_pb.VMDeployType_RANDOM
 	default:
-		return pb.VMDeployType_UNIFORM
+		return compute_pb.VMDeployType_UNIFORM
 	}
 }
 
-func getVMDeployScheduler(scheduler string) pb.VMScheduleType {
+func getVMDeployScheduler(scheduler string) compute_pb.VMScheduleType {
 	switch strings.ToLower(scheduler) {
 	case "sequential":
-		return pb.VMScheduleType_SEQUENTIAL
+		return compute_pb.VMScheduleType_SEQUENTIAL
 	case "skew":
-		return pb.VMScheduleType_RPS
+		return compute_pb.VMScheduleType_RPS
 	case "random":
-		return pb.VMScheduleType_RANDOM_SCHEDULE
+		return compute_pb.VMScheduleType_RANDOM_SCHEDULE
 	default:
-		return pb.VMScheduleType_SEQUENTIAL
+		return compute_pb.VMScheduleType_SEQUENTIAL
 	}
 }

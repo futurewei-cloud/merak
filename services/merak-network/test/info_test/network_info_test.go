@@ -19,7 +19,8 @@ import (
 	"log"
 	"time"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -41,7 +42,7 @@ func main() {
 		NetconfigId:    "InternalNetConfigConfigurationNetconfigId",
 	}
 	testInternalNetConfigInfo := pb.InternalNetConfigInfo{
-		OperationType: pb.OperationType_INFO,
+		OperationType: common_pb.OperationType_INFO,
 		Config:        &testInternalNetConfigConfiguration,
 	}
 

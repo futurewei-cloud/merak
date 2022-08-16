@@ -10,13 +10,14 @@ Copyright(c) 2022 Futurewei Cloud
     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
 syntax="proto3";
-package merak;
-option go_package = "merak/";
+package network;
 import "common.proto";
+option go_package = "github.com/futurewei-cloud/merak/api/proto/v1/network;network";
 
 message InternalSecurityGroupRulelnfo {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     string id = 2;
     string name = 3;
     string description = 4;
@@ -29,21 +30,21 @@ message InternalSecurityGroupRulelnfo {
 }
 
 message InternalRouterInfo {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     string id = 2;
     string name = 3;
     repeated string subnets = 4;
 }
 
 message InternalGatewayInfo {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     string id = 2;
     string name = 3;
     repeated string ips = 4;
 }
 
 message InternalSecurityGroupInfo {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     string id = 2;
     string name = 3;
     string tenant_id = 4;
@@ -53,12 +54,12 @@ message InternalSecurityGroupInfo {
 }
 
 message InternalNetworkInfo {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     string id = 2;
     string name = 3;
     uint32 number_of_vpcs = 4;
     uint32 number_of_subnet_per_vpc = 5;
-    repeated InternalVpcInfo vpcs = 6;
+    repeated common.InternalVpcInfo vpcs = 6;
     uint32 number_of_security_groups = 7;
     repeated InternalRouterInfo routers = 8;
     repeated InternalGatewayInfo gateways = 9;
@@ -78,23 +79,23 @@ message InternalNetConfigConfiguration {
     uint32 revision_number = 2;
     string request_id = 3;
     string netconfig_id = 4;
-    MessageType message_type = 5;
-    repeated InternalServiceInfo services = 6;
-    repeated InternalComputeInfo computes = 7;
+    common.MessageType message_type = 5;
+    repeated common.InternalServiceInfo services = 6;
+    repeated common.InternalComputeInfo computes = 7;
     InternalNetworkInfo network = 8;
     InternalStorageInfo storage = 9;
     InternalNetConfigExtraInfo extra_info = 10;
 }
 
 message InternalNetConfigInfo {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     InternalNetConfigConfiguration config = 2;
 }
 
 message ReturnNetworkMessage {
-    ReturnCode return_code = 1;
+    common.ReturnCode return_code = 1;
     string return_message = 2;
-    repeated InternalVpcInfo vpcs = 3;
+    repeated common.InternalVpcInfo vpcs = 3;
     repeated string security_group_ids = 4;
 }
 

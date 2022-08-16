@@ -10,9 +10,10 @@ Copyright(c) 2022 Futurewei Cloud
     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
 syntax="proto3";
-package merak;
-option go_package = "merak/";
+package agent;
+option go_package = "github.com/futurewei-cloud/merak/api/proto/v1/agent;agent";
 import "common.proto";
 
 service MerakAgentService {
@@ -20,7 +21,7 @@ service MerakAgentService {
 }
 
 message InternalPortConfig {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     string id = 2;
     string name = 3;
     string vpcid = 4;
@@ -39,11 +40,11 @@ message ReturnPortInfo {
     string ip = 1;
     string remoteid = 2;
     string deviceid = 3;
-    Status status = 8;
+    common.Status status = 8;
 }
 
 message AgentReturnInfo {
-    ReturnCode return_code = 1;
+    common.ReturnCode return_code = 1;
     string return_message = 2;
     ReturnPortInfo port = 3;
 }

@@ -13,7 +13,7 @@ Copyright(c) 2022 Futurewei Cloud
 package create
 
 import (
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/temporal"

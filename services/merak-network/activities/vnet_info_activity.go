@@ -16,10 +16,11 @@ package activities
 import (
 	"context"
 	"encoding/json"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	"log"
+
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
 	"github.com/futurewei-cloud/merak/services/merak-network/database"
 	"github.com/futurewei-cloud/merak/services/merak-network/utils"
-	"log"
 )
 
 func VnetInfo(ctx context.Context, netConfigId string) (*pb.ReturnNetworkMessage, error) {

@@ -16,7 +16,8 @@ import (
 	"context"
 	"strconv"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/activity"
@@ -29,7 +30,7 @@ func VmInfo(ctx context.Context) (*pb.ReturnComputeMessage, error) {
 		logger.Error("Unable get VM IDs from redis", ids.Err())
 
 		return &pb.ReturnComputeMessage{
-			ReturnCode:    pb.ReturnCode_FAILED,
+			ReturnCode:    common_pb.ReturnCode_FAILED,
 			ReturnMessage: "Unable get node IDs from redis",
 		}, ids.Err()
 	}
@@ -49,17 +50,17 @@ func VmInfo(ctx context.Context) (*pb.ReturnComputeMessage, error) {
 		if err != nil {
 			logger.Error("Failed to convert status string to int!", err)
 			return &pb.ReturnComputeMessage{
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				ReturnMessage: "Failed to convert status string to int!",
 				Vms:           vms,
 			}, err
 		}
-		vm.Status = pb.Status(status)
+		vm.Status = common_pb.Status(status)
 		vms = append(vms, &vm)
 	}
 
 	return &pb.ReturnComputeMessage{
-		ReturnCode:    pb.ReturnCode_OK,
+		ReturnCode:    common_pb.ReturnCode_OK,
 		ReturnMessage: "Success!",
 		Vms:           vms,
 	}, nil

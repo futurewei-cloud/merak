@@ -17,7 +17,8 @@ import (
 	"strconv"
 	"strings"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/activity"
@@ -25,14 +26,14 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func VmDelete(ctx context.Context) (*pb.ReturnMessage, error) {
+func VmDelete(ctx context.Context) (*common_pb.ReturnMessage, error) {
 	logger := activity.GetLogger(ctx)
 	ids := common.RedisClient.SMembers(ctx, constants.COMPUTE_REDIS_NODE_IP_SET)
 	if ids.Err() != nil {
 		logger.Error("Unable get VM IDs from redis", ids.Err())
 
-		return &pb.ReturnMessage{
-			ReturnCode:    pb.ReturnCode_FAILED,
+		return &common_pb.ReturnMessage{
+			ReturnCode:    common_pb.ReturnCode_FAILED,
 			ReturnMessage: "Unable get node IDs from redis",
 		}, ids.Err()
 	}
@@ -42,8 +43,8 @@ func VmDelete(ctx context.Context) (*pb.ReturnMessage, error) {
 		vmIDsList := common.RedisClient.LRange(ctx, "l"+podID, 0, -1)
 		if vmIDsList.Err() != nil {
 			logger.Error("Unable get node vmIDsList from redis", vmIDsList.Err())
-			return &pb.ReturnMessage{
-				ReturnCode:    pb.ReturnCode_FAILED,
+			return &common_pb.ReturnMessage{
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				ReturnMessage: "Unable get node vmIDsList from redis",
 			}, vmIDsList.Err()
 		}
@@ -56,11 +57,11 @@ func VmDelete(ctx context.Context) (*pb.ReturnMessage, error) {
 			logger.Info("Failed to dial gRPC server address: "+agent_address.String(), err)
 			continue
 		}
-		client := pb.NewMerakAgentServiceClient(conn)
+		client := agent_pb.NewMerakAgentServiceClient(conn)
 		logger.Info("VM Ids " + vmIDsList.String() + "\n")
 		for _, vmID := range vmIDsList.Val() {
-			port := pb.InternalPortConfig{
-				OperationType: pb.OperationType_DELETE,
+			port := agent_pb.InternalPortConfig{
+				OperationType: common_pb.OperationType_DELETE,
 				Name:          common.RedisClient.HGet(ctx, vmID, "name").Val(),
 				Projectid:     common.RedisClient.HGet(ctx, vmID, "projectID").Val(),
 				Deviceid:      common.RedisClient.HGet(ctx, vmID, "deviceID").Val(),
@@ -75,8 +76,8 @@ func VmDelete(ctx context.Context) (*pb.ReturnMessage, error) {
 		}
 	}
 	common.RedisClient.FlushAll(ctx)
-	return &pb.ReturnMessage{
-		ReturnCode:    pb.ReturnCode_OK,
+	return &common_pb.ReturnMessage{
+		ReturnCode:    common_pb.ReturnCode_OK,
 		ReturnMessage: "Success!",
 	}, nil
 }

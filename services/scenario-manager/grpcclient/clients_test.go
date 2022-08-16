@@ -20,7 +20,10 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	compute_pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
+	network_pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
+	topology_pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
@@ -31,34 +34,34 @@ import (
 )
 
 type mockMerakTopologyServiceServer struct {
-	pb.UnimplementedMerakTopologyServiceServer
+	topology_pb.UnimplementedMerakTopologyServiceServer
 }
 
 type mockMerakNetworkServiceServer struct {
-	pb.UnimplementedMerakNetworkServiceServer
+	network_pb.UnimplementedMerakNetworkServiceServer
 }
 
 type mockMerakComputeServiceServer struct {
-	pb.UnimplementedMerakComputeServiceServer
+	compute_pb.UnimplementedMerakComputeServiceServer
 }
 
-func (*mockMerakTopologyServiceServer) TopologyHandler(ctx context.Context, req *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
+func (*mockMerakTopologyServiceServer) TopologyHandler(ctx context.Context, req *topology_pb.InternalTopologyInfo) (*topology_pb.ReturnTopologyMessage, error) {
 	if req.Config.GetRequestId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "request id cannot be empty %v", req.Config.GetRequestId())
 	}
 
-	compute := &pb.InternalComputeInfo{Id: "1", Name: "compute1", Ip: "10.0.0.1", Mac: "ff:ff:ff:ff:ff", Veth: "eth1"}
+	compute := &pb.InternalComputeInfo{Id: "1", Name: "compute1", DatapathIp: "10.0.0.1", Mac: "ff:ff:ff:ff:ff", Veth: "eth1"}
 	var computes []*pb.InternalComputeInfo
 	computes = append(computes, compute)
 
-	return &pb.ReturnTopologyMessage{ReturnCode: pb.ReturnCode_OK, ReturnMessage: "Topology protobuf message received", ComputeNodes: computes}, nil
+	return &topology_pb.ReturnTopologyMessage{ReturnCode: pb.ReturnCode_OK, ReturnMessage: "Topology protobuf message received", ComputeNodes: computes}, nil
 }
 
 func topologyDialer() func(context.Context, string) (net.Conn, error) {
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
 
-	pb.RegisterMerakTopologyServiceServer(server, &mockMerakTopologyServiceServer{})
+	topology_pb.RegisterMerakTopologyServiceServer(server, &mockMerakTopologyServiceServer{})
 	go func() {
 		if err := server.Serve(listener); err != nil {
 			log.Fatal(err)
@@ -71,16 +74,16 @@ func topologyDialer() func(context.Context, string) (net.Conn, error) {
 }
 
 func TestTopologyClient(t *testing.T) {
-	topoConfig := &pb.InternalTopologyConfiguration{
+	topoConfig := &topology_pb.InternalTopologyConfiguration{
 		RequestId: utils.GenUUID(),
 	}
-	topoInfo := &pb.InternalTopologyInfo{
+	topoInfo := &topology_pb.InternalTopologyInfo{
 		Config: topoConfig,
 	}
 	//compute := &pb.InternalComputeInfo{Id: "compute1", Name: "compute1", Ip: "10.244.0.1", Mac: "xx.xx.xx.xx.xx", Veth: "eth0", Status: pb.Status_READY}
 	//var computes []*pb.InternalComputeInfo
 	//computes = append(computes, compute)
-	topoRet := &pb.ReturnTopologyMessage{
+	topoRet := &topology_pb.ReturnTopologyMessage{
 		ReturnCode:    pb.ReturnCode_OK,
 		ReturnMessage: "Topology protobuf message received",
 		//ComputeNodes:  computes,
@@ -88,8 +91,8 @@ func TestTopologyClient(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		data          *pb.InternalTopologyInfo
-		response      *pb.ReturnTopologyMessage
+		data          *topology_pb.InternalTopologyInfo
+		response      *topology_pb.ReturnTopologyMessage
 		expectedError bool
 		err           error
 	}{
@@ -124,7 +127,7 @@ func TestTopologyClient(t *testing.T) {
 	}
 }
 
-func (*mockMerakNetworkServiceServer) NetConfigHandler(ctx context.Context, req *pb.InternalNetConfigInfo) (*pb.ReturnNetworkMessage, error) {
+func (*mockMerakNetworkServiceServer) NetConfigHandler(ctx context.Context, req *network_pb.InternalNetConfigInfo) (*network_pb.ReturnNetworkMessage, error) {
 	if req.Config.GetRequestId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "request id cannot be empty %v", req.Config.GetRequestId())
 	}
@@ -136,14 +139,14 @@ func (*mockMerakNetworkServiceServer) NetConfigHandler(ctx context.Context, req 
 	var vpcs []*pb.InternalVpcInfo
 	vpcs = append(vpcs, vpc)
 
-	return &pb.ReturnNetworkMessage{ReturnCode: pb.ReturnCode_OK, ReturnMessage: "Topology protobuf message received", Vpcs: vpcs}, nil
+	return &network_pb.ReturnNetworkMessage{ReturnCode: pb.ReturnCode_OK, ReturnMessage: "Topology protobuf message received", Vpcs: vpcs}, nil
 }
 
 func networkDialer() func(context.Context, string) (net.Conn, error) {
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
 
-	pb.RegisterMerakNetworkServiceServer(server, &mockMerakNetworkServiceServer{})
+	network_pb.RegisterMerakNetworkServiceServer(server, &mockMerakNetworkServiceServer{})
 	go func() {
 		if err := server.Serve(listener); err != nil {
 			log.Fatal(err)
@@ -156,21 +159,21 @@ func networkDialer() func(context.Context, string) (net.Conn, error) {
 }
 
 func TestNetworkClient(t *testing.T) {
-	netConfig := &pb.InternalNetConfigConfiguration{
+	netConfig := &network_pb.InternalNetConfigConfiguration{
 		RequestId: utils.GenUUID(),
 	}
-	netconfInfo := &pb.InternalNetConfigInfo{
+	netconfInfo := &network_pb.InternalNetConfigInfo{
 		Config: netConfig,
 	}
-	netconfRet := &pb.ReturnNetworkMessage{
+	netconfRet := &network_pb.ReturnNetworkMessage{
 		ReturnCode:    pb.ReturnCode_OK,
 		ReturnMessage: "Network protobuf message received",
 	}
 
 	tests := []struct {
 		name          string
-		data          *pb.InternalNetConfigInfo
-		response      *pb.ReturnNetworkMessage
+		data          *network_pb.InternalNetConfigInfo
+		response      *network_pb.ReturnNetworkMessage
 		expectedError bool
 		err           error
 	}{
@@ -204,19 +207,19 @@ func TestNetworkClient(t *testing.T) {
 	}
 }
 
-func (*mockMerakComputeServiceServer) ComputeHandler(ctx context.Context, req *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
+func (*mockMerakComputeServiceServer) ComputeHandler(ctx context.Context, req *compute_pb.InternalComputeConfigInfo) (*compute_pb.ReturnComputeMessage, error) {
 	if req.Config.GetRequestId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "request id cannot be empty %v", req.Config.GetRequestId())
 	}
 
-	return &pb.ReturnComputeMessage{ReturnCode: pb.ReturnCode_OK, ReturnMessage: "Compute protobuf message received"}, nil
+	return &compute_pb.ReturnComputeMessage{ReturnCode: pb.ReturnCode_OK, ReturnMessage: "Compute protobuf message received"}, nil
 }
 
 func computeDialer() func(context.Context, string) (net.Conn, error) {
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
 
-	pb.RegisterMerakComputeServiceServer(server, &mockMerakComputeServiceServer{})
+	compute_pb.RegisterMerakComputeServiceServer(server, &mockMerakComputeServiceServer{})
 	go func() {
 		if err := server.Serve(listener); err != nil {
 			log.Fatal(err)
@@ -229,10 +232,10 @@ func computeDialer() func(context.Context, string) (net.Conn, error) {
 }
 
 func TestComputeClient(t *testing.T) {
-	computeConf := &pb.InternalComputeConfiguration{
+	computeConf := &compute_pb.InternalComputeConfiguration{
 		RequestId: utils.GenUUID(),
 	}
-	computeInfo := &pb.InternalComputeConfigInfo{
+	computeInfo := &compute_pb.InternalComputeConfigInfo{
 		Config: computeConf,
 	}
 	computeRet := &pb.ReturnMessage{
@@ -242,7 +245,7 @@ func TestComputeClient(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		data          *pb.InternalComputeConfigInfo
+		data          *compute_pb.InternalComputeConfigInfo
 		response      *pb.ReturnMessage
 		expectedError bool
 		err           error

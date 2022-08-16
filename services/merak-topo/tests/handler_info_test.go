@@ -16,7 +16,8 @@ import (
 	"log"
 	"testing"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 	"github.com/futurewei-cloud/merak/services/merak-topo/handler"
 	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
@@ -24,7 +25,7 @@ import (
 
 func TestTopologyInfo(t *testing.T) {
 	returnMessage := pb.ReturnTopologyMessage{
-		ReturnCode:    pb.ReturnCode_FAILED,
+		ReturnCode:    common_pb.ReturnCode_FAILED,
 		ReturnMessage: "Unintialized",
 	}
 
@@ -43,11 +44,11 @@ func TestTopologyInfo(t *testing.T) {
 	err3 := handler.Info(k8client, topo_id, &returnMessage)
 
 	if err3 != nil {
-		returnMessage.ReturnCode = pb.ReturnCode_FAILED
+		returnMessage.ReturnCode = common_pb.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Topology Info Fails"
 
 	} else {
-		returnMessage.ReturnCode = pb.ReturnCode_OK
+		returnMessage.ReturnCode = common_pb.ReturnCode_OK
 		returnMessage.ReturnMessage = "Topology Info Passes."
 	}
 

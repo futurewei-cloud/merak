@@ -20,7 +20,10 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	compute_pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
+	network_pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
+	topology_pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/database"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/entities"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/handler"
@@ -65,7 +68,7 @@ func ScenarioActoins(c *fiber.Ctx) error {
 	var scenarioStatus entities.ServiceStatus
 	for _, sa := range scenarioAction.Services {
 		if strings.ToLower(sa.ServiceName) == "topology" {
-			var returnTopo *pb.ReturnTopologyMessage
+			var returnTopo *topology_pb.ReturnTopologyMessage
 			returnTopo, err := handler.TopologyHandler(&scenario, sa.Action)
 			if err != nil || returnTopo.ReturnCode == pb.ReturnCode_FAILED {
 				sa.Status = entities.STATUS_FAILED
@@ -79,7 +82,7 @@ func ScenarioActoins(c *fiber.Ctx) error {
 			}
 		}
 		if strings.ToLower(sa.ServiceName) == "network" {
-			var returnNetwork *pb.ReturnNetworkMessage
+			var returnNetwork *network_pb.ReturnNetworkMessage
 			returnNetwork, err := handler.NetworkHandler(&scenario, sa.Action)
 			if err != nil || returnNetwork.ReturnCode == pb.ReturnCode_FAILED {
 				sa.Status = entities.STATUS_FAILED
@@ -93,7 +96,7 @@ func ScenarioActoins(c *fiber.Ctx) error {
 			}
 		}
 		if strings.ToLower(sa.ServiceName) == "compute" {
-			var returnCompute *pb.ReturnComputeMessage
+			var returnCompute *compute_pb.ReturnComputeMessage
 			returnCompute, err := handler.ComputeHanlder(&scenario, sa.Action)
 			if err != nil || returnCompute.ReturnCode == pb.ReturnCode_FAILED {
 				sa.Status = entities.STATUS_FAILED

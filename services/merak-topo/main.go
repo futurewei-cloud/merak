@@ -18,7 +18,7 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	"github.com/futurewei-cloud/merak/services/merak-topo/grpc/service"
 	"google.golang.org/grpc"
 )

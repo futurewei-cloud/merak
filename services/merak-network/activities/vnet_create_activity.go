@@ -16,25 +16,27 @@ package activities
 import (
 	"context"
 	"encoding/json"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	"log"
+	"sync"
+
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
 	"github.com/futurewei-cloud/merak/services/merak-network/database"
 	"github.com/futurewei-cloud/merak/services/merak-network/entities"
 	"github.com/futurewei-cloud/merak/services/merak-network/http"
 	"github.com/futurewei-cloud/merak/services/merak-network/utils"
-	"log"
-	"sync"
 )
 
 var (
 	returnNetworkMessage = pb.ReturnNetworkMessage{
-		ReturnCode:       pb.ReturnCode_OK,
+		ReturnCode:       common_pb.ReturnCode_OK,
 		ReturnMessage:    "returnNetworkMessage Finished",
 		Vpcs:             nil,
 		SecurityGroupIds: nil,
 	}
 )
 
-func doVPC(vpc *pb.InternalVpcInfo, projectId string) (vpcId string, err error) {
+func doVPC(vpc *common_pb.InternalVpcInfo, projectId string) (vpcId string, err error) {
 	log.Println("doVPC")
 	vpcBody := entities.VpcStruct{Network: entities.VpcBody{
 		AdminStateUp:        true,
@@ -62,7 +64,7 @@ func doVPC(vpc *pb.InternalVpcInfo, projectId string) (vpcId string, err error) 
 	log.Println("doVPC done")
 	return returnJson.Network.ID, nil
 }
-func doSubnet(subnet *pb.InternalSubnetInfo, vpcId string, projectId string) (subnetId string, err error) {
+func doSubnet(subnet *common_pb.InternalSubnetInfo, vpcId string, projectId string) (subnetId string, err error) {
 	log.Println("doSubnet")
 	subnetBody := entities.SubnetStruct{Subnet: entities.SubnetBody{
 		Cider:     subnet.SubnetCidr,
@@ -172,9 +174,9 @@ func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNet
 			return nil, err
 		}
 		vpcIds = append(vpcIds, vpcId)
-		var returnInfo []*pb.InternalVpcInfo
+		var returnInfo []*common_pb.InternalVpcInfo
 
-		var subnetInfo []*pb.InternalSubnetInfo
+		var subnetInfo []*common_pb.InternalSubnetInfo
 		for _, subnet := range vpc.Subnets {
 			subnetId, err := doSubnet(subnet, vpcId, projectId)
 			if err != nil {
@@ -182,7 +184,7 @@ func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNet
 			}
 			subnetCiderIdMap[subnet.SubnetCidr] = subnetId
 			log.Printf("subnetCiderIdMap %s", subnetCiderIdMap)
-			currentSubnet := pb.InternalSubnetInfo{
+			currentSubnet := common_pb.InternalSubnetInfo{
 				SubnetId:   subnetId,
 				SubnetCidr: subnet.SubnetCidr,
 				SubnetGw:   subnet.SubnetGw,
@@ -190,7 +192,7 @@ func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNet
 			}
 			subnetInfo = append(subnetInfo, &currentSubnet)
 		}
-		currentVPC := pb.InternalVpcInfo{
+		currentVPC := common_pb.InternalVpcInfo{
 			VpcId:     vpcId,
 			TenantId:  vpc.TenantId,
 			ProjectId: vpc.ProjectId,

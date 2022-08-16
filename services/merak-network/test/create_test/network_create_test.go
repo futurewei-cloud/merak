@@ -19,7 +19,8 @@ import (
 	"log"
 	"time"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -35,7 +36,7 @@ var (
 
 func main() {
 	testInternalSecurityGroupRulelnfo := pb.InternalSecurityGroupRulelnfo{
-		OperationType: pb.OperationType_CREATE,
+		OperationType: common_pb.OperationType_CREATE,
 		//Id:             "1",
 		Name:           "InternalSecurityGroupRulelnfo",
 		Description:    "InternalSecurityGroupRulelnfo_description",
@@ -47,19 +48,19 @@ func main() {
 		RemoteIpPrefix: "10",
 	}
 	testInternalRouterInfo := pb.InternalRouterInfo{
-		OperationType: pb.OperationType_CREATE,
+		OperationType: common_pb.OperationType_CREATE,
 		//Id:            "1",
 		Name:    "InternalRouterInfo",
 		Subnets: []string{"10.8.1.0/24", "10.8.2.0/24"},
 	}
 	testInternalGatewayInfo := pb.InternalGatewayInfo{
-		OperationType: pb.OperationType_CREATE,
+		OperationType: common_pb.OperationType_CREATE,
 		//Id:            "1",
 		Name: "InternalGatewayInfo",
 		Ips:  []string{"10.8.1.1", "10.8.2.1"},
 	}
 	testInternalSecurityGroupInfo := pb.InternalSecurityGroupInfo{
-		OperationType: pb.OperationType_CREATE,
+		OperationType: common_pb.OperationType_CREATE,
 		//Id:            "1",
 		Name:      "InternalSecurityGroupInfo",
 		TenantId:  "123456789",
@@ -67,39 +68,39 @@ func main() {
 		Rules:     []*pb.InternalSecurityGroupRulelnfo{&testInternalSecurityGroupRulelnfo},
 		ApplyTo:   []string{"ApplyTo"},
 	}
-	testInternalSubnetInfo := pb.InternalSubnetInfo{
+	testInternalSubnetInfo := common_pb.InternalSubnetInfo{
 		//SubnetId:   "SubnetId1",
 		SubnetCidr: "10.8.1.0/24",
 		SubnetGw:   "10.8.1.1",
 		NumberVms:  0,
 	}
-	testInternalSubnetInfo2 := pb.InternalSubnetInfo{
+	testInternalSubnetInfo2 := common_pb.InternalSubnetInfo{
 		//SubnetId:   "SubnetId2",
 		SubnetCidr: "10.8.2.0/24",
 		SubnetGw:   "10.8.2.1",
 		NumberVms:  0,
 	}
-	testInternalVpcInfo := pb.InternalVpcInfo{
+	testInternalVpcInfo := common_pb.InternalVpcInfo{
 		//VpcId:     "VpcId1",
 		TenantId:  "123456789",
 		ProjectId: "123456789",
 		VpcCidr:   "10.8.0.0/16",
-		Subnets:   []*pb.InternalSubnetInfo{&testInternalSubnetInfo, &testInternalSubnetInfo2},
+		Subnets:   []*common_pb.InternalSubnetInfo{&testInternalSubnetInfo, &testInternalSubnetInfo2},
 	}
 	testInternalNetworkInfo := pb.InternalNetworkInfo{
-		OperationType: pb.OperationType_CREATE,
+		OperationType: common_pb.OperationType_CREATE,
 		//Id:                     "1",
 		Name:                   "InternalNetworkInfo",
 		NumberOfVpcs:           1,
 		NumberOfSubnetPerVpc:   2,
-		Vpcs:                   []*pb.InternalVpcInfo{&testInternalVpcInfo},
+		Vpcs:                   []*common_pb.InternalVpcInfo{&testInternalVpcInfo},
 		NumberOfSecurityGroups: 1,
 		Routers:                []*pb.InternalRouterInfo{&testInternalRouterInfo},
 		Gateways:               []*pb.InternalGatewayInfo{&testInternalGatewayInfo},
 		SecurityGroups:         []*pb.InternalSecurityGroupInfo{&testInternalSecurityGroupInfo},
 	}
-	testInternalServiceInfo1 := pb.InternalServiceInfo{
-		OperationType: pb.OperationType_CREATE,
+	testInternalServiceInfo1 := common_pb.InternalServiceInfo{
+		OperationType: common_pb.OperationType_CREATE,
 		Id:            "1",
 		Name:          "Service 1",
 		Cmd:           "curl",
@@ -110,8 +111,8 @@ func main() {
 		WhenToRun:     "INIT",
 		WhereToRun:    "NETWORK",
 	}
-	testInternalServiceInfo3 := pb.InternalServiceInfo{
-		OperationType: pb.OperationType_CREATE,
+	testInternalServiceInfo3 := common_pb.InternalServiceInfo{
+		OperationType: common_pb.OperationType_CREATE,
 		Id:            "3",
 		Name:          "Service 3",
 		Cmd:           "InternalServiceInfo CMD",
@@ -122,8 +123,8 @@ func main() {
 		WhenToRun:     "AFTER:Service 2",
 		WhereToRun:    "network",
 	}
-	testInternalServiceInfo2 := pb.InternalServiceInfo{
-		OperationType: pb.OperationType_CREATE,
+	testInternalServiceInfo2 := common_pb.InternalServiceInfo{
+		OperationType: common_pb.OperationType_CREATE,
 		Id:            "2",
 		Name:          "Service 2",
 		Cmd:           "InternalServiceInfo CMD",
@@ -134,21 +135,21 @@ func main() {
 		WhenToRun:     "AFTER:Service 1",
 		WhereToRun:    "network",
 	}
-	testInternalComputeInfo1 := pb.InternalComputeInfo{
-		OperationType: pb.OperationType_CREATE,
+	testInternalComputeInfo1 := common_pb.InternalComputeInfo{
+		OperationType: common_pb.OperationType_CREATE,
 		//Id:            "1",
-		Name: "YM_node5",
-		Ip:   "192.168.10.15",
-		Mac:  "36:db:23:8c:4a:c5",
-		Veth: "eth1",
+		Name:       "YM_node5",
+		DatapathIp: "192.168.10.15",
+		Mac:        "36:db:23:8c:4a:c5",
+		Veth:       "eth1",
 	}
-	testInternalComputeInfo2 := pb.InternalComputeInfo{
-		OperationType: pb.OperationType_CREATE,
+	testInternalComputeInfo2 := common_pb.InternalComputeInfo{
+		OperationType: common_pb.OperationType_CREATE,
 		//Id:            "1",
-		Name: "YM_node6",
-		Ip:   "192.168.10.16",
-		Mac:  "36:db:23:8c:4a:c6",
-		Veth: "eth1",
+		Name:       "YM_node6",
+		DatapathIp: "192.168.10.16",
+		Mac:        "36:db:23:8c:4a:c6",
+		Veth:       "eth1",
 	}
 	testInternalStorageInfo := pb.InternalStorageInfo{Info: "InternalStorageInfo"}
 	testInternalNetConfigExtraInfo := pb.InternalNetConfigExtraInfo{Info: "InternalNetConfigExtraInfo"}
@@ -158,14 +159,14 @@ func main() {
 		RequestId:      "InternalNetConfigConfigurationRequestId",
 		NetconfigId:    "InternalNetConfigConfigurationNetconfigId",
 		MessageType:    0,
-		Services:       []*pb.InternalServiceInfo{&testInternalServiceInfo1, &testInternalServiceInfo3, &testInternalServiceInfo2},
-		Computes:       []*pb.InternalComputeInfo{&testInternalComputeInfo1, &testInternalComputeInfo2},
+		Services:       []*common_pb.InternalServiceInfo{&testInternalServiceInfo1, &testInternalServiceInfo3, &testInternalServiceInfo2},
+		Computes:       []*common_pb.InternalComputeInfo{&testInternalComputeInfo1, &testInternalComputeInfo2},
 		Network:        &testInternalNetworkInfo,
 		Storage:        &testInternalStorageInfo,
 		ExtraInfo:      &testInternalNetConfigExtraInfo,
 	}
 	testInternalNetConfigInfo := pb.InternalNetConfigInfo{
-		OperationType: pb.OperationType_CREATE,
+		OperationType: common_pb.OperationType_CREATE,
 		Config:        &testInternalNetConfigConfiguration,
 	}
 

@@ -16,13 +16,14 @@ package activities
 import (
 	"context"
 	"encoding/json"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	"log"
+	"sync"
+
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
 	"github.com/futurewei-cloud/merak/services/merak-network/database"
 	"github.com/futurewei-cloud/merak/services/merak-network/entities"
 	"github.com/futurewei-cloud/merak/services/merak-network/http"
 	"github.com/futurewei-cloud/merak/services/merak-network/utils"
-	"log"
-	"sync"
 )
 
 func getSubnetRouter(subnetId string, projectId string) (returnRouterId string, err error) {

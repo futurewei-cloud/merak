@@ -19,7 +19,9 @@ import (
 	"strconv"
 	"time"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	compute_pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
+	network_pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
+	topology_pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/logger"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
@@ -39,7 +41,7 @@ func NewGrpcClient(conn *grpc.ClientConn, timeout time.Duration) GrpcClient {
 	}
 }
 
-func TopologyClient(topopb *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
+func TopologyClient(topopb *topology_pb.InternalTopologyInfo) (*topology_pb.ReturnTopologyMessage, error) {
 	var conn *grpc.ClientConn
 
 	addr := constants.TOPLOGY_GRPC_SERVER_ADDRESS + ":" + strconv.Itoa(constants.TOPLOGY_GRPC_SERVER_PORT)
@@ -61,8 +63,8 @@ func TopologyClient(topopb *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage,
 	return response, nil
 }
 
-func (g GrpcClient) TopologyHandler(ctx context.Context, topopb *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
-	client := pb.NewMerakTopologyServiceClient(g.conn)
+func (g GrpcClient) TopologyHandler(ctx context.Context, topopb *topology_pb.InternalTopologyInfo) (*topology_pb.ReturnTopologyMessage, error) {
+	client := topology_pb.NewMerakTopologyServiceClient(g.conn)
 
 	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(g.timeout))
 	defer cancel()
@@ -78,7 +80,7 @@ func (g GrpcClient) TopologyHandler(ctx context.Context, topopb *pb.InternalTopo
 	return response, nil
 }
 
-func NetworkClient(netconfpb *pb.InternalNetConfigInfo) (*pb.ReturnNetworkMessage, error) {
+func NetworkClient(netconfpb *network_pb.InternalNetConfigInfo) (*network_pb.ReturnNetworkMessage, error) {
 	var conn *grpc.ClientConn
 
 	addr := constants.NETWORK_GRPC_SERVER_ADDRESS + ":" + strconv.Itoa(constants.NETWORK_GRPC_SERVER_PORT)
@@ -99,8 +101,8 @@ func NetworkClient(netconfpb *pb.InternalNetConfigInfo) (*pb.ReturnNetworkMessag
 	return response, nil
 }
 
-func (g GrpcClient) NetConfigHandler(ctx context.Context, netconfpb *pb.InternalNetConfigInfo) (*pb.ReturnNetworkMessage, error) {
-	client := pb.NewMerakNetworkServiceClient(g.conn)
+func (g GrpcClient) NetConfigHandler(ctx context.Context, netconfpb *network_pb.InternalNetConfigInfo) (*network_pb.ReturnNetworkMessage, error) {
+	client := network_pb.NewMerakNetworkServiceClient(g.conn)
 
 	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(g.timeout))
 	defer cancel()
@@ -116,7 +118,7 @@ func (g GrpcClient) NetConfigHandler(ctx context.Context, netconfpb *pb.Internal
 	return response, nil
 }
 
-func ComputeClient(computepb *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
+func ComputeClient(computepb *compute_pb.InternalComputeConfigInfo) (*compute_pb.ReturnComputeMessage, error) {
 	var conn *grpc.ClientConn
 
 	addr := constants.COMPUTE_GRPC_SERVER_ADDRESS + ":" + strconv.Itoa(constants.COMPUTE_GRPC_SERVER_PORT)
@@ -137,8 +139,8 @@ func ComputeClient(computepb *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMe
 	return response, nil
 }
 
-func (g GrpcClient) ComputeHandler(ctx context.Context, computepb *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
-	client := pb.NewMerakComputeServiceClient(g.conn)
+func (g GrpcClient) ComputeHandler(ctx context.Context, computepb *compute_pb.InternalComputeConfigInfo) (*compute_pb.ReturnComputeMessage, error) {
+	client := compute_pb.NewMerakComputeServiceClient(g.conn)
 
 	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(g.timeout))
 	defer cancel()
