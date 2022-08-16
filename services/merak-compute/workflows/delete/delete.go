@@ -13,7 +13,7 @@ Copyright(c) 2022 Futurewei Cloud
 package delete
 
 import (
-	compute_pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	compute_pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/temporal"

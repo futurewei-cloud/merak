@@ -24,7 +24,8 @@ import (
 
 	"strings"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -115,7 +116,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	}
 
 	for _, s := range k8s_nodes.Items {
-		var hnode pb.InternalHostInfo
+		var hnode common_pb.InternalHostInfo
 
 		node_yaml, err2 := k8client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})
 		if err2 != nil {
@@ -124,7 +125,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 		for _, c := range s.Status.Conditions {
 			if c.Type == corev1.NodeReady {
-				hnode.Status = pb.Status_READY
+				hnode.Status = common_pb.Status_READY
 				log.Printf(s.Name + " status " + string(c.Type))
 				break
 			}
@@ -146,18 +147,18 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	fmt.Println("========= Return deployed compute nodes information =====")
 
 	for _, node := range topo.Vnodes {
-		var cnode pb.InternalComputeInfo
+		var cnode common_pb.InternalComputeInfo
 		if strings.Contains(node.Name, "vhost") {
 			cnode.Name = node.Name
 			cnode.Id = node.Id
-			cnode.Ip = strings.Split(node.Nics[len(node.Nics)-1].Ip, "/")[0]
+			cnode.DatapathIp = strings.Split(node.Nics[len(node.Nics)-1].Ip, "/")[0]
 			cnode.Veth = node.Nics[len(node.Nics)-1].Intf
 		}
 
 		log.Printf("get compute nodes IP and Veth")
 
-		cnode.OperationType = pb.OperationType_CREATE
-		cnode.Status = pb.Status_DEPLOYING
+		cnode.OperationType = common_pb.OperationType_CREATE
+		cnode.Status = common_pb.Status_DEPLOYING
 
 		log.Printf("get compute nodes status")
 
@@ -192,7 +193,7 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 	}
 
 	for _, s := range k8s_nodes.Items {
-		var hnode pb.InternalHostInfo
+		var hnode common_pb.InternalHostInfo
 
 		node_yaml, err2 := client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})
 		if err2 != nil {
@@ -201,7 +202,7 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 
 		for _, c := range s.Status.Conditions {
 			if c.Type == corev1.NodeReady {
-				hnode.Status = pb.Status_READY
+				hnode.Status = common_pb.Status_READY
 				log.Printf(s.Name + " status " + string(c.Type))
 				break
 			}
@@ -229,7 +230,7 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 	log.Printf("updatecomputenode:=========Update mac addresses ===========")
 
 	for _, node := range topo.Vnodes {
-		var cnode pb.InternalComputeInfo
+		var cnode common_pb.InternalComputeInfo
 
 		if strings.Contains(node.Name, "vhost") {
 
@@ -238,10 +239,10 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 			if err != nil {
 				cnode.Name = node.Name
 				cnode.Id = node.Id
-				cnode.Ip = strings.Split(node.Nics[len(node.Nics)-1].Ip, "/")[0]
+				cnode.DatapathIp = strings.Split(node.Nics[len(node.Nics)-1].Ip, "/")[0]
 				cnode.Veth = node.Nics[len(node.Nics)-1].Intf
-				cnode.OperationType = pb.OperationType_INFO
-				cnode.Status = pb.Status_ERROR
+				cnode.OperationType = common_pb.OperationType_INFO
+				cnode.Status = common_pb.Status_ERROR
 
 				returnMessage.ComputeNodes = append(returnMessage.ComputeNodes, &cnode)
 				return fmt.Errorf("get pod error %s", err)
@@ -250,7 +251,7 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 				cnode.Name = res.Name
 				cnode.Id = string(res.UID)
 
-				cnode.Ip = strings.Split(node.Nics[len(node.Nics)-1].Ip, "/")[0]
+				cnode.DatapathIp = strings.Split(node.Nics[len(node.Nics)-1].Ip, "/")[0]
 				cnode.Veth = node.Nics[len(node.Nics)-1].Intf
 				if res.Status.PodIP != "" {
 					cnode.ContainerIp = res.Status.PodIP
@@ -258,21 +259,21 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 					log.Printf("pod ip is not ready %v", res.Name)
 				}
 
-				mac, err := database.Get(topo_id + ":" + cnode.Ip)
+				mac, err := database.Get(topo_id + ":" + cnode.DatapathIp)
 				if err != nil {
 					log.Printf("updatecomputenode: mac address is not available")
 				} else {
 					cnode.Mac = strings.Trim(mac, "\"")
-					cnode.OperationType = pb.OperationType_INFO
+					cnode.OperationType = common_pb.OperationType_INFO
 				}
 
 				if len(res.Status.ContainerStatuses) == 0 {
 					log.Printf("updatecomputenode: container status is not available %v", res.Name)
 				} else {
 					if res.Status.ContainerStatuses[len(res.Status.ContainerStatuses)-1].Ready {
-						cnode.Status = pb.Status_READY
+						cnode.Status = common_pb.Status_READY
 					} else {
-						cnode.Status = pb.Status_DEPLOYING
+						cnode.Status = common_pb.Status_DEPLOYING
 					}
 				}
 				returnMessage.ComputeNodes = append(returnMessage.ComputeNodes, &cnode)
@@ -436,9 +437,9 @@ func QueryHostNode(k8client *kubernetes.Clientset, topo_id string) error {
 	return nil
 }
 
-func Testapi(k8client *kubernetes.Clientset, topo database.TopologyData) ([]*pb.InternalComputeInfo, error) {
-	var cnodes []*pb.InternalComputeInfo
-	var cnode *pb.InternalComputeInfo
+func Testapi(k8client *kubernetes.Clientset, topo database.TopologyData) ([]*common_pb.InternalComputeInfo, error) {
+	var cnodes []*common_pb.InternalComputeInfo
+	var cnode *common_pb.InternalComputeInfo
 
 	for _, node := range topo.Vnodes {
 
@@ -451,7 +452,7 @@ func Testapi(k8client *kubernetes.Clientset, topo database.TopologyData) ([]*pb.
 			cnode.Name = res.Name
 			cnode.Id = string(res.UID)
 			// cnode.HostIP = out.Items[i].Status.HostIP
-			cnode.Ip = res.Status.PodIP
+			cnode.DatapathIp = res.Status.PodIP
 			cnode.Mac = ""
 			cnode.Veth = ""
 			cnode.OperationType = 2

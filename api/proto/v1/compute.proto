@@ -11,8 +11,8 @@ Copyright(c) 2022 Futurewei Cloud
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 syntax="proto3";
-package merak;
-option go_package = "merak/";
+package compute;
+option go_package = "github.com/futurewei-cloud/merak/api/proto/v1/compute;compute";
 import "common.proto";
 
 service MerakComputeService {
@@ -34,16 +34,16 @@ enum VMScheduleType {
 }
 
 message InternalVMPod {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     string pod_ip = 2;
     uint32 num_of_vm = 3;
     repeated string subnets = 4;
 }
 
 message InternalVMDeployInfo {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     VMDeployType deploy_type = 2;
-    repeated InternalVpcInfo vpcs = 3;
+    repeated common.InternalVpcInfo vpcs = 3;
     repeated string secgroups = 4;
     VMScheduleType scheduler = 5;
     repeated InternalVMPod deploy_method = 6;
@@ -54,15 +54,15 @@ message InternalComputeConfiguration {
     uint32 revision_number = 2;
     string request_id = 3;
     string compute_config_id = 4;
-    MessageType message_type = 5;
-    repeated InternalComputeInfo pods = 6;
+    common.MessageType message_type = 5;
+    repeated common.InternalComputeInfo pods = 6;
     InternalVMDeployInfo vm_deploy = 7;
-    repeated InternalServiceInfo services = 8;
+    repeated common.InternalServiceInfo services = 8;
     InternalComputeExtraInfo extra_info= 9;
 }
 
 message InternalComputeConfigInfo {
-    OperationType operation_type = 1;
+    common.OperationType operation_type = 1;
     InternalComputeConfiguration config = 2;
 }
 
@@ -78,11 +78,11 @@ message InternalVMInfo {
     string subnet_id = 5;
     string security_group_id = 6;
     string default_gateway = 7;
-    Status status = 8;
+    common.Status status = 8;
 }
 
 message ReturnComputeMessage {
-    ReturnCode return_code = 1;
+    common.ReturnCode return_code = 1;
     string return_message = 2;
     repeated InternalVMInfo vms = 3;
 }

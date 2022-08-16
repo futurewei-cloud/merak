@@ -25,7 +25,8 @@ import (
 	"strconv"
 	"strings"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/tidwall/gjson"
 )
@@ -77,11 +78,11 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		Ip:       "",
 		Deviceid: "",
 		Remoteid: "",
-		Status:   pb.Status_ERROR,
+		Status:   common_pb.Status_ERROR,
 	}
 	// Parse input d
 	switch op := in.OperationType; op {
-	case pb.OperationType_CREATE:
+	case common_pb.OperationType_CREATE:
 		log.Println("Operation Create")
 
 		log.Println("Create Minimal Port")
@@ -101,7 +102,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to marshal json!",
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -110,7 +111,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to send create minimal port to Alcor!",
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -118,7 +119,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		if resp.StatusCode != constants.HTTP_CREATE_SUCCESS {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to create minimal port! Response Code: " + strconv.Itoa(resp.StatusCode),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -126,7 +127,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to parse response",
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -139,7 +140,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		if constants.ALCOR_PORT_ID_SUBSTRING_LENGTH >= len(portID) {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Port ID from Alcor too short",
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -148,7 +149,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			Ip:       ip,
 			Deviceid: tapName,
 			Remoteid: portID,
-			Status:   pb.Status_ERROR,
+			Status:   common_pb.Status_ERROR,
 		}
 		// Create Device
 		log.Println("OVS setup")
@@ -158,7 +159,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("ovs-vsctl failed! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "ovs-vsctl failed! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -169,7 +170,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Namespace creation failed! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Namespace creation failed! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -181,7 +182,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Inner and outer veth creation failed! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Inner and outer veth creation failed! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -192,7 +193,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Move veth into namespace failed! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Move veth into namespace failed! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -204,7 +205,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed to give inner veth IP! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to give inner veth IP! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -216,7 +217,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed bring up inner veth! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed bring up inner veth! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -228,7 +229,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed to set MTU probing! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to set MTU probing! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -240,7 +241,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed to bring up outer veth!  " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to bring up outer veth!  " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -252,7 +253,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed to bring up loopback! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to bring up loopback! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -264,7 +265,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Assign mac! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Assign mac! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -276,7 +277,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed add default gw! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed add default gw! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -288,7 +289,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed to create bridge! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to create bridge! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -300,7 +301,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed to add veth to bridge! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to add veth to bridge! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -312,7 +313,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed to add tap to bridge " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to add tap to bridge " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -324,7 +325,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed to bring up bridge " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to bring up bridge " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -336,7 +337,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed to bring up tap device " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to bring up tap device " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -363,7 +364,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to marshal json!",
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -375,7 +376,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed send Update Port request to Alcor!", err)
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed send Update Port request to Alcor!",
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -387,7 +388,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed to update port to Alcor!: \n", jsonStringBody)
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed update port!",
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
@@ -395,32 +396,32 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		if resp.StatusCode != constants.HTTP_OK {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to update_port! Response Code: " + strconv.Itoa(resp.StatusCode),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
 			}, err
 		}
-		vmInfo.Status = pb.Status_DONE
+		vmInfo.Status = common_pb.Status_DONE
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Create Success",
-			ReturnCode:    pb.ReturnCode_OK,
+			ReturnCode:    common_pb.ReturnCode_OK,
 			Port: &pb.ReturnPortInfo{
 				Ip:       ip,
 				Deviceid: tapName,
 				Remoteid: portID,
-				Status:   pb.Status_DONE,
+				Status:   common_pb.Status_DONE,
 			},
 		}, nil
 
-	case pb.OperationType_UPDATE:
+	case common_pb.OperationType_UPDATE:
 
 		log.Println("Update Unimplemented")
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Update Unimplemented",
-			ReturnCode:    pb.ReturnCode_FAILED,
+			ReturnCode:    common_pb.ReturnCode_FAILED,
 			Port:          nil,
 		}, errors.New("update unimplemented")
 
-	case pb.OperationType_DELETE:
+	case common_pb.OperationType_DELETE:
 
 		log.Println("Operation Delete")
 		log.Println("Send Delete Port Request to Alcor")
@@ -431,7 +432,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed send Delete Port request to Alcor!", err)
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed send Delete Port request to Alcor!",
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 			}, err
 		}
 
@@ -442,14 +443,14 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed to delete port to Alcor!")
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed Delete port!",
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 			}, err
 		}
 		log.Println("Response code from Alcor", resp.StatusCode)
 		if resp.StatusCode != constants.HTTP_OK {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to Delete Port ! Response Code: " + strconv.Itoa(resp.StatusCode),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 			}, err
 		}
 
@@ -460,7 +461,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Namespace deletion failed! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Namespace deletion failed! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 			}, err
 		}
 		log.Println("Deleting bridge device")
@@ -470,7 +471,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Bridge deletion failed! " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Bridge deletion failed! " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 			}, err
 		}
 
@@ -482,20 +483,20 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			log.Println("Failed to delete tap " + string(stdout))
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to delete tap " + string(stdout),
-				ReturnCode:    pb.ReturnCode_FAILED,
+				ReturnCode:    common_pb.ReturnCode_FAILED,
 			}, err
 		}
 
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Delete Success!",
-			ReturnCode:    pb.ReturnCode_OK,
+			ReturnCode:    common_pb.ReturnCode_OK,
 		}, nil
 
 	default:
 		log.Println("Unknown Operation")
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Unknown Operation",
-			ReturnCode:    pb.ReturnCode_FAILED,
+			ReturnCode:    common_pb.ReturnCode_FAILED,
 		}, errors.New("unknown operation")
 	}
 }

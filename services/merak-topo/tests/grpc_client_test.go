@@ -19,7 +19,7 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

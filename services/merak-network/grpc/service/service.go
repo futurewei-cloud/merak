@@ -18,18 +18,20 @@ package service
 import (
 	"context"
 	"flag"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
-	constants "github.com/futurewei-cloud/merak/services/common"
-	"github.com/futurewei-cloud/merak/services/merak-network/activities"
 	"log"
 	"sync"
+
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
+	constants "github.com/futurewei-cloud/merak/services/common"
+	"github.com/futurewei-cloud/merak/services/merak-network/activities"
 )
 
 var (
 	Port = flag.Int("port", constants.NETWORK_GRPC_SERVER_PORT, "The server port")
 
 	returnNetworkMessage = pb.ReturnNetworkMessage{
-		ReturnCode:       pb.ReturnCode_FAILED,
+		ReturnCode:       common_pb.ReturnCode_FAILED,
 		ReturnMessage:    "returnNetworkMessage Unintialized",
 		Vpcs:             nil,
 		SecurityGroupIds: nil,
@@ -52,18 +54,18 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 	var currentError error
 
 	switch op := in.GetOperationType(); op {
-	case pb.OperationType_INFO:
+	case common_pb.OperationType_INFO:
 		ctx := context.TODO()
 		log.Println("Info")
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_INFO haha"
-		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
+		returnNetworkMessage.ReturnCode = common_pb.ReturnCode_OK
 		networkInfoReturn := make(chan *pb.ReturnNetworkMessage)
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			var vnetInfoReturn, err = activities.VnetInfo(ctx, netConfigId)
 			if err != nil {
-				returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+				returnNetworkMessage.ReturnCode = common_pb.ReturnCode_FAILED
 				returnNetworkMessage.ReturnMessage = err.Error()
 				ifAnyFailure = true
 				currentError = err
@@ -79,7 +81,7 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 			return nil, currentError
 		}
 		return returnNetworkMessage, nil
-	case pb.OperationType_CREATE:
+	case common_pb.OperationType_CREATE:
 		ctx := context.TODO()
 		// services
 		log.Println(in.Config.Services)
@@ -89,7 +91,7 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 			defer wg.Done()
 			var _, err = activities.DoServices(ctx, in.Config.GetServices(), &wg, projectId)
 			if err != nil {
-				returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+				returnNetworkMessage.ReturnCode = common_pb.ReturnCode_FAILED
 				returnNetworkMessage.ReturnMessage = err.Error()
 				ifAnyFailure = true
 				currentError = err
@@ -103,7 +105,7 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 			defer wg.Done()
 			var _, err = activities.RegisterNode(ctx, in.Config.GetComputes(), &wg, projectId)
 			if err != nil {
-				returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+				returnNetworkMessage.ReturnCode = common_pb.ReturnCode_FAILED
 				returnNetworkMessage.ReturnMessage = err.Error()
 				ifAnyFailure = true
 				currentError = err
@@ -118,7 +120,7 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 			defer wg.Done()
 			var vnetCreateReturn, err = activities.VnetCreate(ctx, netConfigId, in.Config.GetNetwork(), &wg, networkReturn, projectId)
 			if err != nil {
-				returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+				returnNetworkMessage.ReturnCode = common_pb.ReturnCode_FAILED
 				returnNetworkMessage.ReturnMessage = err.Error()
 				ifAnyFailure = true
 				currentError = err
@@ -137,7 +139,7 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		//}
 		log.Println("Before Wait")
 
-		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
+		returnNetworkMessage.ReturnCode = common_pb.ReturnCode_OK
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_CREATE"
 		returnNetworkMessage := <-networkReturn
 		wg.Wait()
@@ -146,9 +148,9 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		}
 		log.Printf("returnNetworkMessage %s", returnNetworkMessage)
 		return returnNetworkMessage, nil
-	case pb.OperationType_UPDATE:
+	case common_pb.OperationType_UPDATE:
 		log.Println("Update")
-	case pb.OperationType_DELETE:
+	case common_pb.OperationType_DELETE:
 		log.Println("Delete")
 		ctx := context.TODO()
 		networkDeleteReturn := make(chan *pb.ReturnNetworkMessage)
@@ -157,7 +159,7 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 			defer wg.Done()
 			var vnetDeleteReturn, err = activities.VnetDelete(ctx, netConfigId, &wg, networkDeleteReturn)
 			if err != nil {
-				returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+				returnNetworkMessage.ReturnCode = common_pb.ReturnCode_FAILED
 				returnNetworkMessage.ReturnMessage = err.Error()
 				ifAnyFailure = true
 				currentError = err
@@ -166,7 +168,7 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 			log.Printf("networkInfoReturn: %s", vnetDeleteReturn)
 		}()
 		wg.Wait()
-		returnNetworkMessage.ReturnCode = pb.ReturnCode_OK
+		returnNetworkMessage.ReturnCode = common_pb.ReturnCode_OK
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_DELETE"
 		returnNetworkMessage := <-networkDeleteReturn
 		if ifAnyFailure {
@@ -176,7 +178,7 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		return returnNetworkMessage, nil
 	default:
 		log.Println("Unknown Operation")
-		returnNetworkMessage.ReturnCode = pb.ReturnCode_FAILED
+		returnNetworkMessage.ReturnCode = common_pb.ReturnCode_FAILED
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: Unknown Operation"
 		return &returnNetworkMessage, nil
 	}

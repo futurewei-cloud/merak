@@ -16,12 +16,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	"log"
+	"net"
+
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
 	"github.com/futurewei-cloud/merak/services/merak-network/database"
 	"github.com/futurewei-cloud/merak/services/merak-network/grpc/service"
 	"google.golang.org/grpc"
-	"log"
-	"net"
 )
 
 func main() {

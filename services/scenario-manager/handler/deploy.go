@@ -17,7 +17,10 @@ import (
 	"errors"
 	"fmt"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	compute_pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
+	network_pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
+	topology_pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/database"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/entities"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/grpcclient"
@@ -25,7 +28,7 @@ import (
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
 )
 
-func TopologyHandler(s *entities.Scenario, action entities.EventName) (*pb.ReturnTopologyMessage, error) {
+func TopologyHandler(s *entities.Scenario, action entities.EventName) (*topology_pb.ReturnTopologyMessage, error) {
 	var topology entities.TopologyConfig
 	if err := database.FindEntity(s.TopologyId, utils.KEY_PREFIX_TOPOLOGY, &topology); err != nil {
 		return nil, fmt.Errorf("topology %s not found", s.TopologyId)
@@ -61,7 +64,7 @@ func TopologyHandler(s *entities.Scenario, action entities.EventName) (*pb.Retur
 		}
 	}
 
-	var topoconf pb.InternalTopologyInfo
+	var topoconf topology_pb.InternalTopologyInfo
 	if err := constructTopologyMessage(&topology, &topoconf, action); err != nil {
 		return nil, errors.New("topology protobuf message error")
 	}
@@ -111,7 +114,7 @@ func actionToStatus(action entities.EventName) entities.ServiceStatus {
 	return entities.STATUS_FAILED
 }
 
-func NetworkHandler(s *entities.Scenario, action entities.EventName) (*pb.ReturnNetworkMessage, error) {
+func NetworkHandler(s *entities.Scenario, action entities.EventName) (*network_pb.ReturnNetworkMessage, error) {
 	var network entities.NetworkConfig
 	if err := database.FindEntity(s.NetworkConfId, utils.KEY_PREFIX_NETWORK, &network); err != nil {
 		return nil, fmt.Errorf("network config %s not found", s.NetworkConfId)
@@ -127,7 +130,7 @@ func NetworkHandler(s *entities.Scenario, action entities.EventName) (*pb.Return
 		}
 	}
 
-	var netconf pb.InternalNetConfigInfo
+	var netconf network_pb.InternalNetConfigInfo
 	if action == entities.EVENT_CHECK {
 		if err := constructNetConfMessage(&network, nil, nil, &netconf, action); err != nil {
 			return nil, errors.New("netconfig protobuf message error")
@@ -147,7 +150,7 @@ func NetworkHandler(s *entities.Scenario, action entities.EventName) (*pb.Return
 			return nil, fmt.Errorf("service %s config not found", s.ServiceConfId)
 		}
 
-		var returnTopo *pb.ReturnTopologyMessage
+		var returnTopo *topology_pb.ReturnTopologyMessage
 		returnTopo, err := TopologyHandler(s, entities.EVENT_CHECK)
 		if err != nil {
 			return nil, fmt.Errorf("topology %s didn't return message", s.TopologyId)
@@ -197,7 +200,7 @@ func NetworkHandler(s *entities.Scenario, action entities.EventName) (*pb.Return
 	return responseNetwork, nil
 }
 
-func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.ReturnComputeMessage, error) {
+func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*compute_pb.ReturnComputeMessage, error) {
 	var compute entities.ComputeConfig
 	if err := database.FindEntity(s.ComputeConfId, utils.KEY_PREFIX_COMPUTE, &compute); err != nil {
 		return nil, fmt.Errorf("compute config %s not found", s.ComputeConfId)
@@ -213,7 +216,7 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.Return
 		}
 	}
 
-	var computeconf pb.InternalComputeConfigInfo
+	var computeconf compute_pb.InternalComputeConfigInfo
 	if action == entities.EVENT_CHECK {
 		if err := constructComputeMessage(&compute, nil, nil, nil, &computeconf, action); err != nil {
 			return nil, errors.New("netconfig protobuf message error")
@@ -224,7 +227,7 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.Return
 			return nil, errors.New("service config not found")
 		}
 
-		var returnTopo *pb.ReturnTopologyMessage
+		var returnTopo *topology_pb.ReturnTopologyMessage
 		returnTopo, topo_err := TopologyHandler(s, entities.EVENT_CHECK)
 		if topo_err != nil {
 			return nil, fmt.Errorf("topology %s didn't return message", s.TopologyId)
@@ -234,7 +237,7 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*pb.Return
 			return nil, fmt.Errorf("topology %s is not ready", s.TopologyId)
 		}
 
-		var returnNetwork *pb.ReturnNetworkMessage
+		var returnNetwork *network_pb.ReturnNetworkMessage
 		returnNetwork, net_err := NetworkHandler(s, entities.EVENT_CHECK)
 		if net_err != nil {
 			return nil, fmt.Errorf("network %s didn't return message", s.NetworkConfId)

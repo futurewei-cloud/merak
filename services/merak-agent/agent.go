@@ -19,7 +19,7 @@ import (
 	"net"
 	"os/exec"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-agent/handler"
 	"google.golang.org/grpc"

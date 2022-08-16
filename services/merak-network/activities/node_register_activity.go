@@ -16,15 +16,16 @@ package activities
 import (
 	"context"
 	"encoding/json"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	"log"
+	"sync"
+
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	"github.com/futurewei-cloud/merak/services/merak-network/entities"
 	"github.com/futurewei-cloud/merak/services/merak-network/http"
 	"github.com/futurewei-cloud/merak/services/merak-network/utils"
-	"log"
-	"sync"
 )
 
-func RegisterNode(ctx context.Context, compute []*pb.InternalComputeInfo, wg *sync.WaitGroup, projectId string) (string, error) {
+func RegisterNode(ctx context.Context, compute []*common_pb.InternalComputeInfo, wg *sync.WaitGroup, projectId string) (string, error) {
 	log.Println("RegisterNode")
 	//defer wg.Done()
 	log.Printf("compute %s", compute)
@@ -33,7 +34,7 @@ func RegisterNode(ctx context.Context, compute []*pb.InternalComputeInfo, wg *sy
 	for _, host := range compute {
 		log.Printf("host %s", host)
 		nodeBody := entities.NodeBody{
-			LocalIP:    host.Ip,
+			LocalIP:    host.DatapathIp,
 			MacAddress: host.Mac,
 			NodeID:     host.Id,
 			NodeName:   host.Name,

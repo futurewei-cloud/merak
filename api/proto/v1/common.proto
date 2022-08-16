@@ -11,8 +11,8 @@ Copyright(c) 2022 Futurewei Cloud
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 syntax="proto3";
-package merak;
-option go_package = "merak/";
+package common;
+option go_package = "github.com/futurewei-cloud/merak/api/proto/v1/common;common";
 
 enum OperationType {
     INFO = 0;
@@ -69,7 +69,7 @@ message InternalComputeInfo {
   OperationType operation_type = 1;
   string id = 2;
   string name = 3;
-  string ip = 4;
+  string datapath_ip = 4;
   string mac = 5;
   string veth = 6;
   string container_ip = 7;

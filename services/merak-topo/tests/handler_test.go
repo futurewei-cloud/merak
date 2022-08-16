@@ -16,7 +16,8 @@ import (
 	"log"
 	"testing"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 	"github.com/futurewei-cloud/merak/services/merak-topo/handler"
 	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
@@ -24,7 +25,7 @@ import (
 
 var (
 	returnMessage = pb.ReturnTopologyMessage{
-		ReturnCode:    pb.ReturnCode_FAILED,
+		ReturnCode:    common_pb.ReturnCode_FAILED,
 		ReturnMessage: "Unintialized",
 	}
 	aca_num         = 48
@@ -49,11 +50,11 @@ func TestTopologyHandler(t *testing.T) {
 
 	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
 	if err2 != nil {
-		returnMessage.ReturnCode = pb.ReturnCode_FAILED
+		returnMessage.ReturnCode = common_pb.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Create Topology."
 
 	} else {
-		returnMessage.ReturnCode = pb.ReturnCode_OK
+		returnMessage.ReturnCode = common_pb.ReturnCode_OK
 		returnMessage.ReturnMessage = "Topology Deployed."
 
 	}
@@ -63,11 +64,11 @@ func TestTopologyHandler(t *testing.T) {
 	err3 := handler.Info(k8client, topo_id, &returnMessage)
 
 	if err3 != nil {
-		returnMessage.ReturnCode = pb.ReturnCode_FAILED
+		returnMessage.ReturnCode = common_pb.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Info Topology."
 
 	} else {
-		returnMessage.ReturnCode = pb.ReturnCode_OK
+		returnMessage.ReturnCode = common_pb.ReturnCode_OK
 		returnMessage.ReturnMessage = "Topology Info Query Done."
 	}
 
@@ -75,10 +76,10 @@ func TestTopologyHandler(t *testing.T) {
 
 	err4 := handler.Delete(k8client, topo_id)
 	if err4 != nil {
-		returnMessage.ReturnCode = pb.ReturnCode_FAILED
+		returnMessage.ReturnCode = common_pb.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Delete Topology."
 	} else {
-		returnMessage.ReturnCode = pb.ReturnCode_OK
+		returnMessage.ReturnCode = common_pb.ReturnCode_OK
 		returnMessage.ReturnMessage = "Topology Delete Done."
 	}
 

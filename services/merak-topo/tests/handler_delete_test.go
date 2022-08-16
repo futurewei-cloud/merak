@@ -17,7 +17,8 @@ import (
 	"log"
 	"testing"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/merak"
+	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 	"github.com/futurewei-cloud/merak/services/merak-topo/handler"
 	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
@@ -26,7 +27,7 @@ import (
 func TestTopologyDelete(t *testing.T) {
 
 	returnMessage := pb.ReturnTopologyMessage{
-		ReturnCode:    pb.ReturnCode_FAILED,
+		ReturnCode:    common_pb.ReturnCode_FAILED,
 		ReturnMessage: "Unintialized",
 	}
 
@@ -44,10 +45,10 @@ func TestTopologyDelete(t *testing.T) {
 
 	err4 := handler.Delete(k8client, topo_id)
 	if err4 != nil {
-		returnMessage.ReturnCode = pb.ReturnCode_FAILED
+		returnMessage.ReturnCode = common_pb.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Delete Topology."
 	} else {
-		returnMessage.ReturnCode = pb.ReturnCode_OK
+		returnMessage.ReturnCode = common_pb.ReturnCode_OK
 		returnMessage.ReturnMessage = "Topology Delete Done."
 	}
 

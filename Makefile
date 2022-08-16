@@ -20,7 +20,40 @@ GFLAGS = CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 all:: proto services
 
 proto:
-	protoc --go_out=api/proto/v1/ --go-grpc_out=api/proto/v1/ -I api/proto/v1/ api/proto/v1/*.proto
+	mkdir -p api/proto/v1/compute
+	protoc --go_out=api/proto/v1/compute \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=api/proto/v1/compute \
+	--go-grpc_opt=paths=source_relative \
+	-I api/proto/v1/ api/proto/v1/compute.proto
+
+	mkdir -p api/proto/v1/common
+	protoc --go_out=api/proto/v1/common \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=api/proto/v1/common \
+	--go-grpc_opt=paths=source_relative \
+	-I api/proto/v1/ api/proto/v1/common.proto
+
+	mkdir -p api/proto/v1/network
+	protoc --go_out=api/proto/v1/network \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=api/proto/v1/network \
+	--go-grpc_opt=paths=source_relative \
+	-I api/proto/v1/ api/proto/v1/network.proto
+
+	mkdir -p api/proto/v1/topology
+	protoc --go_out=api/proto/v1/topology \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=api/proto/v1/topology \
+	--go-grpc_opt=paths=source_relative \
+	-I api/proto/v1/ api/proto/v1/topology.proto
+
+	mkdir -p api/proto/v1/agent
+	protoc --go_out=api/proto/v1/agent \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=api/proto/v1/agent \
+	--go-grpc_opt=paths=source_relative \
+	-I api/proto/v1/ api/proto/v1/agent.proto
 
 .PHONY: deploy-dev
 deploy-dev:
