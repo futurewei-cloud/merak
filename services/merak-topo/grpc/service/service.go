@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"log"
 
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
@@ -53,16 +53,16 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 	// Operation&Return
 	switch op := in.OperationType; op {
 
-	case common_pb.OperationType_INFO:
+	case pb_common.OperationType_INFO:
 
 		if in.Config.GetTopologyId() != "" {
 			err_info := handler.Info(k8client, in.Config.GetTopologyId(), &returnMessage)
 			if err_info != nil {
-				returnMessage.ReturnCode = common_pb.ReturnCode_FAILED
+				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 				returnMessage.ReturnMessage = "INFO fails."
 
 			} else {
-				returnMessage.ReturnCode = common_pb.ReturnCode_OK
+				returnMessage.ReturnCode = pb_common.ReturnCode_OK
 				returnMessage.ReturnMessage = "INFO successes."
 			}
 
@@ -72,7 +72,7 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			log.Printf("return host node %v", returnMessage.Hosts)
 		}
 
-	case common_pb.OperationType_CREATE:
+	case pb_common.OperationType_CREATE:
 
 		/// save the protobuf hostinfo --- with each created topology
 
@@ -80,12 +80,14 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 		rack_num := in.Config.GetNumberOfRacks()
 		aca_per_rack := in.Config.GetVhostPerRack()
 		data_plane_cidr := in.Config.GetDataPlaneCidr()
-		cgw_num := in.Config.GetNumberOfGateways()
+		// cgw_num := in.Config.GetNumberOfGateways()
+		cgw_num := 0
 		topo_id := in.Config.GetTopologyId()
 
-		if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 || cgw_num == 0 {
+		// if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 || cgw_num == 0 {
+		if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 {
 
-			returnMessage.ReturnCode = common_pb.ReturnCode_FAILED
+			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 			returnMessage.ReturnMessage = "Must provide a valid data plane cider, aca number, aca per rack number, rack number, and control plane gateways"
 
 			return &returnMessage, nil
@@ -110,10 +112,10 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			err_create := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
 
 			if err_create != nil {
-				returnMessage.ReturnCode = common_pb.ReturnCode_FAILED
+				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 				returnMessage.ReturnMessage = "Fail to Create Topology."
 			} else {
-				returnMessage.ReturnCode = common_pb.ReturnCode_OK
+				returnMessage.ReturnCode = pb_common.ReturnCode_OK
 				returnMessage.ReturnMessage = "Success to create topology"
 			}
 			log.Printf("return message %v", returnMessage.ReturnMessage)
@@ -124,28 +126,28 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			return &returnMessage, err_create
 		}
 
-	case common_pb.OperationType_DELETE:
+	case pb_common.OperationType_DELETE:
 		// delete topology
 		err := handler.Delete(k8client, in.Config.TopologyId)
 
 		//return topology message-- compute info
 
 		if err != nil {
-			returnMessage.ReturnCode = common_pb.ReturnCode_FAILED
+			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 			returnMessage.ReturnMessage = "Fail to Delete Topology."
 		} else {
-			returnMessage.ReturnCode = common_pb.ReturnCode_OK
+			returnMessage.ReturnCode = pb_common.ReturnCode_OK
 			returnMessage.ReturnMessage = "Success to Delete Topology"
 		}
 
 		log.Printf("return message %v", returnMessage.ReturnMessage)
 		log.Printf("return code %v", returnMessage.ReturnCode)
 
-	case common_pb.OperationType_UPDATE:
+	case pb_common.OperationType_UPDATE:
 		// update topology
 	default:
 		log.Println("Unknown Operation")
-		returnMessage.ReturnCode = common_pb.ReturnCode_FAILED
+		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "TopologyHandler: Unknown Operation"
 	}
 

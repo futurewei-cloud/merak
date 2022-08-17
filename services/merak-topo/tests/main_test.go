@@ -18,7 +18,7 @@ import (
 	"net"
 	"testing"
 
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	"github.com/futurewei-cloud/merak/services/merak-topo/grpc/service"
 	"google.golang.org/grpc"
@@ -49,14 +49,14 @@ func bufDialer(context.Context, string) (net.Conn, error) {
 func TestGRPC(t *testing.T) {
 	// Test case setup
 	node0 := pb.InternalVNodeInfo{
-		OperationType: common_pb.OperationType_CREATE,
+		OperationType: pb_common.OperationType_CREATE,
 		Id:            "0",
 		Name:          "proj1-topo1-vnode0",
 		Type:          pb.VNodeType_VHOST,
 		Vnics:         []*pb.InternalVNicInfo{},
 	}
 	node1 := pb.InternalVNodeInfo{
-		OperationType: common_pb.OperationType_CREATE,
+		OperationType: pb_common.OperationType_CREATE,
 		Id:            "1",
 		Name:          "proj1-topo1-vnode1",
 		Type:          pb.VNodeType_VSWITCH,
@@ -64,7 +64,7 @@ func TestGRPC(t *testing.T) {
 	}
 
 	link0 := pb.InternalVLinkInfo{
-		OperationType: common_pb.OperationType_CREATE,
+		OperationType: pb_common.OperationType_CREATE,
 		Id:            "0",
 		Name:          "link_0",
 		Src:           "10.0.0.1",
@@ -72,7 +72,7 @@ func TestGRPC(t *testing.T) {
 	}
 
 	link1 := pb.InternalVLinkInfo{
-		OperationType: common_pb.OperationType_CREATE,
+		OperationType: pb_common.OperationType_CREATE,
 		Id:            "1",
 		Name:          "link_1",
 		Src:           "10.0.0.2",
@@ -84,7 +84,7 @@ func TestGRPC(t *testing.T) {
 		RevisionNumber: 1,
 		RequestId:      "proj1-topo1-info-test",
 		TopologyId:     "proj1-topo1",
-		MessageType:    common_pb.MessageType_FULL,
+		MessageType:    pb_common.MessageType_FULL,
 		Vnodes:         []*pb.InternalVNodeInfo{&node0, &node1},
 		Vlinks:         []*pb.InternalVLinkInfo{&link0, &link1},
 		ExtraInfo:      &pb.InternalTopologyExtraInfo{Info: "info test"},
@@ -95,19 +95,19 @@ func TestGRPC(t *testing.T) {
 		RevisionNumber: 1,
 		RequestId:      "proj1-topo2-create-test",
 		TopologyId:     "proj1-topo2",
-		MessageType:    common_pb.MessageType_FULL,
+		MessageType:    pb_common.MessageType_FULL,
 		Vnodes:         []*pb.InternalVNodeInfo{},
 		Vlinks:         []*pb.InternalVLinkInfo{},
 		ExtraInfo:      &pb.InternalTopologyExtraInfo{Info: "create test"},
 	}
 	// Test cases for INFO, CREATE, DELETE, UPDATE
 	topology_info := pb.InternalTopologyInfo{
-		OperationType: common_pb.OperationType_INFO,
+		OperationType: pb_common.OperationType_INFO,
 		Config:        &topologyConfig_c1,
 	}
 
 	topology_create := pb.InternalTopologyInfo{
-		OperationType: common_pb.OperationType_CREATE,
+		OperationType: pb_common.OperationType_CREATE,
 		Config:        &topologyConfig_c2,
 	}
 

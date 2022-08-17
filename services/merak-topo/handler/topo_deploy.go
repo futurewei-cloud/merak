@@ -38,12 +38,15 @@ import (
 )
 
 var (
-	ACA_IMAGE = "phudtran/merak-agent:dev"
+	// ACA_IMAGE = "phudtran/merak-agent:dev"
+	ACA_IMAGE = "meraksim/merak-agent:dev"
+	// ACA_IMAGE = "meraksim/merak-agent:testv2"
 	OVS_IMAGE = "yanmo96/ovs_only:latest"
-	GW_IMAGE  = "yanmo96/aca_build_standard:v2"
-	RYU_IP    = "ryu.default.svc.cluster.local"
-	RYU_PORT  = "6653"
-	Ctx       = context.Background()
+	// GW_IMAGE  = "yanmo96/aca_build_standard:v2"
+	RYU_IP = "ryu.default.svc.cluster.local"
+	// RYU_IP   = "10.213.43.77"
+	RYU_PORT = "6653"
+	Ctx      = context.Background()
 
 	namespace        = "default"
 	topologyClassGVR = schema.GroupVersionResource{
@@ -254,38 +257,38 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 					Tolerations:                   tol,
 				},
 			}
-		} else if strings.Contains(node.Name, "cgw") {
-			l["Type"] = "configgw"
+			// } else if strings.Contains(node.Name, "cgw") {
+			// 	l["Type"] = "configgw"
 
-			log.Printf("assign cgw to node %v", k8snodes[0])
+			// 	log.Printf("assign cgw to node %v", k8snodes[0])
 
-			newPod = &corev1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:   node.Name,
-					Labels: l,
-				},
-				Spec: corev1.PodSpec{
-					InitContainers: init_containers,
-					Containers: []corev1.Container{
-						{
-							Name:            "cgw",
-							Image:           GW_IMAGE,
-							ImagePullPolicy: "IfNotPresent",
-							Command:         []string{"sleep", "100000"},
-							SecurityContext: &sc,
-						},
-					},
-					RestartPolicy:                 "OnFailure",
-					NodeName:                      k8snodes[0],
-					TerminationGracePeriodSeconds: &grace_period,
-					Tolerations:                   tol,
-				},
-			}
-			if len(k8snodes) > 1 {
-				k8snodes = k8snodes[1:]
-				log.Printf("unassigned nodes %v", k8snodes)
+			// 	newPod = &corev1.Pod{
+			// 		ObjectMeta: metav1.ObjectMeta{
+			// 			Name:   node.Name,
+			// 			Labels: l,
+			// 		},
+			// 		Spec: corev1.PodSpec{
+			// 			InitContainers: init_containers,
+			// 			Containers: []corev1.Container{
+			// 				{
+			// 					Name:            "cgw",
+			// 					Image:           GW_IMAGE,
+			// 					ImagePullPolicy: "IfNotPresent",
+			// 					Command:         []string{"sleep", "100000"},
+			// 					SecurityContext: &sc,
+			// 				},
+			// 			},
+			// 			RestartPolicy:                 "OnFailure",
+			// 			NodeName:                      k8snodes[0],
+			// 			TerminationGracePeriodSeconds: &grace_period,
+			// 			Tolerations:                   tol,
+			// 		},
+			// 	}
+			// 	if len(k8snodes) > 1 {
+			// 		k8snodes = k8snodes[1:]
+			// 		log.Printf("unassigned nodes %v", k8snodes)
 
-			}
+			// 	}
 
 		} else {
 			return errors.New("no image for this device, please upload the image before create topology")

@@ -16,7 +16,7 @@ import (
 	"log"
 	"testing"
 
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 	"github.com/futurewei-cloud/merak/services/merak-topo/handler"
@@ -25,15 +25,15 @@ import (
 
 var (
 	returnMessage = pb.ReturnTopologyMessage{
-		ReturnCode:    common_pb.ReturnCode_FAILED,
+		ReturnCode:    pb_common.ReturnCode_FAILED,
 		ReturnMessage: "Unintialized",
 	}
-	aca_num         = 48
-	rack_num        = 4
-	aca_per_rack    = 12
+	aca_num         = 10
+	rack_num        = 2
+	aca_per_rack    = 5
 	data_plane_cidr = "10.200.0.0/16"
 	topo_id         = "1topo"
-	cgw_num         = 6
+	cgw_num         = 0
 )
 
 func TestTopologyHandler(t *testing.T) {
@@ -50,11 +50,11 @@ func TestTopologyHandler(t *testing.T) {
 
 	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
 	if err2 != nil {
-		returnMessage.ReturnCode = common_pb.ReturnCode_FAILED
+		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Create Topology."
 
 	} else {
-		returnMessage.ReturnCode = common_pb.ReturnCode_OK
+		returnMessage.ReturnCode = pb_common.ReturnCode_OK
 		returnMessage.ReturnMessage = "Topology Deployed."
 
 	}
@@ -64,11 +64,11 @@ func TestTopologyHandler(t *testing.T) {
 	err3 := handler.Info(k8client, topo_id, &returnMessage)
 
 	if err3 != nil {
-		returnMessage.ReturnCode = common_pb.ReturnCode_FAILED
+		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Info Topology."
 
 	} else {
-		returnMessage.ReturnCode = common_pb.ReturnCode_OK
+		returnMessage.ReturnCode = pb_common.ReturnCode_OK
 		returnMessage.ReturnMessage = "Topology Info Query Done."
 	}
 
@@ -76,10 +76,10 @@ func TestTopologyHandler(t *testing.T) {
 
 	err4 := handler.Delete(k8client, topo_id)
 	if err4 != nil {
-		returnMessage.ReturnCode = common_pb.ReturnCode_FAILED
+		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Delete Topology."
 	} else {
-		returnMessage.ReturnCode = common_pb.ReturnCode_OK
+		returnMessage.ReturnCode = pb_common.ReturnCode_OK
 		returnMessage.ReturnMessage = "Topology Delete Done."
 	}
 

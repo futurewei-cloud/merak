@@ -22,6 +22,9 @@ import (
 
 const K8SAPIURL string = "https://kubernetes.default:6443"
 
+// const K8SAPIURL string = "https://10.213.43.77:6443"
+// const K8SCONFIGPATH string = "/etc/kubernetes/admin.conf"
+
 func K8sClient() (*kubernetes.Clientset, error) {
 
 	config, err_config := K8sConfig()
@@ -48,3 +51,14 @@ func K8sConfig() (*rest.Config, error) {
 	return config, nil
 
 }
+
+// func K8sConfig() (*rest.Config, error) {
+
+// 	config, err := clientcmd.BuildConfigFromFlags(K8SAPIURL, K8SCONFIGPATH)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return config, nil
+
+// }
