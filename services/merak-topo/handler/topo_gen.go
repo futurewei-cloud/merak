@@ -211,6 +211,7 @@ func Links_gen(topo_nodes []database.Vnode) []database.Vlink {
 
 						dst_name := strings.Split(d.Name, ":")[0]
 
+						/*comment gw creation function*/
 						// if (strings.Contains(dst_name, "cgw") || strings.Contains(dst_name, "vswitch")) && (!slices.Contains(paired_nodes, dst_name)) && !paired {
 						if (strings.Contains(dst_name, "vswitch")) && (!slices.Contains(paired_nodes, dst_name)) && !paired {
 							paired_nodes = append(paired_nodes, dst_name)

@@ -32,6 +32,7 @@ import (
 )
 
 //function CREATE
+/* save the part of gw creation and mac learning for future requirment, comment the related code now*/
 func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, cgw_num uint32, data_plane_cidr string, returnMessage *pb.ReturnTopologyMessage) error {
 
 	var topo database.TopologyData
@@ -47,17 +48,17 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	fmt.Println("======== Generate device list ==== ")
 	rack_device := Pod_name(int(rack_num), "vswitch")
 	aca_device := Pod_name(int(aca_num), "vhost")
-	// ngw_device := Pod_name(int(cgw_num), "cgw")
+	// ngw_device := Pod_name(int(cgw_num), "cgw")    /*comment gw creation function*/
 
 	fmt.Printf("Vswitch_device: %v\n", rack_device)
 	fmt.Printf("Vhost_device: %v\n", aca_device)
-	// fmt.Printf("Cgw_device: %v\n", ngw_device)
+	// fmt.Printf("Cgw_device: %v\n", ngw_device) /*comment gw creation function*/
 
 	fmt.Println("======== Generate device nodes ==== ")
 	rack_intf_num := int(aca_per_rack) + 1
 	tor_intf_num := int(rack_num) + int(cgw_num)
 	aca_intf_num := 1
-	// ngw_intf_num := 1
+	// ngw_intf_num := 1 /*comment gw creation function*/
 
 	log.Println("=== Generate ip addresses == ")
 
@@ -73,7 +74,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	topo.Topology_id = topo_id
 
 	topo_nodes, _ := Node_port_gen(aca_intf_num, aca_device, ips, true)
-	// nodes, _ := Node_port_gen(ngw_intf_num, ngw_device, ips_1, true)
+	// nodes, _ := Node_port_gen(ngw_intf_num, ngw_device, ips_1, true)  /*comment gw creation function*/
 	// topo_nodes = append(topo_nodes, nodes...)
 	nodes_s, _ := Node_port_gen(rack_intf_num, rack_device, ips, false)
 	topo_nodes = append(topo_nodes, nodes_s...)
@@ -221,6 +222,8 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 
 	}
 
+	/*comment mac learning function*/
+
 	// err3 := QueryMac(client, topo_id)
 
 	// if err3 != nil {
@@ -259,6 +262,7 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 					log.Printf("pod ip is not ready %v", res.Name)
 				}
 
+				/*comment mac learning function*/
 				// mac, err := database.Get(topo_id + ":" + cnode.Ip)
 				// if err != nil {
 				// 	log.Printf("updatecomputenode: mac address is not available")
@@ -438,29 +442,4 @@ func QueryHostNode(k8client *kubernetes.Clientset, topo_id string) error {
 	}
 
 	return nil
-}
-
-func Testapi(k8client *kubernetes.Clientset, topo database.TopologyData) ([]*pb_common.InternalComputeInfo, error) {
-	var cnodes []*pb_common.InternalComputeInfo
-	var cnode *pb_common.InternalComputeInfo
-
-	for _, node := range topo.Vnodes {
-
-		res, err := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
-
-		if err != nil {
-			return cnodes, fmt.Errorf("get pod error %s", err)
-		}
-		if res.Status.Phase == "Running" && res.Labels["Type"] == "vhost" {
-			cnode.Name = res.Name
-			cnode.Id = string(res.UID)
-			cnode.DatapathIp = res.Status.PodIP
-			cnode.Mac = ""
-			cnode.Veth = ""
-			cnode.OperationType = 2
-			cnodes = append(cnodes, cnode)
-
-		}
-	}
-	return cnodes, nil
 }

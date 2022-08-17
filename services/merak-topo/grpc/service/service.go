@@ -40,7 +40,7 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 	var returnMessage pb.ReturnTopologyMessage
 
-	k8client, err := utils.K8sClient() // config.yaml- sm
+	k8client, err := utils.K8sClient()
 	if err != nil {
 		return nil, fmt.Errorf("create k8s client error %s", err.Error())
 	}
@@ -74,16 +74,15 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 	case pb_common.OperationType_CREATE:
 
-		/// save the protobuf hostinfo --- with each created topology
-
 		aca_num := in.Config.GetNumberOfVhosts()
 		rack_num := in.Config.GetNumberOfRacks()
 		aca_per_rack := in.Config.GetVhostPerRack()
 		data_plane_cidr := in.Config.GetDataPlaneCidr()
-		// cgw_num := in.Config.GetNumberOfGateways()
+		// cgw_num := in.Config.GetNumberOfGateways()  /*comment gw creation function, set cgw_num=0*/
 		cgw_num := 0
 		topo_id := in.Config.GetTopologyId()
 
+		/*comment gw creation function*/
 		// if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 || cgw_num == 0 {
 		if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 {
 
@@ -93,8 +92,6 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			return &returnMessage, nil
 
 		}
-
-		// save topology data to radis
 
 		switch s := in.Config.TopologyType; s {
 		case pb.TopologyType_SINGLE:

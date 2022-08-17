@@ -38,15 +38,11 @@ import (
 )
 
 var (
-	// ACA_IMAGE = "phudtran/merak-agent:dev"
 	ACA_IMAGE = "meraksim/merak-agent:dev"
-	// ACA_IMAGE = "meraksim/merak-agent:testv2"
 	OVS_IMAGE = "yanmo96/ovs_only:latest"
-	// GW_IMAGE  = "yanmo96/aca_build_standard:v2"
-	RYU_IP = "ryu.default.svc.cluster.local"
-	// RYU_IP   = "10.213.43.77"
-	RYU_PORT = "6653"
-	Ctx      = context.Background()
+	RYU_IP    = "ryu.default.svc.cluster.local"
+	RYU_PORT  = "6653"
+	Ctx       = context.Background()
 
 	namespace        = "default"
 	topologyClassGVR = schema.GroupVersionResource{
@@ -257,6 +253,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 					Tolerations:                   tol,
 				},
 			}
+			/*comment gw creation function*/
 			// } else if strings.Contains(node.Name, "cgw") {
 			// 	l["Type"] = "configgw"
 
