@@ -393,6 +393,7 @@ type AttachRouterReturn struct {
 }
 
 type NodeBody struct {
+	DataPathIp string `json:"data-path-ip"`
 	LocalIP    string `json:"local_ip"`
 	MacAddress string `json:"mac_address"`
 	NodeID     string `json:"node_id"`
@@ -404,6 +405,7 @@ type NodeStruct struct {
 	Hosts []NodeBody `json:"host_infos"`
 }
 type NodeReturn []struct {
+	DataPathIp string      `json:"data-path-ip"`
 	NcmURI     string      `json:"ncm_uri"`
 	NodeID     string      `json:"node_id"`
 	NodeName   string      `json:"node_name"`

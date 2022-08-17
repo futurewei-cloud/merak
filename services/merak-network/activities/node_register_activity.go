@@ -34,7 +34,8 @@ func RegisterNode(ctx context.Context, compute []*common_pb.InternalComputeInfo,
 	for _, host := range compute {
 		log.Printf("host %s", host)
 		nodeBody := entities.NodeBody{
-			LocalIP:    host.DatapathIp,
+			DataPathIp: host.DatapathIp,
+			LocalIP:    host.ContainerIp,
 			MacAddress: host.Mac,
 			NodeID:     host.Id,
 			NodeName:   host.Name,
