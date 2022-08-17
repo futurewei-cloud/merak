@@ -24,6 +24,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: merak-topology
+  
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -83,6 +84,7 @@ apiVersion: apps/v1  # API version
 kind: Deployment
 metadata:
   name: topology-redis-master # Unique name for the deployment
+  namespace: merak
   labels:
     app: topology-redis       # Labels to be applied to this deployment
 spec:
@@ -113,6 +115,7 @@ apiVersion: v1
 kind: Service        # Type of Kubernetes resource
 metadata:
   name: topology-redis-master # Name of the Kubernetes resource
+  namespace: merak
   labels:            # Labels that will be applied to this resource
     app: topology-redis
     role: master
@@ -132,6 +135,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ryu-deployment
+  namespace: merak
 spec:
   selector:
     matchLabels:

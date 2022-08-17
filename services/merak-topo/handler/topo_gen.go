@@ -126,7 +126,7 @@ func Node_port_gen(intf_num int, dev_list []string, ips []string, ip_flag bool) 
 			}
 
 			nics = append(nics, nic)
-			// ports = append(ports, port)
+
 		}
 
 		node.Id = GenUUID()

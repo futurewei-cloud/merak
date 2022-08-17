@@ -38,9 +38,9 @@ import (
 )
 
 var (
-	ACA_IMAGE = "meraksim/merak-agent:dev"
+	ACA_IMAGE = "meraksim/merak-agent:test2"
 	OVS_IMAGE = "yanmo96/ovs_only:latest"
-	RYU_IP    = "ryu.default.svc.cluster.local"
+	RYU_IP    = "ryu.merak.svc.cluster.local"
 	RYU_PORT  = "6653"
 	Ctx       = context.Background()
 
@@ -114,8 +114,8 @@ func NewTopologyClass(name string, links []map[string]interface{}) *unstructured
 }
 
 func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) error {
-
-	var k8snodes []string
+	/*comment gw creation function*/
+	// var k8snodes []string
 
 	nodes := topo.Vnodes
 
@@ -125,16 +125,17 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 		return fmt.Errorf("fails to create dynamic client %s", err)
 	}
 
-	k_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-	if err1 != nil {
-		return fmt.Errorf("fails to query k8s nodes info %s", err1)
-	}
+	/*comment gw creation function*/
+	// k_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	// if err1 != nil {
+	// 	return fmt.Errorf("fails to query k8s nodes info %s", err1)
+	// }
 
-	for _, s := range k_nodes.Items {
-		if s.Spec.Taints == nil {
-			k8snodes = append(k8snodes, s.Name)
-		}
-	}
+	// for _, s := range k_nodes.Items {
+	// 	if s.Spec.Taints == nil {
+	// 		k8snodes = append(k8snodes, s.Name)
+	// 	}
+	// }
 
 	for _, node := range nodes {
 
