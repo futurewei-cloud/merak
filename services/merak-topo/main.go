@@ -39,6 +39,4 @@ func main() {
 		log.Fatalf("fail to serve: %v", err)
 	}
 
-	// log.Printf("DB connected")
-
 }

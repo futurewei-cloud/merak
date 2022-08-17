@@ -24,7 +24,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	"github.com/go-redis/redis/v8"
 	corev1 "k8s.io/api/core/v1"
@@ -156,8 +156,8 @@ func FindPodEntity(id string, prefix string) (*corev1.Pod, error) {
 	return entity, nil
 }
 
-func FindHostNode(id string, prefix string) ([]*common_pb.InternalHostInfo, error) {
-	var entity []*common_pb.InternalHostInfo
+func FindHostNode(id string, prefix string) ([]*pb_common.InternalHostInfo, error) {
+	var entity []*pb_common.InternalHostInfo
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
@@ -170,8 +170,8 @@ func FindHostNode(id string, prefix string) ([]*common_pb.InternalHostInfo, erro
 	return entity, nil
 }
 
-func FindComputenode(id string, prefix string) ([]*common_pb.InternalComputeInfo, error) {
-	var entity []*common_pb.InternalComputeInfo
+func FindComputenode(id string, prefix string) ([]*pb_common.InternalComputeInfo, error) {
+	var entity []*pb_common.InternalComputeInfo
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
