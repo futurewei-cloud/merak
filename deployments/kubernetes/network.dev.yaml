@@ -75,7 +75,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis-main
+  name: redis-network
   namespace: merak
   labels:
     app: redis
