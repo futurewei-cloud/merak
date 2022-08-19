@@ -50,8 +50,8 @@ const (
 
 // Action
 type ScenarioAction struct {
-	ScenarioId string          `json:"scenario_id"`
-	Services   []ServiceAction `json:"services"`
+	ScenarioId string        `json:"scenario_id"`
+	Service    ServiceAction `json:"service"`
 }
 
 type ServiceAction struct {

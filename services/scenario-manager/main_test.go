@@ -252,10 +252,8 @@ func TestCreateScenario(t *testing.T) {
 func TestScenarioActions(t *testing.T) {
 	var sa entities.ScenarioAction
 	sa.ScenarioId = "d6f044df409d4836930ee88b540b2610"
-	var ssa entities.ServiceAction
-	ssa.ServiceName = "topology"
-	ssa.Action = "DEPLOY"
-	sa.Services = append(sa.Services, ssa)
+	sa.Service.ServiceName = "topology"
+	sa.Service.Action = "DEPLOY"
 
 	// Setup the app as it is done in the main function
 	app := Setup()
@@ -292,10 +290,8 @@ func TestScenarioActions(t *testing.T) {
 func TestSAGetTopology(t *testing.T) {
 	var sa entities.ScenarioAction
 	sa.ScenarioId = "d6f044df409d4836930ee88b540b2610"
-	var ssa entities.ServiceAction
-	ssa.ServiceName = "topology"
-	ssa.Action = "CHECK"
-	sa.Services = append(sa.Services, ssa)
+	sa.Service.ServiceName = "topology"
+	sa.Service.Action = "CHECK"
 
 	// Setup the app as it is done in the main function
 	app := Setup()

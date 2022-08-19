@@ -1,0 +1,531 @@
+{
+	"info": {
+		"_postman_id": "2eeebc76-e28d-43f4-b5da-c81a58d039e9",
+		"name": "merak",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11062325"
+	},
+	"item": [
+		{
+			"name": "post scenario",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"scenario-test1\",\n    \"project_id\": \"123456789\", \n    \"topology_id\": \"905b84b6da5142118f3ffbe00fe357f1\",\n    \"service_config_id\": \"a3523333ab0142d49e6fc8b443d03810\",\n    \"network_config_id\": \"e6b7e72ac496490e8e4d9127798ec802\",\n    \"compute_config_id\": \"bb5898c7cf6c4ea2a2c8628bc38c9ed1\",\n    \"test_config_id\": \"f6e20ed6bcf446308fcc06b6f5187a02\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "10.213.43.77:32000/api/scenarios",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"scenarios"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "post scenario action",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"scenario_id\": \"c25972a0e094441ea87ed5534de231d3\",\n    \"service\": {\n        \"action\": \"CHECK\",\n        \"service_name\": \"compute\"\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "10.213.43.77:32000/api/scenarios/actions",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"scenarios",
+						"actions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "put scenario",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"status\": \"DONE\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "10.213.43.77:32000/api/scenarios/c25972a0e094441ea87ed5534de231d3",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"scenarios",
+						"c25972a0e094441ea87ed5534de231d3"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "put topology",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"number_of_vhosts\": 20,\n    \"number_of_racks\": 5,\n    \"vhosts_per_rack\": 4,\n    \"number_of_control_plane_gateways\": 6,\n    \"status\": \"NONE\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "10.213.43.77:32000/api/topologies/905b84b6da5142118f3ffbe00fe357f1",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"topologies",
+						"905b84b6da5142118f3ffbe00fe357f1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "put network-config",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"number_of_vpcs\": 1,\n    \"number_of_subnet_per_vpc\": 1,\n    \"number_of_security_groups\": 1,\n    \"status\": \"NONE\",\n    \"vpcs\": [\n        {\n            \"vpc_id\": \"\",\n            \"tenant_id\": \"123456789\",\n            \"project_id\": \"123456789\",\n            \"vpc_cidr\": \"\",\n            \"number_of_subnets\": 1,\n            \"subnet_info\": [\n                {\n                    \"subnet_id\": \"\",\n                    \"subnet_cidr\": \"10.0.1.0/20\",\n                    \"subnet_gateway\": \"10.0.1.1\",\n                    \"number_of_vms\": 100\n                }\n            ]\n        }\n    ],\n    \"security_groups\": [\n        {\n            \"id\": \"\",\n            \"name\": \"sg-1\",\n            \"tenant_id\": \"123456789\",\n            \"project_id\": \"123456789\",\n            \"rules\": [\n                {\n                    \"id\": \"\",\n                    \"name\": \"string\",\n                    \"description\": \"string\",\n                    \"ethertype\": \"string\",\n                    \"direction\": \"string\",\n                    \"protocol\": \"string\",\n                    \"port_range\": \"string\",\n                    \"remote_group_id\": \"string\",\n                    \"remote_ip_prefix\": \"string\"\n                }\n            ],\n            \"apply_to\": [\n                \"string\"\n            ]\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "10.213.43.77:32000/api/network-config/e6b7e72ac496490e8e4d9127798ec802",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"network-config",
+						"e6b7e72ac496490e8e4d9127798ec802"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "put serviceconfig",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"service-config-1\",\n    \"services\": [\n        {\n            \"cmd\": \"curl\",\n            \"name\": \"alcor-createDefaultTable\",\n            \"parameters\": [\n                \"-X POST\",\n                \"-H 'Content-Type: application/json'\",\n                \"-H 'Accept: */*'\"\n            ],\n            \"return_code\": [\n                200,\n                201\n            ],\n            \"return_string\": [\n                \"\"\n            ],\n            \"url\": \"http://10.213.43.224:30001/segments/createDefaultTable\",\n            \"when_to_run\": \"INIT\",\n            \"where_to_run\": \"NETWORK\"\n        },\n        {\n            \"cmd\": \"curl\",\n            \"name\": \"alcor-nodemanager\",\n            \"parameters\": [\n                \"-X POST\",\n                \"-H 'Content-Type: application/json'\",\n                \"-H 'Accept: */*'\",\n                \"-d '{ \\\"host_info\\\": [ { \\\"host_dvr_mac\\\": \\\"string\\\", \\\"local_ip\\\": \\\"string\\\", \\\"mac_address\\\": \\\"string\\\", \\\"ncm_id\\\": \\\"string\\\", \\\"ncm_uri\\\": \\\"string\\\", \\\"node_id\\\": \\\"string\\\", \\\"node_name\\\": \\\"string\\\", \\\"server_port\\\": 0, \\\"veth\\\": \\\"string\\\" } ]}'\"\n            ],\n            \"return_code\": [\n                200,\n                201\n            ],\n            \"return_string\": [\n                \"\"\n            ],\n            \"url\": \"http://10.213.43.224:30007/nodes/bulk\",\n            \"when_to_run\": \"AFTER:alcor-createDefaultTable\",\n            \"where_to_run\": \"NETWORK\"\n        },\n        {\n            \"cmd\": \"curl\",\n            \"name\": \"alcor-create-vpcs\",\n            \"parameters\": [\n                \"-X POST\",\n                \"-H 'Content-Type: application/json'\",\n                \"-H 'Accept: */*'\",\n                \"-d '{ \\\"network\\\": { \\\"admin_state_up\\\": true, \\\"revision_number\\\": 0, \\\"cidr\\\": \\\"string\\\", \\\"default\\\": true, \\\"description\\\": \\\"string\\\", \\\"dns_domain\\\": \\\"string\\\", \\\"id\\\": \\\"string\\\", \\\"is_default\\\": true, \\\"mtu\\\": 1400, \\\"name\\\": \\\"string\\\", \\\"port_security_enabled\\\": true, \\\"project_id\\\": \\\"string\\\" } }'\"\n            ],\n            \"return_code\": [\n                200,\n                201\n            ],\n            \"return_string\": [\n                \"\"\n            ],\n            \"url\": \"http://10.213.43.224:30001/project/{project_id}/vpcs\",\n            \"when_to_run\": \"AFTER:alcor-createDefaultTable\",\n            \"where_to_run\": \"NETWORK\"\n        },\n        {\n            \"cmd\": \"curl\",\n            \"name\": \"alcor-create-securitygroups\",\n            \"parameters\": [\n                \"-X POST\",\n                \"-H 'Content-Type: application/json'\",\n                \"-H 'Accept: */*'\",\n                \"-d '{ \\\"security_group\\\": { \\\"name\\\": \\\"string\\\", \\\"project_id\\\": \\\"string\\\", \\\"description\\\": \\\"string\\\", \\\"id\\\": \\\"string\\\", \\\"tenant_id\\\": \\\"string\\\", \\\"security_group_rules\\\": [] } }'\"\n            ],\n            \"return_code\": [\n                200,\n                201\n            ],\n            \"return_string\": [\n                \"\"\n            ],\n            \"url\": \"http://10.213.43.224:30008/project/{project_id}/security-groups\",\n            \"when_to_run\": \"AFTER:alcor-create-vpcs\",\n            \"where_to_run\": \"NETWORK\"\n        },\n        {\n            \"cmd\": \"curl\",\n            \"name\": \"alcor-create-subnets\",\n            \"parameters\": [\n                \"-X POST\",\n                \"-H 'Content-Type: application/json'\",\n                \"-H 'Accept: */*'\",\n                \"-d '{ \\\"subnet\\\": { \\\"name\\\": \\\"string\\\", \\\"id\\\": \\\"string\\\", \\\"ip_version\\\": 4, \\\"network_id\\\": \\\"string\\\", \\\"cidr\\\": \\\"string\\\", \\\"host_routes\\\": [] } }'\"\n            ],\n            \"return_code\": [\n                200,\n                201\n            ],\n            \"return_string\": [\n                \"\"\n            ],\n            \"url\": \"http://10.213.43.224:30002/project/{project_id}/subnets\",\n            \"when_to_run\": \"AFTER:alcor-create-vpcs\",\n            \"where_to_run\": \"NETWORK\"\n        },\n        {\n            \"cmd\": \"curl\",\n            \"name\": \"alcor-create-ports\",\n            \"parameters\": [\n                \"-X POST\",\n                \"-H 'Content-Type: application/json'\",\n                \"-H 'Accept: */*'\",\n                \"-d '{ \\\"port\\\": { \\\"admin_state_up\\\": true, \\\"tenant_id\\\": \\\"string\\\", \\\"network_id\\\": \\\"string\\\", \\\"device_id\\\": \\\"string\\\", \\\"description\\\": \\\"string\\\", \\\"security_groups\\\": [ \\\"string\\\" ], \\\"fixed_ips\\\": [ { \\\"subnet_id\\\": \\\"string\\\" } ] } }'\"\n            ],\n            \"return_code\": [\n                200,\n                201\n            ],\n            \"return_string\": [\n                \"\"\n            ],\n            \"url\": \"http://10.213.43.224:30006/project/{project_id}/ports\",\n            \"when_to_run\": \"AFTER:aca-cmd\",\n            \"where_to_run\": \"AGENT\"\n        },\n        {\n            \"cmd\": \"curl\",\n            \"name\": \"alcor-update-ports\",\n            \"parameters\": [\n                \"-X PUT\",\n                \"-H 'Content-Type: application/json'\",\n                \"-H 'Accept: */*'\",\n                \"-d '{ \\\"port\\\": { \\\"admin_state_up\\\": true, \\\"tenant_id\\\": \\\"string\\\", \\\"network_id\\\": \\\"string\\\", \\\"device_id\\\": \\\"string\\\", \\\"binding:host_id\\\": \\\"string\\\", \\\"binding:vif_details\\\": {}, \\\"device_owner\\\": \\\"compute:nova\\\", \\\"description\\\": \\\"string\\\", \\\"security_groups\\\": [ \\\"string\\\" ], \\\"fixed_ips\\\": [ { \\\"subnet_id\\\": \\\"string\\\" } ] } }'\"\n            ],\n            \"return_code\": [\n                200,\n                201\n            ],\n            \"return_string\": [\n                \"\"\n            ],\n            \"url\": \"http://10.213.43.224:30006/project/{project_id}/ports/{port_id}\",\n            \"when_to_run\": \"AFTER:alcor-create-ports\",\n            \"where_to_run\": \"AGENT\"\n        },\n        {\n            \"cmd\": \"ssh\",\n            \"name\": \"infra-host-config\",\n            \"parameters\": [\n                \"root@host-ip\",\n                \"route add -net **\"\n            ],\n            \"return_code\": [\n                0\n            ],\n            \"return_string\": [\n                \"\"\n            ],\n            \"url\": \"\",\n            \"when_to_run\": \"INIT\",\n            \"where_to_run\": \"NETWORK\"\n        },\n        {\n            \"cmd\": \"/root/alcor-control-agent/build/bin/AlcorControlAgent\",\n            \"name\": \"aca-cmd\",\n            \"parameters\": [\n                \"-d\",\n                \"-a 10.213.43.224\",\n                \"-p 30014\"\n            ],\n            \"return_code\": [\n                0\n            ],\n            \"return_string\": [\n                \"\"\n            ],\n            \"url\": \"\",\n            \"when_to_run\": \"INIT\",\n            \"where_to_run\": \"AGENT\"\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "10.213.43.224:3000/api/service-config/01b58c5299d04b099e8f6293567ce478",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"224"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"service-config",
+						"01b58c5299d04b099e8f6293567ce478"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "put compute",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"number_of_compute_nodes\": 50,\n    \"number_of_port_per_vm\": 10,\n    \"vm_deploy_type\": \"UNIFORM\",\n    \"scheduler\": \"SEQENTIAL\",\n    \"number_of_vm_per_vpc\": 500,\n    \"status\": \"NONE\",\n    \"vpc_info\": [\n        {\n            \"vpc_id\": \"\",\n            \"tenant_id\": \"123456789\",\n            \"project_id\": \"123456789\",\n            \"vpc_cidr\": \"\",\n            \"number_of_subnets\": 1,\n            \"subnet_info\": [\n                {\n                    \"subnet_id\": \"\",\n                    \"subnet_cidr\": \"10.0.1.0/20\",\n                    \"subnet_gateway\": \"10.0.1.1\",\n                    \"number_of_vms\": 100\n                }\n            ]\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "10.213.43.77:32000/api/compute-config/bb5898c7cf6c4ea2a2c8628bc38c9ed1",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"compute-config",
+						"bb5898c7cf6c4ea2a2c8628bc38c9ed1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "post topology",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"topology-1\",\n    \"number_of_control_plane_gateways\": 6,\n    \"number_of_vhosts\": 50,\n    \"number_of_racks\": 5,\n    \"type\": \"string\",\n    \"vhosts_per_rack\": 10,\n    \"data_plane_cidr\": \"10.200.0.0/16\",\n    \"control_plane_gateway_ips\": [\n        \"string\"\n    ],\n    \"images\": [\n    {\n      \"args\": [\n        \"string\"\n      ],\n      \"cmd\": [\n        \"string\"\n      ],\n      \"id\": \"string\",\n      \"name\": \"string\",\n      \"registry\": \"string\"\n    }\n  ],\n  \"vlinks\": [\n    {\n      \"from\": \"string\",\n      \"name\": \"string\",\n      \"to\": \"string\"\n    }\n  ],\n  \"vnodes\": [\n    {\n      \"name\": \"string\",\n      \"nics\": [\n        {\n          \"ip\": \"string\",\n          \"name\": \"string\"\n        }\n      ]\n    }\n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "10.213.43.77:32000/api/topologies",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"topologies"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "post networkconfig",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"gateways\": [\n    {\n      \"ips\": [\n        \"string\"\n      ],\n      \"name\": \"string\"\n    }\n  ],\n  \"name\": \"network-config-1\",\n  \"number_of_security_groups\": 1,\n  \"number_of_subnet_per_vpc\": 1,\n  \"number_of_vpcs\": 1,\n  \"routers\": [\n    {\n      \"name\": \"string\",\n      \"subnet_gateways\": [\n        \"string\"\n      ]\n    }\n  ],\n  \"security_groups\": [\n    {\n      \"apply_to\": [\n        \"string\"\n      ],\n      \"name\": \"sg-1\",\n      \"project_id\": \"123456789\",\n      \"rules\": [\n        {\n          \"description\": \"string\",\n          \"direction\": \"string\",\n          \"ethertype\": \"string\",\n          \"name\": \"string\",\n          \"port_range\": \"string\",\n          \"protocol\": \"string\",\n          \"remote_group_id\": \"string\",\n          \"remote_ip_prefix\": \"string\"\n        }\n      ],\n      \"tenant_id\": \"123456789\"\n    }\n  ],\n  \"vpcs\": [\n    {\n      \"number_of_subnets\": 1,\n      \"project_id\": \"123456789\",\n      \"subnet_info\": [\n        {\n          \"number_of_vms\": 100,\n          \"subnet_cidr\": \"10.0.1.0/24\",\n          \"subnet_gateway\": \"10.0.1.1\"\n        }\n      ],\n      \"tenant_id\": \"123456789\"\n    }\n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "10.213.43.77:32000/api/network-config",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"network-config"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "post serviceconfig",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"service-config-1\",\n    \"services\": [\n        {\n            \"cmd\": \"curl\",\n            \"name\": \"alcor-createDefaultTable\",\n            \"parameters\": [\n                \"-X POST\",\n                \"-H 'Content-Type: application/json'\",\n                \"-H 'Accept: */*'\"\n            ],\n            \"return_code\": [\n                200,\n                201\n            ],\n            \"return_string\": [\n                \"\"\n            ],\n            \"url\": \"http://10.213.43.111:30001/segments/createDefaultTable\",\n            \"when_to_run\": \"INIT\",\n            \"where_to_run\": \"NETWORK\"\n        },\n        {\n            \"cmd\": \"curl\",\n            \"name\": \"alcor-nodemanager\",\n            \"parameters\": [\n                \"-X POST\",\n                \"-H 'Content-Type: application/json'\",\n                \"-H 'Accept: */*'\",\n                \"-d '{ \\\"host_info\\\": [ { \\\"host_dvr_mac\\\": \\\"string\\\", \\\"local_ip\\\": \\\"string\\\", \\\"mac_address\\\": \\\"string\\\", \\\"ncm_id\\\": \\\"string\\\", \\\"ncm_uri\\\": \\\"string\\\", \\\"node_id\\\": \\\"string\\\", \\\"node_name\\\": \\\"string\\\", \\\"server_port\\\": 0, \\\"veth\\\": \\\"string\\\" } ]}'\"\n            ],\n            \"return_code\": [\n                200,\n                201\n            ],\n            \"return_string\": [\n                \"\"\n            ],\n            \"url\": \"http://10.213.43.111:30007/nodes/bulk\",\n            \"when_to_run\": \"AFTER:alcor-createDefaultTable\",\n            \"where_to_run\": \"NETWORK\"\n        },\n        {\n            \"cmd\": \"/root/alcor-control-agent/build/bin/AlcorControlAgent\",\n            \"name\": \"aca-cmd\",\n            \"parameters\": [\n                \"-d\",\n                \"-a 10.213.43.111\",\n                \"-p 30014\"\n            ],\n            \"return_code\": [\n                0\n            ],\n            \"return_string\": [\n                \"\"\n            ],\n            \"url\": \"\",\n            \"when_to_run\": \"INIT\",\n            \"where_to_run\": \"AGENT\"\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "10.213.43.77:32000/api/service-config",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"service-config"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "post computeconfig",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"compute-config-1\",\n  \"number_of_compute_nodes\": 50,\n  \"number_of_port_per_vm\": 10,\n  \"number_of_vm_per_vpc\": 500,\n  \"scheduler\": \"SEQENTIAL\",\n  \"vm_deploy_type\": \"UNIFORM\",\n  \"vpc_info\": [\n    {\n      \"number_of_subnets\": 1,\n      \"project_id\": \"123456789\",\n      \"subnet_info\": [\n        {\n          \"number_of_vms\": 100,\n          \"subnet_cidr\": \"10.0.1.0/24\",\n          \"subnet_gateway\": \"10.0.1.1\"\n        }\n      ],\n      \"tenant_id\": \"123456789\"\n    }\n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "10.213.43.77:3000/api/compute-config",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"compute-config"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "post testconfig",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"test-config-1\",\n  \"tests\": [\n    {\n      \"cmd\": \"ping\",\n      \"id\": \"string\",\n      \"name\": \"pingall\",\n      \"parameters\": [\n        \"string\"\n      ],\n      \"script\": \"github.com/merak/test/scripts/script1.sh\",\n      \"when_to_run\": \"after:VM_CREATED\",\n      \"where_to_run\": \"AGENT\"\n    }\n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "10.213.43.77:3000/api/test-config",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"test-config"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get scenraio",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "10.213.43.77:32000/api/scenarios/e69d9ccba0574efa825322ba6b955839",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"scenarios",
+						"e69d9ccba0574efa825322ba6b955839"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get topology",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "10.213.43.77:32000/api/topologies/905b84b6da5142118f3ffbe00fe357f1",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"topologies",
+						"905b84b6da5142118f3ffbe00fe357f1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get scenarios",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "10.213.43.77:32000/api/scenarios",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"scenarios"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get netconfig",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "10.213.43.77:32000/api/network-config/1cc82c0ed6124bc5a9caa104351a9708",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"network-config",
+						"1cc82c0ed6124bc5a9caa104351a9708"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get serviceconfig",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "10.213.43.77:32000/api/service-config/adb2db16bc034d05ae397fb418517a8c",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"service-config",
+						"adb2db16bc034d05ae397fb418517a8c"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get compute",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "10.213.43.77:32000/api/compute-config/e05dc94880784a67a19ae13cbeb95444",
+					"host": [
+						"10",
+						"213",
+						"43",
+						"77"
+					],
+					"port": "32000",
+					"path": [
+						"api",
+						"compute-config",
+						"e05dc94880784a67a19ae13cbeb95444"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "merak-server",
+			"value": ":"
+		}
+	]
+}

@@ -66,49 +66,42 @@ func ScenarioActoins(c *fiber.Ctx) error {
 	database.Set(utils.KEY_PREFIX_SCENARIO+scenario.Id, &scenario)
 
 	var scenarioStatus entities.ServiceStatus
-	for _, sa := range scenarioAction.Services {
-		if strings.ToLower(sa.ServiceName) == "topology" {
-			var returnTopo *topology_pb.ReturnTopologyMessage
-			returnTopo, err := handler.TopologyHandler(&scenario, sa.Action)
-			if err != nil || returnTopo.ReturnCode == pb.ReturnCode_FAILED {
-				sa.Status = entities.STATUS_FAILED
-				scenarioStatus = entities.STATUS_FAILED
-				logger.Log.Errorf("'%s' topology failed: %s", sa.Action, err.Error())
-			} else {
-				sa.Status = entities.STATUS_DONE
-				scenarioStatus = entities.STATUS_DONE
-				logger.Log.Infof("'%s' topology done.", sa.Action)
-				logger.Log.Infof("returnTopo for action %s : %s", sa.Action, returnTopo)
-			}
+	var returnTopo *topology_pb.ReturnTopologyMessage
+	var returnNetwork *network_pb.ReturnNetworkMessage
+	var returnCompute *compute_pb.ReturnComputeMessage
+
+	if strings.ToLower(scenarioAction.Service.ServiceName) == "topology" {
+		returnTopo, err := handler.TopologyHandler(&scenario, scenarioAction.Service.Action)
+		if err != nil || returnTopo.ReturnCode == pb.ReturnCode_FAILED {
+			scenarioStatus = entities.STATUS_FAILED
+			logger.Log.Errorf("'%s' topology failed: %s", scenarioAction.Service.Action, err.Error())
+		} else {
+			scenarioStatus = entities.STATUS_DONE
+			logger.Log.Infof("'%s' topology done.", scenarioAction.Service.Action)
+			logger.Log.Infof("returnTopo for action %s : %s", scenarioAction.Service.Action, returnTopo)
 		}
-		if strings.ToLower(sa.ServiceName) == "network" {
-			var returnNetwork *network_pb.ReturnNetworkMessage
-			returnNetwork, err := handler.NetworkHandler(&scenario, sa.Action)
-			if err != nil || returnNetwork.ReturnCode == pb.ReturnCode_FAILED {
-				sa.Status = entities.STATUS_FAILED
-				scenarioStatus = entities.STATUS_FAILED
-				logger.Log.Errorf("'%s' network failed: %s", sa.Action, err.Error())
-			} else {
-				sa.Status = entities.STATUS_DONE
-				scenarioStatus = entities.STATUS_DONE
-				logger.Log.Infof("'%s' network done.", sa.Action)
-				logger.Log.Infof("returnNetwork for action %s : %s", sa.Action, returnNetwork)
-			}
+	} else if strings.ToLower(scenarioAction.Service.ServiceName) == "network" {
+		returnNetwork, err := handler.NetworkHandler(&scenario, scenarioAction.Service.Action)
+		if err != nil || returnNetwork.ReturnCode == pb.ReturnCode_FAILED {
+			scenarioStatus = entities.STATUS_FAILED
+			logger.Log.Errorf("'%s' network failed: %s", scenarioAction.Service.Action, err.Error())
+		} else {
+			scenarioStatus = entities.STATUS_DONE
+			logger.Log.Infof("'%s' network done.", scenarioAction.Service.Action)
+			logger.Log.Infof("returnNetwork for action %s : %s", scenarioAction.Service.Action, returnNetwork)
 		}
-		if strings.ToLower(sa.ServiceName) == "compute" {
-			var returnCompute *compute_pb.ReturnComputeMessage
-			returnCompute, err := handler.ComputeHanlder(&scenario, sa.Action)
-			if err != nil || returnCompute.ReturnCode == pb.ReturnCode_FAILED {
-				sa.Status = entities.STATUS_FAILED
-				scenarioStatus = entities.STATUS_FAILED
-				logger.Log.Errorf("'%s' compute failed: %s", sa.Action, err.Error())
-			} else {
-				sa.Status = entities.STATUS_DONE
-				scenarioStatus = entities.STATUS_DONE
-				logger.Log.Infof("'%s' compute done.", sa.Action)
-				logger.Log.Infof("returnCompute for action %s : %s", sa.Action, returnCompute)
-			}
+	} else if strings.ToLower(scenarioAction.Service.ServiceName) == "compute" {
+		returnCompute, err := handler.ComputeHanlder(&scenario, scenarioAction.Service.Action)
+		if err != nil || returnCompute.ReturnCode == pb.ReturnCode_FAILED {
+			scenarioStatus = entities.STATUS_FAILED
+			logger.Log.Errorf("'%s' compute failed: %s", scenarioAction.Service.Action, err.Error())
+		} else {
+			scenarioStatus = entities.STATUS_DONE
+			logger.Log.Infof("'%s' compute done.", scenarioAction.Service.Action)
+			logger.Log.Infof("returnCompute for action %s : %s", scenarioAction.Service.Action, returnCompute)
 		}
+	} else {
+		return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", "Scenario Action Failed.", scenarioAction))
 	}
 
 	scenario.Status = scenarioStatus
@@ -119,7 +112,15 @@ func ScenarioActoins(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).JSON(utils.ReturnResponseMessage("FAILED", "Scenario Action Failed.", scenarioAction))
 	}
 
-	return c.Status(http.StatusOK).JSON(utils.ReturnResponseMessage("OK", "Action on the scenario successfully.", scenarioAction))
+	if strings.ToLower(scenarioAction.Service.ServiceName) == "topology" {
+		return c.Status(http.StatusOK).JSON(utils.ReturnResponseMessage("OK", "Action on the Topology successfully.", returnTopo))
+	} else if strings.ToLower(scenarioAction.Service.ServiceName) == "network" {
+		return c.Status(http.StatusOK).JSON(utils.ReturnResponseMessage("OK", "Action on the Network successfully.", returnNetwork))
+	} else if strings.ToLower(scenarioAction.Service.ServiceName) == "compute" {
+		return c.Status(http.StatusOK).JSON(utils.ReturnResponseMessage("OK", "Action on the Compute successfully.", returnCompute))
+	}
+
+	return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", "Scenario Action Failed.", scenarioAction))
 }
 
 //Function for creating a scenario
