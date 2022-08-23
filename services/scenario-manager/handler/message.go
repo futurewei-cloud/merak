@@ -210,14 +210,16 @@ func constructNetConfMessage(netconf *entities.NetworkConfig, serviceConf *entit
 	}
 
 	conf.Network = &netPb
-	conf.Computes = topoReturn.GetComputeNodes()
+	if topoReturn != nil {
+		conf.Computes = topoReturn.GetComputeNodes()
+	}
 	netconfPb.Config = &conf
 
 	return nil
 }
 
 func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entities.ServiceConfig, topoReturn *topology_pb.ReturnTopologyMessage, netReturn *network_pb.ReturnNetworkMessage, computePb *compute_pb.InternalComputeConfigInfo, action entities.EventName) error {
-	computePb.OperationType = pb.OperationType_CREATE
+	computePb.OperationType = actionToOperation(action)
 
 	var conf compute_pb.InternalComputeConfiguration
 	conf.FormatVersion = 1
@@ -225,34 +227,39 @@ func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entit
 	conf.RequestId = utils.GenUUID()
 	conf.ComputeConfigId = compute.Id
 	conf.MessageType = pb.MessageType_FULL
-	conf.Pods = topoReturn.GetComputeNodes()
+	if topoReturn != nil {
+		conf.Pods = topoReturn.GetComputeNodes()
+	}
 
 	var vmDeployPb compute_pb.InternalVMDeployInfo
-	vmDeployPb.OperationType = pb.OperationType_CREATE
-	vmDeployPb.Vpcs = netReturn.GetVpcs()
-	vmDeployPb.Secgroups = netReturn.GetSecurityGroupIds()
+	vmDeployPb.OperationType = actionToOperation(action)
+	if netReturn != nil {
+		vmDeployPb.Vpcs = netReturn.GetVpcs()
+		vmDeployPb.Secgroups = netReturn.GetSecurityGroupIds()
+	}
 	vmDeployPb.DeployType = getVMDeployType(compute.VmDeployType)
 	vmDeployPb.Scheduler = getVMDeployScheduler(compute.Scheduler)
 
 	conf.VmDeploy = &vmDeployPb
 
-	for _, service := range serviceConf.Services {
-		var servicePb pb.InternalServiceInfo
-		if strings.ToUpper(service.WhereToRun) == utils.MERAK_COMPUTE || strings.ToUpper(service.WhereToRun) == utils.MERAK_AGENT {
-			servicePb.OperationType = pb.OperationType_CREATE
-			servicePb.Id = service.Id
-			servicePb.Name = service.Name
-			servicePb.Cmd = service.Cmd
-			servicePb.Url = service.Url
-			servicePb.Parameters = service.Parameters
-			servicePb.ReturnCode = service.ReturnCode
-			servicePb.ReturnString = service.ReturnString
-			servicePb.WhenToRun = service.WhenToRun
-			servicePb.WhereToRun = service.WhereToRun
-			conf.Services = append(conf.Services, &servicePb)
+	if serviceConf != nil {
+		for _, service := range serviceConf.Services {
+			var servicePb pb.InternalServiceInfo
+			if strings.ToUpper(service.WhereToRun) == utils.MERAK_COMPUTE || strings.ToUpper(service.WhereToRun) == utils.MERAK_AGENT {
+				servicePb.OperationType = pb.OperationType_CREATE
+				servicePb.Id = service.Id
+				servicePb.Name = service.Name
+				servicePb.Cmd = service.Cmd
+				servicePb.Url = service.Url
+				servicePb.Parameters = service.Parameters
+				servicePb.ReturnCode = service.ReturnCode
+				servicePb.ReturnString = service.ReturnString
+				servicePb.WhenToRun = service.WhenToRun
+				servicePb.WhereToRun = service.WhereToRun
+				conf.Services = append(conf.Services, &servicePb)
+			}
 		}
 	}
-
 	computePb.Config = &conf
 
 	return nil

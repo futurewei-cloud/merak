@@ -21,15 +21,13 @@ import (
 	"time"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	compute_pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
-	network_pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
-	topology_pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/database"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/entities"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/handler"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/logger"
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
 	"github.com/gofiber/fiber/v2"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 //Function for doing some actions for a scenario
@@ -65,50 +63,65 @@ func ScenarioActoins(c *fiber.Ctx) error {
 	scenario.Status = entities.STATUS_DEPLOYING
 	database.Set(utils.KEY_PREFIX_SCENARIO+scenario.Id, &scenario)
 
+	var returnBody interface{}
 	var scenarioStatus entities.ServiceStatus
-	for _, sa := range scenarioAction.Services {
-		if strings.ToLower(sa.ServiceName) == "topology" {
-			var returnTopo *topology_pb.ReturnTopologyMessage
-			returnTopo, err := handler.TopologyHandler(&scenario, sa.Action)
-			if err != nil || returnTopo.ReturnCode == pb.ReturnCode_FAILED {
-				sa.Status = entities.STATUS_FAILED
-				scenarioStatus = entities.STATUS_FAILED
-				logger.Log.Errorf("'%s' topology failed: %s", sa.Action, err.Error())
+
+	if strings.ToLower(scenarioAction.Service.ServiceName) == "topology" {
+		returnTopo, err := handler.TopologyHandler(&scenario, scenarioAction.Service.Action)
+		if err != nil || returnTopo.ReturnCode == pb.ReturnCode_FAILED {
+			scenarioStatus = entities.STATUS_FAILED
+			logger.Log.Errorf("'%s' topology failed: %s", scenarioAction.Service.Action, err.Error())
+		} else {
+			scenarioStatus = entities.STATUS_DONE
+			logger.Log.Infof("'%s' topology done.", scenarioAction.Service.Action)
+			logger.Log.Infof("returnTopo for action %s : %s", scenarioAction.Service.Action, returnTopo)
+			ret, err := protojson.Marshal(returnTopo)
+			if err != nil {
+				logger.Log.Errorf("returnBody Error: %s", err.Error())
 			} else {
-				sa.Status = entities.STATUS_DONE
-				scenarioStatus = entities.STATUS_DONE
-				logger.Log.Infof("'%s' topology done.", sa.Action)
-				logger.Log.Infof("returnTopo for action %s : %s", sa.Action, returnTopo)
+				if err1 := json.Unmarshal(ret, &returnBody); err1 != nil {
+					logger.Log.Errorf("Unmarshal error: %s", err1.Error())
+				}
 			}
 		}
-		if strings.ToLower(sa.ServiceName) == "network" {
-			var returnNetwork *network_pb.ReturnNetworkMessage
-			returnNetwork, err := handler.NetworkHandler(&scenario, sa.Action)
-			if err != nil || returnNetwork.ReturnCode == pb.ReturnCode_FAILED {
-				sa.Status = entities.STATUS_FAILED
-				scenarioStatus = entities.STATUS_FAILED
-				logger.Log.Errorf("'%s' network failed: %s", sa.Action, err.Error())
+	} else if strings.ToLower(scenarioAction.Service.ServiceName) == "network" {
+		returnNetwork, err := handler.NetworkHandler(&scenario, scenarioAction.Service.Action)
+		if err != nil || returnNetwork.ReturnCode == pb.ReturnCode_FAILED {
+			scenarioStatus = entities.STATUS_FAILED
+			logger.Log.Errorf("'%s' network failed: %s", scenarioAction.Service.Action, err.Error())
+		} else {
+			scenarioStatus = entities.STATUS_DONE
+			logger.Log.Infof("'%s' network done.", scenarioAction.Service.Action)
+			logger.Log.Infof("returnNetwork for action %s : %s", scenarioAction.Service.Action, returnNetwork)
+			ret, err := protojson.Marshal(returnNetwork)
+			if err != nil {
+				logger.Log.Errorf("returnBody Error: %s", err.Error())
 			} else {
-				sa.Status = entities.STATUS_DONE
-				scenarioStatus = entities.STATUS_DONE
-				logger.Log.Infof("'%s' network done.", sa.Action)
-				logger.Log.Infof("returnNetwork for action %s : %s", sa.Action, returnNetwork)
+				if err1 := json.Unmarshal(ret, &returnBody); err1 != nil {
+					logger.Log.Errorf("Unmarshal error: %s", err1.Error())
+				}
 			}
 		}
-		if strings.ToLower(sa.ServiceName) == "compute" {
-			var returnCompute *compute_pb.ReturnComputeMessage
-			returnCompute, err := handler.ComputeHanlder(&scenario, sa.Action)
-			if err != nil || returnCompute.ReturnCode == pb.ReturnCode_FAILED {
-				sa.Status = entities.STATUS_FAILED
-				scenarioStatus = entities.STATUS_FAILED
-				logger.Log.Errorf("'%s' compute failed: %s", sa.Action, err.Error())
+	} else if strings.ToLower(scenarioAction.Service.ServiceName) == "compute" {
+		returnCompute, err := handler.ComputeHanlder(&scenario, scenarioAction.Service.Action)
+		if err != nil || returnCompute.ReturnCode == pb.ReturnCode_FAILED {
+			scenarioStatus = entities.STATUS_FAILED
+			logger.Log.Errorf("'%s' compute failed: %s", scenarioAction.Service.Action, err.Error())
+		} else {
+			scenarioStatus = entities.STATUS_DONE
+			logger.Log.Infof("'%s' compute done.", scenarioAction.Service.Action)
+			logger.Log.Infof("returnCompute for action %s : %s", scenarioAction.Service.Action, returnCompute)
+			ret, err := protojson.Marshal(returnCompute)
+			if err != nil {
+				logger.Log.Errorf("returnBody Error: %s", err.Error())
 			} else {
-				sa.Status = entities.STATUS_DONE
-				scenarioStatus = entities.STATUS_DONE
-				logger.Log.Infof("'%s' compute done.", sa.Action)
-				logger.Log.Infof("returnCompute for action %s : %s", sa.Action, returnCompute)
+				if err1 := json.Unmarshal(ret, &returnBody); err1 != nil {
+					logger.Log.Errorf("Unmarshal error: %s", err1.Error())
+				}
 			}
 		}
+	} else {
+		return c.Status(http.StatusBadRequest).JSON(utils.ReturnResponseMessage("FAILED", "Scenario Action Failed.", scenarioAction))
 	}
 
 	scenario.Status = scenarioStatus
@@ -119,7 +132,7 @@ func ScenarioActoins(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).JSON(utils.ReturnResponseMessage("FAILED", "Scenario Action Failed.", scenarioAction))
 	}
 
-	return c.Status(http.StatusOK).JSON(utils.ReturnResponseMessage("OK", "Action on the scenario successfully.", scenarioAction))
+	return c.Status(http.StatusOK).JSON(utils.ReturnResponseMessage("OK", "Action on the scenario successfully.", returnBody))
 }
 
 //Function for creating a scenario
