@@ -20,7 +20,7 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-func Delete(ctx workflow.Context, vms []string) {
+func Delete(ctx workflow.Context, vms []string) (err error) {
 	retrypolicy := &temporal.RetryPolicy{
 		InitialInterval:    common.TEMPORAL_ACTIVITY_RETRY_INTERVAL,
 		BackoffCoefficient: common.TEMPORAL_ACTIVITY_BACKOFF,
@@ -42,5 +42,6 @@ func Delete(ctx workflow.Context, vms []string) {
 		}
 	}
 	logger.Info("VmDelete workflow completed.%s\n")
+	return nil
 
 }

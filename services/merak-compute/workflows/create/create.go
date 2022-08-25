@@ -20,7 +20,7 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-func Create(ctx workflow.Context, vms []string) {
+func Create(ctx workflow.Context, vms []string) (err error) {
 	retrypolicy := &temporal.RetryPolicy{
 		InitialInterval:    common.TEMPORAL_ACTIVITY_RETRY_INTERVAL,
 		BackoffCoefficient: common.TEMPORAL_ACTIVITY_BACKOFF,
@@ -43,4 +43,6 @@ func Create(ctx workflow.Context, vms []string) {
 		logger.Info("VmCreate activity completed for vm_id ", vm)
 	}
 	logger.Info("VmCreate workflow completed for vms ", vms)
+
+	return nil
 }

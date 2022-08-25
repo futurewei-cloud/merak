@@ -27,7 +27,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func VmCreate(ctx context.Context, vmID string) {
+func VmCreate(ctx context.Context, vmID string) (err error) {
 	logger := activity.GetLogger(ctx)
 
 	var agent_address strings.Builder
@@ -39,7 +39,7 @@ func VmCreate(ctx context.Context, vmID string) {
 	conn, err := grpc.Dial(agent_address.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Info("Failed to dial gRPC server address: "+agent_address.String(), err)
-		return
+		return err
 	}
 	client := agent_pb.NewMerakAgentServiceClient(conn)
 
@@ -66,9 +66,9 @@ func VmCreate(ctx context.Context, vmID string) {
 			"5",
 		).Err(); err != nil {
 			logger.Info("Failed to add vm response to DB!")
-			return
+			return err
 		}
-		return
+		return err
 	}
 
 	if resp.ReturnCode == common_pb.ReturnCode_OK {
@@ -90,10 +90,11 @@ func VmCreate(ctx context.Context, vmID string) {
 			remoteID,
 		).Err(); err != nil {
 			logger.Info("Failed to add vm response to DB!")
-			return
+			return err
 		}
 	}
 	logger.Info("Response from agent at address " + podIP + ": " + resp.GetReturnMessage())
 
 	defer conn.Close()
+	return nil
 }

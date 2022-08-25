@@ -27,7 +27,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func VmDelete(ctx context.Context, vmID string) {
+func VmDelete(ctx context.Context, vmID string) (err error) {
 	logger := activity.GetLogger(ctx)
 	podIP := common.RedisClient.HGet(ctx, vmID, "hostIP").Val()
 
@@ -54,4 +54,6 @@ func VmDelete(ctx context.Context, vmID string) {
 		logger.Error("Unable delete vm ID " + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
 	}
 	common.RedisClient.FlushAll(ctx)
+
+	return nil
 }
