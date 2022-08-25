@@ -69,7 +69,7 @@ metadata:
   name: merak-compute-vm-worker
   namespace: merak
 spec:
-  replicas: 1
+  replicas: 5
   selector:
     matchLabels:
       app: merak-compute-vm-worker
