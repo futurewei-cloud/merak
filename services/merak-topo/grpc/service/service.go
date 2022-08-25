@@ -78,6 +78,9 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 		rack_num := in.Config.GetNumberOfRacks()
 		aca_per_rack := in.Config.GetVhostPerRack()
 		data_plane_cidr := in.Config.GetDataPlaneCidr()
+		// will be modified with new layer switch algorithm
+		ovs_layer1_num := 2
+		rack_per_layer1 := 2
 		// cgw_num := in.Config.GetNumberOfGateways()  /*comment gw creation function, set cgw_num=0*/
 		cgw_num := 0
 		topo_id := in.Config.GetTopologyId()
@@ -106,7 +109,7 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			//
 		default:
 			// pb.TopologyType_TREE
-			err_create := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
+			err_create := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, uint32(ovs_layer1_num), uint32(rack_per_layer1), &returnMessage)
 
 			if err_create != nil {
 				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED

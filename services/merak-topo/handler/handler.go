@@ -33,7 +33,9 @@ import (
 
 //function CREATE
 /* save the part of gw creation and mac learning for future requirment, comment the related code now*/
-func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, cgw_num uint32, data_plane_cidr string, returnMessage *pb.ReturnTopologyMessage) error {
+// func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, cgw_num uint32, data_plane_cidr string, ovs_layer1_num uint32, rack_per_layer1 uint32, returnMessage *pb.ReturnTopologyMessage) error {
+
+func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, cgw_num uint32, data_plane_cidr string, ovs_layer1_num uint32, rack_per_layer1 uint32, returnMessage *pb.ReturnTopologyMessage) error {
 
 	var topo database.TopologyData
 
@@ -45,20 +47,48 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	log.Printf("Vswitch number is: %v\n", rack_num)
 	log.Printf("Vhost number is: %v\n", aca_num)
 
+	// fmt.Println("======== Generate device list ==== ")
+	// rack_device := Pod_name(int(rack_num), "vswitch")
+	// aca_device := Pod_name(int(aca_num), "vhost")
+	// // ngw_device := Pod_name(int(cgw_num), "cgw")    /*comment gw creation function*/
+
+	// fmt.Printf("Vswitch_device: %v\n", rack_device)
+	// fmt.Printf("Vhost_device: %v\n", aca_device)
+	// // fmt.Printf("Cgw_device: %v\n", ngw_device) /*comment gw creation function*/
+
+	// fmt.Println("======== Generate device nodes ==== ")
+	// rack_intf_num := int(aca_per_rack) + 1
+	// tor_intf_num := int(rack_num) + int(cgw_num)
+	// aca_intf_num := 1
+	// // ngw_intf_num := 1 /*comment gw creation function*/
+
+	// log.Println("=== Generate ip addresses == ")
+
+	// ips := Ips_gen(topo_id, ip_num, data_plane_cidr)
+
+	// err := database.SetValue(topo_id+":ips", ips)
+	// if err != nil {
+	// 	return fmt.Errorf("fail to save ips in DB %s", err)
+	// }
+
+	// fmt.Println("======== Generate topology data ==== ")
+
+	// topo.Topology_id = topo_id
 	fmt.Println("======== Generate device list ==== ")
+	ovs_layer_device := Pod_name(int(ovs_layer1_num), "ovs")
 	rack_device := Pod_name(int(rack_num), "vswitch")
 	aca_device := Pod_name(int(aca_num), "vhost")
-	// ngw_device := Pod_name(int(cgw_num), "cgw")    /*comment gw creation function*/
+	ngw_device := Pod_name(int(cgw_num), "cgw")
 
 	fmt.Printf("Vswitch_device: %v\n", rack_device)
 	fmt.Printf("Vhost_device: %v\n", aca_device)
-	// fmt.Printf("Cgw_device: %v\n", ngw_device) /*comment gw creation function*/
+	fmt.Printf("Cgw_device: %v\n", ngw_device)
 
 	fmt.Println("======== Generate device nodes ==== ")
-	rack_intf_num := int(aca_per_rack) + 1
-	tor_intf_num := int(rack_num) + int(cgw_num)
+	rack_intf_num := int(aca_per_rack + 1)
+	ovslayer1_intf_num := int(rack_per_layer1 + 1)
+	tor_intf_num := int(ovs_layer1_num)
 	aca_intf_num := 1
-	// ngw_intf_num := 1 /*comment gw creation function*/
 
 	log.Println("=== Generate ip addresses == ")
 
@@ -78,6 +108,8 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	// topo_nodes = append(topo_nodes, nodes...)
 	nodes_s, _ := Node_port_gen(rack_intf_num, rack_device, ips, false)
 	topo_nodes = append(topo_nodes, nodes_s...)
+	nodes_layer1, _ := Node_port_gen(ovslayer1_intf_num, ovs_layer_device, ips, false)
+	topo_nodes = append(topo_nodes, nodes_layer1...)
 	nodes_t, _ := Node_port_gen(tor_intf_num, ovs_tor_device, ips, false)
 	topo_nodes = append(topo_nodes, nodes_t...)
 
@@ -87,7 +119,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 	fmt.Println("======== Pairing links ==== ")
 
-	topo_links := Links_gen(topo_nodes)
+	topo_links := Vlinks_gen(topo_nodes)
 
 	fmt.Printf("The topology links are : %v. \n", topo_links)
 
@@ -237,7 +269,7 @@ func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnM
 
 		if strings.Contains(node.Name, "vhost") {
 
-			res, err := client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
+			res, err := client.CoreV1().Pods(topo_id).Get(Ctx, node.Name, metav1.GetOptions{})
 
 			if err != nil {
 				cnode.Name = node.Name
@@ -363,7 +395,7 @@ func QueryMac(k8client *kubernetes.Clientset, topo_id string) error {
 					"-c 1",
 					ip,
 				}
-				Pod_query(k8client, pod, cmd1)
+				Pod_query(k8client, pod, cmd1, topo_id)
 
 			}
 
@@ -371,7 +403,7 @@ func QueryMac(k8client *kubernetes.Clientset, topo_id string) error {
 				"arp",
 				"-a",
 			}
-			out2, err3 := Pod_query(k8client, pod, cmd2)
+			out2, err3 := Pod_query(k8client, pod, cmd2, topo_id)
 
 			if err3 != nil {
 				return fmt.Errorf("failed to query pod compute node info from K8s %s", err)
