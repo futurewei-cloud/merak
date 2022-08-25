@@ -1,14 +1,15 @@
 /*
 MIT License
 Copyright(c) 2022 Futurewei Cloud
-    Permission is hereby granted,
-    free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
-    including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
-    to whom the Software is furnished to do so, subject to the following conditions:
-    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+	Permission is hereby granted,
+	free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+	including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+	to whom the Software is furnished to do so, subject to the following conditions:
+	The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 package handler
 
@@ -102,14 +103,11 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			RetryPolicy: retrypolicy,
 		}
 		log.Println("Operation Create")
-		// Store Available Node IPs in DB
 
-		//Info needed:
-		// -All host IPs(pod ips)
-		// -VMs to create/host
-		// -Ports to create/VM
-		// Subnet and VPC for each VM
+		var result pb.ReturnComputeMessage
+		var result_vms []*pb.InternalVMInfo
 
+		// Add pods to DB
 		for _, pod := range in.Config.Pods {
 			if err := RedisClient.HSet(
 				ctx,
@@ -136,8 +134,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 				}, err
 			}
 
-			// Currently 1 VM = 1 Port.
-			// Generate VMs
+			// Generate VMs for each VPC and Subnet
 			for i, vpc := range in.Config.VmDeploy.Vpcs {
 				for j, subnet := range vpc.Subnets {
 					for k := 0; j < int(subnet.NumberVms); j++ {
@@ -175,6 +172,8 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 								ReturnCode:    common_pb.ReturnCode_FAILED,
 							}, err
 						}
+
+						// Store VM to Pod list
 						log.Println("Added VM " + vmID + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k) + " of " + strconv.Itoa(int(subnet.NumberVms)))
 						if err := RedisClient.LPush(ctx, "l"+pod.Id, vmID).Err(); err != nil {
 							return &pb.ReturnComputeMessage{
@@ -186,35 +185,53 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 					}
 				}
 			}
+			// Get VM to pod list
+			vms := common.RedisClient.LRange(ctx, "l"+pod.Id, 0, -1)
+			if vms.Err() != nil {
+				log.Println("Unable get node vmIDsList from redis", vms.Err())
+				return &pb.ReturnComputeMessage{
+					ReturnCode:    common_pb.ReturnCode_FAILED,
+					ReturnMessage: "Unable get node vmIDsList from redis",
+				}, vms.Err()
+			}
 
-		}
-		// Start VM Create Workflow
-		var result pb.ReturnComputeMessage
-		log.Println("Executing VM Create Workflow!")
-		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create)
-		if err != nil {
-			return &pb.ReturnComputeMessage{
-				ReturnMessage: "Unable to execute workflow",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
-			}, err
-		}
-		log.Println("Started workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
+			// Execute VM creation on a per pod basis
+			// Send a list of VMs to the Workflow
+			log.Println("Executing VM Create Workflow!")
+			we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create, vms)
+			if err != nil {
+				return &pb.ReturnComputeMessage{
+					ReturnMessage: "Unable to execute workflow",
+					ReturnCode:    common_pb.ReturnCode_FAILED,
+				}, err
+			}
+			log.Println("Started workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
 
-		// Sync get results of workflow
-		err = we.Get(context.Background(), &result)
-		if err != nil {
-			return &pb.ReturnComputeMessage{
-				ReturnMessage: result.GetReturnMessage(),
-				ReturnCode:    common_pb.ReturnCode_FAILED,
-				Vms:           result.GetVms(),
-			}, err
+			var node_results pb.ReturnComputeMessage
+			// Sync get results of workflow
+			err = we.Get(context.Background(), &node_results)
+			if err != nil {
+				return &pb.ReturnComputeMessage{
+					ReturnMessage: node_results.GetReturnMessage(),
+					ReturnCode:    common_pb.ReturnCode_FAILED,
+					Vms:           node_results.GetVms(),
+				}, err
+			}
+
+			log.Println("Workflow node result message:", node_results.GetReturnMessage())
+			log.Println("Workflow node result return code:", node_results.GetReturnCode())
+			log.Println("Workflow node result vms:", node_results.GetVms())
+
+			// Append vms list to final result vms
+			result_vms = append(result_vms, node_results.GetVms()...)
 		}
+
 		log.Println("Workflow result:", result.ReturnMessage)
 		return &pb.ReturnComputeMessage{
-			ReturnMessage: result.GetReturnMessage(),
-			ReturnCode:    result.GetReturnCode(),
-			Vms:           result.GetVms(),
-		}, err
+			ReturnMessage: "Success!",
+			ReturnCode:    common_pb.ReturnCode_OK,
+			Vms:           result_vms,
+		}, nil
 
 	case common_pb.OperationType_UPDATE:
 		workflowOptions = client.StartWorkflowOptions{
