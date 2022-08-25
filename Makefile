@@ -81,6 +81,15 @@ docker-compute:
 	docker push meraksim/merak-compute-vm-worker:dev
 
 
+.PHONY: docker-compute-test
+docker-compute-test:
+	make proto
+	make compute
+	docker build -t meraksim/merak-compute:test -f docker/compute.Dockerfile .
+	docker build -t meraksim/merak-compute-vm-worker:test -f docker/compute-vm-worker.Dockerfile .
+	docker push meraksim/merak-compute:test
+	docker push meraksim/merak-compute-vm-worker:test
+
 .PHONY: docker-agent
 docker-agent:
 	make proto
@@ -88,6 +97,12 @@ docker-agent:
 	docker build -t meraksim/merak-agent:dev -f docker/agent.Dockerfile .
 	docker push meraksim/merak-agent:dev
 
+.PHONY: docker-agent-test
+docker-agent-test:
+	make proto
+	make agent
+	docker build -t meraksim/merak-agent:test -f docker/agent.Dockerfile .
+	docker push meraksim/merak-agent:test
 
 .PHONY: docker-network
 docker-network:
