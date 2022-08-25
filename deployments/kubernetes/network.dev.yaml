@@ -58,7 +58,7 @@ metadata:
   name: network-redis-network
   namespace: merak
   labels:
-    app: redis
+    app: redis-network
     role: main
     tier: backend
 spec:
@@ -67,7 +67,7 @@ spec:
       port: 30053
       targetPort: network-redis
   selector:
-    app: redis
+    app: redis-network
     role: main
     tier: backend
   type: ClusterIP
@@ -75,21 +75,21 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis-main
+  name: redis-network
   namespace: merak
   labels:
-    app: redis
+    app: redis-network
     role: main
     tier: backend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: redis
+      app: redis-network
   template:
     metadata:
       labels:
-        app: redis
+        app: redis-network
         role: main
         tier: backend
     spec:

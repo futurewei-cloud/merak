@@ -39,6 +39,7 @@ func ConnectDatabase() error {
 	})
 
 	if err := client.Ping(Ctx).Err(); err != nil {
+		log.Printf("DB ConnectDatabase Issue: %s", err.Error())
 		return err
 	}
 
@@ -54,6 +55,7 @@ func Set(key string, val interface{}) error {
 
 	err = Rdb.Set(Ctx, key, jsonVal, 0).Err()
 	if err != nil {
+		log.Printf("DB Set Issue: %s", err.Error())
 		return err
 	}
 	return nil
@@ -63,7 +65,7 @@ func Get(key string) (string, error) {
 	log.Printf("DB GET %s", key)
 	val, err := Rdb.Get(Ctx, key).Result()
 	if err != nil {
-		log.Println("DB Get Issue")
+		log.Printf("DB Get Issue: %s", err.Error())
 		return "", err
 	}
 	return val, nil
@@ -71,6 +73,7 @@ func Get(key string) (string, error) {
 
 func Del(key string) error {
 	if err := Rdb.Del(Ctx, key).Err(); err != nil {
+		log.Printf("DB Del Issue: %s", err.Error())
 		return err
 	}
 	return nil
