@@ -18,14 +18,11 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
-// const K8SAPIURL string = "https://kubernetes.default:6443"
-// const K8SAPIURL string = "https://172.31.28.160:6443"
-const K8SAPIURL string = "https://172.31.28.160:6443"
+const K8SAPIURL string = "https://kubernetes.default:6443"
 
-const K8SCONFIGPATH string = "/etc/kubernetes/admin.conf"
+// const K8SCONFIGPATH string = "/etc/kubernetes/admin.conf"
 
 func K8sClient() (*kubernetes.Clientset, error) {
 
@@ -43,24 +40,24 @@ func K8sClient() (*kubernetes.Clientset, error) {
 
 }
 
-// func K8sConfig() (*rest.Config, error) {
-
-// 	config, err := rest.InClusterConfig()
-// 	if err != nil {
-// 		panic(err.Error())
-// 	}
-
-// 	return config, nil
-
-// }
-
 func K8sConfig() (*rest.Config, error) {
 
-	config, err := clientcmd.BuildConfigFromFlags(K8SAPIURL, K8SCONFIGPATH)
+	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, err
+		panic(err.Error())
 	}
 
 	return config, nil
 
 }
+
+// func K8sConfig() (*rest.Config, error) {
+
+// 	config, err := clientcmd.BuildConfigFromFlags(K8SAPIURL, K8SCONFIGPATH)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return config, nil
+
+// }

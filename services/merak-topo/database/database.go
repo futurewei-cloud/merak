@@ -39,10 +39,7 @@ var (
 func ConnectDatabase() error {
 	client := redis.NewClient(&redis.Options{
 
-		Addr: "topology-redis-master.default.svc.cluster.local:55001",
-		// Addr:     "172.31.28.160:55001",
-		// Addr:     "54.189.190.120:55001",
-		// Addr:     "10.106.191.97:6379",
+		Addr:     "topology-redis-master.default.svc.cluster.local:55001",
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})

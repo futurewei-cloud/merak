@@ -41,7 +41,6 @@ var (
 	ACA_IMAGE = "meraksim/merak-agent:dev"
 	OVS_IMAGE = "yanmo96/ovs_only:latest"
 	RYU_IP    = "ryu.merak.svc.cluster.local"
-	// RYU_IP = "10.97.130.111"
 
 	RYU_PORT = "6653"
 	Ctx      = context.Background()
