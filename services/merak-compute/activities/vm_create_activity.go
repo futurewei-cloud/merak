@@ -20,7 +20,6 @@ import (
 
 	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/activity"
@@ -28,9 +27,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func VmCreate(ctx context.Context, vmID string) (*pb.ReturnComputeMessage, error) {
+func VmCreate(ctx context.Context, vmID string) {
 	logger := activity.GetLogger(ctx)
-	var result_vm []*pb.InternalVMInfo
 
 	var agent_address strings.Builder
 	podIP := common.RedisClient.HGet(ctx, vmID, "hostIP").Val()
@@ -41,6 +39,7 @@ func VmCreate(ctx context.Context, vmID string) (*pb.ReturnComputeMessage, error
 	conn, err := grpc.Dial(agent_address.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Info("Failed to dial gRPC server address: "+agent_address.String(), err)
+		return
 	}
 	client := agent_pb.NewMerakAgentServiceClient(conn)
 
@@ -60,6 +59,16 @@ func VmCreate(ctx context.Context, vmID string) (*pb.ReturnComputeMessage, error
 	resp, err := client.PortHandler(ctx, &port)
 	if err != nil {
 		logger.Error("Unable to create vm on" + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
+		if err := common.RedisClient.HSet(
+			ctx,
+			vmID,
+			"status",
+			"5",
+		).Err(); err != nil {
+			logger.Info("Failed to add vm response to DB!")
+			return
+		}
+		return
 	}
 
 	if resp.ReturnCode == common_pb.ReturnCode_OK {
@@ -68,15 +77,6 @@ func VmCreate(ctx context.Context, vmID string) (*pb.ReturnComputeMessage, error
 		deviceID := resp.Port.GetDeviceid()
 		remoteID := resp.Port.GetRemoteid()
 		logger.Info("IP:" + ip + " status:" + status.String() + " deviceID:" + deviceID + " remoteID:" + remoteID)
-		return_vm := pb.InternalVMInfo{
-			Name:            common.RedisClient.HGet(ctx, vmID, "name").Val(),
-			VpcId:           common.RedisClient.HGet(ctx, vmID, "vpc").Val(),
-			Ip:              ip,
-			SecurityGroupId: common.RedisClient.HGet(ctx, vmID, "sh").Val(),
-			SubnetId:        common.RedisClient.HGet(ctx, vmID, "subnetID").Val(),
-			DefaultGateway:  common.RedisClient.HGet(ctx, vmID, "gw").Val(),
-			Status:          status,
-		}
 		if err := common.RedisClient.HSet(
 			ctx,
 			vmID,
@@ -90,16 +90,10 @@ func VmCreate(ctx context.Context, vmID string) (*pb.ReturnComputeMessage, error
 			remoteID,
 		).Err(); err != nil {
 			logger.Info("Failed to add vm response to DB!")
+			return
 		}
-		result_vm = append(result_vm, &return_vm)
 	}
 	logger.Info("Response from agent at address " + podIP + ": " + resp.GetReturnMessage())
 
 	defer conn.Close()
-
-	return &pb.ReturnComputeMessage{
-		ReturnCode:    common_pb.ReturnCode_OK,
-		ReturnMessage: "Success!",
-		Vms:           result_vm,
-	}, nil
 }

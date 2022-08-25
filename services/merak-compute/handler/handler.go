@@ -74,7 +74,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, info.Info)
 		if err != nil {
 			return &pb.ReturnComputeMessage{
-				ReturnMessage: "Unable to execute workflow",
+				ReturnMessage: "Unable to execute info workflow",
 				ReturnCode:    common_pb.ReturnCode_FAILED,
 			}, err
 		}
@@ -103,9 +103,6 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			RetryPolicy: retrypolicy,
 		}
 		log.Println("Operation Create")
-
-		var result pb.ReturnComputeMessage
-		var result_vms []*pb.InternalVMInfo
 
 		// Add pods to DB
 		for _, pod := range in.Config.Pods {
@@ -165,7 +162,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 							"hostIP", pod.ContainerIp,
 							"hostmac", pod.Mac,
 							"hostname", pod.Name,
-							"status", "0",
+							"status", "1",
 						).Err(); err != nil {
 							return &pb.ReturnComputeMessage{
 								ReturnMessage: "Unable add VM to DB Hash Map",
@@ -198,39 +195,19 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			// Execute VM creation on a per pod basis
 			// Send a list of VMs to the Workflow
 			log.Println("Executing VM Create Workflow!")
-			we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create, vms)
+			we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create, vms.Val())
 			if err != nil {
 				return &pb.ReturnComputeMessage{
-					ReturnMessage: "Unable to execute workflow",
+					ReturnMessage: "Unable to execute create workflow",
 					ReturnCode:    common_pb.ReturnCode_FAILED,
 				}, err
 			}
-			log.Println("Started workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
-
-			var node_results pb.ReturnComputeMessage
-			// Sync get results of workflow
-			err = we.Get(context.Background(), &node_results)
-			if err != nil {
-				return &pb.ReturnComputeMessage{
-					ReturnMessage: node_results.GetReturnMessage(),
-					ReturnCode:    common_pb.ReturnCode_FAILED,
-					Vms:           node_results.GetVms(),
-				}, err
-			}
-
-			log.Println("Workflow node result message:", node_results.GetReturnMessage())
-			log.Println("Workflow node result return code:", node_results.GetReturnCode())
-			log.Println("Workflow node result vms:", node_results.GetVms())
-
-			// Append vms list to final result vms
-			result_vms = append(result_vms, node_results.GetVms()...)
+			log.Println("Started Create workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
 		}
 
-		log.Println("Workflow result:", result.ReturnMessage)
 		return &pb.ReturnComputeMessage{
-			ReturnMessage: "Success!",
+			ReturnMessage: "Successfully started all create workflows!",
 			ReturnCode:    common_pb.ReturnCode_OK,
-			Vms:           result_vms,
 		}, nil
 
 	case common_pb.OperationType_UPDATE:
@@ -251,30 +228,57 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			TaskQueue:   common.VM_TASK_QUEUE,
 			RetryPolicy: retrypolicy,
 		}
-		var result pb.ReturnComputeMessage
-		log.Println("Executing VM Delete Workflow!")
-		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, delete.Delete)
-		if err != nil {
-			return &pb.ReturnComputeMessage{
-				ReturnMessage: "Unable to execute workflow",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
-			}, err
-		}
-		log.Println("Started workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
 
-		// Sync get results of workflow
-		err = we.Get(context.Background(), &result)
-		if err != nil {
+		//Get a list of all pods
+		pod_list := common.RedisClient.SMembers(
+			ctx,
+			constants.COMPUTE_REDIS_NODE_IP_SET,
+		)
+		if pod_list.Err() != nil {
+			log.Println("Unable get VM IDs from redis", pod_list.Err())
+
 			return &pb.ReturnComputeMessage{
-				ReturnMessage: result.GetReturnMessage(),
 				ReturnCode:    common_pb.ReturnCode_FAILED,
-			}, err
+				ReturnMessage: "Unable get node IDs from redis",
+			}, pod_list.Err()
 		}
-		log.Println("Workflow result:", result.ReturnMessage)
+		// Get list of all vms in pod
+		for _, pod_id := range pod_list.Val() {
+			vms := common.RedisClient.LRange(ctx, "l"+pod_id, 0, -1)
+			if vms.Err() != nil {
+				log.Println("Unable get node vmIDsList from redis", vms.Err())
+				return &pb.ReturnComputeMessage{
+					ReturnCode:    common_pb.ReturnCode_FAILED,
+					ReturnMessage: "Unable get node vmIDsList from redis",
+				}, vms.Err()
+			}
+			for _, vm_id := range vms.Val() {
+				if err := RedisClient.HSet(
+					ctx,
+					vm_id,
+					"status", "3",
+				).Err(); err != nil {
+					return &pb.ReturnComputeMessage{
+						ReturnMessage: "Unable to set VM status to deleting in DB Hash Map",
+						ReturnCode:    common_pb.ReturnCode_FAILED,
+					}, err
+				}
+			}
+			log.Println("Executing VM Delete Workflow!")
+			we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, delete.Delete, vms.Val())
+			if err != nil {
+				return &pb.ReturnComputeMessage{
+					ReturnMessage: "Unable to execute delete workflow",
+					ReturnCode:    common_pb.ReturnCode_FAILED,
+				}, err
+			}
+			log.Println("Started Delete workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
+		}
+
 		return &pb.ReturnComputeMessage{
-			ReturnMessage: result.GetReturnMessage(),
-			ReturnCode:    result.GetReturnCode(),
-		}, err
+			ReturnMessage: "Successfully started all delete workflows!",
+			ReturnCode:    common_pb.ReturnCode_OK,
+		}, nil
 
 	default:
 		log.Println("Unknown Operation")
