@@ -39,6 +39,7 @@ func VmDelete(ctx context.Context, vmID string) (err error) {
 	conn, err := grpc.Dial(agent_address.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Info("Failed to dial gRPC server address: "+agent_address.String(), err)
+		return err
 	}
 	client := agent_pb.NewMerakAgentServiceClient(conn)
 	port := agent_pb.InternalPortConfig{
@@ -52,6 +53,7 @@ func VmDelete(ctx context.Context, vmID string) (err error) {
 	resp, err := client.PortHandler(ctx, &port)
 	if err != nil {
 		logger.Error("Unable delete vm ID " + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
+		return err
 	}
 	common.RedisClient.FlushAll(ctx)
 

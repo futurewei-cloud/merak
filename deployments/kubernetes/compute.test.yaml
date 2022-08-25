@@ -53,7 +53,7 @@ spec:
         effect: "NoSchedule"
       containers:
       - name: merak-compute
-        image: meraksim/merak-compute:latest
+        image: meraksim/merak-compute:test
         imagePullPolicy: Always
         ports:
           - containerPort: 40051
@@ -84,7 +84,7 @@ spec:
         effect: "NoSchedule"
       containers:
       - name: merak-compute-vm-worker
-        image: meraksim/merak-compute-vm-worker:latest
+        image: meraksim/merak-compute-vm-worker:test
         imagePullPolicy: Always
         env:
         - name: "TEMPORAL"

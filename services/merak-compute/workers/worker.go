@@ -34,8 +34,6 @@ import (
 var ctx = context.Background()
 
 func main() {
-
-	log.Println("Test")
 	temporal_address, ok := os.LookupEnv(constants.TEMPORAL_ENV)
 	if !ok {
 		log.Println("Temporal environment variable not set, using default address.")
@@ -52,6 +50,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("Unable to create client", err)
 	}
+	log.Println("Connected to Temporal!")
 	defer c.Close()
 
 	//Connect to Redis

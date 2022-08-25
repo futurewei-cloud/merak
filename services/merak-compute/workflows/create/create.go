@@ -36,13 +36,10 @@ func Create(ctx workflow.Context, vms []string) (err error) {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("VmCreate starting workflow.")
 	for _, vm := range vms {
-		err := workflow.ExecuteActivity(ctx, activities.VmCreate, vm)
-		if err != nil {
-			logger.Error("VmCreate failed! %s\n", err)
-		}
-		logger.Info("VmCreate activity completed for vm_id ", vm)
+		workflow.ExecuteActivity(ctx, activities.VmCreate, vm)
+		logger.Info("VmCreate activity started for vm_id ", vm)
 	}
-	logger.Info("VmCreate workflow completed for vms ", vms)
+	logger.Info("Started VmCreate workflows for vms ", vms)
 
 	return nil
 }
