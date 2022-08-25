@@ -55,7 +55,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: network-redis-network
+  name: merak-redis-network
   namespace: merak
   labels:
     app: redis-network
@@ -94,7 +94,7 @@ spec:
         tier: backend
     spec:
       containers:
-        - name: main
+        - name: network-redis-main
           image: "redis:7.0.0"
           resources:
             requests:
