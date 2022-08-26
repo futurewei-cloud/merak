@@ -96,8 +96,8 @@ docker-compute-test:
 docker-agent:
 	make proto
 	make agent
-	docker build -t meraksim/merak-agent:test -f docker/agent.Dockerfile .
-	docker push meraksim/merak-agent:test
+	docker build -t meraksim/merak-agent:dev -f docker/agent.Dockerfile .
+	docker push meraksim/merak-agent:dev
 
 .PHONY: docker-agent-test
 docker-agent-test:
