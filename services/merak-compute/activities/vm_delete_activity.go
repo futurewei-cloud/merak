@@ -27,10 +27,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func VmDelete(ctx context.Context, vmID string) (err error) {
+func VmDelete(ctx context.Context, vmID string) error {
 	logger := activity.GetLogger(ctx)
-	podIP := common.RedisClient.HGet(ctx, vmID, "hostIP").Val()
 
+	podIP := common.RedisClient.HGet(ctx, vmID, "hostIP").Val()
 	var agent_address strings.Builder
 	agent_address.Reset()
 	agent_address.WriteString(podIP)

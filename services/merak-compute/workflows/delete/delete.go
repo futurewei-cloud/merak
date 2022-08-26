@@ -34,11 +34,12 @@ func Delete(ctx workflow.Context, vms []string) (err error) {
 
 	ctx = workflow.WithActivityOptions(ctx, ao)
 	logger := workflow.GetLogger(ctx)
+
 	for _, vm := range vms {
-		workflow.ExecuteActivity(ctx, activities.VmDelete, vm)
-		logger.Info("Started VmDelete workflow for vm ", vm)
+		workflow.ExecuteActivity(ctx, activities.VmDelete, vm).Get(ctx, nil)
+		logger.Info("Started VmDelete workflow for vm " + vm)
 	}
-	logger.Info("Started VmDelete all workflows.%s\n")
+	logger.Info("Started VmDelete all workflows.\n")
 	return nil
 
 }

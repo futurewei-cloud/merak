@@ -27,13 +27,14 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func VmCreate(ctx context.Context, vmID string) (err error) {
+func VmCreate(ctx context.Context, vmID string) error {
 	logger := activity.GetLogger(ctx)
+	logger.Info("Starting create activity for VM " + vmID)
 
 	var agent_address strings.Builder
 	podIP := common.RedisClient.HGet(ctx, vmID, "hostIP").Val()
 	agent_address.WriteString(podIP)
-	logger.Info("Connecting to pod at: ", podIP)
+	logger.Info("Connecting to pod at: " + podIP)
 	agent_address.WriteString(":")
 	agent_address.WriteString(strconv.Itoa(constants.AGENT_GRPC_SERVER_PORT))
 	conn, err := grpc.Dial(agent_address.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))

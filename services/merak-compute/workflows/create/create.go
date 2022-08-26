@@ -14,6 +14,8 @@ Copyright(c) 2022 Futurewei Cloud
 package create
 
 import (
+	"strings"
+
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/temporal"
@@ -34,12 +36,22 @@ func Create(ctx workflow.Context, vms []string) (err error) {
 
 	ctx = workflow.WithActivityOptions(ctx, ao)
 	logger := workflow.GetLogger(ctx)
-	logger.Info("VmCreate starting workflow.")
-	for _, vm := range vms {
-		workflow.ExecuteActivity(ctx, activities.VmCreate, vm)
-		logger.Info("VmCreate activity started for vm_id ", vm)
-	}
-	logger.Info("Started VmCreate workflows for vms ", vms)
 
+	var futures []workflow.Future
+	for _, vm := range vms {
+		future := workflow.ExecuteActivity(ctx, activities.VmCreate, vm)
+		logger.Info("VmCreate activity started for vm_id " + vm)
+		futures = append(futures, future)
+	}
+	logger.Info("Started VmCreate workflows for vms" + strings.Join(vms, " "))
+
+	for _, future := range futures {
+		err = future.Get(ctx, nil)
+		logger.Info("Activity completed!")
+		if err != nil {
+			return
+		}
+	}
+	logger.Info("All activities completed")
 	return nil
 }

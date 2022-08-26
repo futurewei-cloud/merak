@@ -104,6 +104,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		}
 		log.Println("Operation Create")
 
+		return_vms := []*pb.InternalVMInfo{}
 		// Add pods to DB
 		for _, pod := range in.Config.Pods {
 			if err := RedisClient.HSet(
@@ -134,7 +135,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			// Generate VMs for each VPC and Subnet
 			for i, vpc := range in.Config.VmDeploy.Vpcs {
 				for j, subnet := range vpc.Subnets {
-					for k := 0; j < int(subnet.NumberVms); j++ {
+					for k := 0; k < int(subnet.NumberVms); k++ {
 						vmID := pod.Id + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
 						suffix := strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
 						if err := RedisClient.SAdd(
@@ -169,13 +170,25 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 								ReturnCode:    common_pb.ReturnCode_FAILED,
 							}, err
 						}
-
+						return_vm := pb.InternalVMInfo{
+							Id:              vmID,
+							Name:            "v" + suffix,
+							VpcId:           vpc.VpcId,
+							Ip:              "",
+							SecurityGroupId: in.Config.VmDeploy.Secgroups[0],
+							SubnetId:        subnet.SubnetId,
+							DefaultGateway:  subnet.SubnetGw,
+							Status:          common_pb.Status(1),
+						}
+						return_vms = append(return_vms, &return_vm)
 						// Store VM to Pod list
-						log.Println("Added VM " + vmID + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k) + " of " + strconv.Itoa(int(subnet.NumberVms)))
+						log.Println("Added VM " + vmID + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(k+1) + " of " + strconv.Itoa(int(subnet.NumberVms)))
 						if err := RedisClient.LPush(ctx, "l"+pod.Id, vmID).Err(); err != nil {
+							log.Println("Failed to add pod -> vm mapping " + vmID)
 							return &pb.ReturnComputeMessage{
 								ReturnMessage: "Unable add VM to pod list",
 								ReturnCode:    common_pb.ReturnCode_FAILED,
+								Vms:           return_vms,
 							}, err
 						}
 						log.Println("Added pod -> vm mapping " + vmID)
@@ -183,23 +196,25 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 				}
 			}
 			// Get VM to pod list
-			vms := common.RedisClient.LRange(ctx, "l"+pod.Id, 0, -1)
+			vms := RedisClient.LRange(ctx, "l"+pod.Id, 0, -1)
 			if vms.Err() != nil {
 				log.Println("Unable get node vmIDsList from redis", vms.Err())
 				return &pb.ReturnComputeMessage{
 					ReturnCode:    common_pb.ReturnCode_FAILED,
 					ReturnMessage: "Unable get node vmIDsList from redis",
+					Vms:           return_vms,
 				}, vms.Err()
 			}
 
 			// Execute VM creation on a per pod basis
 			// Send a list of VMs to the Workflow
-			log.Println("Executing VM Create Workflow!")
+			log.Println("Executing VM Create Workflow with VMs ", vms.Val())
 			we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create, vms.Val())
 			if err != nil {
 				return &pb.ReturnComputeMessage{
 					ReturnMessage: "Unable to execute create workflow",
 					ReturnCode:    common_pb.ReturnCode_FAILED,
+					Vms:           return_vms,
 				}, err
 			}
 			log.Println("Started Create workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
@@ -208,6 +223,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		return &pb.ReturnComputeMessage{
 			ReturnMessage: "Successfully started all create workflows!",
 			ReturnCode:    common_pb.ReturnCode_OK,
+			Vms:           return_vms,
 		}, nil
 
 	case common_pb.OperationType_UPDATE:
@@ -230,7 +246,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		}
 
 		//Get a list of all pods
-		pod_list := common.RedisClient.SMembers(
+		pod_list := RedisClient.SMembers(
 			ctx,
 			constants.COMPUTE_REDIS_NODE_IP_SET,
 		)
@@ -244,7 +260,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		}
 		// Get list of all vms in pod
 		for _, pod_id := range pod_list.Val() {
-			vms := common.RedisClient.LRange(ctx, "l"+pod_id, 0, -1)
+			vms := RedisClient.LRange(ctx, "l"+pod_id, 0, -1)
 			if vms.Err() != nil {
 				log.Println("Unable get node vmIDsList from redis", vms.Err())
 				return &pb.ReturnComputeMessage{
