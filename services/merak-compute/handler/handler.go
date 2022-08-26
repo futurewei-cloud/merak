@@ -97,9 +97,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		}, err
 
 	case common_pb.OperationType_CREATE:
-
 		log.Println("Operation Create")
-
 		return_vms := []*pb.InternalVMInfo{}
 		// Add pods to DB
 		for n, pod := range in.Config.Pods {
@@ -290,6 +288,9 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			}
 			log.Println("Started Delete workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
 		}
+
+		log.Println("Deleting all VMs from DB")
+		RedisClient.FlushAll(ctx)
 
 		return &pb.ReturnComputeMessage{
 			ReturnMessage: "Successfully started all delete workflows!",
