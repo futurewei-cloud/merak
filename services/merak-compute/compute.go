@@ -31,7 +31,10 @@ import (
 	"google.golang.org/grpc"
 )
 
-var ctx = context.Background()
+var (
+	ctx  = context.Background()
+	Port = flag.Int("port", constants.COMPUTE_GRPC_SERVER_PORT, "The server port")
+)
 
 func main() {
 	// Connect to temporal
@@ -77,7 +80,7 @@ func main() {
 
 	//Start gRPC Server
 	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *handler.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", Port))
 	if err != nil {
 		log.Fatalln("ERROR: Failed to listen", err)
 	}
