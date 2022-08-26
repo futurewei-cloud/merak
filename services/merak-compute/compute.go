@@ -80,7 +80,7 @@ func main() {
 
 	//Start gRPC Server
 	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *Port))
 	if err != nil {
 		log.Fatalln("ERROR: Failed to listen", err)
 	}

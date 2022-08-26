@@ -24,10 +24,7 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-var (
-	workflowOptions client.StartWorkflowOptions
-)
-
+var workflowOptions client.StartWorkflowOptions
 var TemporalClient client.Client
 var RedisClient redis.Client
 
