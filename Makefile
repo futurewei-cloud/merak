@@ -75,6 +75,7 @@ docker-scenario:
 docker-compute:
 	make proto
 	make compute
+	make vm-worker
 	docker build -t meraksim/merak-compute:dev -f docker/compute.Dockerfile .
 	docker build -t meraksim/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
 	docker push meraksim/merak-compute:dev
