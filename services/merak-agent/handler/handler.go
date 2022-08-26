@@ -122,7 +122,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 				ReturnMessage: "Failed to create minimal port! Response Code: " + strconv.Itoa(resp.StatusCode),
 				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
-			}, err
+			}, errors.New("Failed to create minimal port! Response Code: " + strconv.Itoa(resp.StatusCode))
 		}
 		respBodyByte, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -393,13 +393,13 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 				Port:          &vmInfo,
 			}, err
 		}
-		log.Println("Response code from Alcor", resp.StatusCode)
+		log.Println("Response code from Alcor update-port", resp.StatusCode)
 		if resp.StatusCode != constants.HTTP_OK {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to update_port! Response Code: " + strconv.Itoa(resp.StatusCode),
 				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
-			}, err
+			}, errors.New("Failed to update port! Response Code: " + strconv.Itoa(resp.StatusCode))
 		}
 		vmInfo.Status = common_pb.Status_DONE
 		return &pb.AgentReturnInfo{
@@ -452,7 +452,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to Delete Port ! Response Code: " + strconv.Itoa(resp.StatusCode),
 				ReturnCode:    common_pb.ReturnCode_FAILED,
-			}, err
+			}, errors.New("Failed to delete port! Response Code: " + strconv.Itoa(resp.StatusCode))
 		}
 
 		log.Println("Deleting Namespace")
