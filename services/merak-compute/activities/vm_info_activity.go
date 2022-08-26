@@ -45,7 +45,7 @@ func VmInfo(ctx context.Context) (*pb.ReturnComputeMessage, error) {
 			Name:            common.RedisClient.HGet(ctx, vmID, "name").Val(),
 			VpcId:           common.RedisClient.HGet(ctx, vmID, "vpc").Val(),
 			Ip:              common.RedisClient.HGet(ctx, vmID, "ip").Val(),
-			SecurityGroupId: common.RedisClient.HGet(ctx, vmID, "sh").Val(),
+			SecurityGroupId: common.RedisClient.HGet(ctx, vmID, "sg").Val(),
 			SubnetId:        common.RedisClient.HGet(ctx, vmID, "subnetID").Val(),
 			DefaultGateway:  common.RedisClient.HGet(ctx, vmID, "gw").Val(),
 		}
