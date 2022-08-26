@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// Creates a VM given by the vmID
 func VmCreate(ctx context.Context, vmID string) error {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Starting create activity for VM " + vmID)
@@ -42,8 +43,8 @@ func VmCreate(ctx context.Context, vmID string) error {
 		logger.Info("Failed to dial gRPC server address: "+agent_address.String(), err)
 		return err
 	}
-	client := agent_pb.NewMerakAgentServiceClient(conn)
 
+	client := agent_pb.NewMerakAgentServiceClient(conn)
 	logger.Info("Sending to agent at" + podIP)
 	port := agent_pb.InternalPortConfig{
 		OperationType: common_pb.OperationType_CREATE,
@@ -72,6 +73,7 @@ func VmCreate(ctx context.Context, vmID string) error {
 		return err
 	}
 
+	// Update DB with device information
 	if resp.ReturnCode == common_pb.ReturnCode_OK {
 		ip := resp.Port.GetIp()
 		status := resp.Port.GetStatus()

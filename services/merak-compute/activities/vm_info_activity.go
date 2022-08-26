@@ -24,6 +24,7 @@ import (
 	"go.temporal.io/sdk/activity"
 )
 
+// Returns the status for all VMs
 func VmInfo(ctx context.Context) (*pb.ReturnComputeMessage, error) {
 	logger := activity.GetLogger(ctx)
 

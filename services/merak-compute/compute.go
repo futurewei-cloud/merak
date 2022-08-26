@@ -47,7 +47,7 @@ func main() {
 	var err error
 	log.Printf("Connecting to Temporal server at %s", sb.String())
 
-	handler.TemporalClient, err = client.NewClient(client.Options{
+	handler.TemporalClient, err = client.Dial(client.Options{
 		HostPort: sb.String(),
 	})
 	if err != nil {

@@ -44,7 +44,7 @@ func main() {
 	sb.WriteString(":")
 	sb.WriteString(strconv.Itoa(constants.TEMPORAL_PORT))
 
-	c, err := client.NewClient(client.Options{
+	c, err := client.Dial(client.Options{
 		HostPort: sb.String(),
 	})
 	if err != nil {
