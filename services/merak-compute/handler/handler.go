@@ -240,12 +240,6 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		}, errors.New("update unimplemented")
 
 	case common_pb.OperationType_DELETE:
-		workflowOptions = client.StartWorkflowOptions{
-			ID:          common.VM_DELETE_WORKFLOW_ID,
-			TaskQueue:   common.VM_TASK_QUEUE,
-			RetryPolicy: retrypolicy,
-		}
-
 		//Get a list of all pods
 		pod_list := RedisClient.SMembers(
 			ctx,
@@ -260,7 +254,7 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 			}, pod_list.Err()
 		}
 		// Get list of all vms in pod
-		for _, pod_id := range pod_list.Val() {
+		for n, pod_id := range pod_list.Val() {
 			vms := RedisClient.LRange(ctx, "l"+pod_id, 0, -1)
 			if vms.Err() != nil {
 				log.Println("Unable get node vmIDsList from redis", vms.Err())
@@ -280,6 +274,11 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 						ReturnCode:    common_pb.ReturnCode_FAILED,
 					}, err
 				}
+			}
+			workflowOptions = client.StartWorkflowOptions{
+				ID:          common.VM_DELETE_WORKFLOW_ID + strconv.Itoa(n),
+				TaskQueue:   common.VM_TASK_QUEUE,
+				RetryPolicy: retrypolicy,
 			}
 			log.Println("Executing VM Delete Workflow!")
 			we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, delete.Delete, vms.Val())
