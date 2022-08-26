@@ -97,16 +97,12 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 		}, err
 
 	case common_pb.OperationType_CREATE:
-		workflowOptions = client.StartWorkflowOptions{
-			ID:          common.VM_CREATE_WORKFLOW_ID,
-			TaskQueue:   common.VM_TASK_QUEUE,
-			RetryPolicy: retrypolicy,
-		}
+
 		log.Println("Operation Create")
 
 		return_vms := []*pb.InternalVMInfo{}
 		// Add pods to DB
-		for _, pod := range in.Config.Pods {
+		for n, pod := range in.Config.Pods {
 			if err := RedisClient.HSet(
 				ctx,
 				pod.Id,
@@ -208,6 +204,11 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 
 			// Execute VM creation on a per pod basis
 			// Send a list of VMs to the Workflow
+			workflowOptions = client.StartWorkflowOptions{
+				ID:          common.VM_CREATE_WORKFLOW_ID + strconv.Itoa(n),
+				TaskQueue:   common.VM_TASK_QUEUE,
+				RetryPolicy: retrypolicy,
+			}
 			log.Println("Executing VM Create Workflow with VMs ", vms.Val())
 			we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create, vms.Val())
 			if err != nil {
