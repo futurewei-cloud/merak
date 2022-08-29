@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	commonPB "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/activity"
@@ -47,7 +47,7 @@ func VmCreate(ctx context.Context, vmID string) error {
 	client := agent_pb.NewMerakAgentServiceClient(conn)
 	logger.Info("Sending to agent at" + podIP)
 	port := agent_pb.InternalPortConfig{
-		OperationType: common_pb.OperationType_CREATE,
+		OperationType: commonPB.OperationType_CREATE,
 		Name:          common.RedisClient.HGet(ctx, vmID, "name").Val(),
 		Vpcid:         common.RedisClient.HGet(ctx, vmID, "vpc").Val(),
 		Tenantid:      common.RedisClient.HGet(ctx, vmID, "tenantID").Val(),
@@ -74,7 +74,7 @@ func VmCreate(ctx context.Context, vmID string) error {
 	}
 
 	// Update DB with device information
-	if resp.ReturnCode == common_pb.ReturnCode_OK {
+	if resp.ReturnCode == commonPB.ReturnCode_OK {
 		ip := resp.Port.GetIp()
 		status := resp.Port.GetStatus()
 		deviceID := resp.Port.GetDeviceid()

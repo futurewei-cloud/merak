@@ -14,15 +14,17 @@ Copyright(c) 2022 Futurewei Cloud
 package delete
 
 import (
+	"context"
 	"strings"
 
+	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
-func Delete(ctx workflow.Context, vms []string) (err error) {
+func Delete(ctx workflow.Context, vms []string, podID string) (err error) {
 	retrypolicy := &temporal.RetryPolicy{
 		InitialInterval:    common.TEMPORAL_ACTIVITY_RETRY_INTERVAL,
 		BackoffCoefficient: common.TEMPORAL_ACTIVITY_BACKOFF,
@@ -43,14 +45,26 @@ func Delete(ctx workflow.Context, vms []string) (err error) {
 		futures = append(futures, future)
 	}
 	logger.Info("Started VmDelete workflows for vms" + strings.Join(vms, " "))
+	var vmID string
+	wfContext := context.Background()
 	for _, future := range futures {
-		err = future.Get(ctx, nil)
-		logger.Info("Activity completed!")
+		err = future.Get(ctx, &vmID)
 		if err != nil {
-			return
+			logger.Error("Failed to delete VM ID " + vmID)
+			return err
 		}
+
+		logger.Info("Deleted VM ID " + vmID)
+
+		// Delete Single VM from DB
+		common.RedisClient.LRem(wfContext, "l"+podID, 1, vmID)
 	}
-	logger.Info("All activities completed")
+	// All VMs on pod have been deleted.
+	// Delete all Pod/VM associations from DB
+	common.RedisClient.HDel(wfContext, podID)
+	common.RedisClient.SRem(wfContext, constants.COMPUTE_REDIS_NODE_IP_SET, podID)
+	common.RedisClient.Del(wfContext, "l"+podID)
+	logger.Info("All VMs for pod " + podID + " deleted!")
 	return nil
 
 }

@@ -18,9 +18,10 @@ import (
 	"strconv"
 	"strings"
 
-	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	agentPB "github.com/futurewei-cloud/merak/api/proto/v1/agent"
+	commonPB "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	constants "github.com/futurewei-cloud/merak/services/common"
+
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/activity"
 	"google.golang.org/grpc"
@@ -28,7 +29,7 @@ import (
 )
 
 // Deletes a VM given by the vmID
-func VmDelete(ctx context.Context, vmID string) error {
+func VmDelete(ctx context.Context, vmID string) (string, error) {
 	logger := activity.GetLogger(ctx)
 
 	podIP := common.RedisClient.HGet(ctx, vmID, "hostIP").Val()
@@ -40,11 +41,11 @@ func VmDelete(ctx context.Context, vmID string) error {
 	conn, err := grpc.Dial(agent_address.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Info("Failed to dial gRPC server address: "+agent_address.String(), err)
-		return err
+		return vmID, err
 	}
-	client := agent_pb.NewMerakAgentServiceClient(conn)
-	port := agent_pb.InternalPortConfig{
-		OperationType: common_pb.OperationType_DELETE,
+	client := agentPB.NewMerakAgentServiceClient(conn)
+	port := agentPB.InternalPortConfig{
+		OperationType: commonPB.OperationType_DELETE,
 		Name:          common.RedisClient.HGet(ctx, vmID, "name").Val(),
 		Projectid:     common.RedisClient.HGet(ctx, vmID, "projectID").Val(),
 		Deviceid:      common.RedisClient.HGet(ctx, vmID, "deviceID").Val(),
@@ -54,7 +55,10 @@ func VmDelete(ctx context.Context, vmID string) error {
 	resp, err := client.PortHandler(ctx, &port)
 	if err != nil {
 		logger.Error("Unable delete vm ID " + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
-		return err
+		return vmID, err
 	}
-	return nil
+	common.RedisClient.HDel(ctx, vmID)                                 // VM Detail hashmap
+	common.RedisClient.SRem(ctx, constants.COMPUTE_REDIS_VM_SET, vmID) // Set of all VM IDs
+
+	return vmID, nil
 }
