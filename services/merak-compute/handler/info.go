@@ -18,7 +18,7 @@ import (
 	"context"
 	"log"
 
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	commonPB "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/info"
@@ -51,7 +51,7 @@ func caseInfo(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Return
 	if err != nil {
 		return &pb.ReturnComputeMessage{
 			ReturnMessage: "Unable to execute info workflow",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
+			ReturnCode:    commonPB.ReturnCode_FAILED,
 		}, err
 	}
 	log.Println("Started workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
@@ -61,7 +61,7 @@ func caseInfo(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Return
 	if err != nil {
 		return &pb.ReturnComputeMessage{
 			ReturnMessage: result.GetReturnMessage(),
-			ReturnCode:    common_pb.ReturnCode_FAILED,
+			ReturnCode:    commonPB.ReturnCode_FAILED,
 			Vms:           result.GetVms(),
 		}, err
 	}

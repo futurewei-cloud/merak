@@ -19,7 +19,7 @@ import (
 	"log"
 	"strconv"
 
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	commonPB "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
@@ -38,7 +38,7 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 	}
 
 	log.Println("Operation Create")
-	return_vms := []*pb.InternalVMInfo{}
+	returnVMs := []*pb.InternalVMInfo{}
 	// Add pods to DB
 	for n, pod := range in.Config.Pods {
 		if err := RedisClient.HSet(
@@ -51,7 +51,7 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		).Err(); err != nil {
 			return &pb.ReturnComputeMessage{
 				ReturnMessage: "Unable add pod to DB Hash Map",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    commonPB.ReturnCode_FAILED,
 			}, err
 		}
 		log.Println("Added pod " + pod.Name + " at address " + pod.ContainerIp)
@@ -62,7 +62,7 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		).Err(); err != nil {
 			return &pb.ReturnComputeMessage{
 				ReturnMessage: "Unable to add pod to DB Hash Set",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    commonPB.ReturnCode_FAILED,
 			}, err
 		}
 
@@ -79,7 +79,7 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 					).Err(); err != nil {
 						return &pb.ReturnComputeMessage{
 							ReturnMessage: "Unable to VM to DB Hash Set",
-							ReturnCode:    common_pb.ReturnCode_FAILED,
+							ReturnCode:    commonPB.ReturnCode_FAILED,
 						}, err
 					}
 					if err := RedisClient.HSet(
@@ -101,10 +101,10 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 					).Err(); err != nil {
 						return &pb.ReturnComputeMessage{
 							ReturnMessage: "Unable add VM to DB Hash Map",
-							ReturnCode:    common_pb.ReturnCode_FAILED,
+							ReturnCode:    commonPB.ReturnCode_FAILED,
 						}, err
 					}
-					return_vm := pb.InternalVMInfo{
+					returnVM := pb.InternalVMInfo{
 						Id:              vmID,
 						Name:            "v" + suffix,
 						VpcId:           vpc.VpcId,
@@ -112,17 +112,17 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 						SecurityGroupId: in.Config.VmDeploy.Secgroups[0],
 						SubnetId:        subnet.SubnetId,
 						DefaultGateway:  subnet.SubnetGw,
-						Status:          common_pb.Status(1),
+						Status:          commonPB.Status(1),
 					}
-					return_vms = append(return_vms, &return_vm)
+					returnVMs = append(returnVMs, &returnVM)
 					// Store VM to Pod list
 					log.Println("Added VM " + vmID + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(k+1) + " of " + strconv.Itoa(int(subnet.NumberVms)))
 					if err := RedisClient.LPush(ctx, "l"+pod.Id, vmID).Err(); err != nil {
 						log.Println("Failed to add pod -> vm mapping " + vmID)
 						return &pb.ReturnComputeMessage{
 							ReturnMessage: "Unable add VM to pod list",
-							ReturnCode:    common_pb.ReturnCode_FAILED,
-							Vms:           return_vms,
+							ReturnCode:    commonPB.ReturnCode_FAILED,
+							Vms:           returnVMs,
 						}, err
 					}
 					log.Println("Added pod -> vm mapping " + vmID)
@@ -134,9 +134,9 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		if vms.Err() != nil {
 			log.Println("Unable get node vmIDsList from redis", vms.Err())
 			return &pb.ReturnComputeMessage{
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    commonPB.ReturnCode_FAILED,
 				ReturnMessage: "Unable get node vmIDsList from redis",
-				Vms:           return_vms,
+				Vms:           returnVMs,
 			}, vms.Err()
 		}
 
@@ -152,8 +152,8 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		if err != nil {
 			return &pb.ReturnComputeMessage{
 				ReturnMessage: "Unable to execute create workflow",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
-				Vms:           return_vms,
+				ReturnCode:    commonPB.ReturnCode_FAILED,
+				Vms:           returnVMs,
 			}, err
 		}
 		log.Println("Started Create workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
@@ -161,7 +161,7 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 
 	return &pb.ReturnComputeMessage{
 		ReturnMessage: "Successfully started all create workflows!",
-		ReturnCode:    common_pb.ReturnCode_OK,
-		Vms:           return_vms,
+		ReturnCode:    commonPB.ReturnCode_OK,
+		Vms:           returnVMs,
 	}, nil
 }

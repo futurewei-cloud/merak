@@ -19,7 +19,7 @@ import (
 	"log"
 	"strconv"
 
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	commonPB "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
@@ -38,37 +38,37 @@ func caseDelete(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 	}
 
 	log.Println("Operation Delete")
-	pod_list := RedisClient.SMembers(
+	podList := RedisClient.SMembers(
 		ctx,
 		constants.COMPUTE_REDIS_NODE_IP_SET,
 	)
-	if pod_list.Err() != nil {
-		log.Println("Unable get VM IDs from redis", pod_list.Err())
+	if podList.Err() != nil {
+		log.Println("Unable get VM IDs from redis", podList.Err())
 
 		return &pb.ReturnComputeMessage{
-			ReturnCode:    common_pb.ReturnCode_FAILED,
+			ReturnCode:    commonPB.ReturnCode_FAILED,
 			ReturnMessage: "Unable get node IDs from redis",
-		}, pod_list.Err()
+		}, podList.Err()
 	}
 	// Get list of all vms in pod
-	for n, pod_id := range pod_list.Val() {
-		vms := RedisClient.LRange(ctx, "l"+pod_id, 0, -1)
+	for n, podID := range podList.Val() {
+		vms := RedisClient.LRange(ctx, "l"+podID, 0, -1)
 		if vms.Err() != nil {
 			log.Println("Unable get node vmIDsList from redis", vms.Err())
 			return &pb.ReturnComputeMessage{
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    commonPB.ReturnCode_FAILED,
 				ReturnMessage: "Unable get node vmIDsList from redis",
 			}, vms.Err()
 		}
-		for _, vm_id := range vms.Val() {
+		for _, vmID := range vms.Val() {
 			if err := RedisClient.HSet(
 				ctx,
-				vm_id,
+				vmID,
 				"status", "3",
 			).Err(); err != nil {
 				return &pb.ReturnComputeMessage{
 					ReturnMessage: "Unable to set VM status to deleting in DB Hash Map",
-					ReturnCode:    common_pb.ReturnCode_FAILED,
+					ReturnCode:    commonPB.ReturnCode_FAILED,
 				}, err
 			}
 		}
@@ -78,21 +78,18 @@ func caseDelete(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 			RetryPolicy: retrypolicy,
 		}
 		log.Println("Executing VM Delete Workflow!")
-		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, delete.Delete, vms.Val())
+		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, delete.Delete, vms.Val(), podID)
 		if err != nil {
 			return &pb.ReturnComputeMessage{
 				ReturnMessage: "Unable to execute delete workflow",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    commonPB.ReturnCode_FAILED,
 			}, err
 		}
 		log.Println("Started Delete workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
 	}
 
-	log.Println("Deleting all VMs from DB")
-	RedisClient.FlushAll(ctx)
-
 	return &pb.ReturnComputeMessage{
 		ReturnMessage: "Successfully started all delete workflows!",
-		ReturnCode:    common_pb.ReturnCode_OK,
+		ReturnCode:    commonPB.ReturnCode_OK,
 	}, nil
 }

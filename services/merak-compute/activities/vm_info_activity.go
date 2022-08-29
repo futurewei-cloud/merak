@@ -17,7 +17,7 @@ import (
 	"context"
 	"strconv"
 
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	commonPB "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
@@ -33,7 +33,7 @@ func VmInfo(ctx context.Context) (*pb.ReturnComputeMessage, error) {
 		logger.Error("Unable get VM IDs from redis", ids.Err())
 
 		return &pb.ReturnComputeMessage{
-			ReturnCode:    common_pb.ReturnCode_FAILED,
+			ReturnCode:    commonPB.ReturnCode_FAILED,
 			ReturnMessage: "Unable get node IDs from redis",
 		}, ids.Err()
 	}
@@ -53,17 +53,17 @@ func VmInfo(ctx context.Context) (*pb.ReturnComputeMessage, error) {
 		if err != nil {
 			logger.Error("Failed to convert status string to int!", err)
 			return &pb.ReturnComputeMessage{
-				ReturnCode:    common_pb.ReturnCode_FAILED,
+				ReturnCode:    commonPB.ReturnCode_FAILED,
 				ReturnMessage: "Failed to convert status string to int!",
 				Vms:           vms,
 			}, err
 		}
-		vm.Status = common_pb.Status(status)
+		vm.Status = commonPB.Status(status)
 		vms = append(vms, &vm)
 	}
 
 	return &pb.ReturnComputeMessage{
-		ReturnCode:    common_pb.ReturnCode_OK,
+		ReturnCode:    commonPB.ReturnCode_OK,
 		ReturnMessage: "Success!",
 		Vms:           vms,
 	}, nil
