@@ -1,14 +1,15 @@
 /*
 MIT License
 Copyright(c) 2022 Futurewei Cloud
-    Permission is hereby granted,
-    free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
-    including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
-    to whom the Software is furnished to do so, subject to the following conditions:
-    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+	Permission is hereby granted,
+	free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+	including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+	to whom the Software is furnished to do so, subject to the following conditions:
+	The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 package handler
 
@@ -121,7 +122,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 				ReturnMessage: "Failed to create minimal port! Response Code: " + strconv.Itoa(resp.StatusCode),
 				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
-			}, err
+			}, errors.New("Failed to create minimal port! Response Code: " + strconv.Itoa(resp.StatusCode))
 		}
 		respBodyByte, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
@@ -152,7 +153,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			Status:   common_pb.Status_ERROR,
 		}
 		// Create Device
-		log.Println("OVS setup")
+		log.Println("Adding tap " + tapName + " to br-int!")
 		cmd := exec.Command("bash", "-c", "ovs-vsctl add-port br-int "+tapName+" --  set Interface "+tapName+" type=internal")
 		stdout, err := cmd.Output()
 		if err != nil {
@@ -163,7 +164,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 				Port:          &vmInfo,
 			}, err
 		}
-		log.Println("Creating Namespace")
+		log.Println("Creating Namespace " + in.Name)
 		cmd = exec.Command("bash", "-c", "ip netns add "+in.Name)
 		stdout, err = cmd.Output()
 		if err != nil {
@@ -175,7 +176,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 
-		log.Println("Creating veth pair")
+		log.Println("Creating veth pair in" + in.Name + " and out" + in.Name)
 		cmd = exec.Command("bash", "-c", "ip link add in"+in.Name+" type veth peer name out"+in.Name)
 		stdout, err = cmd.Output()
 		if err != nil {
@@ -186,7 +187,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 				Port:          &vmInfo,
 			}, err
 		}
-		log.Println("Moving veth to namespace")
+		log.Println("Moving veth in" + in.Name + " to namespace " + in.Name)
 		cmd = exec.Command("bash", "-c", "ip link set in"+in.Name+" netns "+in.Name)
 		stdout, err = cmd.Output()
 		if err != nil {
@@ -198,7 +199,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 
-		log.Println("Assigning IP address to veth device")
+		log.Println("Assigning IP " + ip + " to veth device")
 		cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" ip addr add "+ip+"/"+strings.Split(in.Cidr, "/")[1]+" dev in"+in.Name)
 		stdout, err = cmd.Output()
 		if err != nil {
@@ -258,7 +259,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 
-		log.Println("Assigning MAC address to veth")
+		log.Println("Assigning MAC " + mac + " address to veth")
 		cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" ifconfig in"+in.Name+" hw ether "+mac)
 		stdout, err = cmd.Output()
 		if err != nil {
@@ -270,7 +271,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 
-		log.Println("Adding default Gateway")
+		log.Println("Adding default Gateway " + in.Gw)
 		cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" route add default gw "+in.Gw)
 		stdout, err = cmd.Output()
 		if err != nil {
@@ -282,7 +283,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			}, err
 		}
 
-		log.Println("Creating bridge device")
+		log.Println("Creating bridge device bridge" + in.Name)
 		cmd = exec.Command("bash", "-c", "ip link add name bridge"+in.Name+" type bridge")
 		stdout, err = cmd.Output()
 		if err != nil {
@@ -392,13 +393,13 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 				Port:          &vmInfo,
 			}, err
 		}
-		log.Println("Response code from Alcor", resp.StatusCode)
+		log.Println("Response code from Alcor update-port", resp.StatusCode)
 		if resp.StatusCode != constants.HTTP_OK {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to update_port! Response Code: " + strconv.Itoa(resp.StatusCode),
 				ReturnCode:    common_pb.ReturnCode_FAILED,
 				Port:          &vmInfo,
-			}, err
+			}, errors.New("Failed to update port! Response Code: " + strconv.Itoa(resp.StatusCode))
 		}
 		vmInfo.Status = common_pb.Status_DONE
 		return &pb.AgentReturnInfo{
@@ -451,7 +452,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to Delete Port ! Response Code: " + strconv.Itoa(resp.StatusCode),
 				ReturnCode:    common_pb.ReturnCode_FAILED,
-			}, err
+			}, errors.New("Failed to delete port! Response Code: " + strconv.Itoa(resp.StatusCode))
 		}
 
 		log.Println("Deleting Namespace")
