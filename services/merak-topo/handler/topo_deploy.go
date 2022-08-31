@@ -52,7 +52,7 @@ var (
 	}
 )
 
-func CreateTopologyClasses(client dynamic.Interface, name string, links []map[string]interface{}) error {
+func CreateTopologyClasses(client dynamic.Interface, name string, links []database.Vlink) error {
 	rc := NewTopologyClass(name, links)
 
 	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Create(Ctx, rc, metav1.CreateOptions{})
@@ -97,7 +97,7 @@ func DeleteTopologyClasses(client dynamic.Interface, name string) error {
 
 }
 
-func NewTopologyClass(name string, links []map[string]interface{}) *unstructured.Unstructured {
+func NewTopologyClass(name string, links []database.Vlink) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"kind":       "Topology",
