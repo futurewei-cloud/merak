@@ -36,3 +36,5 @@ jobs:
 ### CLEAN-UP ####
     - name: delete merak
       run: kubectl delete -f deployments/kubernetes/merak.ci.yaml
+    - name: Clean up images
+      run: sudo crictl rmi --prune
