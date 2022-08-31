@@ -16,6 +16,7 @@ package routes
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -65,6 +66,7 @@ func ScenarioActoins(c *fiber.Ctx) error {
 
 	var returnBody interface{}
 	var scenarioStatus entities.ServiceStatus
+	var returnMessage string
 
 	if strings.ToLower(scenarioAction.Service.ServiceName) == "topology" {
 		returnTopo, err := handler.TopologyHandler(&scenario, scenarioAction.Service.Action)
@@ -75,6 +77,31 @@ func ScenarioActoins(c *fiber.Ctx) error {
 			scenarioStatus = entities.STATUS_DONE
 			logger.Log.Infof("'%s' topology done.", scenarioAction.Service.Action)
 			logger.Log.Infof("returnTopo for action %s : %s", scenarioAction.Service.Action, returnTopo)
+
+			var ready = 0
+			var deplolying = 0
+			var deleting = 0
+			var errors = 0
+			var done = 0
+			var others = 0
+			for _, cn := range returnTopo.GetComputeNodes() {
+				switch cn.Status {
+				case pb.Status_DONE:
+					done++
+				case pb.Status_READY:
+					ready++
+				case pb.Status_DEPLOYING:
+					deplolying++
+				case pb.Status_DELETING:
+					deleting++
+				case pb.Status_ERROR:
+					errors++
+				default:
+					others++
+				}
+			}
+			returnMessage = fmt.Sprintf("%s on %s got - DONE: %d, READY: %d, DEPLOYING: %d, DELETING: %d, ERROR: %d, Others: %d", scenarioAction.Service.Action, "Topology", done, ready, deplolying, deleting, errors, others)
+
 			ret, err := protojson.Marshal(returnTopo)
 			if err != nil {
 				logger.Log.Errorf("returnBody Error: %s", err.Error())
@@ -93,6 +120,9 @@ func ScenarioActoins(c *fiber.Ctx) error {
 			scenarioStatus = entities.STATUS_DONE
 			logger.Log.Infof("'%s' network done.", scenarioAction.Service.Action)
 			logger.Log.Infof("returnNetwork for action %s : %s", scenarioAction.Service.Action, returnNetwork)
+
+			returnMessage = fmt.Sprintf("%s on %s done", scenarioAction.Service.Action, "Network")
+
 			ret, err := protojson.Marshal(returnNetwork)
 			if err != nil {
 				logger.Log.Errorf("returnBody Error: %s", err.Error())
@@ -111,6 +141,31 @@ func ScenarioActoins(c *fiber.Ctx) error {
 			scenarioStatus = entities.STATUS_DONE
 			logger.Log.Infof("'%s' compute done.", scenarioAction.Service.Action)
 			logger.Log.Infof("returnCompute for action %s : %s", scenarioAction.Service.Action, returnCompute)
+
+			var ready = 0
+			var deplolying = 0
+			var deleting = 0
+			var errors = 0
+			var done = 0
+			var others = 0
+			for _, vm := range returnCompute.GetVms() {
+				switch vm.Status {
+				case pb.Status_DONE:
+					done++
+				case pb.Status_READY:
+					ready++
+				case pb.Status_DEPLOYING:
+					deplolying++
+				case pb.Status_DELETING:
+					deleting++
+				case pb.Status_ERROR:
+					errors++
+				default:
+					others++
+				}
+			}
+			returnMessage = fmt.Sprintf("%s on %s got - DONE: %d, READY: %d, DEPLOYING: %d, DELETING: %d, ERROR: %d, Others: %d", scenarioAction.Service.Action, "Compute", done, ready, deplolying, deleting, errors, others)
+
 			ret, err := protojson.Marshal(returnCompute)
 			if err != nil {
 				logger.Log.Errorf("returnBody Error: %s", err.Error())
@@ -132,7 +187,7 @@ func ScenarioActoins(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).JSON(utils.ReturnResponseMessage("FAILED", "Scenario Action Failed.", scenarioAction))
 	}
 
-	return c.Status(http.StatusOK).JSON(utils.ReturnResponseMessage("OK", "Action on the scenario successfully.", returnBody))
+	return c.Status(http.StatusOK).JSON(utils.ReturnResponseMessage("OK", "Action successfully - "+returnMessage, returnBody))
 }
 
 //Function for creating a scenario
