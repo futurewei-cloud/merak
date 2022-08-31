@@ -112,6 +112,7 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 						SecurityGroupId: in.Config.VmDeploy.Secgroups[0],
 						SubnetId:        subnet.SubnetId,
 						DefaultGateway:  subnet.SubnetGw,
+						Host:            pod.Name,
 						Status:          commonPB.Status(1),
 					}
 					returnVMs = append(returnVMs, &returnVM)

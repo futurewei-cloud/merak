@@ -78,7 +78,8 @@ message InternalVMInfo {
     string subnet_id = 5;
     string security_group_id = 6;
     string default_gateway = 7;
-    common.Status status = 8;
+    string host = 8;
+    common.Status status = 9;
 }
 
 message ReturnComputeMessage {
