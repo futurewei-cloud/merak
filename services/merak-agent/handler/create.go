@@ -100,7 +100,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			Port:          &vmInfo,
 		}, err
 	}
-	log.Println("Response code from Alcor", resp.StatusCode)
+	log.Println("VM Name: "+in.Name+" Response code from Alcor", resp.StatusCode)
 	if resp.StatusCode != constants.HTTP_CREATE_SUCCESS {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to create minimal port! Response Code: " + strconv.Itoa(resp.StatusCode),
@@ -377,7 +377,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			Port:          &vmInfo,
 		}, err
 	}
-	log.Println("Response code from Alcor update-port", resp.StatusCode)
+	log.Println("VM Name: "+in.Name+" PortID: "+portID+" Response code from Alcor update-port ", resp.StatusCode)
 	if resp.StatusCode != constants.HTTP_OK {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to update_port! Response Code: " + strconv.Itoa(resp.StatusCode),

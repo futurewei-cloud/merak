@@ -50,7 +50,7 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 		}, err
 	}
-	log.Println("Response code from Alcor", resp.StatusCode)
+	log.Println("VM Name: "+in.Name+" Port ID: "+in.Remoteid+" Response code from Alcor delete-port ", resp.StatusCode)
 	if resp.StatusCode != constants.HTTP_OK {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to Delete Port ! Response Code: " + strconv.Itoa(resp.StatusCode),
