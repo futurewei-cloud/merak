@@ -84,8 +84,7 @@ message InternalTopologyConfiguration {
     repeated InternalVNodeInfo vnodes = 15;
     repeated InternalVLinkInfo vlinks = 16;
     InternalTopologyExtraInfo extra_info = 17;
-    uint32 vswitch_layer_number = 18;
-    uint32 ports_per_vswitch = 19;
+    uint32 ports_per_vswitch = 18;
 }
 
 message InternalTopologyInfo {

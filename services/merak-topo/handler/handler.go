@@ -33,21 +33,23 @@ import (
 
 //function CREATE
 /* save the part of gw creation and mac learning for future requirment, comment the related code now*/
-func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, cgw_num uint32, data_plane_cidr string, vswitch_layers_num uint32, ports_per_vswitch uint32, returnMessage *pb.ReturnTopologyMessage) error {
+func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, cgw_num uint32, data_plane_cidr string, ports_per_vswitch uint32, returnMessage *pb.ReturnTopologyMessage) error {
 
 	log.Println("=== Parse gRPC message === ")
 	log.Printf("Vhost number is: %v\n", aca_num)
 	log.Printf("Rack number is: %v\n", rack_num)
 	log.Printf("Vhosts per rack is: %v\n", aca_per_rack)
-	log.Printf("Vswitch layer number is: %v\n", vswitch_layers_num)
+
 	log.Printf("Ports per vswitch is: %v\n", ports_per_vswitch)
 
 	log.Println("=== Generate topology data === ")
 
-	err_create, topo := Create_multiple_layers_vswitches(int(aca_num), int(rack_num), int(aca_per_rack), int(vswitch_layers_num), int(ports_per_vswitch), data_plane_cidr)
+	err_create, topo := Create_multiple_layers_vswitches(int(aca_num), int(rack_num), int(aca_per_rack), int(ports_per_vswitch), data_plane_cidr)
 	if err_create != nil {
 		return fmt.Errorf("create multiple layers vswitches error %s", err_create)
 	}
+
+	topo.Topology_id = topo_id
 
 	log.Println("=== Save topology to redis ===")
 	err1 := Topo_save(topo)
