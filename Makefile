@@ -75,11 +75,22 @@ docker-scenario:
 docker-compute:
 	make proto
 	make compute
+	make vm-worker
 	docker build -t meraksim/merak-compute:dev -f docker/compute.Dockerfile .
 	docker build -t meraksim/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
 	docker push meraksim/merak-compute:dev
 	docker push meraksim/merak-compute-vm-worker:dev
 
+
+.PHONY: docker-compute-test
+docker-compute-test:
+	make proto
+	make compute
+	make vm-worker
+	docker build -t meraksim/merak-compute:test -f docker/compute.Dockerfile .
+	docker push meraksim/merak-compute:test
+	docker build -t meraksim/merak-compute-vm-worker:test -f docker/compute-vm-worker.Dockerfile .
+	docker push meraksim/merak-compute-vm-worker:test
 
 .PHONY: docker-agent
 docker-agent:
@@ -88,6 +99,12 @@ docker-agent:
 	docker build -t meraksim/merak-agent:dev -f docker/agent.Dockerfile .
 	docker push meraksim/merak-agent:dev
 
+.PHONY: docker-agent-test
+docker-agent-test:
+	make proto
+	make agent
+	docker build -t meraksim/merak-agent:test -f docker/agent.Dockerfile .
+	docker push meraksim/merak-agent:test
 
 .PHONY: docker-network
 docker-network:

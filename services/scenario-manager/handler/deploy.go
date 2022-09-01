@@ -60,7 +60,7 @@ func TopologyHandler(s *entities.Scenario, action entities.EventName) (*topology
 		}
 
 		if compute.Status != entities.STATUS_NONE {
-			return nil, fmt.Errorf("nework config '%s' is '%s' now", s.ComputeConfId, compute.Status)
+			return nil, fmt.Errorf("compute config '%s' is '%s' now", s.ComputeConfId, compute.Status)
 		}
 	}
 
@@ -142,7 +142,7 @@ func NetworkHandler(s *entities.Scenario, action entities.EventName) (*network_p
 		}
 
 		if compute.Status != entities.STATUS_NONE {
-			return nil, fmt.Errorf("nework config '%s' is '%s' now", s.ComputeConfId, compute.Status)
+			return nil, fmt.Errorf("compute config '%s' is '%s' now", s.ComputeConfId, compute.Status)
 		}
 
 		var service entities.ServiceConfig
@@ -219,7 +219,7 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*compute_p
 	var computeconf compute_pb.InternalComputeConfigInfo
 	if action == entities.EVENT_CHECK {
 		if err := constructComputeMessage(&compute, nil, nil, nil, &computeconf, action); err != nil {
-			return nil, errors.New("netconfig protobuf message error")
+			return nil, errors.New("compute config protobuf message error")
 		}
 	} else {
 		var service entities.ServiceConfig
@@ -248,7 +248,7 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*compute_p
 		}
 
 		if err := constructComputeMessage(&compute, &service, returnTopo, returnNetwork, &computeconf, action); err != nil {
-			return nil, errors.New("netconfig protobuf message error")
+			return nil, errors.New("compute config protobuf message error")
 		}
 
 		for _, n := range returnNetwork.GetVpcs() {
@@ -290,7 +290,7 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*compute_p
 	}
 
 	if action != entities.EVENT_CHECK {
-		database.Set(utils.KEY_PREFIX_NETWORK+compute.Id, &compute)
+		database.Set(utils.KEY_PREFIX_COMPUTE+compute.Id, &compute)
 	}
 
 	return responseCompute, nil
