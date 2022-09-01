@@ -52,7 +52,7 @@ type Vnode struct {
 type Vlink struct {
 	Id         string        `json:"id"`
 	Name       string        `json:"name"`
-	Uid        string        `json:"uid"`
+	Uid        int           `json:"uid"`
 	Peer_pod   string        `json:"peer_pod"`
 	Local_pod  string        `json:"local_pod"`
 	Local_intf string        `json:"local_intf"`

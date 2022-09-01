@@ -227,10 +227,11 @@ func attach_vhosts_to_rack(rack database.Vnode, hosts []database.Vnode, uid_init
 		var link_r database.Vlink
 		var link_h database.Vlink
 
-		uid := strconv.FormatInt(int64(uid_initial+i), 10)
+		uid := uid_initial + i
 
 		link_r.Id = GenUUID()
 		link_r.Uid = uid
+		link_r.Name = rack.Name + "-l" + strconv.FormatInt(int64(uid), 10)
 		link_r.Local_pod = rack.Name
 		link_r.Local_intf = nic.Intf
 		link_r.Peer_pod = hosts[i].Name
@@ -241,6 +242,7 @@ func attach_vhosts_to_rack(rack database.Vnode, hosts []database.Vnode, uid_init
 
 		link_h.Id = GenUUID()
 		link_h.Uid = uid
+		link_h.Name = hosts[i].Name + "-l" + strconv.FormatInt(int64(uid), 10)
 		link_h.Local_pod = hosts[i].Name
 		link_h.Local_intf = hosts[i].Nics[0].Intf
 		link_h.Local_ip = hosts[i].Nics[0].Ip
@@ -268,10 +270,11 @@ func attach_racks_to_vswitch(vswitch database.Vnode, racks []database.Vnode, uid
 		var link_v database.Vlink
 		var link_r database.Vlink
 
-		uid := strconv.FormatInt(int64(uid_initial+i), 10)
+		uid := uid_initial + i
 
 		link_v.Id = GenUUID()
 		link_v.Uid = uid
+		link_v.Name = vswitch.Name + "-l" + strconv.FormatInt(int64(uid), 10)
 		link_v.Local_pod = vswitch.Name
 		link_v.Local_intf = nic.Intf
 		link_v.Peer_pod = racks[i].Name
@@ -281,6 +284,7 @@ func attach_racks_to_vswitch(vswitch database.Vnode, racks []database.Vnode, uid
 
 		link_r.Id = GenUUID()
 		link_r.Uid = uid
+		link_r.Name = racks[i].Name + "-l" + strconv.FormatInt(int64(uid), 10)
 		link_r.Local_pod = racks[i].Name
 		link_r.Local_intf = racks[i].Nics[0].Intf
 		link_r.Peer_pod = vswitch.Name
