@@ -32,4 +32,19 @@ In order to provide more virtual and emulated resources with limited hardware re
 - Kubernetes-in-Kubernetes (KinK)
 - Kubernetes cluster in virtual machines
 
-For ore detail design and information, please refer to the docs folder in this repository. 
+For more detail design and information, please refer to the docs folder in this repository. 
+
+## Getting started with development
+
+To build this project, please make sure the following things are installed:
+
+- Go: <https://go.dev/doc/install>
+- Protobuf: <https://grpc.io/docs/protoc-installation/>
+- Go plugins for gRPC: <https://grpc.io/docs/languages/go/quickstart/>
+- Docker: <https://docs.docker.com/engine/install/>
+
+Then, the project can be built with:
+
+```bash
+make
+```
