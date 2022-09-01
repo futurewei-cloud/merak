@@ -81,7 +81,7 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 		// cgw_num := in.Config.GetNumberOfGateways()  /*comment gw creation function, set cgw_num=0*/
 		cgw_num := 0
 		topo_id := in.Config.GetTopologyId()
-		// vswitch_layers_num := in.Config.GetVswitchLayerNumber()
+
 		ports_per_vswitch := in.Config.GetPortsPerVswitch()
 
 		/*comment gw creation function*/

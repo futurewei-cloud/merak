@@ -49,6 +49,8 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 		return fmt.Errorf("create multiple layers vswitches error %s", err_create)
 	}
 
+	topo.Topology_id = topo_id
+
 	log.Println("=== Save topology to redis ===")
 	err1 := Topo_save(topo)
 	if err1 != nil {
