@@ -101,7 +101,7 @@ func deleteVpc(vpcId string, projectId string) (returnVpcId string, err error) {
 	return vpcId, nil
 }
 
-func deleteSg(sgId string, projectId string) (returnVpcId string, err error) {
+func deleteSg(sgId string, projectId string) (returnSgId string, err error) {
 	log.Println("deleteSg")
 	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30008/project/"+projectId+"/security-groups/"+sgId, "DELETE", "", nil)
 	if returnErr != nil {
@@ -114,9 +114,34 @@ func deleteSg(sgId string, projectId string) (returnVpcId string, err error) {
 	return sgId, nil
 }
 
+func deleteNode(netConfigId string) (err error) {
+	log.Println("deleteNode")
+	values, err := database.Get(utils.NODEGROUP + netConfigId)
+	if err != nil {
+		return err
+	}
+	log.Printf("NodeGroup %s", values)
+	var returnJson entities.NodeReturn
+	json.Unmarshal([]byte(values), &returnJson)
+	log.Printf("returnMessage %s", returnJson)
+
+	for _, node := range returnJson {
+		_, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30007/nodes/"+node.NodeID, "DELETE", nil, nil)
+		if returnErr != nil {
+			log.Printf("returnErr %s", returnErr)
+			return returnErr
+		}
+	}
+	log.Println("deleteNode done")
+	return nil
+}
+
 func VnetDelete(ctx context.Context, netConfigId string, wg *sync.WaitGroup, returnMessage chan *pb.ReturnNetworkMessage) (*pb.ReturnNetworkMessage, error) {
 	// TODO: when query db, make sure to check if key exist first, other wise could timeout
 	log.Println("VnetDelete")
+
+	deleteNode(netConfigId)
+
 	values, err := database.Get(utils.NETCONFIG + netConfigId)
 	if err != nil {
 		return nil, err

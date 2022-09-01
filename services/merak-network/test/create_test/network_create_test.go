@@ -137,19 +137,19 @@ func main() {
 	}
 	testInternalComputeInfo1 := common_pb.InternalComputeInfo{
 		OperationType: common_pb.OperationType_CREATE,
-		//Id:            "1",
-		Name:       "YM_node5",
-		DatapathIp: "192.168.10.15",
-		Mac:        "36:db:23:8c:4a:c5",
-		Veth:       "eth1",
+		Id:            "YM_node5_id",
+		Name:          "YM_node5",
+		DatapathIp:    "192.168.10.15",
+		Mac:           "36:db:23:8c:4a:c5",
+		Veth:          "eth1",
 	}
 	testInternalComputeInfo2 := common_pb.InternalComputeInfo{
 		OperationType: common_pb.OperationType_CREATE,
-		//Id:            "1",
-		Name:       "YM_node6",
-		DatapathIp: "192.168.10.16",
-		Mac:        "36:db:23:8c:4a:c6",
-		Veth:       "eth1",
+		Id:            "YM_node6_id",
+		Name:          "YM_node6",
+		DatapathIp:    "192.168.10.16",
+		Mac:           "36:db:23:8c:4a:c6",
+		Veth:          "eth1",
 	}
 	testInternalStorageInfo := pb.InternalStorageInfo{Info: "InternalStorageInfo"}
 	testInternalNetConfigExtraInfo := pb.InternalNetConfigExtraInfo{Info: "InternalNetConfigExtraInfo"}
@@ -181,7 +181,7 @@ func main() {
 	c := pb.NewMerakNetworkServiceClient(conn)
 
 	// Contact the server and print out its response.
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	// r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
 	r, err := c.NetConfigHandler(ctx, &testInternalNetConfigInfo)

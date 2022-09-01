@@ -57,7 +57,7 @@ func main() {
 	c := pb.NewMerakNetworkServiceClient(conn)
 
 	// Contact the server and print out its response.
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
 	defer cancel()
 	// r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
 	r, err := c.NetConfigHandler(ctx, &testInternalNetConfigInfo)

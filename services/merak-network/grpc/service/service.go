@@ -103,7 +103,7 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			var _, err = activities.RegisterNode(ctx, in.Config.GetComputes(), &wg, projectId)
+			var _, err = activities.RegisterNode(ctx, in.Config.GetComputes(), &wg, netConfigId)
 			if err != nil {
 				returnNetworkMessage.ReturnCode = common_pb.ReturnCode_FAILED
 				returnNetworkMessage.ReturnMessage = err.Error()
