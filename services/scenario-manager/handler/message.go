@@ -37,6 +37,7 @@ func constructTopologyMessage(topo *entities.TopologyConfig, topoPb *topology_pb
 	conf.NumberOfVhosts = uint32(topo.NumberOfVhosts)
 	conf.NumberOfRacks = uint32(topo.NumberOfRacks)
 	conf.VhostPerRack = uint32(topo.VhostsPerRack)
+	conf.PortsPerVswtich = uint32(topo.PortsPerVSwitch)
 	conf.DataPlaneCidr = topo.DataPlaneCidr
 	conf.NumberOfGateways = uint32(topo.NumberOfGateways)
 	conf.GatewayIps = topo.GatewayIPs

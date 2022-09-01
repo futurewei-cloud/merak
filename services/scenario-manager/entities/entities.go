@@ -104,6 +104,7 @@ type TopologyConfig struct {
 	NumberOfVhosts   uint          `json:"number_of_vhosts"`
 	NumberOfRacks    uint          `json:"number_of_racks"`
 	VhostsPerRack    uint          `json:"vhosts_per_rack"`
+	PortsPerVSwitch  uint          `json:"ports_per_vswitch"`
 	DataPlaneCidr    string        `json:"data_plane_cidr"`
 	NumberOfGateways uint          `json:"number_of_control_plane_gateways"`
 	GatewayIPs       []string      `json:"control_plane_gateway_ips"`

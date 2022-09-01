@@ -77,13 +77,14 @@ message InternalTopologyConfiguration {
     uint32 number_of_vhosts = 8;
     uint32 number_of_racks = 9;
     uint32 vhost_per_rack = 10;
-    string data_plane_cidr = 11;
-    uint32 number_of_gateways = 12;
-    repeated string gateway_ips = 13;
-    repeated InternalTopologyImage images = 14;
-    repeated InternalVNodeInfo vnodes = 15;
-    repeated InternalVLinkInfo vlinks = 16;
-    InternalTopologyExtraInfo extra_info = 17;
+    uint32 ports_per_vswtich = 11;
+    string data_plane_cidr = 12;
+    uint32 number_of_gateways = 13;
+    repeated string gateway_ips = 14;
+    repeated InternalTopologyImage images = 15;
+    repeated InternalVNodeInfo vnodes = 16;
+    repeated InternalVLinkInfo vlinks = 17;
+    InternalTopologyExtraInfo extra_info = 18;
 }
 
 message InternalTopologyInfo {
