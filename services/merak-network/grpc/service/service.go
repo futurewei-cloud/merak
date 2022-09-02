@@ -173,7 +173,6 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 			networkDeleteReturn <- vnetDeleteReturn
 			log.Printf("networkDeleteReturn: %s", vnetDeleteReturn)
 		}()
-		wg.Wait()
 		returnNetworkMessage.ReturnCode = common_pb.ReturnCode_OK
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_DELETE"
 		returnNetworkMessage := <-networkDeleteReturn
