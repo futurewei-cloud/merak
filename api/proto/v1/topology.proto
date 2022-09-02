@@ -77,7 +77,7 @@ message InternalTopologyConfiguration {
     uint32 number_of_vhosts = 8;
     uint32 number_of_racks = 9;
     uint32 vhost_per_rack = 10;
-    uint32 ports_per_vswtich = 11;
+    uint32 ports_per_vswitch = 11;
     string data_plane_cidr = 12;
     uint32 number_of_gateways = 13;
     repeated string gateway_ips = 14;
