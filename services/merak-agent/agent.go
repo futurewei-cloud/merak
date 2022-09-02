@@ -25,6 +25,10 @@ import (
 	"google.golang.org/grpc"
 )
 
+var (
+	Port = flag.Int("port", constants.AGENT_GRPC_SERVER_PORT, "The server port")
+)
+
 func main() {
 
 	// Start plugin
@@ -38,7 +42,7 @@ func main() {
 
 	// Start gRPC Server
 	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *handler.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *Port))
 	if err != nil {
 		log.Fatalln("ERROR: Failed to listen", err)
 	}

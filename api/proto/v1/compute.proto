@@ -79,7 +79,8 @@ message InternalVMInfo {
     string security_group_id = 6;
     string default_gateway = 7;
     string host = 8;
-    common.Status status = 9;
+    string remote_id = 9;
+    common.Status status = 10;
 }
 
 message ReturnComputeMessage {
