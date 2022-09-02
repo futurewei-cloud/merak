@@ -132,6 +132,7 @@ func deleteNode(netConfigId string) (err error) {
 			return returnErr
 		}
 	}
+	database.Del(utils.NODEGROUP + netConfigId)
 	log.Println("deleteNode done")
 	return nil
 }

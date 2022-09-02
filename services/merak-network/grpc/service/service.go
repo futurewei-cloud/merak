@@ -75,6 +75,9 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		}()
 
 		returnNetworkMessage := <-networkInfoReturn
+		for len(networkInfoReturn) > 0 {
+			<-networkInfoReturn
+		}
 		wg.Wait()
 		log.Printf("returnNetworkMessage %s", returnNetworkMessage)
 		if ifAnyFailure {
@@ -142,11 +145,14 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 		returnNetworkMessage.ReturnCode = common_pb.ReturnCode_OK
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_CREATE"
 		returnNetworkMessage := <-networkReturn
+		for len(networkReturn) > 0 {
+			<-networkReturn
+		}
 		wg.Wait()
 		if ifAnyFailure {
 			return nil, currentError
 		}
-		log.Printf("returnNetworkMessage %s", returnNetworkMessage)
+		log.Printf("networkCreateReturn returnNetworkMessage %s", returnNetworkMessage)
 		return returnNetworkMessage, nil
 	case common_pb.OperationType_UPDATE:
 		log.Println("Update")
@@ -165,16 +171,21 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 				currentError = err
 			}
 			networkDeleteReturn <- vnetDeleteReturn
-			log.Printf("networkInfoReturn: %s", vnetDeleteReturn)
+			log.Printf("networkDeleteReturn: %s", vnetDeleteReturn)
 		}()
 		wg.Wait()
 		returnNetworkMessage.ReturnCode = common_pb.ReturnCode_OK
 		returnNetworkMessage.ReturnMessage = "NetworkHandler: OperationType_DELETE"
 		returnNetworkMessage := <-networkDeleteReturn
+		for len(networkDeleteReturn) > 0 {
+			<-networkDeleteReturn
+		}
+		wg.Wait()
+		log.Printf("============== After networkDeleteReturn")
 		if ifAnyFailure {
 			return nil, currentError
 		}
-		log.Printf("returnNetworkMessage %s", returnNetworkMessage)
+		log.Printf("networkDeleteReturn returnNetworkMessage %s", returnNetworkMessage)
 		return returnNetworkMessage, nil
 	default:
 		log.Println("Unknown Operation")
