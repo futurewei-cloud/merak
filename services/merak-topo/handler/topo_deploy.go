@@ -57,7 +57,8 @@ func CreateTopologyClasses(client dynamic.Interface, name string, links []databa
 
 	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Create(Ctx, rc, metav1.CreateOptions{})
 
-	log.Printf("Creating TopologyClass %s", name)
+	// log.Printf("Creating TopologyClass %s", name)
+	// log.Printf("topology class details %s", rc)
 
 	if err != nil {
 		return fmt.Errorf("failed to create topologyClass %s", err)
@@ -69,7 +70,7 @@ func CreateTopologyClasses(client dynamic.Interface, name string, links []databa
 
 func GetTopologyClasses(client dynamic.Interface, name string) error {
 
-	data, err := client.Resource(topologyClassGVR).Namespace(namespace).Get(Ctx, name, metav1.GetOptions{})
+	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Get(Ctx, name, metav1.GetOptions{})
 
 	log.Printf("Get TopologyClass %s", name)
 
@@ -77,7 +78,7 @@ func GetTopologyClasses(client dynamic.Interface, name string) error {
 		return fmt.Errorf("failed to create topologyClass %s", err)
 	}
 
-	fmt.Printf("Get %v topology data: %v", name, data)
+	// fmt.Printf("Get %v topology data: %v", name, data)
 
 	return nil
 
@@ -226,7 +227,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 						{
 							Name:            "vhost",
 							Image:           ACA_IMAGE,
-							ImagePullPolicy: "Always",
+							ImagePullPolicy: "IfNotPresent",
 							SecurityContext: &sc,
 						},
 					},

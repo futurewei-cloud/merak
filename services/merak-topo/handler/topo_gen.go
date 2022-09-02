@@ -14,6 +14,7 @@ package handler
 
 import (
 	"fmt"
+	"log"
 
 	"strconv"
 	"strings"
@@ -37,7 +38,10 @@ func ip_gen(vhost_idx int, data_plane_cidr string, upper int) string {
 		//
 	default: //16
 		i := (vhost_idx) / upper
-		ip = strings.Split(data_plane_cidr, ".")[0] + "." + strings.Split(data_plane_cidr, ".")[1] + "." + strconv.FormatInt(int64(i), 10) + "." + strconv.FormatInt(int64(vhost_idx), 10) + "/16"
+		// if (vhost_idx)%upper > 0 {
+		// 	i = i + 1
+		// }
+		ip = strings.Split(data_plane_cidr, ".")[0] + "." + strings.Split(data_plane_cidr, ".")[1] + "." + strconv.FormatInt(int64(i), 10) + "." + strconv.FormatInt(int64((vhost_idx-i*upper)), 10) + "/16"
 	}
 
 	return ip
@@ -99,7 +103,7 @@ func create_vhosts(init int, vhosts_per_rack int, data_plane_cidr string, upper 
 func rack_nics_gen(idx int, vhosts_per_rack int) []database.Nic {
 	var nics []database.Nic
 
-	for nintf := 1; nintf < (vhosts_per_rack + 1); nintf++ {
+	for nintf := 1; nintf <= (vhosts_per_rack + 1); nintf++ {
 		var nic database.Nic
 		nic.Id = GenUUID()
 		nic.Intf = "r" + strconv.FormatInt(int64(idx), 10) + "-eth" + strconv.FormatInt(int64(nintf), 10)
@@ -127,7 +131,7 @@ func vhost_nics_gen(idx int, data_plane_cidr string, upper int) []database.Nic {
 func vswitch_nics_gen(idx int, ports_per_vswitch int) []database.Nic {
 	var nics []database.Nic
 
-	for nintf := 1; nintf < (ports_per_vswitch + 1); nintf++ {
+	for nintf := 1; nintf <= (ports_per_vswitch + 1); nintf++ {
 		var nic database.Nic
 		nic.Id = GenUUID()
 		nic.Intf = "vs" + strconv.FormatInt(int64(idx), 10) + "-eth" + strconv.FormatInt(int64(nintf), 10)
@@ -208,13 +212,53 @@ func create_and_attach_a_core(vs []database.Vnode, j int, nports int, uid_initia
 	core.Nics = nics
 
 	// attach vs to the vswitch
-	err_attach, core_attached, vs_attached := attach_racks_to_vswitch(core, vs, uid_initial)
+	err_attach, core_attached, vs_attached := attach_vswitches_to_core(core, vs, uid_initial)
 
 	if err_attach != nil {
 		fmt.Printf("attach vswitch to vs error %s", err_attach)
 	}
 
 	return err_attach, core_attached, vs_attached
+}
+
+func attach_vswitches_to_core(core database.Vnode, vswitches []database.Vnode, uid_initial int) (error, database.Vnode, []database.Vnode) {
+
+	var core_links []database.Vlink
+	var vswitches_attached []database.Vnode
+
+	for i, nic := range core.Nics {
+		var link_c database.Vlink
+		var link_v database.Vlink
+
+		uid := uid_initial + i
+
+		link_c.Id = GenUUID()
+		link_c.Uid = uid
+		link_c.Name = core.Name + "-l" + strconv.FormatInt(int64(uid), 10)
+		link_c.Local_pod = core.Name
+		link_c.Local_intf = nic.Intf
+		link_c.Peer_pod = vswitches[i].Name
+		link_c.Peer_intf = vswitches[i].Nics[len(vswitches[i].Nics)-1].Intf
+
+		core_links = append(core_links, link_c)
+
+		link_v.Id = GenUUID()
+		link_v.Uid = uid
+		link_v.Name = vswitches[i].Name + "-l" + strconv.FormatInt(int64(uid), 10)
+		link_v.Local_pod = vswitches[i].Name
+		link_v.Local_intf = vswitches[i].Nics[len(vswitches[i].Nics)-1].Intf
+		link_v.Peer_pod = core.Name
+		link_v.Peer_intf = nic.Intf
+
+		vswitch := vswitches[i]
+		vswitch.Flinks = append(vswitch.Flinks, link_v)
+		vswitches_attached = append(vswitches_attached, vswitch)
+
+	}
+
+	core.Flinks = core_links
+
+	return nil, core, vswitches_attached
 }
 
 func attach_vhosts_to_rack(rack database.Vnode, hosts []database.Vnode, uid_initial int) (error, database.Vnode, []database.Vnode) {
@@ -224,39 +268,41 @@ func attach_vhosts_to_rack(rack database.Vnode, hosts []database.Vnode, uid_init
 
 	for i, nic := range rack.Nics {
 
-		var link_r database.Vlink
-		var link_h database.Vlink
+		if i < len(rack.Nics)-1 {
+			var link_r database.Vlink
+			var link_h database.Vlink
 
-		uid := uid_initial + i
+			uid := uid_initial + i
 
-		link_r.Id = GenUUID()
-		link_r.Uid = uid
-		link_r.Name = rack.Name + "-l" + strconv.FormatInt(int64(uid), 10)
-		link_r.Local_pod = rack.Name
-		link_r.Local_intf = nic.Intf
-		link_r.Peer_pod = hosts[i].Name
-		link_r.Peer_intf = hosts[i].Nics[0].Intf
-		link_r.Peer_ip = hosts[i].Nics[0].Ip
+			link_r.Id = GenUUID()
+			link_r.Uid = uid
+			link_r.Name = rack.Name + "-l" + strconv.FormatInt(int64(uid), 10)
+			link_r.Local_pod = rack.Name
+			link_r.Local_intf = nic.Intf
+			link_r.Peer_pod = hosts[i].Name
+			link_r.Peer_intf = hosts[i].Nics[0].Intf
+			link_r.Peer_ip = hosts[i].Nics[0].Ip
 
-		rack_links = append(rack_links, link_r)
+			rack_links = append(rack_links, link_r)
 
-		link_h.Id = GenUUID()
-		link_h.Uid = uid
-		link_h.Name = hosts[i].Name + "-l" + strconv.FormatInt(int64(uid), 10)
-		link_h.Local_pod = hosts[i].Name
-		link_h.Local_intf = hosts[i].Nics[0].Intf
-		link_h.Local_ip = hosts[i].Nics[0].Ip
-		link_h.Peer_pod = rack.Name
-		link_h.Peer_intf = nic.Intf
+			link_h.Id = GenUUID()
+			link_h.Uid = uid
+			link_h.Name = hosts[i].Name + "-l" + strconv.FormatInt(int64(uid), 10)
+			link_h.Local_pod = hosts[i].Name
+			link_h.Local_intf = hosts[i].Nics[0].Intf
+			link_h.Local_ip = hosts[i].Nics[0].Ip
+			link_h.Peer_pod = rack.Name
+			link_h.Peer_intf = nic.Intf
 
-		host := hosts[i]
-		host.Flinks = append(host.Flinks, link_h)
-		hosts_attached = append(hosts_attached, host)
+			host := hosts[i]
+			host.Flinks = append(host.Flinks, link_h)
+			hosts_attached = append(hosts_attached, host)
+
+		}
 
 	}
 
 	rack.Flinks = rack_links
-
 	return nil, rack, hosts_attached
 }
 
@@ -266,33 +312,35 @@ func attach_racks_to_vswitch(vswitch database.Vnode, racks []database.Vnode, uid
 	var racks_attached []database.Vnode
 
 	for i, nic := range vswitch.Nics {
+		if i < len(vswitch.Nics)-1 {
+			var link_v database.Vlink
+			var link_r database.Vlink
 
-		var link_v database.Vlink
-		var link_r database.Vlink
+			uid := uid_initial + i
 
-		uid := uid_initial + i
+			link_v.Id = GenUUID()
+			link_v.Uid = uid
+			link_v.Name = vswitch.Name + "-l" + strconv.FormatInt(int64(uid), 10)
+			link_v.Local_pod = vswitch.Name
+			link_v.Local_intf = nic.Intf
+			link_v.Peer_pod = racks[i].Name
+			link_v.Peer_intf = racks[i].Nics[len(racks[i].Nics)-1].Intf
 
-		link_v.Id = GenUUID()
-		link_v.Uid = uid
-		link_v.Name = vswitch.Name + "-l" + strconv.FormatInt(int64(uid), 10)
-		link_v.Local_pod = vswitch.Name
-		link_v.Local_intf = nic.Intf
-		link_v.Peer_pod = racks[i].Name
-		link_v.Peer_intf = racks[i].Nics[0].Intf
+			vswitch_links = append(vswitch_links, link_v)
 
-		vswitch_links = append(vswitch_links, link_v)
+			link_r.Id = GenUUID()
+			link_r.Uid = uid
+			link_r.Name = racks[i].Name + "-l" + strconv.FormatInt(int64(uid), 10)
+			link_r.Local_pod = racks[i].Name
+			link_r.Local_intf = racks[i].Nics[len(racks[i].Nics)-1].Intf
+			link_r.Peer_pod = vswitch.Name
+			link_r.Peer_intf = nic.Intf
 
-		link_r.Id = GenUUID()
-		link_r.Uid = uid
-		link_r.Name = racks[i].Name + "-l" + strconv.FormatInt(int64(uid), 10)
-		link_r.Local_pod = racks[i].Name
-		link_r.Local_intf = racks[i].Nics[0].Intf
-		link_r.Peer_pod = vswitch.Name
-		link_r.Peer_intf = nic.Intf
+			rack := racks[i]
+			rack.Flinks = append(rack.Flinks, link_r)
+			racks_attached = append(racks_attached, rack)
 
-		rack := racks[i]
-		rack.Flinks = append(rack.Flinks, link_r)
-		racks_attached = append(racks_attached, rack)
+		}
 
 	}
 
@@ -353,12 +401,13 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 	racks_full_attached = append(racks_full_attached, racks_vs_attached...)
 
 	nvswitch := len(vs_attached)
-	flag_multi_layer_vs := false
+	log.Printf("vs number %v", len(vs_attached))
+	flag := false
 
 	var vs_to_core []database.Vnode
 
 	for nvswitch > ports_per_vswitch {
-		flag_multi_layer_vs = true
+		flag = true
 		err_vs, vs_upper_attached, vs_lower_attached := create_vswitches(vs_attached, init_idx_vs, ports_per_vswitch, uid_initial)
 
 		if err_vs != nil {
@@ -374,17 +423,23 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 
 	}
 
-	if !flag_multi_layer_vs {
+	if !flag {
 		vs_to_core = vs_attached
 	}
 
-	err_core, core_attached, vs_upper_attached := create_and_attach_a_core(vs_to_core, 1, len(vs_to_core), uid_initial)
+	log.Printf("vs_to_core %v", vs_to_core)
+	log.Printf("flag_multi_layer_vs %v", flag)
+
+	err_core, core_attached, vs_attached := create_and_attach_a_core(vs_to_core, 1, len(vs_to_core), uid_initial)
 	if err_core != nil {
 		fmt.Printf("create and attach a core error %s", err_core)
 	}
 	// uid_initial = uid_initial + len(vs_to_core)
 
-	vswitches = append(vswitches, vs_upper_attached...)
+	vswitches = append(vswitches, vs_attached...)
+	log.Printf("vswitches %v", vswitches)
+	log.Printf("vs_upper_attached %v", vs_attached)
+	log.Printf("core_attached %v", core_attached)
 
 	vnodes := append(vhosts, racks_full_attached...)
 	vnodes = append(vnodes, vswitches...)
