@@ -28,12 +28,13 @@ var (
 		ReturnCode:    pb_common.ReturnCode_FAILED,
 		ReturnMessage: "Unintialized",
 	}
-	aca_num         = 10
-	rack_num        = 2
-	aca_per_rack    = 5
-	data_plane_cidr = "10.200.0.0/16"
-	topo_id         = "1topo"
-	cgw_num         = 0
+	aca_num           = 10
+	rack_num          = 2
+	aca_per_rack      = 5
+	data_plane_cidr   = "10.200.0.0/16"
+	topo_id           = "1topo"
+	cgw_num           = 0
+	ports_per_vswitch = 2
 )
 
 func TestTopologyHandler(t *testing.T) {
@@ -48,7 +49,7 @@ func TestTopologyHandler(t *testing.T) {
 		log.Printf("connect to DB error %s", err1)
 	}
 
-	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
+	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, uint32(ports_per_vswitch), &returnMessage)
 	if err2 != nil {
 		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Create Topology."
