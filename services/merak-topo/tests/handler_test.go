@@ -12,77 +12,77 @@ Copyright(c) 2022 Futurewei Cloud
 */
 package tests
 
-import (
-	"log"
-	"testing"
+// import (
+// 	"log"
+// 	"testing"
 
-	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
-	"github.com/futurewei-cloud/merak/services/merak-topo/database"
-	"github.com/futurewei-cloud/merak/services/merak-topo/handler"
-	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
-)
+// 	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
+// 	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
+// 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
+// 	"github.com/futurewei-cloud/merak/services/merak-topo/handler"
+// 	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
+// )
 
-var (
-	returnMessage = pb.ReturnTopologyMessage{
-		ReturnCode:    pb_common.ReturnCode_FAILED,
-		ReturnMessage: "Unintialized",
-	}
-	aca_num         = 10
-	rack_num        = 2
-	aca_per_rack    = 5
-	data_plane_cidr = "10.200.0.0/16"
-	topo_id         = "1topo"
-	cgw_num         = 0
-)
+// var (
+// 	returnMessage = pb.ReturnTopologyMessage{
+// 		ReturnCode:    pb_common.ReturnCode_FAILED,
+// 		ReturnMessage: "Unintialized",
+// 	}
+// 	aca_num         = 10
+// 	rack_num        = 2
+// 	aca_per_rack    = 5
+// 	data_plane_cidr = "10.200.0.0/16"
+// 	topo_id         = "1topo"
+// 	cgw_num         = 0
+// )
 
-func TestTopologyHandler(t *testing.T) {
+// func TestTopologyHandler(t *testing.T) {
 
-	k8client, err := utils.K8sClient()
-	if err != nil {
-		log.Printf("create k8s client error %s", err)
-	}
+// 	k8client, err := utils.K8sClient()
+// 	if err != nil {
+// 		log.Printf("create k8s client error %s", err)
+// 	}
 
-	err1 := database.ConnectDatabase()
-	if err1 != nil {
-		log.Printf("connect to DB error %s", err1)
-	}
+// 	err1 := database.ConnectDatabase()
+// 	if err1 != nil {
+// 		log.Printf("connect to DB error %s", err1)
+// 	}
 
-	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
-	if err2 != nil {
-		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-		returnMessage.ReturnMessage = "Fail to Create Topology."
+// 	// err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
+// 	// if err2 != nil {
+// 	// 	returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
+// 	// 	returnMessage.ReturnMessage = "Fail to Create Topology."
 
-	} else {
-		returnMessage.ReturnCode = pb_common.ReturnCode_OK
-		returnMessage.ReturnMessage = "Topology Deployed."
+// 	// } else {
+// 	// 	returnMessage.ReturnCode = pb_common.ReturnCode_OK
+// 	// 	returnMessage.ReturnMessage = "Topology Deployed."
 
-	}
+// 	// }
 
-	log.Printf("///// CREATE Return Message //// %v", &returnMessage)
+// 	log.Printf("///// CREATE Return Message //// %v", &returnMessage)
 
-	err3 := handler.Info(k8client, topo_id, &returnMessage)
+// 	err3 := handler.Info(k8client, topo_id, &returnMessage)
 
-	if err3 != nil {
-		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-		returnMessage.ReturnMessage = "Fail to Info Topology."
+// 	if err3 != nil {
+// 		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
+// 		returnMessage.ReturnMessage = "Fail to Info Topology."
 
-	} else {
-		returnMessage.ReturnCode = pb_common.ReturnCode_OK
-		returnMessage.ReturnMessage = "Topology Info Query Done."
-	}
+// 	} else {
+// 		returnMessage.ReturnCode = pb_common.ReturnCode_OK
+// 		returnMessage.ReturnMessage = "Topology Info Query Done."
+// 	}
 
-	log.Printf("///// INFO Return Message //// %v", &returnMessage)
+// 	log.Printf("///// INFO Return Message //// %v", &returnMessage)
 
-	err4 := handler.Delete(k8client, topo_id)
-	if err4 != nil {
-		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-		returnMessage.ReturnMessage = "Fail to Delete Topology."
-	} else {
-		returnMessage.ReturnCode = pb_common.ReturnCode_OK
-		returnMessage.ReturnMessage = "Topology Delete Done."
-	}
+// 	err4 := handler.Delete(k8client, topo_id)
+// 	if err4 != nil {
+// 		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
+// 		returnMessage.ReturnMessage = "Fail to Delete Topology."
+// 	} else {
+// 		returnMessage.ReturnCode = pb_common.ReturnCode_OK
+// 		returnMessage.ReturnMessage = "Topology Delete Done."
+// 	}
 
-	log.Printf("///// DELETE Return Message //// %v", &returnMessage)
+// 	log.Printf("///// DELETE Return Message //// %v", &returnMessage)
 
-}
+// }
