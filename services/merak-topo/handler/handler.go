@@ -57,15 +57,9 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 		return fmt.Errorf("save topology to redis error %s", err1)
 	}
 
-	log.Println("=== Topology Deployment === ")
+	log.Printf("topology details:  %v", topo)
 
-	err_deploy := Topo_deploy(k8client, topo)
-
-	if err_deploy != nil {
-		return fmt.Errorf("topology deployment error %s", err_deploy)
-	}
-
-	log.Println("=== Get k8s host nodes information after deployment===")
+	log.Println("=== Get k8s host nodes information ===")
 
 	k8s_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 
@@ -130,6 +124,14 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	if err_db2 != nil {
 
 		return fmt.Errorf("fail to save return msg to DB %s", err_db2)
+	}
+
+	log.Println("=== Topology Deployment === ")
+
+	err_deploy := Topo_deploy(k8client, topo)
+
+	if err_deploy != nil {
+		return fmt.Errorf("topology deployment error %s", err_deploy)
 	}
 
 	return nil
