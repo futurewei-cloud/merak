@@ -38,11 +38,11 @@ import (
 )
 
 var (
-	ACA_IMAGE = "meraksim/merak-agent:311f5f6c"
-	OVS_IMAGE = "yanmo96/ovs_only:latest"
-	RYU_IP    = "ryu.merak.svc.cluster.local"
-	RYU_PORT  = "6653"
-	Ctx       = context.Background()
+	// ACA_IMAGE = "meraksim/merak-agent:311f5f6c"
+	// OVS_IMAGE = "yanmo96/ovs_only:latest"
+	RYU_IP   = "ryu.merak.svc.cluster.local"
+	RYU_PORT = "6653"
+	Ctx      = context.Background()
 
 	namespace        = "default"
 	topologyClassGVR = schema.GroupVersionResource{
@@ -128,7 +128,7 @@ func NewTopologyClass(name string, links []database.Vlink) *unstructured.Unstruc
 	return out
 }
 
-func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) error {
+func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image string, topo database.TopologyData) error {
 	/*comment gw creation function*/
 	// var k8snodes []string
 
@@ -226,7 +226,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 					Containers: []corev1.Container{
 						{
 							Name:            "vhost",
-							Image:           ACA_IMAGE,
+							Image:           aca_image,
 							ImagePullPolicy: "IfNotPresent",
 							SecurityContext: &sc,
 						},
@@ -257,7 +257,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 					Containers: []corev1.Container{
 						{
 							Name:            "vswitch",
-							Image:           OVS_IMAGE,
+							Image:           ovs_image,
 							ImagePullPolicy: "IfNotPresent",
 							Args:            []string{"service rsyslog restart; /etc/init.d/openvswitch-switch restart; " + ovs_set + "sleep infinity"},
 							Command:         []string{"/bin/sh", "-c"},

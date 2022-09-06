@@ -33,7 +33,7 @@ import (
 
 //function CREATE
 /* save the part of gw creation and mac learning for future requirment, comment the related code now*/
-func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, cgw_num uint32, data_plane_cidr string, ports_per_vswitch uint32, returnMessage *pb.ReturnTopologyMessage) error {
+func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, cgw_num uint32, data_plane_cidr string, ports_per_vswitch uint32, images []*pb.InternalTopologyImage, returnMessage *pb.ReturnTopologyMessage) error {
 
 	log.Println("=== Parse gRPC message === ")
 	log.Printf("Vhost number is: %v\n", aca_num)
@@ -127,8 +127,18 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	}
 
 	log.Println("=== Topology Deployment === ")
+	var aca_image string
+	var ovs_image string
 
-	err_deploy := Topo_deploy(k8client, topo)
+	for _, img := range images {
+		if strings.Contains(img.Name, "ACA") {
+			aca_image = img.Registry
+		} else if strings.Contains(img.Name, "OVS") {
+			ovs_image = img.Registry
+		}
+	}
+
+	err_deploy := Topo_deploy(k8client, aca_image, ovs_image, topo)
 
 	if err_deploy != nil {
 		return fmt.Errorf("topology deployment error %s", err_deploy)
