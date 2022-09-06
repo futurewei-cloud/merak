@@ -85,6 +85,7 @@ message InternalTopologyConfiguration {
     repeated InternalVNodeInfo vnodes = 16;
     repeated InternalVLinkInfo vlinks = 17;
     InternalTopologyExtraInfo extra_info = 18;
+    
 }
 
 message InternalTopologyInfo {
