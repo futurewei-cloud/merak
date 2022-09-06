@@ -87,10 +87,10 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 		/*comment gw creation function*/
 		// if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 || cgw_num == 0 {
-		if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 {
+		if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 || ports_per_vswitch == 0 {
 
 			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-			returnMessage.ReturnMessage = "Must provide a valid data plane cider, aca number, aca per rack number, rack number, and control plane gateways"
+			returnMessage.ReturnMessage = "Must provide a valid data plane cider, aca number, aca per rack number, rack number, ports per vswitch, and control plane gateways"
 
 			return &returnMessage, nil
 
