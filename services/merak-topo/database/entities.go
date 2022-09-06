@@ -26,37 +26,44 @@ const (
 )
 
 type Nic struct {
+	Id   string `json:"id"`
 	Intf string `json:"intf"`
 	Ip   string `json:"ip"`
 	Mac  string `json:"mac"`
 }
 
 type Vnode struct {
-	Id          string                   `json:"id"`
-	Name        string                   `json:"name"`
-	Nics        []Nic                    `json:"nics"`
-	Flinks      []map[string]interface{} `json:"flinks"`
-	ContainerIp string                   `json:"containerip"`
-	Status      ServiceStatus            `json:"status"`
+	Id          string        `json:"id"`
+	Type        string        `json:"type"`
+	Name        string        `json:"name"`
+	Nics        []Nic         `json:"nics"`
+	Flinks      []Vlink       `json:"flinks"`
+	ContainerIp string        `json:"containerip"`
+	Status      ServiceStatus `json:"status"`
 }
 
-type Vport struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-	Intf string `json:"nic"`
-	Ip   string `json:"ip"`
-}
+// type Vport struct {
+// 	Id   string `json:"id"`
+// 	Name string `json:"name"`
+// 	Intf string `json:"nic"`
+// 	Ip   string `json:"ip"`
+// }
 
 type Vlink struct {
-	Id     string        `json:"id"`
-	Name   string        `json:"name"`
-	Src    Vport         `json:"src"`
-	Dst    Vport         `json:"dst"`
-	Status ServiceStatus `json:"status"`
+	Id         string        `json:"id"`
+	Name       string        `json:"name"`
+	Uid        int           `json:"uid"`
+	Peer_pod   string        `json:"peer_pod"`
+	Local_pod  string        `json:"local_pod"`
+	Local_intf string        `json:"local_intf"`
+	Local_ip   string        `json:"local_ip"`
+	Peer_intf  string        `json:"peer_intf"`
+	Peer_ip    string        `json:"peer_ip"`
+	Status     ServiceStatus `json:"status"`
 }
 
 type TopologyData struct {
 	Topology_id string  `json:"topology_id"`
 	Vnodes      []Vnode `json:"vnodes"`
-	Vlinks      []Vlink `json:"vlinks"`
+	// Vlinks      []Vlink `json:"vlinks"`
 }
