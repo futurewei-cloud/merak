@@ -11,23 +11,13 @@ The following services are provided over gRPC.
 
 Compute Scenarios:
 - INFO
-  - Returns information about the current status of the scheduled VMs and Ports.
+  - Returns information about the current status of the scheduled VMs.
 - CREATE
-  - Creates a new set of VMs and Ports.
+  - Creates a new set of VMs.
 - UPDATE
-  - Update an existing set of VMs and Ports.
+  - Update an existing set of VMs.
 - DELETE
-  - Delete an existing set of VMs and Ports.
-
-<!-- Test Scenarios:
-- INFO
-  - Returns information about the status of an existing test scenario
-- CREATE
-  - Creates a new test scenario
-- UPDATE
-  - Update an existing test scenario
-- DELETE
-  - Delete an existing test scenario -->
+  - Delete an existing set of VMs.
 
 ## Components
 
@@ -46,60 +36,6 @@ The VM workers will be responsible for running the following workflows
 - VM Delete
 - VM Update
 - VM Info
-
-<!-- get_vm(hostname, vm):
-- Returns info about the VM on a node.
-
-get_vm_node(hostname):
-- Returns info about all VMs on the node.
-
-create_n_vms_on_host(hostname, n)
-- creates n VMs at hostname
-- returns a list of names of VMs created
-
-delete_n_vms(hostname)
-- deletes n VMs at hostname
-- returns a list of names of VMs deleted -->
-
-### Port Workers
-The Port Worker will be responsible for making calls to the Merak Agent to Create/Update/Delete Ports by running workflows
-
-- Port Create
-- PortM Delete
-- Port Update
-- Port Info
-
-<!-- #### Interface with Merak Agent
-
-get_ports_vm(hostname, vm):
-- Returns info on all ports in the VM on the node.
-
-get_ports_node(hostname):
-- Returns info on all ports on the node.
-
-create_n_ports(hostname, vm, tenant, vpc, subnet, security_group)
-- creates n ports in vm at hostname in the described VPC and subnet
-- returns a list of names and IP of the ports created
-
-delete_n_ports(hostname, vm)
-- deletes n ports at hostname in vm
-- returns a list of names of ports deleted -->
-
-<!-- ### Test Controller
-
-The Test controller will be responsible for coordinating tests across the available vms.
-
-#### Interface with Merak Agent
-
-get_test(vm, src):
-- Returns the status of a running test on the VM origination from the source
-
-run_test(vm, src, target, test-type, opt):
-- Runs a network test from inside the VM to the target
-- Returns the result of the ping test
-
-stop_test(vm, src):
-- Stops any running test in the VM originating from the source -->
 
 ## Scheduling
 
@@ -142,17 +78,18 @@ The following are the three VM and Port scheduling settings.
 - VM
   - ID
   - Name
-    - Ports
-
-- Ports
-  - ID
-  - Name
-  - VM
   - Tenant
   - VPC
   - Subnet
   - Security Group
   - IP
+  - Status
+  - Host IP
+  - Host MAC
+  - Host Name
+  - Gateway
+  - Status
+
 
 
 Example:
@@ -174,88 +111,21 @@ Example:
   {
       "id": "netns1",
       "name": "vm1",
-      "ports": ["port1", "port2"]
+      "vpc": "1",
+      "tenantID": "1",
+      "subnetID": "1",
+      "cidr": "10.0.0/8",
+      "ip" : "10.0.0.2"
+      "gw": "10.0.0.1",
+      "sg": "123",
+      "hostIP": "172.0.0.2",
+      "hostmac": "aa:bb:cc:dd:ee:ff",
+      "hostname": "pod1",
+      "status": "DEPLOYED",
   }
 }
 ```
 
-```
-{
-  "port":
-  {
-      "id": "veth1",
-      "name": "port1",
-      "vm": "netns1",
-      "tenant": "tenant1",
-      "vpc": "vpc1",
-      "subnet": "subnet1",
-      "security_group": "sg1",
-      "ip": "20.0.0.2",
-  }
-}
 
-```
-
-<!-- #### Test Datamodel
-
-- Test
-  - Name
-  - source
-    - host
-      - vm
-        - port
-  - target
-    - host
-      - vm
-        - port
-  - test-type
-  - results
-
-Example:
-```
-{
-    test:
-    {
-        "name": "test-ping",
-        "source":
-        [
-            {
-                "host": "pod1",
-                "vm":   "vm1",
-                "port": "port1"
-            },
-            {
-                "host": "pod1",
-                "vm":   "vm1",
-                "port": "port2"
-            },
-
-        ],
-        "target":
-        [
-            {
-                "host": "pod2",
-                "vm":   "vm1",
-                "port": "port1"
-            },
-            {
-                "host": "pod2",
-                "vm":   "vm2",
-                "port": "port1"
-            },
-
-        ],
-        "test-type": "ping",
-        "results":
-        [
-            "source_1->target_1": "pass",
-            "source1->target_2": "failed",
-            "source2->target_1": "pass",
-            "source2->target_2": "pending"
-        ]
-
-    }
-} -->
-```
 ### Data Storage
 Merak Compute will use a distributed KV Datastore behind a Kubernetes ClusterIP service.
