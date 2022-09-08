@@ -1,6 +1,6 @@
-# Merak Test
+# Merak nTest
 
-Merak Test is the service that will be responsible for automatically running network tests across all VMs in the cluster.
+Merak nTest is the service that will be responsible for automatically running network tests across all VMs in the cluster.
 
 ![merak test design diagram](../images/merak_compute_design_diagram.png)
 
@@ -16,17 +16,17 @@ The following services are provided over gRPC.
 ## Components
 
 
-### Merak Test Controller
+### Merak nTest Controller
 
 The Merak Test Controller will be responsible for receiving, parsing, and acting on requests sent from the scenario manager. It also be responsible for registering the various
 workflows and activities with their corresponding workers.
 Based on the requests, it will invoke workers via the temporal client to run the workflows.
 
-### Test Workers
+### nTest Workers
 
 The Test Worker will be responsible for making calls to the Merak Agent to start various network tests.
 
-#### Test Worklfows
+#### nTest Worklfows
 
 The Test workers will be responsible for running the following workflows
 
