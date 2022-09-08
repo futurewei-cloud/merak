@@ -15,9 +15,11 @@ syntax="proto3";
 package agent;
 option go_package = "github.com/futurewei-cloud/merak/api/proto/v1/agent;agent";
 import "common.proto";
+import "ntest.proto";
 
 service MerakAgentService {
     rpc PortHandler (InternalPortConfig) returns (AgentReturnInfo) {}
+    rpc TestHandler (InternalTestTargetConfig) returns (AgentReturnTestInfo) {}
 }
 
 message InternalPortConfig {
@@ -47,4 +49,16 @@ message AgentReturnInfo {
     common.ReturnCode return_code = 1;
     string return_message = 2;
     ReturnPortInfo port = 3;
+}
+
+message InternalTestTargetConfig {
+    string src = 1;
+    repeated string dest = 2;
+    ntest.TestType test_type = 3;
+}
+
+message AgentReturnTestInfo {
+    common.ReturnCode return_code = 1;
+    string return_message = 2;
+    ntest.TestStatus results = 3;
 }

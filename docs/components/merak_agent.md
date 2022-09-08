@@ -14,6 +14,11 @@ The following services are exposed by the Merak Agent over gRPC
 - DELETE
   - Delete an existing set of VM on this host.
 
+#### Test
+
+- Create
+  - Starts a new network test.
+
 ## Simulation Design
 
 ### Merak Node

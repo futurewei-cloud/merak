@@ -16,5 +16,46 @@ option go_package = "github.com/futurewei-cloud/merak/api/proto/v1/ntest;ntest";
 import "common.proto";
 
 service MeraknTestService {
-    rpc TestHandler (InternalComputeConfigInfo) returns (ReturnComputeMessage) {}
+    rpc TestHandler (InternalTestConfiguration) returns (ReturnTestMessage) {}
+}
+
+enum TestStatus {
+  NONE = 0;
+  RUNNING = 1;
+  PASSED = 2;
+  FAILED = 3;
+}
+
+enum TestType {
+  PINGALL = 0;
+}
+
+message InternalTestConfiguration {
+    TestType test_type = 1;
+}
+
+message InternalTestInfo {
+    string id = 1;
+    TestType test_type = 2;
+    repeated InternalVMHost hosts = 3;
+}
+
+message InternalVMHost {
+    string name = 1;
+    string ip = 2;
+    repeated InternalVMTestInfo vms = 3;
+}
+
+message InternalVMTestInfo {
+    string name = 1;
+    string id = 2;
+    string ip = 3;
+    TestStatus results = 4;
+}
+
+
+message ReturnTestMessage {
+    common.ReturnCode return_code = 1;
+    string return_message = 2;
+    InternalTestInfo results = 3;
 }

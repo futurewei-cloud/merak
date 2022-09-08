@@ -10,7 +10,7 @@ The following services are provided over gRPC.
 
 - INFO
   - Returns information about the current status of the tests.
-- START
+- CREATE
   - Starts a new tests.
 
 ## Components
@@ -31,7 +31,7 @@ The Test Worker will be responsible for making calls to the Merak Agent to start
 The Test workers will be responsible for running the following workflows
 
 - Test Info
-- Test Start
+- Test Create
 
 ## Datamodel
 
