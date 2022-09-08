@@ -304,10 +304,7 @@ func Delete(k8client *kubernetes.Clientset, topo_id string) error {
 
 	log.Printf("DELETE:===== Start: delete topology %v deployment in k8s cluster =====", topo_id)
 
-	err := Topo_delete(k8client, topo)
-	if err != nil {
-		return fmt.Errorf("topology delete fails %s", err)
-	}
+	go Topo_delete(k8client, topo)
 
 	return nil
 }
