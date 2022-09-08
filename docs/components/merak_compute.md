@@ -1,7 +1,6 @@
 # Merak Compute
 
-Merak compute is a distributed service that manages the allocation of virtual machines and ports. It utilizes [Temporal](https://temporal.io) as a microservice framework to
-reliably and scalably allocate emulated VMs, and ports.
+Merak compute is a distributed service that manages the allocation of virtual machines and ports. It utilizes [Temporal](https://temporal.io) to reliably and scalably allocate emulated VMs, and ports.
 
 ![merak compute design diagram](../images/merak_compute_design_diagram.png)
 
@@ -24,7 +23,7 @@ Compute Scenarios:
 ### Merak Compute Controller
 The Merak Compute Controller will be responsible for receiving, parsing, and acting on requests sent  from the scenario manager. It also be responsible for registering the various
 workflows and activities with their corresponding workers.
-Based on the requests, it will invoke workers via a temporal client to run the workflows.
+Based on the requests, it will invoke workers via the temporal client to run the workflows.
 
 ### VM Workers
 The VM Worker will be responsible for making calls to the Merak Agent to Create/Update/Delete VMs by running workflows.
