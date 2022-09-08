@@ -139,24 +139,24 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 	go Topo_deploy(k8client, aca_image, ovs_image, topo)
 
-	log.Printf("CREATE:===== Start: update compute node deployment status to DB======")
+	// log.Printf("CREATE:===== Start: update compute node deployment status to DB======")
 
-	go update_deploy(k8client, topo_id, returnMessage)
-
-	return nil
-
-}
-
-func update_deploy(client *kubernetes.Clientset, topo_id string, returnMessage *pb.ReturnTopologyMessage) error {
-	time.Sleep(time.Minute * 45)
-	err := UpdateComputenodeInfo(client, topo_id, returnMessage)
-	if err != nil {
-		return fmt.Errorf("update pods status after deployment error %s", err)
-	}
+	// go update_deploy(k8client, topo_id, returnMessage)
 
 	return nil
 
 }
+
+// func update_deploy(client *kubernetes.Clientset, topo_id string, returnMessage *pb.ReturnTopologyMessage) error {
+// 	time.Sleep(time.Minute * 45)
+// 	err := UpdateComputenodeInfo(client, topo_id, returnMessage)
+// 	if err != nil {
+// 		return fmt.Errorf("update pods status after deployment error %s", err)
+// 	}
+
+// 	return nil
+
+// }
 
 func UpdateComputenodeInfo(client *kubernetes.Clientset, topo_id string, returnMessage *pb.ReturnTopologyMessage) error {
 	topo, err := database.FindTopoEntity(topo_id, "")

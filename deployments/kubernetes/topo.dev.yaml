@@ -134,21 +134,21 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ryu-deployment
+  name: sdn-controller-deployment
   namespace: merak
 spec:
   selector:
     matchLabels:
-      app: ryu
+      app: sdn-controller
   replicas: 5
   template:
     metadata:
       labels:
-        app: ryu
+        app: sdn-controller
     spec:
      #hostNetwork: true
       containers:
-      - name: ryu
+      - name: sdn-controller
         image: osrg/ryu
         args:
           - ryu-manager

@@ -28,6 +28,7 @@ func GenUUID() string {
 	return strings.Replace(uuidWithHyphen.String(), "-", "", -1)
 }
 
+// function to generate ip address based on the data plane cidr
 func ip_gen(vhost_idx int, data_plane_cidr string, upper int) string {
 	var ip string = data_plane_cidr
 	switch mask := strings.Split(data_plane_cidr, "/")[1]; mask {
@@ -43,6 +44,8 @@ func ip_gen(vhost_idx int, data_plane_cidr string, upper int) string {
 
 	return ip
 }
+
+// function to create vswitches based on the number of racks and the ports per vswitch
 
 func create_vswitches(racks []database.Vnode, init_idx_vs int, ports_per_vswitch int, uid_initial int) (error, []database.Vnode, []database.Vnode) {
 	var vswitches []database.Vnode
@@ -78,6 +81,7 @@ func create_vswitches(racks []database.Vnode, init_idx_vs int, ports_per_vswitch
 	return nil, vswitches, racks_attached
 }
 
+// function to create vhosts data
 func create_vhosts(init int, vhosts_per_rack int, data_plane_cidr string, upper int) []database.Vnode {
 	var vhosts []database.Vnode
 
@@ -97,6 +101,7 @@ func create_vhosts(init int, vhosts_per_rack int, data_plane_cidr string, upper 
 
 }
 
+// function to generate interface of each rack based on the given value of vhosts per rack
 func rack_nics_gen(idx int, vhosts_per_rack int) []database.Nic {
 	var nics []database.Nic
 
@@ -111,6 +116,7 @@ func rack_nics_gen(idx int, vhosts_per_rack int) []database.Nic {
 	return nics
 }
 
+// function to generate the interface of vhost and assign name and ip to the associated interface
 func vhost_nics_gen(idx int, data_plane_cidr string, upper int) []database.Nic {
 	var nics []database.Nic
 
@@ -125,6 +131,7 @@ func vhost_nics_gen(idx int, data_plane_cidr string, upper int) []database.Nic {
 
 }
 
+// function to generate the interface of vswitch with the assigned interface name
 func vswitch_nics_gen(idx int, ports_per_vswitch int) []database.Nic {
 	var nics []database.Nic
 
@@ -141,6 +148,7 @@ func vswitch_nics_gen(idx int, ports_per_vswitch int) []database.Nic {
 
 }
 
+//function to generate the interface of core with the assigned interface name
 func core_nics_gen(idx int, nports int) []database.Nic {
 	var nics []database.Nic
 
@@ -157,6 +165,7 @@ func core_nics_gen(idx int, nports int) []database.Nic {
 
 }
 
+// function to create a rack
 func create_a_rack(idx int, vhosts_per_rack int) database.Vnode {
 
 	var rack database.Vnode
@@ -170,6 +179,7 @@ func create_a_rack(idx int, vhosts_per_rack int) database.Vnode {
 
 }
 
+// function to create multi-layer vswithes for racks
 func create_and_attach_a_vswitch(vs []database.Vnode, idx_vs int, ports_per_vswitch int, uid_initial int) (error, database.Vnode, []database.Vnode) {
 	var vswitch database.Vnode
 	var nports int
@@ -197,6 +207,7 @@ func create_and_attach_a_vswitch(vs []database.Vnode, idx_vs int, ports_per_vswi
 	return err_attach, vswitch_attached, vs_attached
 }
 
+//function to create the core to attach the toppest level vswitches
 func create_and_attach_a_core(vs []database.Vnode, j int, nports int, uid_initial int) (error, database.Vnode, []database.Vnode) {
 	var core database.Vnode
 
@@ -216,6 +227,7 @@ func create_and_attach_a_core(vs []database.Vnode, j int, nports int, uid_initia
 	return err_attach, core_attached, vs_attached
 }
 
+// function to attach the toppest level vswitches to the core
 func attach_vswitches_to_core(core database.Vnode, vswitches []database.Vnode, uid_initial int) (error, database.Vnode, []database.Vnode) {
 
 	var core_links []database.Vlink
@@ -256,6 +268,7 @@ func attach_vswitches_to_core(core database.Vnode, vswitches []database.Vnode, u
 	return nil, core, vswitches_attached
 }
 
+// function to attach vhosts to a rack
 func attach_vhosts_to_rack(rack database.Vnode, hosts []database.Vnode, uid_initial int) (error, database.Vnode, []database.Vnode) {
 
 	var rack_links []database.Vlink
@@ -301,6 +314,7 @@ func attach_vhosts_to_rack(rack database.Vnode, hosts []database.Vnode, uid_init
 	return nil, rack, hosts_attached
 }
 
+//function to attach racks to a vswitch
 func attach_racks_to_vswitch(vswitch database.Vnode, racks []database.Vnode, uid_initial int) (error, database.Vnode, []database.Vnode) {
 
 	var vswitch_links []database.Vlink
@@ -344,9 +358,10 @@ func attach_racks_to_vswitch(vswitch database.Vnode, racks []database.Vnode, uid
 	return nil, vswitch, racks_attached
 }
 
+// function of creating multiple layers vswitches based on the vhost number, rack number, vhosts per rack, ports per vswitch, and data plane cidr
 func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_rack int, ports_per_vswitch int, data_plane_cidr string) (error, database.TopologyData) {
 	var topo database.TopologyData
-	upper := 250
+	upper := 250 //the assigned number of ips per subnet
 	nvhosts := vhost_num
 	idx := 1
 	var racks_full_attached []database.Vnode
@@ -360,10 +375,13 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 
 	for nvhosts > 0 && idx < rack_num+1 {
 		var vhs []database.Vnode
+
+		//create a rack
 		rack := create_a_rack(idx, vhosts_per_rack)
 
 		idx = idx + 1
 
+		//create vhosts and attach the created vhosts to the rack
 		if nvhosts > vhosts_per_rack {
 			out := create_vhosts(init_idx_host, vhosts_per_rack, data_plane_cidr, upper)
 			vhs = append(vhs, out...)
@@ -381,11 +399,14 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 		if err != nil {
 			fmt.Printf("attach vhosts to rack error %s", err)
 		}
+
+		//update the link uid after attaching vhosts to the rack
 		uid_initial = uid_initial + len(vhs_attached)
 		racks = append(racks, rack_host_attached)
 		vhosts = append(vhosts, vhs_attached...)
 	}
 
+	//create vswitches for racks
 	err, vs_attached, racks_vs_attached := create_vswitches(racks, init_idx_vs, ports_per_vswitch, uid_initial)
 	uid_initial = uid_initial + len(racks)
 	init_idx_vs = init_idx_vs + len(vs_attached)
@@ -401,6 +422,7 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 
 	var vs_to_core []database.Vnode
 
+	// create multi-layer vswitches
 	for nvswitch > ports_per_vswitch {
 		flag = true
 		err_vs, vs_upper_attached, vs_lower_attached := create_vswitches(vs_attached, init_idx_vs, ports_per_vswitch, uid_initial)
@@ -428,6 +450,8 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 	}
 
 	vswitches = append(vswitches, vs_attached...)
+
+	// combine the created nodes and save to the topology file
 
 	vnodes := append(vhosts, racks_full_attached...)
 	vnodes = append(vnodes, vswitches...)

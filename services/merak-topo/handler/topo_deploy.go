@@ -39,9 +39,9 @@ import (
 )
 
 var (
-	RYU_IP   = "ryu.merak.svc.cluster.local"
-	RYU_PORT = "6653"
-	Ctx      = context.Background()
+	SDN_Controller_IP   = "sdn-controller.merak.svc.cluster.local"
+	SDN_Controller_PORT = "6653"
+	Ctx                 = context.Background()
 
 	namespace        = "default"
 	topologyClassGVR = schema.GroupVersionResource{
@@ -231,7 +231,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 			}
 		} else if strings.Contains(node.Name, "rack") || strings.Contains(node.Name, "vs") || strings.Contains(node.Name, "core") {
 
-			ovs_set, err0 := ovs_config(topo, node.Name, RYU_IP, RYU_PORT)
+			ovs_set, err0 := ovs_config(topo, node.Name, SDN_Controller_IP, SDN_Controller_PORT)
 			if err0 != nil {
 				return fmt.Errorf("fails to get ovs switch controller info %s", err0)
 			}
