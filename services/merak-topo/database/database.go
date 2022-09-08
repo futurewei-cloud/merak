@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 
 	"strings"
 
@@ -45,7 +44,7 @@ func ConnectDatabase() error {
 	})
 
 	if err := client.Ping(Ctx).Err(); err != nil {
-		return fmt.Errorf("fail to connect DB %s", err)
+		return fmt.Errorf("ConnectDB:fail to connect DB %s", err)
 	}
 
 	Rdb = client
@@ -55,11 +54,11 @@ func ConnectDatabase() error {
 func SetValue(key string, val interface{}) error {
 	j, err := json.Marshal(val)
 	if err != nil {
-		return fmt.Errorf("fail to save value in DB %s", err)
+		return fmt.Errorf("Savevalue:fail to save value in DB %s", err)
 	}
 	err = Rdb.Set(Ctx, key, j, 0).Err()
 	if err != nil {
-		return fmt.Errorf("fail to save value in DB %s", err)
+		return fmt.Errorf("Savevalue:fail to save value in DB %s", err)
 	}
 
 	return nil
@@ -81,17 +80,17 @@ func SetPbReturnValue(key string, val *pb.ReturnTopologyMessage) error {
 func GetPbReturnValue(id string, prefix string, entity *pb.ReturnTopologyMessage) error {
 
 	if (id + prefix) == "" {
-		log.Println("get key is empty")
+
 		return fmt.Errorf("get key is empty")
 	}
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		log.Printf("fail to get value for key in DB %s", err.Error())
+
 		return fmt.Errorf("fail to get value for key in DB %s", err.Error())
 	}
 	err = proto.Unmarshal([]byte(value), entity)
 	if err != nil {
-		log.Printf("fail to unmarshal in DB %s", err.Error())
+
 		return fmt.Errorf("fail to unmarshal in DB %s", err.Error())
 	}
 	return nil
@@ -190,11 +189,11 @@ func FindTopoEntity(id string, prefix string) (TopologyData, error) {
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
 		return entity, fmt.Errorf("fail to get value for key in DB %s", err)
-		// panic(err)
+
 	}
 	err = json.Unmarshal([]byte(value), &entity)
 	if err != nil {
-		// return fmt.Errorf("fail to get value for key in DB %s", err)
+
 		return entity, fmt.Errorf("fail to unmarsh value for key in DB %s", err)
 	}
 	return entity, nil

@@ -20,6 +20,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 
@@ -38,8 +39,6 @@ import (
 )
 
 var (
-	// ACA_IMAGE = "meraksim/merak-agent:311f5f6c"
-	// OVS_IMAGE = "yanmo96/ovs_only:latest"
 	RYU_IP   = "ryu.merak.svc.cluster.local"
 	RYU_PORT = "6653"
 	Ctx      = context.Background()
@@ -57,9 +56,6 @@ func CreateTopologyClasses(client dynamic.Interface, name string, links []databa
 
 	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Create(Ctx, rc, metav1.CreateOptions{})
 
-	// log.Printf("Creating TopologyClass %s", name)
-	// log.Printf("topology class details %s", rc)
-
 	if err != nil {
 		return fmt.Errorf("failed to create topologyClass %s", err)
 	}
@@ -72,13 +68,9 @@ func GetTopologyClasses(client dynamic.Interface, name string) error {
 
 	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Get(Ctx, name, metav1.GetOptions{})
 
-	log.Printf("Get TopologyClass %s", name)
-
 	if err != nil {
 		return fmt.Errorf("failed to create topologyClass %s", err)
 	}
-
-	// fmt.Printf("Get %v topology data: %v", name, data)
 
 	return nil
 
@@ -87,8 +79,6 @@ func GetTopologyClasses(client dynamic.Interface, name string) error {
 func DeleteTopologyClasses(client dynamic.Interface, name string) error {
 
 	err := client.Resource(topologyClassGVR).Namespace(namespace).Delete(Ctx, name, metav1.DeleteOptions{})
-
-	log.Printf("Delete TopologyClass %s", name)
 
 	if err != nil {
 		return fmt.Errorf("failed to create topologyClass %s", err)
@@ -131,6 +121,7 @@ func NewTopologyClass(name string, links []database.Vlink) *unstructured.Unstruc
 func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image string, topo database.TopologyData) error {
 	/*comment gw creation function*/
 	// var k8snodes []string
+	start_time := time.Now()
 
 	nodes := topo.Vnodes
 
@@ -321,6 +312,10 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 	}
 
+	elaps := time.Since(start_time)
+
+	log.Printf("CREATE:======= Complete: topoloy deploy (topology class + k8s deploy) ========= %v", elaps)
+
 	return nil
 
 }
@@ -339,8 +334,6 @@ func ovs_config(topo database.TopologyData, node_name string, ryu_ip string, ryu
 		}
 
 	}
-
-	log.Println(ovs_set)
 
 	return ovs_set, nil
 
@@ -390,6 +383,8 @@ func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod, cmd []string) (s
 
 func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData) error {
 
+	start_time := time.Now()
+
 	config := ctrl.GetConfigOrDie()
 	dclient, err := dynamic.NewForConfig(config)
 
@@ -417,6 +412,11 @@ func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData) err
 		}
 
 	}
+
+	elapsed := time.Since(start_time)
+
+	log.Printf("DELETE:===== Complete: delete topology in: %v =====", elapsed)
+
 	return nil
 }
 

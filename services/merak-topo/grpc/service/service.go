@@ -68,8 +68,7 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 			log.Printf("return message %v", returnMessage.ReturnMessage)
 			log.Printf("return code %v", returnMessage.ReturnCode)
-			log.Printf("return compute node %+v", returnMessage.ComputeNodes)
-			log.Printf("return host node %v", returnMessage.Hosts)
+
 		}
 
 	case pb_common.OperationType_CREATE:
@@ -109,7 +108,6 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			//
 		default:
 			// pb.TopologyType_TREE
-			// err_create := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
 
 			err_create := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, uint32(ports_per_vswitch), images, &returnMessage)
 
@@ -122,8 +120,6 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			}
 			log.Printf("return message %v", returnMessage.ReturnMessage)
 			log.Printf("return code %v", returnMessage.ReturnCode)
-			log.Printf("return compute node %+v", returnMessage.ComputeNodes)
-			log.Printf("return host node %v", returnMessage.Hosts)
 
 			return &returnMessage, err_create
 		}
@@ -131,8 +127,6 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 	case pb_common.OperationType_DELETE:
 		// delete topology
 		err := handler.Delete(k8client, in.Config.TopologyId)
-
-		//return topology message-- compute info
 
 		if err != nil {
 			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED

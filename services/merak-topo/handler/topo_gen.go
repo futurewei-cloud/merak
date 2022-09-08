@@ -14,7 +14,6 @@ package handler
 
 import (
 	"fmt"
-	"log"
 
 	"strconv"
 	"strings"
@@ -38,9 +37,7 @@ func ip_gen(vhost_idx int, data_plane_cidr string, upper int) string {
 		//
 	default: //16
 		i := (vhost_idx) / upper
-		// if (vhost_idx)%upper > 0 {
-		// 	i = i + 1
-		// }
+
 		ip = strings.Split(data_plane_cidr, ".")[0] + "." + strings.Split(data_plane_cidr, ".")[1] + "." + strconv.FormatInt(int64(i), 10) + "." + strconv.FormatInt(int64((vhost_idx-i*upper)), 10) + "/16"
 	}
 
@@ -191,7 +188,6 @@ func create_and_attach_a_vswitch(vs []database.Vnode, idx_vs int, ports_per_vswi
 
 	vswitch.Nics = nics
 
-	// attach vs to the vswitch
 	err_attach, vswitch_attached, vs_attached := attach_racks_to_vswitch(vswitch, vs, uid_initial)
 
 	if err_attach != nil {
@@ -211,7 +207,6 @@ func create_and_attach_a_core(vs []database.Vnode, j int, nports int, uid_initia
 
 	core.Nics = nics
 
-	// attach vs to the vswitch
 	err_attach, core_attached, vs_attached := attach_vswitches_to_core(core, vs, uid_initial)
 
 	if err_attach != nil {
@@ -401,7 +396,7 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 	racks_full_attached = append(racks_full_attached, racks_vs_attached...)
 
 	nvswitch := len(vs_attached)
-	log.Printf("vs number %v", len(vs_attached))
+
 	flag := false
 
 	var vs_to_core []database.Vnode
@@ -427,19 +422,12 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 		vs_to_core = vs_attached
 	}
 
-	log.Printf("vs_to_core %v", vs_to_core)
-	log.Printf("flag_multi_layer_vs %v", flag)
-
 	err_core, core_attached, vs_attached := create_and_attach_a_core(vs_to_core, 1, len(vs_to_core), uid_initial)
 	if err_core != nil {
 		fmt.Printf("create and attach a core error %s", err_core)
 	}
-	// uid_initial = uid_initial + len(vs_to_core)
 
 	vswitches = append(vswitches, vs_attached...)
-	log.Printf("vswitches %v", vswitches)
-	log.Printf("vs_upper_attached %v", vs_attached)
-	log.Printf("core_attached %v", core_attached)
 
 	vnodes := append(vhosts, racks_full_attached...)
 	vnodes = append(vnodes, vswitches...)
