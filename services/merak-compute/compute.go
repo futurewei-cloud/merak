@@ -84,7 +84,9 @@ func main() {
 	if err != nil {
 		log.Fatalln("ERROR: Failed to listen", err)
 	}
-	gRPCServer := grpc.NewServer()
+	gRPCServer := grpc.NewServer(
+		grpc.MaxSendMsgSize(constants.GRPC_MAX_SEND_MSG_SIZE),
+		grpc.MaxRecvMsgSize(constants.GRPC_MAX_RECV_MSG_SIZE))
 	pb.RegisterMerakComputeServiceServer(gRPCServer, &handler.Server{})
 	log.Printf("Starting gRPC server. Listening at %v", lis.Addr())
 	if err := gRPCServer.Serve(lis); err != nil {
