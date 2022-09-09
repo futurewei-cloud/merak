@@ -92,7 +92,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 	log.Println("Sending body to Alcor: \n", string(body[:]))
-	resp, err := http.Post("http://"+constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
+	resp, err := http.Post("http://"+RemoteServer+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports", "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to send create minimal port to Alcor!",
@@ -355,7 +355,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 	}
 	jsonStringBody := string(body[:])
 	log.Println("Creating update_port request with body: \n", jsonStringBody)
-	req, err := http.NewRequest(http.MethodPut, "http://"+constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports/"+portID, bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPut, "http://"+RemoteServer+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports/"+portID, bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	if err != nil {
 		log.Println("Failed send Update Port request to Alcor!", err)

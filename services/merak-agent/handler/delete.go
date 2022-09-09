@@ -30,7 +30,7 @@ import (
 func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
 	log.Println("Send Delete Port Request to Alcor")
 
-	req, err := http.NewRequest(http.MethodDelete, "http://"+constants.ALCOR_ADDRESS+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports/"+in.Remoteid, bytes.NewBuffer(nil))
+	req, err := http.NewRequest(http.MethodDelete, "http://"+RemoteServer+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports/"+in.Remoteid, bytes.NewBuffer(nil))
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	if err != nil {
 		log.Println("Failed send Delete Port request to Alcor!", err)
