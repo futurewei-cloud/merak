@@ -9,33 +9,15 @@ The following services are exposed by the Merak Agent over gRPC
 
 #### VM
 
-- INFO
-  - Returns information about the current status of all VMs on this host.
 - CREATE
   - Creates a new VM on this host.
-- UPDATE
-  - Update an existing VM on this host.
 - DELETE
   - Delete an existing set of VM on this host.
 
-#### Port
+#### Test
 
-- INFO
-  - Returns information about the current status of all ports on this host.
-- CREATE
-  - Creates a port on this host.
-- UPDATE
-  - Update an existing port on this host.
-- DELETE
-  - Delete an existing set of VMs and Ports.
-
-<!-- #### Tests
-- INFO
-  - Returns the status of a running test on this host.
-- CREATE
-  - Runs a new test on this host.
-- DELETE
-  - Stops an existing test on this host. -->
+- Create
+  - Starts a new network test.
 
 ## Simulation Design
 

@@ -10,55 +10,52 @@ Copyright(c) 2022 Futurewei Cloud
     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 syntax="proto3";
-package agent;
-option go_package = "github.com/futurewei-cloud/merak/api/proto/v1/agent;agent";
+package ntest;
+option go_package = "github.com/futurewei-cloud/merak/api/proto/v1/ntest;ntest";
 import "common.proto";
-import "ntest.proto";
 
-service MerakAgentService {
-    rpc PortHandler (InternalPortConfig) returns (AgentReturnInfo) {}
-    rpc TestHandler (InternalTestTargetConfig) returns (AgentReturnTestInfo) {}
+service MeraknTestService {
+    rpc TestHandler (InternalTestConfiguration) returns (ReturnTestMessage) {}
 }
 
-message InternalPortConfig {
-    common.OperationType operation_type = 1;
+enum TestStatus {
+  NONE = 0;
+  RUNNING = 1;
+  PASSED = 2;
+  FAILED = 3;
+}
+
+enum TestType {
+  PINGALL = 0;
+}
+
+message InternalTestConfiguration {
+    TestType test_type = 1;
+}
+
+message InternalTestInfo {
+    string id = 1;
+    TestType test_type = 2;
+    repeated InternalVMHost hosts = 3;
+}
+
+message InternalVMHost {
+    string name = 1;
+    string ip = 2;
+    repeated InternalVMTestInfo vms = 3;
+}
+
+message InternalVMTestInfo {
+    string name = 1;
     string id = 2;
-    string name = 3;
-    string vpcid = 4;
-    string tenantid = 5;
-    string projectid = 6;
-    string subnetid = 7;
-    string gw = 8;
-    string sg = 9;
-    string cidr = 10;
-    string hostname = 11;
-    string remoteid = 12;
-    string deviceid = 13;
+    string ip = 3;
+    TestStatus results = 4;
 }
 
-message ReturnPortInfo {
-    string ip = 1;
-    string remoteid = 2;
-    string deviceid = 3;
-    common.Status status = 8;
-}
 
-message AgentReturnInfo {
+message ReturnTestMessage {
     common.ReturnCode return_code = 1;
     string return_message = 2;
-    ReturnPortInfo port = 3;
-}
-
-message InternalTestTargetConfig {
-    string src = 1;
-    repeated string dest = 2;
-    ntest.TestType test_type = 3;
-}
-
-message AgentReturnTestInfo {
-    common.ReturnCode return_code = 1;
-    string return_message = 2;
-    ntest.TestStatus results = 3;
+    InternalTestInfo results = 3;
 }

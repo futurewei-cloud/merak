@@ -17,7 +17,6 @@ import "common.proto";
 
 service MerakComputeService {
     rpc ComputeHandler (InternalComputeConfigInfo) returns (ReturnComputeMessage) {}
-    rpc TestHandler (InternalComputeConfigInfo) returns (ReturnComputeMessage) {}
 }
 
 enum VMDeployType {

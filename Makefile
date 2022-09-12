@@ -55,6 +55,13 @@ proto:
 	--go-grpc_opt=paths=source_relative \
 	-I api/proto/v1/ api/proto/v1/agent.proto
 
+	mkdir -p api/proto/v1/ntest
+	protoc --go_out=api/proto/v1/ntest \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=api/proto/v1/ntest \
+	--go-grpc_opt=paths=source_relative \
+	-I api/proto/v1/ api/proto/v1/ntest.proto
+
 .PHONY: deploy-dev
 deploy-dev:
 	kubectl apply -f deployments/kubernetes/scenario.dev.yaml
