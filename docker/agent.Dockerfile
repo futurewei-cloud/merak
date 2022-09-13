@@ -15,4 +15,4 @@ FROM meraksim/aca:serial
 WORKDIR /
 RUN mkdir -p /merak-bin
 COPY services/merak-agent/build/merak-agent /merak-bin/merak-agent
-CMD [ "/merak-bin/merak-agent" ]
+ENTRYPOINT [ "/merak-bin/merak-agent" ]
