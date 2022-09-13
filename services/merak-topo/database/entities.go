@@ -59,3 +59,9 @@ type TopologyData struct {
 	Topology_id string  `json:"topology_id"`
 	Vnodes      []Vnode `json:"vnodes"`
 }
+
+type K8sHost struct {
+	Host_name   string        `json:"host_name"`
+	Host_ip     string        `json:"host_ip"`
+	Host_status ServiceStatus `json:"host_status"`
+}

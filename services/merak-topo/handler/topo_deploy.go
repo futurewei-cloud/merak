@@ -219,6 +219,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 							Name:            "vhost",
 							Image:           aca_image,
 							ImagePullPolicy: "IfNotPresent",
+							Args:            []string{"10.213.43.77 30014"},
 							SecurityContext: &sc,
 						},
 					},
@@ -381,7 +382,7 @@ func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod, cmd []string) (s
 
 }
 
-func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData) error {
+func Topo_delete(k8client *kubernetes.Clientset, topo_id string) error {
 
 	start_time := time.Now()
 
@@ -392,10 +393,11 @@ func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData) err
 		return fmt.Errorf("failed to create dynamic client %s", err)
 	}
 
-	err_del_db := database.DeleteAllValuesWithKeyPrefix(topo.Topology_id)
+	var topo *database.TopologyData
+	err_db := database.FindTopoEntity(topo_id, "", topo)
 
-	if err_del_db != nil {
-		return fmt.Errorf("failed to delete topology info %s", err_del_db)
+	if err_db != nil {
+		return fmt.Errorf("query topology_id error %s", err_db)
 	}
 
 	for _, node := range topo.Vnodes {
@@ -411,6 +413,17 @@ func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData) err
 			return fmt.Errorf("delete pod topology error %s", err_del_t)
 		}
 
+		err_del_db := database.Del(topo_id + ":computenode:" + node.Name)
+		if err_del_db != nil {
+			return fmt.Errorf("delete compute node in DB error %s", err_del_db)
+		}
+
+	}
+
+	err_del_db := database.DeleteAllValuesWithKeyPrefix(topo_id)
+
+	if err_del_db != nil {
+		return fmt.Errorf("failed to delete topology info %s", err_del_db)
 	}
 
 	elapsed := time.Since(start_time)

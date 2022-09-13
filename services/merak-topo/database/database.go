@@ -21,12 +21,9 @@ import (
 
 	"strings"
 
-	"github.com/golang/protobuf/proto"
-
 	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
+
 	"github.com/go-redis/redis/v8"
-	corev1 "k8s.io/api/core/v1"
 )
 
 var (
@@ -44,7 +41,7 @@ func ConnectDatabase() error {
 	})
 
 	if err := client.Ping(Ctx).Err(); err != nil {
-		return fmt.Errorf("ConnectDB:fail to connect DB %s", err)
+		return fmt.Errorf("connectDB:fail to connect DB %s", err)
 	}
 
 	Rdb = client
@@ -54,52 +51,20 @@ func ConnectDatabase() error {
 func SetValue(key string, val interface{}) error {
 	j, err := json.Marshal(val)
 	if err != nil {
-		return fmt.Errorf("Savevalue:fail to save value in DB %s", err)
+		return fmt.Errorf("savevalue:fail to marshal input %s", err)
 	}
 	err = Rdb.Set(Ctx, key, j, 0).Err()
 	if err != nil {
-		return fmt.Errorf("Savevalue:fail to save value in DB %s", err)
+		return fmt.Errorf("savevalue:fail to save marshal data in DB %s", err)
 	}
 
 	return nil
 }
 
-func SetPbReturnValue(key string, val *pb.ReturnTopologyMessage) error {
-	j, err := proto.Marshal(val)
-	if err != nil {
-		return fmt.Errorf("fail to save value in DB %s", err)
-	}
-	err = Rdb.Set(Ctx, key, j, 0).Err()
-	if err != nil {
-		return fmt.Errorf("fail to save value in DB %s", err)
-	}
-
-	return nil
-}
-
-func GetPbReturnValue(id string, prefix string, entity *pb.ReturnTopologyMessage) error {
-
-	if (id + prefix) == "" {
-
-		return fmt.Errorf("get key is empty")
-	}
-	value, err := Rdb.Get(Ctx, id+prefix).Result()
-	if err != nil {
-
-		return fmt.Errorf("fail to get value for key in DB %s", err.Error())
-	}
-	err = proto.Unmarshal([]byte(value), entity)
-	if err != nil {
-
-		return fmt.Errorf("fail to unmarshal in DB %s", err.Error())
-	}
-	return nil
-}
-
-func Get(key string) (string, error) {
+func Get(key string) (interface{}, error) {
 	val, err := Rdb.Get(Ctx, key).Result()
 	if err != nil {
-		return "", err
+		return nil, fmt.Errorf("get:fail to get data in DB %s", err)
 	}
 	return val, nil
 }
@@ -112,19 +77,19 @@ func Del(key string) error {
 }
 
 // Function for finding an entity from database
-func FindEntity(id string, prefix string, entity interface{}) (interface{}, error) {
+func FindEntity(id string, prefix string, entity interface{}) error {
 	if (id + prefix) == "" {
-		return "invalid input", nil
+		return fmt.Errorf("invalid input of key")
 	}
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		return "fail to get value for key in DB", err
+		return fmt.Errorf("fail to find entity in DB %s", err)
 	}
-	err = json.Unmarshal([]byte(value), &entity)
-	if err != nil {
-		return "fail to unmarshal value in DB", err
+	err1 := json.Unmarshal([]byte(value), &entity)
+	if err1 != nil {
+		return fmt.Errorf("fail to unmarshal entity  %s", err1)
 	}
-	return entity, nil
+	return nil
 }
 
 func FindIPEntity(id string, prefix string) ([]string, error) {
@@ -141,62 +106,59 @@ func FindIPEntity(id string, prefix string) ([]string, error) {
 	return entity, nil
 }
 
-func FindPodEntity(id string, prefix string) (*corev1.Pod, error) {
-	var entity *corev1.Pod
+// func FindPodEntity(id string, prefix string) (*corev1.Pod, error) {
+// 	var entity *corev1.Pod
+
+// 	value, err := Rdb.Get(Ctx, id+prefix).Result()
+// 	if err != nil {
+// 		return nil, fmt.Errorf("fail to find pod %s", err)
+// 	}
+// 	err = json.Unmarshal([]byte(value), &entity)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return entity, nil
+// }
+
+func FindHostNode(id string, prefix string, entity []*pb_common.InternalHostInfo) error {
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		return nil, fmt.Errorf("fail to find pod %s", err)
+		return fmt.Errorf("fail to find host node %s", err)
 	}
-	err = json.Unmarshal([]byte(value), &entity)
-	if err != nil {
-		return nil, err
+	err1 := json.Unmarshal([]byte(value), &entity)
+	if err1 != nil {
+		return fmt.Errorf("fail to unmarshal host node value %s", err1)
 	}
-	return entity, nil
+	return nil
 }
 
-func FindHostNode(id string, prefix string) ([]*pb_common.InternalHostInfo, error) {
-	var entity []*pb_common.InternalHostInfo
+func FindComputenode(id string, prefix string, entity []*pb_common.InternalComputeInfo) error {
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		return nil, fmt.Errorf("fail to find pod %s", err)
+		return fmt.Errorf("find compute nodes in DB error %s", err)
 	}
-	err = json.Unmarshal([]byte(value), &entity)
-	if err != nil {
-		return nil, err
+	err1 := json.Unmarshal([]byte(value), &entity)
+	if err1 != nil {
+		return fmt.Errorf("unmarsh compute node db value error %s", err)
 	}
-	return entity, nil
+	return nil
 }
 
-func FindComputenode(id string, prefix string) ([]*pb_common.InternalComputeInfo, error) {
-	var entity []*pb_common.InternalComputeInfo
+func FindTopoEntity(id string, prefix string, entity *TopologyData) error {
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		return nil, fmt.Errorf("fail to find pod %s", err)
-	}
-	err = json.Unmarshal([]byte(value), &entity)
-	if err != nil {
-		return nil, err
-	}
-	return entity, nil
-}
-
-func FindTopoEntity(id string, prefix string) (TopologyData, error) {
-	var entity TopologyData
-
-	value, err := Rdb.Get(Ctx, id+prefix).Result()
-	if err != nil {
-		return entity, fmt.Errorf("fail to get value for key in DB %s", err)
+		return fmt.Errorf("fail to get value for key in DB %s", err)
 
 	}
 	err = json.Unmarshal([]byte(value), &entity)
 	if err != nil {
 
-		return entity, fmt.Errorf("fail to unmarsh value for key in DB %s", err)
+		return fmt.Errorf("fail to unmarsh value for key in DB %s", err)
 	}
-	return entity, nil
+	return nil
 }
 
 func GetAllValuesWithKeyPrefix(prefix string) (map[string]string, error) {

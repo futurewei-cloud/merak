@@ -43,7 +43,7 @@ func TestTopologyDelete(t *testing.T) {
 		log.Printf("connect to DB error %s", err1)
 	}
 
-	err4 := handler.Delete(k8client, topo_id)
+	err4 := handler.Delete(k8client, topo_id, &returnMessage)
 	if err4 != nil {
 		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Delete Topology."
