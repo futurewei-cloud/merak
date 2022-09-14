@@ -10,18 +10,52 @@ Copyright(c) 2022 Futurewei Cloud
     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+syntax="proto3";
+package ntest;
+option go_package = "github.com/futurewei-cloud/merak/api/proto/v1/ntest;ntest";
+import "common.proto";
 
-package utils
+service MeraknTestService {
+    rpc TestHandler (InternalTestConfiguration) returns (ReturnTestMessage) {}
+}
 
-const CODE_SUCCESS uint16 = 200
-const CODE_FAILED uint16 = 500
-const CODE_NOT_FOUND uint16 = 400
+enum TestStatus {
+  NONE = 0;
+  RUNNING = 1;
+  PASSED = 2;
+  FAILED = 3;
+}
 
-const VPC string = "vpc:"
-const SUBNET string = "subnet:"
-const Router string = "router:"
-const SECURITYGROUP string = "securityGroup:"
-const NETCONFIG string = "netconfig:"
-const NODEGROUP string = "nodeGroup:"
+enum TestType {
+  PINGALL = 0;
+}
 
-const ALCORURL string = "10.213.43.77"
+message InternalTestConfiguration {
+    TestType test_type = 1;
+}
+
+message InternalTestInfo {
+    string id = 1;
+    TestType test_type = 2;
+    repeated InternalVMHost hosts = 3;
+}
+
+message InternalVMHost {
+    string name = 1;
+    string ip = 2;
+    repeated InternalVMTestInfo vms = 3;
+}
+
+message InternalVMTestInfo {
+    string name = 1;
+    string id = 2;
+    string ip = 3;
+    TestStatus results = 4;
+}
+
+
+message ReturnTestMessage {
+    common.ReturnCode return_code = 1;
+    string return_message = 2;
+    InternalTestInfo results = 3;
+}

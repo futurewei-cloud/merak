@@ -45,7 +45,8 @@ func TopologyClient(topopb *topology_pb.InternalTopologyInfo) (*topology_pb.Retu
 	var conn *grpc.ClientConn
 
 	addr := constants.TOPLOGY_GRPC_SERVER_ADDRESS + ":" + strconv.Itoa(constants.TOPLOGY_GRPC_SERVER_PORT)
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(500*1024*1024), grpc.MaxCallSendMsgSize(500*1024*1024)))
 
 	if err != nil {
 		logger.Log.Errorf("can not connect to %s", err)
@@ -84,7 +85,9 @@ func NetworkClient(netconfpb *network_pb.InternalNetConfigInfo) (*network_pb.Ret
 	var conn *grpc.ClientConn
 
 	addr := constants.NETWORK_GRPC_SERVER_ADDRESS + ":" + strconv.Itoa(constants.NETWORK_GRPC_SERVER_PORT)
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(500*1024*1024), grpc.MaxCallSendMsgSize(500*1024*1024)))
+
 	if err != nil {
 		logger.Log.Errorf("can not connect to %s", err)
 		return nil, fmt.Errorf("cannot connect to merak-network grpc server: %s", err)
@@ -122,7 +125,8 @@ func ComputeClient(computepb *compute_pb.InternalComputeConfigInfo) (*compute_pb
 	var conn *grpc.ClientConn
 
 	addr := constants.COMPUTE_GRPC_SERVER_ADDRESS + ":" + strconv.Itoa(constants.COMPUTE_GRPC_SERVER_PORT)
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(500*1024*1024), grpc.MaxCallSendMsgSize(500*1024*1024)))
 	if err != nil {
 		logger.Log.Errorf("can not connect to %s", err)
 		return nil, fmt.Errorf("cannot connect to merak-compute grpc server: %s", err)
