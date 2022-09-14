@@ -74,7 +74,11 @@ func ScenarioActoins(c *fiber.Ctx) error {
 			scenarioStatus = entities.STATUS_FAILED
 			logger.Log.Errorf("'%s' topology failed: %s", scenarioAction.Service.Action, err.Error())
 		} else {
-			scenarioStatus = entities.STATUS_DONE
+			if scenarioAction.Service.Action == entities.EVENT_DELETE {
+				scenarioStatus = entities.STATUS_NONE
+			} else {
+				scenarioStatus = entities.STATUS_DONE
+			}
 			logger.Log.Infof("'%s' topology done.", scenarioAction.Service.Action)
 			logger.Log.Infof("returnTopo for action %s : %s", scenarioAction.Service.Action, returnTopo)
 

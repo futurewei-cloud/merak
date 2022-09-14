@@ -26,6 +26,8 @@ type Server struct {
 	pb.UnimplementedMerakAgentServiceServer
 }
 
+var RemoteServer string
+
 func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
 	log.Println("Received on PortHandler", in)
 
