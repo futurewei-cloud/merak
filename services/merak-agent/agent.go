@@ -51,9 +51,10 @@ func main() {
 	if remote_port_int > constants.MAX_PORT || remote_port_int < constants.MIN_PORT {
 		log.Fatalf("Port: %d is not within a valid range!\n", remote_port_int)
 	}
-
+	cmdString := "service rsyslog restart && /etc/init.d/openvswitch-switch restart && /merak-bin/AlcorControlAgent -d -a " + remote_server + " -p " + remote_port
+	log.Println("Executing command " + cmdString)
 	// Start plugin
-	cmd := exec.Command("bash", "-c", "service rsyslog restart && /etc/init.d/openvswitch-switch restart && /merak-bin/AlcorControlAgent -d -a "+remote_server+" -p "+remote_port)
+	cmd := exec.Command("bash", "-c", cmdString)
 	cmd.Dir = "/"
 	err = cmd.Start()
 	if err != nil {
