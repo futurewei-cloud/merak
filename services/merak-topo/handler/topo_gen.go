@@ -41,7 +41,7 @@ func ip_gen(vhost_idx int, data_plane_cidr string, upper int) string {
 		// if (vhost_idx)%upper > 0 {
 		// 	i = i + 1
 		// }
-		ip = strings.Split(data_plane_cidr, ".")[0] + "." + strings.Split(data_plane_cidr, ".")[1] + "." + strconv.FormatInt(int64(i), 10) + "." + strconv.FormatInt(int64((vhost_idx-i*upper)), 10) + "/16"
+		ip = strings.Split(data_plane_cidr, ".")[0] + "." + strings.Split(data_plane_cidr, ".")[1] + "." + strconv.FormatInt(int64(i), 10) + "." + strconv.FormatInt(int64((vhost_idx-i*upper+1)), 10) + "/16"
 	}
 
 	return ip
@@ -360,7 +360,7 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 	var vswitches []database.Vnode
 
 	uid_initial := 1
-	init_idx_host := 1
+	init_idx_host := 0
 	init_idx_vs := 1
 
 	for nvhosts > 0 && idx < rack_num+1 {
