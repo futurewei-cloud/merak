@@ -57,9 +57,6 @@ func CreateTopologyClasses(client dynamic.Interface, name string, links []databa
 
 	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Create(Ctx, rc, metav1.CreateOptions{})
 
-	// log.Printf("Creating TopologyClass %s", name)
-	// log.Printf("topology class details %s", rc)
-
 	if err != nil {
 		return fmt.Errorf("failed to create topologyClass %s", err)
 	}
@@ -77,8 +74,6 @@ func GetTopologyClasses(client dynamic.Interface, name string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create topologyClass %s", err)
 	}
-
-	// fmt.Printf("Get %v topology data: %v", name, data)
 
 	return nil
 
@@ -229,7 +224,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 							Image:           aca_image,
 							ImagePullPolicy: "IfNotPresent",
 							// Args:            []string{},
-							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent 172.31.115.6 30014"},
+							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent 172.31.121.248 30014"},
 							SecurityContext: &sc,
 						},
 					},
@@ -341,8 +336,6 @@ func ovs_config(topo database.TopologyData, node_name string, ryu_ip string, ryu
 		}
 
 	}
-
-	log.Println(ovs_set)
 
 	return ovs_set, nil
 

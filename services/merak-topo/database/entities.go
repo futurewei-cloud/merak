@@ -42,13 +42,6 @@ type Vnode struct {
 	Status      ServiceStatus `json:"status"`
 }
 
-// type Vport struct {
-// 	Id   string `json:"id"`
-// 	Name string `json:"name"`
-// 	Intf string `json:"nic"`
-// 	Ip   string `json:"ip"`
-// }
-
 type Vlink struct {
 	Id         string        `json:"id"`
 	Name       string        `json:"name"`
@@ -65,5 +58,4 @@ type Vlink struct {
 type TopologyData struct {
 	Topology_id string  `json:"topology_id"`
 	Vnodes      []Vnode `json:"vnodes"`
-	// Vlinks      []Vlink `json:"vlinks"`
 }

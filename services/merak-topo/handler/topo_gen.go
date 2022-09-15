@@ -38,9 +38,7 @@ func ip_gen(vhost_idx int, data_plane_cidr string, upper int) string {
 		//
 	default: //16
 		i := (vhost_idx) / upper
-		// if (vhost_idx)%upper > 0 {
-		// 	i = i + 1
-		// }
+
 		ip = strings.Split(data_plane_cidr, ".")[0] + "." + strings.Split(data_plane_cidr, ".")[1] + "." + strconv.FormatInt(int64(i), 10) + "." + strconv.FormatInt(int64((vhost_idx-i*upper+1)), 10) + "/16"
 	}
 
@@ -67,10 +65,7 @@ func create_vswitches(racks []database.Vnode, init_idx_vs int, ports_per_vswitch
 			upper_bound = len(racks)
 		}
 
-		err, vswitch, rs_out := create_and_attach_a_vswitch(racks[lower_bound:upper_bound], j, ports_per_vswitch, uid_initial)
-		if err != nil {
-			return fmt.Errorf("fail to create and attach vswitch %s", err), nil, nil
-		}
+		vswitch, rs_out := create_and_attach_a_vswitch(racks[lower_bound:upper_bound], j, ports_per_vswitch, uid_initial)
 
 		vswitches = append(vswitches, vswitch)
 		racks_attached = append(racks_attached, rs_out...)
@@ -173,7 +168,7 @@ func create_a_rack(idx int, vhosts_per_rack int) database.Vnode {
 
 }
 
-func create_and_attach_a_vswitch(vs []database.Vnode, idx_vs int, ports_per_vswitch int, uid_initial int) (error, database.Vnode, []database.Vnode) {
+func create_and_attach_a_vswitch(vs []database.Vnode, idx_vs int, ports_per_vswitch int, uid_initial int) (database.Vnode, []database.Vnode) {
 	var vswitch database.Vnode
 	var nports int
 
@@ -192,13 +187,9 @@ func create_and_attach_a_vswitch(vs []database.Vnode, idx_vs int, ports_per_vswi
 	vswitch.Nics = nics
 
 	// attach vs to the vswitch
-	err_attach, vswitch_attached, vs_attached := attach_racks_to_vswitch(vswitch, vs, uid_initial)
+	vswitch_attached, vs_attached := attach_racks_to_vswitch(vswitch, vs, uid_initial)
 
-	if err_attach != nil {
-		fmt.Printf("attach vswitch to vs error %s", err_attach)
-	}
-
-	return err_attach, vswitch_attached, vs_attached
+	return vswitch_attached, vs_attached
 }
 
 func create_and_attach_a_core(vs []database.Vnode, j int, nports int, uid_initial int) (error, database.Vnode, []database.Vnode) {
@@ -306,7 +297,7 @@ func attach_vhosts_to_rack(rack database.Vnode, hosts []database.Vnode, uid_init
 	return nil, rack, hosts_attached
 }
 
-func attach_racks_to_vswitch(vswitch database.Vnode, racks []database.Vnode, uid_initial int) (error, database.Vnode, []database.Vnode) {
+func attach_racks_to_vswitch(vswitch database.Vnode, racks []database.Vnode, uid_initial int) (database.Vnode, []database.Vnode) {
 
 	var vswitch_links []database.Vlink
 	var racks_attached []database.Vnode
@@ -346,7 +337,7 @@ func attach_racks_to_vswitch(vswitch database.Vnode, racks []database.Vnode, uid
 
 	vswitch.Flinks = vswitch_links
 
-	return nil, vswitch, racks_attached
+	return vswitch, racks_attached
 }
 
 func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_rack int, ports_per_vswitch int, data_plane_cidr string) (error, database.TopologyData) {
@@ -427,25 +418,22 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 		vs_to_core = vs_attached
 	}
 
-	log.Printf("vs_to_core %v", vs_to_core)
-	log.Printf("flag_multi_layer_vs %v", flag)
-
 	err_core, core_attached, vs_attached := create_and_attach_a_core(vs_to_core, 1, len(vs_to_core), uid_initial)
 	if err_core != nil {
 		fmt.Printf("create and attach a core error %s", err_core)
 	}
-	// uid_initial = uid_initial + len(vs_to_core)
 
 	vswitches = append(vswitches, vs_attached...)
+
 	log.Printf("vswitches %v", vswitches)
-	log.Printf("vs_upper_attached %v", vs_attached)
-	log.Printf("core_attached %v", core_attached)
 
 	vnodes := append(vhosts, racks_full_attached...)
 	vnodes = append(vnodes, vswitches...)
 	vnodes = append(vnodes, core_attached)
 
 	topo.Vnodes = vnodes
+
+	log.Printf("vnodes %v", vnodes)
 
 	return nil, topo
 
