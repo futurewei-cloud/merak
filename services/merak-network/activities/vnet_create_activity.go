@@ -160,10 +160,12 @@ func doSg(sg *pb.InternalSecurityGroupInfo, sgID string, projectId string) (stri
 
 func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNetworkInfo, wg *sync.WaitGroup, returnMessage chan *pb.ReturnNetworkMessage, projectId string) (*pb.ReturnNetworkMessage, error) {
 	log.Println("VnetCreate")
-	//defer wg.Done()
 	// TODO may want to separate bellow sections to different function, and use `go` and `wg` to improve overall speed
 	// TODO when do concurrent, need to keep in mind on how to control the number of concurrency
-	// Doing vpc and subnet
+
+	// clear the returnNetworkMessage
+	returnNetworkMessage.Vpcs = nil
+	returnNetworkMessage.SecurityGroupIds = nil
 
 	var vpcId string
 	var vpcIds []string
