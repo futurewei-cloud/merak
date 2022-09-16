@@ -129,26 +129,26 @@ spec:
     role: master
     tier: backend
 
-# RYU controller deployment
+# SDN controller deployment
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ryu-deployment
+  name: sdn-controller
   namespace: merak
 spec:
   selector:
     matchLabels:
-      app: ryu
+      app: sdn-controller
   replicas: 5
   template:
     metadata:
       labels:
-        app: ryu
+        app: sdn-controller
     spec:
      #hostNetwork: true
       containers:
-      - name: ryu
+      - name: sdn-controller
         image: osrg/ryu
         args:
           - ryu-manager
@@ -156,3 +156,21 @@ spec:
         ports:
         - containerPort: 6653
           name: openflow
+---
+apiVersion: v1
+kind: Service        # Type of Kubernetes resource
+metadata:
+  name: sdn-controller # Name of the Kubernetes resource
+  namespace: merak
+  labels:            # Labels that will be applied to this resource
+    app: sdn-controller
+    role: master
+    tier: backend
+spec:
+  ports:
+  - port: 6653       # Map incoming connections on port 55001 to the target port 55001 of the Pod
+    targetPort: 6653
+  selector:          # Map any Pod with the specified labels to this service
+    app: sdn-controller
+    role: master
+    tier: backend
