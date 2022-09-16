@@ -38,11 +38,9 @@ import (
 )
 
 var (
-	ACA_IMAGE = "meraksim/merak-agent:test2"
-	OVS_IMAGE = "yanmo96/ovs_only:latest"
-	RYU_IP    = "ryu.merak.svc.cluster.local"
-	RYU_PORT  = "6653"
-	Ctx       = context.Background()
+	SDN_IP   = "sdn-controller.merak.svc.cluster.local"
+	SDN_PORT = "6653"
+	Ctx      = context.Background()
 
 	namespace        = "default"
 	topologyClassGVR = schema.GroupVersionResource{
@@ -52,12 +50,10 @@ var (
 	}
 )
 
-func CreateTopologyClasses(client dynamic.Interface, name string, links []map[string]interface{}) error {
+func CreateTopologyClasses(client dynamic.Interface, name string, links []database.Vlink) error {
 	rc := NewTopologyClass(name, links)
 
 	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Create(Ctx, rc, metav1.CreateOptions{})
-
-	log.Printf("Creating TopologyClass %s", name)
 
 	if err != nil {
 		return fmt.Errorf("failed to create topologyClass %s", err)
@@ -69,15 +65,13 @@ func CreateTopologyClasses(client dynamic.Interface, name string, links []map[st
 
 func GetTopologyClasses(client dynamic.Interface, name string) error {
 
-	data, err := client.Resource(topologyClassGVR).Namespace(namespace).Get(Ctx, name, metav1.GetOptions{})
+	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Get(Ctx, name, metav1.GetOptions{})
 
 	log.Printf("Get TopologyClass %s", name)
 
 	if err != nil {
 		return fmt.Errorf("failed to create topologyClass %s", err)
 	}
-
-	fmt.Printf("Get %v topology data: %v", name, data)
 
 	return nil
 
@@ -97,8 +91,21 @@ func DeleteTopologyClasses(client dynamic.Interface, name string) error {
 
 }
 
-func NewTopologyClass(name string, links []map[string]interface{}) *unstructured.Unstructured {
-	return &unstructured.Unstructured{
+func NewTopologyClass(name string, links []database.Vlink) *unstructured.Unstructured {
+	var clinks []map[string]interface{}
+	for _, link := range links {
+		config_clink := map[string]interface{}{
+			"uid":        link.Uid,
+			"peer_pod":   link.Peer_pod,
+			"local_intf": link.Local_intf,
+			"local_ip":   link.Local_ip,
+			"peer_intf":  link.Peer_intf,
+			"peer_ip":    link.Peer_ip,
+		}
+		clinks = append(clinks, config_clink)
+	}
+
+	out := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"kind":       "Topology",
 			"apiVersion": "networkop.co.uk/v1beta1",
@@ -107,13 +114,14 @@ func NewTopologyClass(name string, links []map[string]interface{}) *unstructured
 				"namespace": namespace,
 			},
 			"spec": map[string]interface{}{
-				"links": links,
+				"links": clinks,
 			},
 		},
 	}
+	return out
 }
 
-func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) error {
+func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image string, topo database.TopologyData) error {
 	/*comment gw creation function*/
 	// var k8snodes []string
 
@@ -211,8 +219,9 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 					Containers: []corev1.Container{
 						{
 							Name:            "vhost",
-							Image:           ACA_IMAGE,
-							ImagePullPolicy: "Always",
+							Image:           aca_image,
+							ImagePullPolicy: "IfNotPresent",
+							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent 172.31.64.48 30014"},
 							SecurityContext: &sc,
 						},
 					},
@@ -223,9 +232,9 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 					Tolerations:                   tol,
 				},
 			}
-		} else if strings.Contains(node.Name, "vswitch") || strings.Contains(node.Name, "core") {
+		} else if strings.Contains(node.Name, "rack") || strings.Contains(node.Name, "vs") || strings.Contains(node.Name, "core") {
 
-			ovs_set, err0 := ovs_config(topo, node.Name, RYU_IP, RYU_PORT)
+			ovs_set, err0 := ovs_config(topo, node.Name, SDN_IP, SDN_PORT)
 			if err0 != nil {
 				return fmt.Errorf("fails to get ovs switch controller info %s", err0)
 			}
@@ -242,7 +251,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 					Containers: []corev1.Container{
 						{
 							Name:            "vswitch",
-							Image:           OVS_IMAGE,
+							Image:           ovs_image,
 							ImagePullPolicy: "IfNotPresent",
 							Args:            []string{"service rsyslog restart; /etc/init.d/openvswitch-switch restart; " + ovs_set + "sleep infinity"},
 							Command:         []string{"/bin/sh", "-c"},
@@ -310,10 +319,10 @@ func Topo_deploy(k8client *kubernetes.Clientset, topo database.TopologyData) err
 
 }
 
-func ovs_config(topo database.TopologyData, node_name string, ryu_ip string, ryu_port string) (string, error) {
+func ovs_config(topo database.TopologyData, node_name string, sdn_ip string, sdn_port string) (string, error) {
 
 	nodes := topo.Vnodes
-	ovs_set := "ovs-vsctl add-br br0; ovs-vsctl set-controller br0 tcp:" + ryu_ip + ":" + ryu_port + "; "
+	ovs_set := "ovs-vsctl add-br br0; ovs-vsctl set-controller br0 tcp:" + sdn_ip + ":" + sdn_port + "; "
 
 	for _, node := range nodes {
 		if node.Name == node_name {
@@ -324,8 +333,6 @@ func ovs_config(topo database.TopologyData, node_name string, ryu_ip string, ryu
 		}
 
 	}
-
-	log.Println(ovs_set)
 
 	return ovs_set, nil
 
