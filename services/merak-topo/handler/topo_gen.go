@@ -55,12 +55,13 @@ func create_vswitches(racks []database.Vnode, init_idx_vs int, ports_per_vswitch
 	}
 
 	j := init_idx_vs
-	k := ports_per_vswitch
+
 	for i := 0; i < num_of_vs; i++ {
-		lower_bound := i * k
+		lower_bound := i * ports_per_vswitch
 		var upper_bound int
-		if i*k+k-1 < len(racks) {
-			upper_bound = lower_bound + k
+		// decide the layers of switches based on how many racks need to be created
+		if i*ports_per_vswitch+ports_per_vswitch-1 < len(racks) {
+			upper_bound = lower_bound + ports_per_vswitch
 		} else {
 			upper_bound = len(racks)
 		}

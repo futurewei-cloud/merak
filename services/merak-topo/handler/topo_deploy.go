@@ -38,10 +38,8 @@ import (
 )
 
 var (
-	// ACA_IMAGE = "meraksim/merak-agent:311f5f6c"
-	// OVS_IMAGE = "yanmo96/ovs_only:latest"
-	RYU_IP   = "ryu.merak.svc.cluster.local"
-	RYU_PORT = "6653"
+	SDN_IP   = "sdn-controller.merak.svc.cluster.local"
+	SDN_PORT = "6653"
 	Ctx      = context.Background()
 
 	namespace        = "default"
@@ -223,8 +221,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 							Name:            "vhost",
 							Image:           aca_image,
 							ImagePullPolicy: "IfNotPresent",
-							// Args:            []string{},
-							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent 172.31.121.248 30014"},
+							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent 172.31.64.48 30014"},
 							SecurityContext: &sc,
 						},
 					},
@@ -237,7 +234,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 			}
 		} else if strings.Contains(node.Name, "rack") || strings.Contains(node.Name, "vs") || strings.Contains(node.Name, "core") {
 
-			ovs_set, err0 := ovs_config(topo, node.Name, RYU_IP, RYU_PORT)
+			ovs_set, err0 := ovs_config(topo, node.Name, SDN_IP, SDN_PORT)
 			if err0 != nil {
 				return fmt.Errorf("fails to get ovs switch controller info %s", err0)
 			}
@@ -322,10 +319,10 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 }
 
-func ovs_config(topo database.TopologyData, node_name string, ryu_ip string, ryu_port string) (string, error) {
+func ovs_config(topo database.TopologyData, node_name string, sdn_ip string, sdn_port string) (string, error) {
 
 	nodes := topo.Vnodes
-	ovs_set := "ovs-vsctl add-br br0; ovs-vsctl set-controller br0 tcp:" + ryu_ip + ":" + ryu_port + "; "
+	ovs_set := "ovs-vsctl add-br br0; ovs-vsctl set-controller br0 tcp:" + sdn_ip + ":" + sdn_port + "; "
 
 	for _, node := range nodes {
 		if node.Name == node_name {
