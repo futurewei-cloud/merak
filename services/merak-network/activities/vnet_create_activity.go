@@ -27,15 +27,6 @@ import (
 	"github.com/futurewei-cloud/merak/services/merak-network/utils"
 )
 
-var (
-	returnNetworkMessage = pb.ReturnNetworkMessage{
-		ReturnCode:       common_pb.ReturnCode_OK,
-		ReturnMessage:    "returnNetworkMessage Finished",
-		Vpcs:             nil,
-		SecurityGroupIds: nil,
-	}
-)
-
 func doVPC(vpc *common_pb.InternalVpcInfo, projectId string) (vpcId string, err error) {
 	log.Println("doVPC")
 	vpcBody := entities.VpcStruct{Network: entities.VpcBody{
@@ -163,9 +154,12 @@ func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNet
 	// TODO may want to separate bellow sections to different function, and use `go` and `wg` to improve overall speed
 	// TODO when do concurrent, need to keep in mind on how to control the number of concurrency
 
-	// clear the returnNetworkMessage
-	returnNetworkMessage.Vpcs = nil
-	returnNetworkMessage.SecurityGroupIds = nil
+	var returnNetworkMessage = pb.ReturnNetworkMessage{
+		ReturnCode:       common_pb.ReturnCode_OK,
+		ReturnMessage:    "returnNetworkMessage Finished",
+		Vpcs:             nil,
+		SecurityGroupIds: nil,
+	}
 
 	var vpcId string
 	var vpcIds []string
