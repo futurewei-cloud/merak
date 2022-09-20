@@ -18,6 +18,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strings"
 
 	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
@@ -85,6 +86,24 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 		ports_per_vswitch := in.Config.GetPortsPerVswitch()
 
+		aca_parameters := ""
+		service_config := in.Config.GetServices()
+		for _, service := range service_config {
+			if service.Name == "aca-cmd" {
+				aca_ip := ""
+				aca_port := ""
+				for _, par := range service.Parameters {
+					words := strings.Fields(par)
+					if words[0] == "-a" {
+						aca_ip = words[1]
+					} else if words[0] == "-p" {
+						aca_port = words[1]
+					}
+				}
+				aca_parameters = aca_ip + " " + aca_port
+			}
+		}
+
 		/*comment gw creation function*/
 		// if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 || cgw_num == 0 {
 		if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 || ports_per_vswitch == 0 {
@@ -111,7 +130,7 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			// pb.TopologyType_TREE
 			// err_create := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, &returnMessage)
 
-			err_create := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, uint32(ports_per_vswitch), images, &returnMessage)
+			err_create := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, uint32(ports_per_vswitch), images, aca_parameters, &returnMessage)
 
 			if err_create != nil {
 				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED

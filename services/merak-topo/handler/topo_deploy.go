@@ -121,7 +121,7 @@ func NewTopologyClass(name string, links []database.Vlink) *unstructured.Unstruc
 	return out
 }
 
-func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image string, topo database.TopologyData) error {
+func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image string, topo database.TopologyData, aca_parameters string) error {
 	/*comment gw creation function*/
 	// var k8snodes []string
 
@@ -221,7 +221,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 							Name:            "vhost",
 							Image:           aca_image,
 							ImagePullPolicy: "IfNotPresent",
-							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent 172.31.64.48 30014"},
+							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent " + aca_parameters},
 							SecurityContext: &sc,
 						},
 					},

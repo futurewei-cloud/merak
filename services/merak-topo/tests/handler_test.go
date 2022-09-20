@@ -36,6 +36,7 @@ var (
 	cgw_num           = 0
 	ports_per_vswitch = 2
 	imgs              []*pb.InternalTopologyImage
+	aca_parameters    string
 )
 
 func TestTopologyHandler(t *testing.T) {
@@ -50,7 +51,7 @@ func TestTopologyHandler(t *testing.T) {
 		log.Printf("connect to DB error %s", err1)
 	}
 
-	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, uint32(ports_per_vswitch), imgs, &returnMessage)
+	err2 := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, uint32(ports_per_vswitch), imgs, aca_parameters, &returnMessage)
 	if err2 != nil {
 		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Create Topology."
