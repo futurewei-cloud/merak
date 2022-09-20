@@ -14,18 +14,15 @@ Copyright(c) 2022 Futurewei Cloud
 package activities
 
 import (
-	"context"
 	"fmt"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	"github.com/futurewei-cloud/merak/services/merak-network/http"
 	"log"
 	"os/exec"
 	"strings"
-	"sync"
-
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	"github.com/futurewei-cloud/merak/services/merak-network/http"
 )
 
-func DoServices(ctx context.Context, services []*pb.InternalServiceInfo, wg *sync.WaitGroup, projectId string) (string, error) {
+func DoServices(services []*pb.InternalServiceInfo) (string, error) {
 	log.Println("DoServices")
 	//defer wg.Done()
 	log.Printf("DoServices %s", services)
