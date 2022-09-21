@@ -24,7 +24,7 @@ import (
 	"github.com/futurewei-cloud/merak/services/scenario-manager/utils"
 )
 
-func constructTopologyMessage(topo *entities.TopologyConfig, topoPb *topology_pb.InternalTopologyInfo, action entities.EventName) error {
+func constructTopologyMessage(topo *entities.TopologyConfig, serviceConf *entities.ServiceConfig, topoPb *topology_pb.InternalTopologyInfo, action entities.EventName) error {
 	topoPb.OperationType = actionToOperation(action)
 	var conf topology_pb.InternalTopologyConfiguration
 	conf.FormatVersion = 1
@@ -41,6 +41,25 @@ func constructTopologyMessage(topo *entities.TopologyConfig, topoPb *topology_pb
 	conf.DataPlaneCidr = topo.DataPlaneCidr
 	conf.NumberOfGateways = uint32(topo.NumberOfGateways)
 	conf.GatewayIps = topo.GatewayIPs
+
+	if serviceConf != nil {
+		for _, service := range serviceConf.Services {
+			var servicePb pb.InternalServiceInfo
+			if strings.ToUpper(service.WhereToRun) == utils.MERAK_AGENT {
+				servicePb.OperationType = actionToOperation(action)
+				servicePb.Id = service.Id
+				servicePb.Name = service.Name
+				servicePb.Cmd = service.Cmd
+				servicePb.Url = service.Url
+				servicePb.Parameters = service.Parameters
+				servicePb.ReturnCode = service.ReturnCode
+				servicePb.ReturnString = service.ReturnString
+				servicePb.WhenToRun = service.WhenToRun
+				servicePb.WhereToRun = service.WhereToRun
+				conf.Services = append(conf.Services, &servicePb)
+			}
+		}
+	}
 
 	for _, image := range topo.Images {
 		var imagePb topology_pb.InternalTopologyImage

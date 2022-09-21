@@ -64,8 +64,13 @@ func TopologyHandler(s *entities.Scenario, action entities.EventName) (*topology
 		}
 	}
 
+	var service entities.ServiceConfig
+	if err := database.FindEntity(s.ServiceConfId, utils.KEY_PREFIX_SERVICE, &service); err != nil {
+		return nil, fmt.Errorf("service %s config not found", s.ServiceConfId)
+	}
+
 	var topoconf topology_pb.InternalTopologyInfo
-	if err := constructTopologyMessage(&topology, &topoconf, action); err != nil {
+	if err := constructTopologyMessage(&topology, &service, &topoconf, action); err != nil {
 		return nil, errors.New("topology protobuf message error")
 	}
 	logger.Log.Infof("constructTopologyMessage: %s", &topoconf)

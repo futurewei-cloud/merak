@@ -84,7 +84,8 @@ message InternalTopologyConfiguration {
     repeated InternalTopologyImage images = 15;
     repeated InternalVNodeInfo vnodes = 16;
     repeated InternalVLinkInfo vlinks = 17;
-    InternalTopologyExtraInfo extra_info = 18;
+    repeated common.InternalServiceInfo services = 18;
+    InternalTopologyExtraInfo extra_info = 19;
 }
 
 message InternalTopologyInfo {
