@@ -14,7 +14,6 @@ Copyright(c) 2022 Futurewei Cloud
 package activities
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 
@@ -23,7 +22,7 @@ import (
 	"github.com/futurewei-cloud/merak/services/merak-network/utils"
 )
 
-func VnetInfo(ctx context.Context, netConfigId string) (*pb.ReturnNetworkMessage, error) {
+func VnetInfo(netConfigId string) (*pb.ReturnNetworkMessage, error) {
 	// TODO: when query db, make sure to check if key exist first, other wise could timeout
 	log.Println("VnetInfo")
 	values, err := database.Get(utils.NETCONFIG + netConfigId)

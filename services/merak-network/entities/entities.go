@@ -132,14 +132,11 @@ type VpcReturnDB struct {
 }
 
 type SgBody struct {
-	CreateAt           string   `json:"create_at"`
 	Description        string   `json:"description"`
-	Id                 string   `json:"id"`
 	Name               string   `json:"name"`
 	ProjectId          string   `json:"project_id"`
 	SecurityGroupRules []string `json:"security_group_rules"`
 	TenantId           string   `json:"tenant_id"`
-	UpdateAt           string   `json:"update_at"`
 }
 type SgStruct struct {
 	Sg SgBody `json:"security_group"`

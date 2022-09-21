@@ -14,16 +14,13 @@ Copyright(c) 2022 Futurewei Cloud
 package activities
 
 import (
-	"context"
 	"encoding/json"
-	"log"
-	"sync"
-
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
 	"github.com/futurewei-cloud/merak/services/merak-network/database"
 	"github.com/futurewei-cloud/merak/services/merak-network/entities"
 	"github.com/futurewei-cloud/merak/services/merak-network/http"
 	"github.com/futurewei-cloud/merak/services/merak-network/utils"
+	"log"
 )
 
 func getSubnetRouter(subnetId string, projectId string) (returnRouterId string, err error) {
@@ -137,7 +134,7 @@ func deleteNode(netConfigId string) (err error) {
 	return nil
 }
 
-func VnetDelete(ctx context.Context, netConfigId string, wg *sync.WaitGroup, returnMessage chan *pb.ReturnNetworkMessage) (*pb.ReturnNetworkMessage, error) {
+func VnetDelete(netConfigId string, returnMessage chan *pb.ReturnNetworkMessage) (*pb.ReturnNetworkMessage, error) {
 	// TODO: when query db, make sure to check if key exist first, other wise could timeout
 	log.Println("VnetDelete")
 
