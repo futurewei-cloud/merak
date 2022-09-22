@@ -115,21 +115,14 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 			cnode.Veth = node.Nics[len(node.Nics)-1].Intf
 		}
 
-		// log.Println("get compute nodes IP and Veth")
-
 		cnode.OperationType = pb_common.OperationType_CREATE
 		cnode.Status = pb_common.Status_DEPLOYING
 
-		// log.Println("get compute nodes status")
-
 		returnMessage.ComputeNodes = append(returnMessage.ComputeNodes, &cnode)
-
-		// log.Println("generate returnMessage for compute nodes")
 
 	}
 	elaps2 := time.Since(start1)
 
-	// save the
 	log.Printf("CREATE: === Complete: Return compute nodes and k8s cluster information to Scenario Manager=== %v", elaps2)
 
 	err_db2 := database.SetPbReturnValue(topo_id+":initialreturn", returnMessage)
@@ -152,12 +145,6 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	}
 
 	go Topo_deploy(k8client, aca_image, ovs_image, topo, aca_parameters)
-
-	// err_deploy := Topo_deploy(k8client, aca_image, ovs_image, topo, aca_parameters)
-
-	// if err_deploy != nil {
-	// 	return fmt.Errorf("topology deployment error %s", err_deploy)
-	// }
 
 	return nil
 

@@ -204,13 +204,13 @@ func create_and_attach_a_core(vs []database.Vnode, j int, nports int, uid_initia
 	core.Nics = nics
 
 	// attach vs to the vswitch
-	err_attach, core_attached, vs_attached := attach_vswitches_to_core(core, vs, uid_initial)
+	err, core_attached, vs_attached := attach_vswitches_to_core(core, vs, uid_initial)
 
-	if err_attach != nil {
-		fmt.Printf("attach vswitch to vs error %s", err_attach)
+	if err != nil {
+		fmt.Printf("attach vswitch to vs error %s", err)
 	}
 
-	return err_attach, core_attached, vs_attached
+	return err, core_attached, vs_attached
 }
 
 func attach_vswitches_to_core(core database.Vnode, vswitches []database.Vnode, uid_initial int) (error, database.Vnode, []database.Vnode) {

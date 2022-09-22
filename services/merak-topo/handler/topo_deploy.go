@@ -135,12 +135,8 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 	}
 
 	var vhost_pods_config []*corev1.Pod
-
 	var rack_pods_config []*corev1.Pod
-
 	var vs_pods_config []*corev1.Pod
-
-	// var pods_config []*corev1.Pod
 
 	/*comment gw creation function*/
 	// k_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
@@ -235,7 +231,6 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 							Image:           aca_image,
 							ImagePullPolicy: "IfNotPresent",
 							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent " + aca_parameters},
-							// Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent 10.0.18.3 30014"},
 							SecurityContext: &sc,
 						},
 					},
@@ -248,7 +243,6 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 			}
 
 			vhost_pods_config = append(vhost_pods_config, newPod)
-			// pods_config = append(pods_config, newPod)
 
 		} else if strings.Contains(node.Name, "rack") {
 
@@ -283,7 +277,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 			}
 
 			rack_pods_config = append(rack_pods_config, newPod)
-			// pods_config = append(pods_config, newPod)
+
 			/*comment gw creation function*/
 			// } else if strings.Contains(node.Name, "cgw") {
 			// 	l["Type"] = "configgw"
@@ -350,23 +344,10 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 				},
 			}
 			vs_pods_config = append(vs_pods_config, newPod)
-			// pods_config = append(pods_config, newPod)
 
 		} else {
 			return errors.New("no image for this device, please upload the image before create topology")
 		}
-
-		// _, err_create := k8client.CoreV1().Pods("default").Create(Ctx, newPod, metav1.CreateOptions{})
-
-		// if err_create != nil {
-		// 	return fmt.Errorf("create pod error %s", err_create)
-		// } else {
-		// 	err_db := database.SetValue(topo.Topology_id+":"+node.Name, newPod)
-		// 	if err_db != nil {
-		// 		log.Fatalf("fail: save topology in DB %s", err_db)
-		// 	}
-
-		// }
 
 	}
 
