@@ -14,19 +14,16 @@ Copyright(c) 2022 Futurewei Cloud
 package activities
 
 import (
-	"context"
 	"encoding/json"
-	"log"
-	"sync"
-
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	"github.com/futurewei-cloud/merak/services/merak-network/database"
 	"github.com/futurewei-cloud/merak/services/merak-network/entities"
 	"github.com/futurewei-cloud/merak/services/merak-network/http"
 	"github.com/futurewei-cloud/merak/services/merak-network/utils"
+	"log"
 )
 
-func RegisterNode(ctx context.Context, compute []*common_pb.InternalComputeInfo, wg *sync.WaitGroup, netConfigId string) (string, error) {
+func RegisterNode(compute []*common_pb.InternalComputeInfo, netConfigId string) (string, error) {
 	log.Println("RegisterNode")
 	//defer wg.Done()
 	log.Printf("compute %s", compute)

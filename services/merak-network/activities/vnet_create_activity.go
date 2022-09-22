@@ -14,26 +14,14 @@ Copyright(c) 2022 Futurewei Cloud
 package activities
 
 import (
-	"context"
 	"encoding/json"
-	"log"
-	"sync"
-
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/network"
 	"github.com/futurewei-cloud/merak/services/merak-network/database"
 	"github.com/futurewei-cloud/merak/services/merak-network/entities"
 	"github.com/futurewei-cloud/merak/services/merak-network/http"
 	"github.com/futurewei-cloud/merak/services/merak-network/utils"
-)
-
-var (
-	returnNetworkMessage = pb.ReturnNetworkMessage{
-		ReturnCode:       common_pb.ReturnCode_OK,
-		ReturnMessage:    "returnNetworkMessage Finished",
-		Vpcs:             nil,
-		SecurityGroupIds: nil,
-	}
+	"log"
 )
 
 func doVPC(vpc *common_pb.InternalVpcInfo, projectId string) (vpcId string, err error) {
@@ -134,10 +122,9 @@ func doAttachRouter(routerId string, subnetId string, projectId string) error {
 	log.Println("doAttachRouter done")
 	return nil
 }
-func doSg(sg *pb.InternalSecurityGroupInfo, sgID string, projectId string) (string, error) {
+func doSg(sg *pb.InternalSecurityGroupInfo, projectId string) (string, error) {
 	log.Println("doSg")
 	sgBody := entities.SgStruct{Sg: entities.SgBody{
-		Id:                 sgID,
 		Description:        "sg Description",
 		Name:               "YM_sample_sg",
 		ProjectId:          sg.ProjectId,
@@ -158,12 +145,17 @@ func doSg(sg *pb.InternalSecurityGroupInfo, sgID string, projectId string) (stri
 	return returnJson.SecurityGroup.ID, nil
 }
 
-func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNetworkInfo, wg *sync.WaitGroup, returnMessage chan *pb.ReturnNetworkMessage, projectId string) (*pb.ReturnNetworkMessage, error) {
+func VnetCreate(netConfigId string, network *pb.InternalNetworkInfo, projectId string) (*pb.ReturnNetworkMessage, error) {
 	log.Println("VnetCreate")
-	//defer wg.Done()
 	// TODO may want to separate bellow sections to different function, and use `go` and `wg` to improve overall speed
 	// TODO when do concurrent, need to keep in mind on how to control the number of concurrency
-	// Doing vpc and subnet
+
+	var returnNetworkMessage = pb.ReturnNetworkMessage{
+		ReturnCode:       common_pb.ReturnCode_OK,
+		ReturnMessage:    "returnNetworkMessage Finished",
+		Vpcs:             nil,
+		SecurityGroupIds: nil,
+	}
 
 	var vpcId string
 	var vpcIds []string
@@ -204,13 +196,11 @@ func VnetCreate(ctx context.Context, netConfigId string, network *pb.InternalNet
 
 	//doing security group
 	for _, sg := range network.SecurityGroups {
-		sgId := utils.GenUUID()
-		_, err := doSg(sg, sgId, projectId)
+		sgID, err := doSg(sg, projectId)
 		if err != nil {
 			return nil, err
 		}
-		returnNetworkMessage.SecurityGroupIds = append(returnNetworkMessage.SecurityGroupIds, sgId)
-		log.Printf("sgId: %s", sgId)
+		returnNetworkMessage.SecurityGroupIds = append(returnNetworkMessage.SecurityGroupIds, sgID)
 	}
 
 	//doing router: create and attach subnet
