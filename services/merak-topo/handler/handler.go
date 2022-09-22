@@ -151,13 +151,13 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 		}
 	}
 
-	// go Topo_deploy(k8client, aca_image, ovs_image, topo)
+	go Topo_deploy(k8client, aca_image, ovs_image, topo, aca_parameters)
 
-	err_deploy := Topo_deploy(k8client, aca_image, ovs_image, topo, aca_parameters)
+	// err_deploy := Topo_deploy(k8client, aca_image, ovs_image, topo, aca_parameters)
 
-	if err_deploy != nil {
-		return fmt.Errorf("topology deployment error %s", err_deploy)
-	}
+	// if err_deploy != nil {
+	// 	return fmt.Errorf("topology deployment error %s", err_deploy)
+	// }
 
 	return nil
 

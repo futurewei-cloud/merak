@@ -20,6 +20,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 
@@ -133,6 +134,14 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 		return fmt.Errorf("fails to create dynamic client %s", err)
 	}
 
+	var vhost_pods_config []*corev1.Pod
+
+	var rack_pods_config []*corev1.Pod
+
+	var vs_pods_config []*corev1.Pod
+
+	// var pods_config []*corev1.Pod
+
 	/*comment gw creation function*/
 	// k_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	// if err1 != nil {
@@ -144,6 +153,10 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 	// 		k8snodes = append(k8snodes, s.Name)
 	// 	}
 	// }
+
+	log.Printf("============ k8s create topology for pods =====================")
+
+	start_time := time.Now()
 
 	for _, node := range nodes {
 
@@ -198,7 +211,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 		t2.Key = "node.kubernetes.io/unreachable"
 		t1.Effect = "NoExecute"
 		t2.Effect = "NoExecute"
-		sec = 6000
+		sec = 600000000000
 		t1.TolerationSeconds = &sec
 		t2.TolerationSeconds = &sec
 
@@ -222,6 +235,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 							Image:           aca_image,
 							ImagePullPolicy: "IfNotPresent",
 							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent " + aca_parameters},
+							// Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent 10.0.18.3 30014"},
 							SecurityContext: &sc,
 						},
 					},
@@ -232,7 +246,11 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 					Tolerations:                   tol,
 				},
 			}
-		} else if strings.Contains(node.Name, "rack") || strings.Contains(node.Name, "vs") || strings.Contains(node.Name, "core") {
+
+			vhost_pods_config = append(vhost_pods_config, newPod)
+			// pods_config = append(pods_config, newPod)
+
+		} else if strings.Contains(node.Name, "rack") {
 
 			ovs_set, err0 := ovs_config(topo, node.Name, SDN_IP, SDN_PORT)
 			if err0 != nil {
@@ -263,6 +281,9 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 					Tolerations:                   tol,
 				},
 			}
+
+			rack_pods_config = append(rack_pods_config, newPod)
+			// pods_config = append(pods_config, newPod)
 			/*comment gw creation function*/
 			// } else if strings.Contains(node.Name, "cgw") {
 			// 	l["Type"] = "configgw"
@@ -297,23 +318,122 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 			// 	}
 
+		} else if strings.Contains(node.Name, "vs") || strings.Contains(node.Name, "core") {
+
+			ovs_set, err0 := ovs_config(topo, node.Name, SDN_IP, SDN_PORT)
+			if err0 != nil {
+				return fmt.Errorf("fails to get ovs switch controller info %s", err0)
+			}
+
+			l["Type"] = "vswitch"
+
+			newPod = &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   node.Name,
+					Labels: l,
+				},
+				Spec: corev1.PodSpec{
+					InitContainers: init_containers,
+					Containers: []corev1.Container{
+						{
+							Name:            "vswitch",
+							Image:           ovs_image,
+							ImagePullPolicy: "IfNotPresent",
+							Args:            []string{"service rsyslog restart; /etc/init.d/openvswitch-switch restart; " + ovs_set + "sleep infinity"},
+							Command:         []string{"/bin/sh", "-c"},
+							SecurityContext: &sc,
+						},
+					},
+					RestartPolicy:                 "OnFailure",
+					TerminationGracePeriodSeconds: &grace_period,
+					Tolerations:                   tol,
+				},
+			}
+			vs_pods_config = append(vs_pods_config, newPod)
+			// pods_config = append(pods_config, newPod)
+
 		} else {
 			return errors.New("no image for this device, please upload the image before create topology")
 		}
 
+		// _, err_create := k8client.CoreV1().Pods("default").Create(Ctx, newPod, metav1.CreateOptions{})
+
+		// if err_create != nil {
+		// 	return fmt.Errorf("create pod error %s", err_create)
+		// } else {
+		// 	err_db := database.SetValue(topo.Topology_id+":"+node.Name, newPod)
+		// 	if err_db != nil {
+		// 		log.Fatalf("fail: save topology in DB %s", err_db)
+		// 	}
+
+		// }
+
+	}
+
+	elaps0 := time.Since(start_time)
+	start0 := time.Now()
+
+	log.Printf("DEPLOY:=== Complete: create topology crd data in K8s === %v", elaps0)
+
+	log.Printf("============ k8s create pods based on pod configuration data ==================")
+
+	for _, newPod := range vs_pods_config {
+
+		log.Printf("+++++ newpod %v+++++", newPod.Name)
+
 		_, err_create := k8client.CoreV1().Pods("default").Create(Ctx, newPod, metav1.CreateOptions{})
+		log.Printf("+++++ k8s create pod %v+++++", newPod.Name)
 
 		if err_create != nil {
 			return fmt.Errorf("create pod error %s", err_create)
 		} else {
-			err_db := database.SetValue(topo.Topology_id+":"+node.Name, newPod)
+			err_db := database.SetValue(topo.Topology_id+":"+newPod.Name, newPod)
 			if err_db != nil {
 				log.Fatalf("fail: save topology in DB %s", err_db)
 			}
 
 		}
-
 	}
+
+	for _, newPod := range rack_pods_config {
+
+		log.Printf("+++++ newpod %v+++++", newPod.Name)
+
+		_, err_create := k8client.CoreV1().Pods("default").Create(Ctx, newPod, metav1.CreateOptions{})
+		log.Printf("+++++ k8s create pod %v+++++", newPod.Name)
+
+		if err_create != nil {
+			return fmt.Errorf("create pod error %s", err_create)
+		} else {
+			err_db := database.SetValue(topo.Topology_id+":"+newPod.Name, newPod)
+			if err_db != nil {
+				log.Fatalf("fail: save topology in DB %s", err_db)
+			}
+
+		}
+	}
+
+	for _, newPod := range vhost_pods_config {
+
+		log.Printf("+++++ newpod %v+++++", newPod.Name)
+
+		_, err_create := k8client.CoreV1().Pods("default").Create(Ctx, newPod, metav1.CreateOptions{})
+		log.Printf("+++++ k8s create pod %v+++++", newPod.Name)
+
+		if err_create != nil {
+			return fmt.Errorf("create pod error %s", err_create)
+		} else {
+			err_db := database.SetValue(topo.Topology_id+":"+newPod.Name, newPod)
+			if err_db != nil {
+				log.Fatalf("fail: save topology in DB %s", err_db)
+			}
+
+		}
+	}
+
+	elaps1 := time.Since(start0)
+
+	log.Printf("DEPLOY:=== Complete: create pod in K8s === %v", elaps1)
 
 	return nil
 
