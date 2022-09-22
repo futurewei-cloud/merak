@@ -122,13 +122,12 @@ func deleteNode(netConfigId string) (err error) {
 	json.Unmarshal([]byte(values), &returnJson)
 	log.Printf("returnMessage %s", returnJson)
 
-	for _, node := range returnJson {
-		_, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30007/nodes/"+node.NodeID, "DELETE", nil, nil)
-		if returnErr != nil {
-			log.Printf("returnErr %s", returnErr)
-			return returnErr
-		}
+	_, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30007/nodes/bulk", "DELETE", nil, nil)
+	if returnErr != nil {
+		log.Printf("returnErr %s", returnErr)
+		return returnErr
 	}
+
 	database.Del(utils.NODEGROUP + netConfigId)
 	log.Println("deleteNode done")
 	return nil
