@@ -77,7 +77,7 @@ func TestTopologyHandler(t *testing.T) {
 
 	log.Printf("///// INFO Return Message //// %v", &returnMessage)
 
-	err4 := handler.Delete(k8client, topo_id)
+	err4 := handler.Delete(k8client, topo_id, &returnMessage)
 	if err4 != nil {
 		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Delete Topology."

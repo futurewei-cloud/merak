@@ -184,9 +184,6 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 		l["App"] = node.Name
 		l["Topo"] = "topology"
 
-		anno := make(map[string]string)
-		anno["linkerd.io/inject"] = "enabled"
-
 		var sc corev1.SecurityContext
 		pri := true
 		sc.Privileged = &pri

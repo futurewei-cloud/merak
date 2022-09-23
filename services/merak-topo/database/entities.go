@@ -25,6 +25,15 @@ const (
 	STATUS_DONE      ServiceStatus = "DONE"
 )
 
+type OperationType string
+
+const (
+	OPERATION_CREATE OperationType = "CREATE"
+	OPERATION_INFO   OperationType = "INFO"
+	OPERATION_DELETE OperationType = "DELETE"
+	OPERATION_UPDATE OperationType = "UPDATE"
+)
+
 type Nic struct {
 	Id   string `json:"id"`
 	Intf string `json:"intf"`
@@ -58,4 +67,21 @@ type Vlink struct {
 type TopologyData struct {
 	Topology_id string  `json:"topology_id"`
 	Vnodes      []Vnode `json:"vnodes"`
+}
+
+type HostNode struct {
+	Ip           string        `json:"host_node_ip"`
+	Routing_rule []string      `json:"rougting_rules"`
+	Status       ServiceStatus `json:"status"`
+}
+
+type ComputeNode struct {
+	OperationType OperationType `json:"operation_type"`
+	Id            string        `json:"id"`
+	Name          string        `json:"name"`
+	DatapathIp    string        `json:"datapath_ip"`
+	Mac           string        `json:"mac"`
+	Veth          string        `json:"veth"`
+	ContainerIp   string        `json:"container_ip"`
+	Status        ServiceStatus `json:"status"`
 }

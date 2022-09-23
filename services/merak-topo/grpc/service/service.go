@@ -147,7 +147,7 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 	case pb_common.OperationType_DELETE:
 		// delete topology
-		err := handler.Delete(k8client, in.Config.TopologyId)
+		err := handler.Delete(k8client, in.Config.TopologyId, &returnMessage)
 
 		//return topology message-- compute info
 
