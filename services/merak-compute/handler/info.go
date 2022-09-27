@@ -22,36 +22,36 @@ import (
 	commonPB "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
-	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 )
 
 func caseInfo(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
 	log.Println("Operation Info")
 
-	ids := common.RedisClient.SMembers(ctx, constants.COMPUTE_REDIS_VM_SET)
+	ids := RedisClient.SMembers(ctx, constants.COMPUTE_REDIS_VM_SET)
 	if ids.Err() != nil {
-		log.Println("Unable get VM IDs from redis", ids.Err())
+		log.Println("Unable to get VM IDs from redis", ids.Err())
 
 		return &pb.ReturnComputeMessage{
 			ReturnCode:    commonPB.ReturnCode_FAILED,
-			ReturnMessage: "Unable get node IDs from redis",
+			ReturnMessage: "Unable to get node IDs from redis",
 		}, ids.Err()
 	}
 	vms := []*pb.InternalVMInfo{}
 	log.Println("Success in getting VM IDs!")
 	for _, vmID := range ids.Val() {
 		vm := pb.InternalVMInfo{
-			Id:              common.RedisClient.HGet(ctx, vmID, "id").Val(),
-			Name:            common.RedisClient.HGet(ctx, vmID, "name").Val(),
-			VpcId:           common.RedisClient.HGet(ctx, vmID, "vpc").Val(),
-			Ip:              common.RedisClient.HGet(ctx, vmID, "ip").Val(),
-			SecurityGroupId: common.RedisClient.HGet(ctx, vmID, "sg").Val(),
-			SubnetId:        common.RedisClient.HGet(ctx, vmID, "subnetID").Val(),
-			DefaultGateway:  common.RedisClient.HGet(ctx, vmID, "gw").Val(),
-			Host:            common.RedisClient.HGet(ctx, vmID, "hostname").Val(),
-			RemoteId:        common.RedisClient.HGet(ctx, vmID, "remoteID").Val(),
+			// TODO: Write a helper to check error before returning Val for each redis HGet
+			Id:              RedisClient.HGet(ctx, vmID, "id").Val(),
+			Name:            RedisClient.HGet(ctx, vmID, "name").Val(),
+			VpcId:           RedisClient.HGet(ctx, vmID, "vpc").Val(),
+			Ip:              RedisClient.HGet(ctx, vmID, "ip").Val(),
+			SecurityGroupId: RedisClient.HGet(ctx, vmID, "sg").Val(),
+			SubnetId:        RedisClient.HGet(ctx, vmID, "subnetID").Val(),
+			DefaultGateway:  RedisClient.HGet(ctx, vmID, "gw").Val(),
+			Host:            RedisClient.HGet(ctx, vmID, "hostname").Val(),
+			RemoteId:        RedisClient.HGet(ctx, vmID, "remoteID").Val(),
 		}
-		status, err := strconv.Atoi(common.RedisClient.HGet(ctx, vmID, "status").Val())
+		status, err := strconv.Atoi(RedisClient.HGet(ctx, vmID, "status").Val())
 		if err != nil {
 			log.Println("Failed to convert status string to int!", err)
 			return &pb.ReturnComputeMessage{
