@@ -1,9 +1,6 @@
 - hosts: all
   become: yes
   tasks:
-  # - name: pull phudtran/merak-agent:dev
-  #   docker_image:
-  #     name: phudtran/merak-agent:dev
   - name: pull meraksim/merak-agent:0908-fixed
     docker_image:
       name: meraksim/merak-agent:0908-fixed
@@ -13,69 +10,3 @@
   - name: pull networkop/init-wait:latest
     docker_image:
       name: networkop/init-wait:latest
-  # - name: pull osrg/ryu
-  #   docker_image:
-  #     name: osrg/ryu
-  # - name: pull phudtran/aca
-  #   docker_image:
-  #     name: phudtran/aca
-  # - name: pull yanmo96/ym-gateway:latest
-  #   docker_image:
-  #     name: yanmo96/ym-gateway:latest
-  # - name: pull yanmo96/ovs_only
-  #   docker_image:
-  #     name: yanmo96/ovs_only
-  # - name: pull yanmo96/aca_build_standard:v3
-  #   docker_image:
-  #     name: yanmo96/aca_build_standard:v3
-  # - name: pull yanmo96/aca_build_standard:v2
-  #   docker_image:
-  #     name: yanmo96/aca_build_standard:v2
-  # - name: pull yanmo96/network_config_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/network_config_manager:v1.0
-  # - name: pull yanmo96/vpc_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/vpc_manager:v1.0
-  # - name: pull yanmo96/subnet_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/subnet_manager:v1.0
-  # - name: pull yanmo96/security_group_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/security_group_manager:v1.0
-  # - name: pull yanmo96/route_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/route_manager:v1.0
-  # - name: pull yanmo96/quota_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/quota_manager:v1.0
-  # - name: pull yanmo96/private_ip_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/private_ip_manager:v1.0
-  # - name: pull yanmo96/port_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/port_manager:v1.0
-  # - name: pull yanmo96/node_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/node_manager:v1.0
-  # - name: pull yanmo96/network_acl_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/network_acl_manager:v1.0
-  # - name: pull yanmo96/mac_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/mac_manager:v1.0
-  # - name: pull yanmo96/gateway_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/gateway_manager:v1.0
-  # - name: pull yanmo96/elastic_ip_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/elastic_ip_manager:v1.0
-  # - name: pull yanmo96/data_plane_manager:v1.0
-  #   docker_image:
-  #     name: yanmo96/data_plane_manager:v1.0
-  # - name: pull yanmo96/api_gateway:v1.0
-  #   docker_image:
-  #     name: yanmo96/api_gateway:v1.0
-  # - name: pull yanmo96/ignite_alcor:lib8
-  #   docker_image:
-  #     name: yanmo96/ignite_alcor:lib8

@@ -22,7 +22,7 @@ pip install 'ansible<2.10'
 ```
 
 ### Set up k8s
-___
+___  
 
 Run:  
 `ansible-playbook -i aws-host kube-dependencies.yml`  
@@ -36,4 +36,17 @@ Then run and put the follow line in `.profile` to be able to manage k8s:
 To install flannel:  
 `kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml`  
 
-All done with k8s setup!
+All done with k8s setup!  
+
+## Install other dependencies like ovs:  
+___  
+
+`ansible-playbook -i aws-host prepare_machine.yml`  
+The current `prepare_machine.yml` file will also install python and python-docker, which then used for pulling docker images later.   
+
+## Pull docker images:  
+___  
+
+`ansible-playbook -i aws-host pull_image.yml`  
+
+
