@@ -1,0 +1,7 @@
+- hosts: workers
+  become: yes
+  tasks:
+  - name: Delete work folder
+    file:
+      state: absent
+      path: /root/work/

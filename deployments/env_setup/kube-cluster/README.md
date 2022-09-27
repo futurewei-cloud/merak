@@ -1,0 +1,39 @@
+# This doc is for set up the k8s env  
+Suggest to put this on the k8s control node.
+### The scripts can:
+1. Install k8s
+2. Pull docker images
+3. Install dependencies on each compute node  
+4. Remove `/root/work/` folder on each compute node  
+
+### First need to install ansible in venv:
+___
+
+```
+sudo apt update
+sudo apt upgrade
+sudo apt install python3-dev python3-venv libffi-dev gcc libssl-dev git
+
+python3 -m venv ansible
+source ansible/bin/activate
+
+pip install -U pip
+pip install 'ansible<2.10'
+```
+
+### Set up k8s
+___
+
+Run:  
+`ansible-playbook -i aws-host kube-dependencies.yml`  
+
+After the above command, run the follow to init k8s on the master node:  
+`kubeadm init --pod-network-cidr=10.244.0.0/16` 
+
+Then run and put the follow line in `.profile` to be able to manage k8s:  
+`export KUBECONFIG=/etc/kubernetes/admin.conf`  
+
+To install flannel:  
+`kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml`  
+
+All done with k8s setup!

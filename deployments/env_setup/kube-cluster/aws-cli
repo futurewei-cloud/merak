@@ -1,0 +1,6 @@
+aws ec2 describe-instances \
+--filters \
+"Name=instance-state-name,Values=running" \
+"Name=tag:Name,Values=ym-250-4" \
+--query 'Reservations[*].Instances[*].[PrivateIpAddress]' \
+--output text

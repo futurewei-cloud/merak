@@ -1,0 +1,5 @@
+- hosts: workers
+  become: yes
+  tasks:
+  - name: join cluster
+    shell: "kubeadm join 172.31.52.142:6443 --token xbgvlb.el3strzd70iirrp9 --discovery-token-ca-cert-hash sha256:46bc105f5d2c515552ac0706bb8385804c6775dd2a46a2c45a137acc95f286bf"
