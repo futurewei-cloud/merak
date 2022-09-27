@@ -122,8 +122,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 			hrm.Ip = hnode.Ip
 			if hnode.Status == database.STATUS_READY {
 				hrm.Status = pb_common.Status_READY
-				// } else if hnode.Status == database.STATUS_DELETING {
-				// 	hrm.Status = pb_common.Status_DELETING
+
 			} else {
 				hrm.Status = pb_common.Status_NONE
 			}
@@ -227,8 +226,6 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 	go Topo_deploy(k8client, aca_image, ovs_image, topo, aca_parameters)
 
-	// go UpdateComputenodeInfo(k8client, topo_id)
-
 	return nil
 
 }
@@ -301,12 +298,6 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string) error
 			res, err := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
 
 			if err != nil {
-				// cnode.Name = node.Name
-				// cnode.Id = node.Id
-				// cnode.DatapathIp = strings.Split(node.Nics[len(node.Nics)-1].Ip, "/")[0]
-				// cnode.Veth = node.Nics[len(node.Nics)-1].Intf
-				// cnode.OperationType = database.OPERATION_INFO
-				// cnode.Status = database.STATUS_DEPLOYING
 				log.Printf("updatecomputenode: get pod info from k8s error %s", err)
 			} else {
 				cnode.Name = res.Name
@@ -362,11 +353,6 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string) error
 
 func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.ReturnTopologyMessage) error {
 
-	// err := UpdateComputenodeInfo(k8client, topo_id)
-	// if err != nil {
-	// 	return fmt.Errorf("fail to update compute nodes info %s", err)
-	// }
-
 	topo, err := database.FindTopoEntity(topo_id, "")
 
 	if err != nil {
@@ -391,8 +377,7 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 			hrm.Ip = hnode.Ip
 			if hnode.Status == database.STATUS_READY {
 				hrm.Status = pb_common.Status_READY
-				// } else if hnode.Status == database.STATUS_DELETING {
-				// 	hrm.Status = pb_common.Status_DELETING
+
 			} else {
 				hrm.Status = pb_common.Status_NONE
 			}
@@ -454,50 +439,6 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 	return nil
 }
 
-// func makehrm(node database.HostNode, hrm pb_common.InternalHostInfo) {
-
-// 	hrm.Ip = node.Ip
-// 	if node.Status == database.STATUS_READY {
-// 		hrm.Status = pb_common.Status_READY
-// 	} else if node.Status == database.STATUS_DELETING {
-// 		hrm.Status = pb_common.Status_DELETING
-// 	} else {
-// 		hrm.Status = pb_common.Status_NONE
-// 	}
-
-// 	hrm.RoutingRules = node.Routing_rule
-
-// }
-
-// func makecrm(node database.ComputeNode, crm pb_common.InternalComputeInfo) {
-
-// 	crm.Id = node.Id
-// 	crm.Name = node.Name
-// 	crm.DatapathIp = node.DatapathIp
-// 	crm.ContainerIp = node.ContainerIp
-// 	crm.Mac = node.Mac
-// 	crm.Veth = node.Veth
-// 	if node.Status == database.STATUS_READY {
-// 		crm.Status = pb_common.Status_READY
-// 	} else if node.Status == database.STATUS_DELETING {
-// 		crm.Status = pb_common.Status_DELETING
-// 	} else if node.Status == database.STATUS_DEPLOYING {
-// 		crm.Status = pb_common.Status_DEPLOYING
-// 	} else {
-// 		crm.Status = pb_common.Status_NONE
-// 	}
-// 	if node.OperationType == database.OPERATION_CREATE {
-// 		crm.OperationType = pb_common.OperationType_CREATE
-// 	} else if node.OperationType == database.OPERATION_INFO {
-// 		crm.OperationType = pb_common.OperationType_INFO
-// 	} else if node.OperationType == database.OPERATION_DELETE {
-// 		crm.OperationType = pb_common.OperationType_DELETE
-// 	} else if node.OperationType == database.OPERATION_UPDATE {
-// 		crm.OperationType = pb_common.OperationType_UPDATE
-// 	}
-
-// }
-
 func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.ReturnTopologyMessage) error {
 	topo, err_db := database.FindTopoEntity(topo_id, "")
 
@@ -525,8 +466,7 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 			hrm.Ip = hnode.Ip
 			if hnode.Status == database.STATUS_READY {
 				hrm.Status = pb_common.Status_READY
-				// } else if hnode.Status == database.STATUS_DELETING {
-				// 	hrm.Status = pb_common.Status_DELETING
+
 			} else {
 				hrm.Status = pb_common.Status_NONE
 			}
