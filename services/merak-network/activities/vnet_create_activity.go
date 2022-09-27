@@ -39,7 +39,7 @@ func doVPC(vpc *common_pb.InternalVpcInfo, projectId string) (vpcId string, err 
 		PortSecurityEnabled: true,
 		ProjectId:           vpc.ProjectId,
 	}}
-	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30001/project/"+projectId+"/vpcs", "POST", vpcBody, nil)
+	returnMessage, returnErr := http.RequestCall("vpcmanager-service.default.svc.NodePort.local:9001/project/"+projectId+"/vpcs", "POST", vpcBody, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
 		return "", returnErr
@@ -60,7 +60,7 @@ func doSubnet(subnet *common_pb.InternalSubnetInfo, vpcId string, projectId stri
 		IpVersion: 4,
 		NetworkId: vpcId,
 	}}
-	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30002/project/"+projectId+"/subnets", "POST", subnetBody, nil)
+	returnMessage, returnErr := http.RequestCall("subnetmanager-service.default.svc.NodePort.local:9002/project/"+projectId+"/subnets", "POST", subnetBody, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
 		return "", returnErr
@@ -93,7 +93,7 @@ func doRouter(vpcId string, projectId string) (routerId string, err error) {
 		Status:         "BUILD",
 		TenantId:       "123456789",
 	}}
-	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30003/project/"+projectId+"/routers", "POST", routerBody, nil)
+	returnMessage, returnErr := http.RequestCall("routemanager-service.default.svc.NodePort.local:9003/project/"+projectId+"/routers", "POST", routerBody, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
 		return "", returnErr
@@ -109,7 +109,7 @@ func doRouter(vpcId string, projectId string) (routerId string, err error) {
 func doAttachRouter(routerId string, subnetId string, projectId string) error {
 	log.Println("doAttachRouter")
 	attachRouterBody := entities.AttachRouterStruct{SubnetId: subnetId}
-	url := "http://" + utils.ALCORURL + ":30003/project/" + projectId + "/routers/" + routerId + "/add_router_interface"
+	url := "routemanager-service.default.svc.NodePort.local:9003/project/" + projectId + "/routers/" + routerId + "/add_router_interface"
 	returnMessage, returnErr := http.RequestCall(url, "PUT", attachRouterBody, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
@@ -131,7 +131,7 @@ func doSg(sg *pb.InternalSecurityGroupInfo, projectId string) (string, error) {
 		SecurityGroupRules: nil,
 		TenantId:           sg.TenantId,
 	}}
-	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30008/project/"+projectId+"/security-groups", "POST", sgBody, nil)
+	returnMessage, returnErr := http.RequestCall("sgmanager-service.default.svc.NodePort.local:9008/project/"+projectId+"/security-groups", "POST", sgBody, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
 		return "", returnErr

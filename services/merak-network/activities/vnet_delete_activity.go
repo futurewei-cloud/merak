@@ -25,7 +25,7 @@ import (
 
 func getSubnetRouter(subnetId string, projectId string) (returnRouterId string, err error) {
 	log.Println("getSubnetRouter")
-	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30002/project/"+projectId+"/subnets/"+subnetId, "GET", "", nil)
+	returnMessage, returnErr := http.RequestCall("subnetmanager-service.default.svc.NodePort.local:9002/project/"+projectId+"/subnets/"+subnetId, "GET", "", nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
 		return "", returnErr
@@ -43,7 +43,7 @@ func removeInterfaceToNeutronRouter(subnetId string, routerId string, projectId 
 	payloadBody := entities.RemoveInterfaceToNeutronRouterBody{
 		SubnetId: subnetId,
 	}
-	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30003/project/"+projectId+"/routers/"+routerId+"/remove_router_interface", "PUT", payloadBody, nil)
+	returnMessage, returnErr := http.RequestCall("routemanager-service.default.svc.NodePort.local:9003/project/"+projectId+"/routers/"+routerId+"/remove_router_interface", "PUT", payloadBody, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
 		return "", returnErr
@@ -59,7 +59,7 @@ func removeInterfaceToNeutronRouter(subnetId string, routerId string, projectId 
 
 func deleteNeutronRouterByRouterId(routerId string, projectId string) (returnRouterId string, err error) {
 	log.Println("deleteNeutronRouterByRouterId")
-	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30003/project/"+projectId+"/routers/"+routerId, "DELETE", "", nil)
+	returnMessage, returnErr := http.RequestCall("routemanager-service.default.svc.NodePort.local:9003/project/"+projectId+"/routers/"+routerId, "DELETE", "", nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
 		return "", returnErr
@@ -74,7 +74,7 @@ func deleteNeutronRouterByRouterId(routerId string, projectId string) (returnRou
 }
 func deleteSubnet(subnetId string, projectId string) (returnSubnetId string, err error) {
 	log.Println("deleteSubnet")
-	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30002/project/"+projectId+"/subnets/"+subnetId, "DELETE", "", nil)
+	returnMessage, returnErr := http.RequestCall("subnetmanager-service.default.svc.NodePort.local:9002/project/"+projectId+"/subnets/"+subnetId, "DELETE", "", nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
 		return "", returnErr
@@ -87,7 +87,7 @@ func deleteSubnet(subnetId string, projectId string) (returnSubnetId string, err
 
 func deleteVpc(vpcId string, projectId string) (returnVpcId string, err error) {
 	log.Println("deleteVpc")
-	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30001/project/"+projectId+"/vpcs/"+vpcId, "DELETE", "", nil)
+	returnMessage, returnErr := http.RequestCall("vpcmanager-service.default.svc.NodePort.local:9001/project/"+projectId+"/vpcs/"+vpcId, "DELETE", "", nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
 		return "", returnErr
@@ -100,7 +100,7 @@ func deleteVpc(vpcId string, projectId string) (returnVpcId string, err error) {
 
 func deleteSg(sgId string, projectId string) (returnSgId string, err error) {
 	log.Println("deleteSg")
-	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30008/project/"+projectId+"/security-groups/"+sgId, "DELETE", "", nil)
+	returnMessage, returnErr := http.RequestCall("sgmanager-service.default.svc.NodePort.local:9008/project/"+projectId+"/security-groups/"+sgId, "DELETE", "", nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
 		return "", returnErr
@@ -123,7 +123,7 @@ func deleteNode(netConfigId string) (err error) {
 	log.Printf("returnMessage %s", returnJson)
 
 	for _, node := range returnJson {
-		_, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30007/nodes/"+node.NodeID, "DELETE", nil, nil)
+		_, returnErr := http.RequestCall("nodemanager-service.default.svc.NodePort.local:9007/nodes/"+node.NodeID, "DELETE", nil, nil)
 		if returnErr != nil {
 			log.Printf("returnErr %s", returnErr)
 			return returnErr

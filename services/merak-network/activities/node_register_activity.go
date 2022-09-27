@@ -43,7 +43,7 @@ func RegisterNode(compute []*common_pb.InternalComputeInfo, netConfigId string) 
 		nodeInfo.Hosts = append(nodeInfo.Hosts, nodeBody)
 	}
 	log.Printf("nodeInfo: %s", nodeInfo)
-	returnMessage, returnErr := http.RequestCall("http://"+utils.ALCORURL+":30007/nodes/bulk", "POST", nodeInfo, nil)
+	returnMessage, returnErr := http.RequestCall("nodemanager-service.default.svc.NodePort.local:9007/nodes/bulk", "POST", nodeInfo, nil)
 	if returnErr != nil {
 		log.Printf("returnErr %s", returnErr)
 		return "", returnErr
