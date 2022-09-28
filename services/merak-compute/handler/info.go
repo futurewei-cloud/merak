@@ -17,58 +17,56 @@ package handler
 import (
 	"context"
 	"log"
+	"strconv"
 
 	commonPB "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
-	"github.com/futurewei-cloud/merak/services/merak-compute/common"
-	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/info"
-	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
+	constants "github.com/futurewei-cloud/merak/services/common"
 )
 
 func caseInfo(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
 	log.Println("Operation Info")
 
-	retrypolicy := &temporal.RetryPolicy{
-		InitialInterval:    common.TEMPORAL_WF_RETRY_INTERVAL,
-		BackoffCoefficient: common.TEMPORAL_WF_BACKOFF,
-		MaximumInterval:    common.TEMPORAL_WF_MAX_INTERVAL,
-		MaximumAttempts:    common.TEMPORAL_WF_MAX_ATTEMPT,
+	ids := RedisClient.SMembers(ctx, constants.COMPUTE_REDIS_VM_SET)
+	if ids.Err() != nil {
+		log.Println("Unable to get VM IDs from redis", ids.Err())
+
+		return &pb.ReturnComputeMessage{
+			ReturnCode:    commonPB.ReturnCode_FAILED,
+			ReturnMessage: "Unable to get node IDs from redis",
+		}, ids.Err()
+	}
+	vms := []*pb.InternalVMInfo{}
+	log.Println("Success in getting VM IDs!")
+	for _, vmID := range ids.Val() {
+		vm := pb.InternalVMInfo{
+			// TODO: Write a helper to check error before returning Val for each redis HGet
+			Id:              RedisClient.HGet(ctx, vmID, "id").Val(),
+			Name:            RedisClient.HGet(ctx, vmID, "name").Val(),
+			VpcId:           RedisClient.HGet(ctx, vmID, "vpc").Val(),
+			Ip:              RedisClient.HGet(ctx, vmID, "ip").Val(),
+			SecurityGroupId: RedisClient.HGet(ctx, vmID, "sg").Val(),
+			SubnetId:        RedisClient.HGet(ctx, vmID, "subnetID").Val(),
+			DefaultGateway:  RedisClient.HGet(ctx, vmID, "gw").Val(),
+			Host:            RedisClient.HGet(ctx, vmID, "hostname").Val(),
+			RemoteId:        RedisClient.HGet(ctx, vmID, "remoteID").Val(),
+		}
+		status, err := strconv.Atoi(RedisClient.HGet(ctx, vmID, "status").Val())
+		if err != nil {
+			log.Println("Failed to convert status string to int!", err)
+			return &pb.ReturnComputeMessage{
+				ReturnCode:    commonPB.ReturnCode_FAILED,
+				ReturnMessage: "Failed to convert status string to int!",
+				Vms:           vms,
+			}, err
+		}
+		vm.Status = commonPB.Status(status)
+		vms = append(vms, &vm)
 	}
 
-	workflowOptions = client.StartWorkflowOptions{
-		ID:                       common.VM_INFO_WORKFLOW_ID,
-		TaskQueue:                common.VM_TASK_QUEUE,
-		WorkflowTaskTimeout:      common.TEMPORAL_WF_TASK_TIMEOUT,
-		WorkflowExecutionTimeout: common.TEMPORAL_WF_EXEC_TIMEOUT,
-		WorkflowRunTimeout:       common.TEMPORAL_WF_RUN_TIMEOUT,
-		RetryPolicy:              retrypolicy,
-	}
-	// Start VM Info Workflow
-	var result pb.ReturnComputeMessage
-	log.Println("Executing VM Info Workflow!")
-	we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, info.Info)
-	if err != nil {
-		return &pb.ReturnComputeMessage{
-			ReturnMessage: "Unable to execute info workflow",
-			ReturnCode:    commonPB.ReturnCode_FAILED,
-		}, err
-	}
-	log.Println("Started workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
-
-	// Sync get results of workflow
-	err = we.Get(context.Background(), &result)
-	if err != nil {
-		return &pb.ReturnComputeMessage{
-			ReturnMessage: result.GetReturnMessage(),
-			ReturnCode:    commonPB.ReturnCode_FAILED,
-			Vms:           result.GetVms(),
-		}, err
-	}
-	log.Println("Workflow result:", result.ReturnMessage)
 	return &pb.ReturnComputeMessage{
-		ReturnMessage: result.GetReturnMessage(),
-		ReturnCode:    result.GetReturnCode(),
-		Vms:           result.GetVms(),
-	}, err
+		ReturnCode:    commonPB.ReturnCode_OK,
+		ReturnMessage: "Success!",
+		Vms:           vms,
+	}, nil
 }
