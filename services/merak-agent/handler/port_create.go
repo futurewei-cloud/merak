@@ -63,7 +63,7 @@ type updatePort struct {
 	BindingHostID string `json:"binding:host_id"`
 }
 
-func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
+func casePortCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
 
 	log.Println("Create Minimal Port")
 	vmInfo := pb.ReturnPortInfo{

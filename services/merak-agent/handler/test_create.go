@@ -16,64 +16,37 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
+	"os/exec"
+	"strconv"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	test_pb "github.com/futurewei-cloud/merak/api/proto/v1/ntest"
 )
 
-type Server struct {
-	pb.UnimplementedMerakAgentServiceServer
-}
+func caseTestCreatePing(ctx context.Context, in *pb.InternalTestConfig) (*pb.AgentReturnTestInfo, error) {
 
-var RemoteServer string
+	log.Println("Create Test")
 
-func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
-	log.Println("Received on PortHandler", in)
-
-	// Parse input d
-	switch op := in.OperationType; op {
-	case common_pb.OperationType_CREATE:
-		log.Println("Operation Create")
-		return casePortCreate(ctx, in)
-
-	case common_pb.OperationType_UPDATE:
-
-		log.Println("Update Unimplemented")
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Update Unimplemented",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-			Port:          nil,
-		}, errors.New("update unimplemented")
-
-	case common_pb.OperationType_DELETE:
-
-		log.Println("Operation Delete")
-		return casePortDelete(ctx, in)
-
-	default:
-		log.Println("Unknown Operation")
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Unknown Operation",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, errors.New("unknown operation")
-	}
-}
-
-func (s *Server) TestHandler(ctx context.Context, in *pb.InternalTestConfig) (*pb.AgentReturnTestInfo, error) {
-	log.Println("Received on TestHandler", in)
-
-	// Parse input d
-	switch op := in.TestType; op {
-	case test_pb.TestType_PING:
-		log.Println("Operation Ping!")
-		return caseTestCreatePing(ctx, in)
-	default:
-		log.Println("Unknown Operation")
+	// Create Device
+	log.Println("Pinging " + in.DestIp)
+	cmd := exec.Command("bash", "-c", "ping -c 1 "+in.DestIp)
+	err := cmd.Run()
+	var exerr *exec.ExitError
+	if errors.As(err, &exerr) {
+		fmt.Printf("Ping failed!: %d\n", exerr.ExitCode())
 		return &pb.AgentReturnTestInfo{
-			ReturnMessage: "Unknown Operation",
+			ReturnMessage: "Ping failed! " + strconv.Itoa(exerr.ExitCode()),
 			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, errors.New("unknown operation")
+			Status:        test_pb.TestStatus_FAILED,
+		}, err
 	}
+
+	return &pb.AgentReturnTestInfo{
+		ReturnMessage: "Ping Success! " + strconv.Itoa(exerr.ExitCode()),
+		ReturnCode:    common_pb.ReturnCode_OK,
+		Status:        test_pb.TestStatus_PASSED,
+	}, err
 }

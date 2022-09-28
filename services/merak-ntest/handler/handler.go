@@ -18,60 +18,33 @@ import (
 	"errors"
 	"log"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	test_pb "github.com/futurewei-cloud/merak/api/proto/v1/ntest"
+	pb "github.com/futurewei-cloud/merak/api/proto/v1/ntest"
+	"github.com/go-redis/redis/v9"
+	"go.temporal.io/sdk/client"
 )
 
+var workflowOptions client.StartWorkflowOptions
+var TemporalClient client.Client
+var RedisClient redis.Client
+
 type Server struct {
-	pb.UnimplementedMerakAgentServiceServer
+	pb.UnimplementedMeraknTestServiceServer
 }
 
-var RemoteServer string
+func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalTestConfiguration) (*pb.ReturnTestMessage, error) {
+	log.Println("Received on ComputeHandler", in)
 
-func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
-	log.Println("Received on PortHandler", in)
-
-	// Parse input d
 	switch op := in.OperationType; op {
+	case common_pb.OperationType_INFO:
+		return caseInfo(ctx, in)
 	case common_pb.OperationType_CREATE:
-		log.Println("Operation Create")
-		return casePortCreate(ctx, in)
-
-	case common_pb.OperationType_UPDATE:
-
-		log.Println("Update Unimplemented")
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Update Unimplemented",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-			Port:          nil,
-		}, errors.New("update unimplemented")
-
+		return caseCreate(ctx, in)
 	case common_pb.OperationType_DELETE:
-
-		log.Println("Operation Delete")
-		return casePortDelete(ctx, in)
-
+		return caseDelete(ctx, in)
 	default:
 		log.Println("Unknown Operation")
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Unknown Operation",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, errors.New("unknown operation")
-	}
-}
-
-func (s *Server) TestHandler(ctx context.Context, in *pb.InternalTestConfig) (*pb.AgentReturnTestInfo, error) {
-	log.Println("Received on TestHandler", in)
-
-	// Parse input d
-	switch op := in.TestType; op {
-	case test_pb.TestType_PING:
-		log.Println("Operation Ping!")
-		return caseTestCreatePing(ctx, in)
-	default:
-		log.Println("Unknown Operation")
-		return &pb.AgentReturnTestInfo{
+		return &pb.ReturnTestMessage{
 			ReturnMessage: "Unknown Operation",
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 		}, errors.New("unknown operation")

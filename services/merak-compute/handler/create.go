@@ -149,6 +149,7 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 			RetryPolicy: retrypolicy,
 		}
 		log.Println("Executing VM Create Workflow with VMs ", vms.Val())
+
 		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create, vms.Val())
 		if err != nil {
 			return &pb.ReturnComputeMessage{

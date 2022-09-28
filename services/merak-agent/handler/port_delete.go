@@ -26,7 +26,7 @@ import (
 	constants "github.com/futurewei-cloud/merak/services/common"
 )
 
-func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
+func casePortDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
 	log.Println("Send Delete Port Request to Alcor")
 
 	req, err := http.NewRequest(http.MethodDelete, "http://"+RemoteServer+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports/"+in.Remoteid, bytes.NewBuffer(nil))

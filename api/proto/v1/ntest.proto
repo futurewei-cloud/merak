@@ -19,43 +19,54 @@ service MeraknTestService {
     rpc TestHandler (InternalTestConfiguration) returns (ReturnTestMessage) {}
 }
 
-enum TestStatus {
-  NONE = 0;
-  RUNNING = 1;
-  PASSED = 2;
-  FAILED = 3;
+message InternalTestConfiguration {
+    common.OperationType operation_type = 1;
+    repeated InternalVMTestInfo vms = 2;
 }
+
+//Input
 
 enum TestType {
-  PINGALL = 0;
-}
-
-message InternalTestConfiguration {
-    TestType test_type = 1;
-}
-
-message InternalTestInfo {
-    string id = 1;
-    TestType test_type = 2;
-    repeated InternalVMHost hosts = 3;
+  PING = 0;
 }
 
 message InternalVMHost {
-    string name = 1;
-    string ip = 2;
-    repeated InternalVMTestInfo vms = 3;
+    string id = 1;
+    int32 port = 2;
 }
 
+
 message InternalVMTestInfo {
-    string name = 1;
-    string id = 2;
+    InternalVMHost src = 1;
+    InternalVMHost dest = 2;
+    TestType test_type = 3;
+}
+
+//Output
+message InternalVMHostInfo {
+    string id = 1;
+    string name = 2;
     string ip = 3;
-    TestStatus results = 4;
+    int32 port = 4;
+    string host = 5;
+}
+
+message InternalVMTestResult {
+    InternalVMHostInfo src = 1;
+    InternalVMHostInfo dest = 2;
+    TestType test_type = 3;
+    TestStatus status = 4;
+}
+
+enum TestStatus {
+  RUNNING = 0;
+  PASSED = 1;
+  FAILED = 2;
 }
 
 
 message ReturnTestMessage {
     common.ReturnCode return_code = 1;
     string return_message = 2;
-    InternalTestInfo results = 3;
+    repeated InternalVMTestResult results = 3;
 }
