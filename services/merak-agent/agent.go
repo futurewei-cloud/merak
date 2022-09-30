@@ -21,11 +21,13 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-agent/handler"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 )
 
 var (
@@ -68,9 +70,22 @@ func main() {
 	if err != nil {
 		log.Fatalln("ERROR: Failed to listen", err)
 	}
+
+	enforcement := keepalive.EnforcementPolicy{
+		MinTime:             5 * time.Second,
+		PermitWithoutStream: true,
+	}
+	kpServerParam := keepalive.ServerParameters{
+		Time:    30 * time.Second,
+		Timeout: 90 * time.Second,
+	}
+
 	gRPCServer := grpc.NewServer(
 		grpc.MaxSendMsgSize(constants.GRPC_MAX_SEND_MSG_SIZE),
-		grpc.MaxRecvMsgSize(constants.GRPC_MAX_RECV_MSG_SIZE))
+		grpc.MaxRecvMsgSize(constants.GRPC_MAX_RECV_MSG_SIZE),
+		grpc.KeepaliveEnforcementPolicy(enforcement),
+		grpc.KeepaliveParams(kpServerParam))
+
 	pb.RegisterMerakAgentServiceServer(gRPCServer, &handler.Server{})
 	log.Printf("Starting gRPC server. Listening at %v", lis.Addr())
 	if err := gRPCServer.Serve(lis); err != nil {

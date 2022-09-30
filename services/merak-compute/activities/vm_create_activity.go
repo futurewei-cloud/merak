@@ -43,9 +43,7 @@ func VmCreate(ctx context.Context, vmID string) error {
 		logger.Info("Failed to dial gRPC server address: "+agent_address.String(), err)
 		return err
 	}
-
 	client := agent_pb.NewMerakAgentServiceClient(conn)
-	logger.Info("Sending to agent at" + podIP)
 	port := agent_pb.InternalPortConfig{
 		OperationType: commonPB.OperationType_CREATE,
 		Name:          common.RedisClient.HGet(ctx, vmID, "name").Val(),
@@ -58,21 +56,21 @@ func VmCreate(ctx context.Context, vmID string) error {
 		Cidr:          common.RedisClient.HGet(ctx, vmID, "cidr").Val(),
 		Hostname:      common.RedisClient.HGet(ctx, vmID, "hostname").Val(),
 	}
+	logger.Info("Sending to agent vmID " + vmID + " at " + podIP + " message " + port.String())
 	resp, err := client.PortHandler(ctx, &port)
 	if err != nil {
-		logger.Error("Unable to create vm on" + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
+		logger.Error("Unable to create vm ID " + vmID + " name " + port.Name + " on " + podIP + " Reason: " + err.Error() + "\n")
 		if err := common.RedisClient.HSet(
 			ctx,
 			vmID,
 			"status",
 			"5",
 		).Err(); err != nil {
-			logger.Info("Failed to add vm response to DB!")
+			logger.Error("Failed to add vm response to DB!")
 			return err
 		}
 		return err
 	}
-
 	// Update DB with device information
 	if resp.ReturnCode == commonPB.ReturnCode_OK {
 		ip := resp.Port.GetIp()
