@@ -49,4 +49,25 @@ ___
 
 `ansible-playbook -i aws-host pull_image.yml`  
 
+## Install Linkerd:  
+___
+
+To install Linkerd, can following the link or commands below:  
+
+https://linkerd.io/2.12/getting-started/
+
+- Install the Linkerd CLI:  
+  - `curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh`  
+- Export the Linkerd path:  
+  - `export PATH=$PATH:/home/ubuntu/.linkerd2/bin`  
+-  Validate Kubernetes cluster:
+  - `linkerd check --pre`  
+- Install Linkerd:  
+  - `linkerd install --crds | kubectl apply -f -`  
+  - `linkerd install | kubectl apply -f -`  
+- Check if Linkerd is installed properly:  
+  - `linkerd check`  
+
+
+
 
