@@ -52,7 +52,7 @@ ___
 ## Install Linkerd:  
 ___
 
-To install Linkerd, can following the link or commands below:  
+To install Linkerd, can follow the link or commands below:  
 
 https://linkerd.io/2.12/getting-started/
 
