@@ -68,6 +68,15 @@ https://linkerd.io/2.12/getting-started/
 - Check if Linkerd is installed properly:  
   - `linkerd check`  
 
+## Install Meshnet  
+___  
+
+```  
+git clone https://github.com/networkop/meshnet-cni.git  
+cd meshnet  
+kubectl apply -k manifests/base  
+```  
+
 
 
 
