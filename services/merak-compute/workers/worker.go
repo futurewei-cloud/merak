@@ -73,8 +73,11 @@ func main() {
 
 	w := worker.New(c, common.VM_TASK_QUEUE, worker.Options{})
 	w.RegisterWorkflow(create.Create)
+	w.RegisterWorkflow(create.GenerateVMs)
 	w.RegisterWorkflow(delete.Delete)
 	w.RegisterActivity(activities.VmCreate)
+	w.RegisterActivity(activities.VmGenerate)
+	w.RegisterActivity(activities.VmDelete)
 	w.RegisterActivity(activities.VmDelete)
 	log.Println("Registered VM Workflows and activities.")
 	log.Println("Starting VM Worker.")
