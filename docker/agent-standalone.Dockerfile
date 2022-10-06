@@ -9,9 +9,10 @@
 #     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-module := services
+FROM golang:buster
 
-submodules := proto merak-compute scenario-manager merak-agent merak-network merak-topo merak-agent-standalone
--include $(patsubst %, $(module)/%/module.mk, $(submodules))
-
-all:: $(submodules)
+# Merak
+WORKDIR /
+RUN mkdir -p /merak-bin
+COPY services/merak-agent-standalone/build/merak-agent /merak-bin/merak-agent
+ENTRYPOINT [ "/merak-bin/merak-agent" ]

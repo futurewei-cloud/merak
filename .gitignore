@@ -4,6 +4,7 @@ vendor
 .vscode
 services/merak-compute/build/*
 services/merak-agent/build/*
+services/merak-agent-standalone/build/*
 services/scenario-manager/build/*
 services/merak-topo/build/*
 services/merak-network/build/*
