@@ -39,29 +39,24 @@ func caseInfo(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Return
 	vms := []*pb.InternalVMInfo{}
 	log.Println("Success in getting VM IDs!")
 	for _, vmID := range ids.Val() {
-		vm := pb.InternalVMInfo{
-			// TODO: Write a helper to check error before returning Val for each redis HGet
-			Id:              RedisClient.HGet(ctx, vmID, "id").Val(),
-			Name:            RedisClient.HGet(ctx, vmID, "name").Val(),
-			VpcId:           RedisClient.HGet(ctx, vmID, "vpc").Val(),
-			Ip:              RedisClient.HGet(ctx, vmID, "ip").Val(),
-			SecurityGroupId: RedisClient.HGet(ctx, vmID, "sg").Val(),
-			SubnetId:        RedisClient.HGet(ctx, vmID, "subnetID").Val(),
-			DefaultGateway:  RedisClient.HGet(ctx, vmID, "gw").Val(),
-			Host:            RedisClient.HGet(ctx, vmID, "hostname").Val(),
-			RemoteId:        RedisClient.HGet(ctx, vmID, "remoteID").Val(),
-		}
-		status, err := strconv.Atoi(RedisClient.HGet(ctx, vmID, "status").Val())
-		if err != nil {
-			log.Println("Failed to convert status string to int!", err)
-			return &pb.ReturnComputeMessage{
-				ReturnCode:    commonPB.ReturnCode_FAILED,
-				ReturnMessage: "Failed to convert status string to int!",
-				Vms:           vms,
-			}, err
-		}
-		vm.Status = commonPB.Status(status)
-		vms = append(vms, &vm)
+		v := vmID
+		go func() {
+			vm := pb.InternalVMInfo{
+				// TODO: Write a helper to check error before returning Val for each redis HGet
+				Id:              RedisClient.HGet(ctx, v, "id").Val(),
+				Name:            RedisClient.HGet(ctx, v, "name").Val(),
+				VpcId:           RedisClient.HGet(ctx, v, "vpc").Val(),
+				Ip:              RedisClient.HGet(ctx, v, "ip").Val(),
+				SecurityGroupId: RedisClient.HGet(ctx, v, "sg").Val(),
+				SubnetId:        RedisClient.HGet(ctx, v, "subnetID").Val(),
+				DefaultGateway:  RedisClient.HGet(ctx, v, "gw").Val(),
+				Host:            RedisClient.HGet(ctx, v, "hostname").Val(),
+				RemoteId:        RedisClient.HGet(ctx, v, "remoteID").Val(),
+			}
+			status, _ := strconv.Atoi(RedisClient.HGet(ctx, v, "status").Val())
+			vm.Status = commonPB.Status(status)
+			vms = append(vms, &vm)
+		}()
 	}
 
 	return &pb.ReturnComputeMessage{

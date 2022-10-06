@@ -78,7 +78,6 @@ func main() {
 	w.RegisterActivity(activities.VmCreate)
 	w.RegisterActivity(activities.VmGenerate)
 	w.RegisterActivity(activities.VmDelete)
-	w.RegisterActivity(activities.VmDelete)
 	log.Println("Registered VM Workflows and activities.")
 	log.Println("Starting VM Worker.")
 	err = w.Run(worker.InterruptCh())
