@@ -11,7 +11,9 @@
 
 module := merak-ntest
 
-merak-ntest: ntest
+merak-ntest: ntest ntest-worker
 
 ntest:
 	$(GFLAGS) go build -o services/merak-ntest/build/merak-ntest services/merak-ntest/ntest.go
+ntest-worker:
+	$(GFLAGS) go build -o services/merak-ntest/build/merak-ntest-worker services/merak-ntest/workers/worker.go

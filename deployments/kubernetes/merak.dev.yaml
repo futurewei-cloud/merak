@@ -470,3 +470,78 @@ spec:
         ports:
         - containerPort: 6653
           name: openflow
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: merak-ntest-service
+  namespace: merak
+spec:
+  selector:
+    app: merak-ntest
+  ports:
+    - protocol: TCP
+      name: grpc
+      port: 40051
+      targetPort: ntest-grpc
+  type: ClusterIP
+---
+# Merak ntest Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: merak-ntest
+  namespace: merak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: merak-ntest
+  template:
+    metadata:
+      labels:
+        app: merak-ntest
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: merak-ntest
+        image: meraksim/merak-ntest:dev
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 40051
+            name: ntest-grpc
+        env:
+        - name: "TEMPORAL"
+          value: "temporaltest-frontend.default.svc.cluster.local"
+---
+# Merak Ntest Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: merak-ntest-worker
+  namespace: merak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: merak-ntest-worker
+  template:
+    metadata:
+      labels:
+        app: merak-ntest-worker
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: merak-ntest-worker
+        image: meraksim/merak-ntest-worker:dev
+        imagePullPolicy: Always
+        env:
+        - name: "TEMPORAL"
+          value: "temporaltest-frontend.default.svc.cluster.local"

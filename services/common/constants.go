@@ -5,15 +5,16 @@ const (
 	TEMPORAL_PORT    = 7233
 	TEMPORAL_ENV     = "TEMPORAL"
 
-	COMPUTE_GRPC_SERVER_PORT    = 40051
 	COMPUTE_GRPC_SERVER_ADDRESS = "merak-compute-service.merak.svc.cluster.local"
-	TOPLOGY_GRPC_SERVER_PORT    = 40052
+	COMPUTE_GRPC_SERVER_PORT    = 40051
 	TOPLOGY_GRPC_SERVER_ADDRESS = "merak-topology-service.merak.svc.cluster.local"
-	NETWORK_GRPC_SERVER_PORT    = 40053
+	TOPLOGY_GRPC_SERVER_PORT    = 40052
 	NETWORK_GRPC_SERVER_ADDRESS = "merak-network-service.merak.svc.cluster.local"
-	NTEST_GRPC_SERVER_PORT      = 40055
+	NETWORK_GRPC_SERVER_PORT    = 40053
 	NTEST_GRPC_SERVER_ADDRESS   = "merak-ntest-service.merak.svc.cluster.local"
-	AGENT_GRPC_SERVER_PORT      = 40054
+	NTEST_GRPC_SERVER_PORT      = 40055
+
+	AGENT_GRPC_SERVER_PORT = 40054
 
 	COMPUTE_REDIS_ADDRESS = "compute-redis-main.merak.svc.cluster.local"
 	COMPUTE_REDIS_PORT    = 30051

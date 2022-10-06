@@ -68,6 +68,7 @@ deploy-dev:
 	kubectl apply -f deployments/kubernetes/compute.dev.yaml
 	kubectl apply -f deployments/kubernetes/network.dev.yaml
 	kubectl apply -f deployments/kubernetes/topo.dev.yaml
+	kubectl apply -f deployments/kubernetes/ntest.dev.yaml
 
 .PHONY: docker-scenario
 docker-scenario:
@@ -128,12 +129,24 @@ docker-topo:
 	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
 	docker push meraksim/merak-topo:dev
 
+.PHONY: docker-ntest
+docker-compute:
+	make proto
+	make ntest
+	make ntest-worker
+	docker build -t meraksim/merak-ntest:dev -f docker/ntest.Dockerfile .
+	docker build -t meraksim/merak-ntest-worker:dev -f docker/ntest-worker.Dockerfile .
+	docker push meraksim/merak-ntest:dev
+	docker push meraksim/merak-ntest-worker:dev
+
 
 .PHONY: docker-all
 docker-all:
 	make
 	docker build -t meraksim/merak-compute:dev -f docker/compute.Dockerfile .
 	docker build -t meraksim/merak-compute-vm-worker:dev -f docker/compute-vm-worker.Dockerfile .
+	docker build -t meraksim/merak-ntest:dev -f docker/ntest.Dockerfile .
+	docker build -t meraksim/merak-ntest-worker:dev -f docker/ntest-worker.Dockerfile .
 	docker build -t meraksim/merak-agent:dev -f docker/agent.Dockerfile .
 	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
 	docker build -t meraksim/merak-network:dev -f docker/network.Dockerfile .
@@ -144,12 +157,16 @@ docker-all:
 	docker push meraksim/scenario-manager:dev
 	docker push meraksim/merak-network:dev
 	docker push meraksim/merak-topo:dev
+	docker push meraksim/merak-netst:dev
+	docker push meraksim/merak-ntest-worker:dev
 
 .PHONY: docker-all-ci
 docker-all-ci:
 	make
 	docker build -t meraksim/merak-compute:ci -f docker/compute.Dockerfile .
 	docker build -t meraksim/merak-compute-vm-worker:ci -f docker/compute-vm-worker.Dockerfile .
+	docker build -t meraksim/merak-ntest:ci -f docker/ntest.Dockerfile .
+	docker build -t meraksim/merak-ntest-worker:ci -f docker/ntest-worker.Dockerfile .
 	docker build -t meraksim/merak-topo:ci -f docker/topo.Dockerfile .
 	docker build -t meraksim/merak-network:ci -f docker/network.Dockerfile .
 	docker build -t meraksim/scenario-manager:ci -f docker/scenario.Dockerfile .
@@ -157,6 +174,8 @@ docker-all-ci:
 	docker push meraksim/merak-agent:ci
 	docker push meraksim/merak-compute:ci
 	docker push meraksim/merak-compute-vm-worker:ci
+	docker push meraksim/merak-netst:ci
+	docker push meraksim/merak-ntest-worker:ci
 	docker push meraksim/merak-network:ci
 	docker push meraksim/merak-topo:ci
 	docker push meraksim/scenario-manager:ci
@@ -167,6 +186,7 @@ docker-all-ci:
 clean:
 	rm -rf api/proto/v1/merak/*.pb.go
 	rm -rf services/merak-compute/build/*
+	rm -rf services/merak-ntest/build/*
 	rm -rf services/merak-agent/build/*
 	rm -rf services/scenario-manager/build/*
 	rm -rf services/merak-network/build/*
