@@ -157,7 +157,7 @@ docker-all:
 	docker push meraksim/scenario-manager:dev
 	docker push meraksim/merak-network:dev
 	docker push meraksim/merak-topo:dev
-	docker push meraksim/merak-netst:dev
+	docker push meraksim/merak-ntest:dev
 	docker push meraksim/merak-ntest-worker:dev
 
 .PHONY: docker-all-ci
@@ -174,7 +174,7 @@ docker-all-ci:
 	docker push meraksim/merak-agent:ci
 	docker push meraksim/merak-compute:ci
 	docker push meraksim/merak-compute-vm-worker:ci
-	docker push meraksim/merak-netst:ci
+	docker push meraksim/merak-ntest:ci
 	docker push meraksim/merak-ntest-worker:ci
 	docker push meraksim/merak-network:ci
 	docker push meraksim/merak-topo:ci
