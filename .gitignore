@@ -7,3 +7,4 @@ services/merak-agent/build/*
 services/scenario-manager/build/*
 services/merak-topo/build/*
 services/merak-network/build/*
+services/merak-ntest/build/*
