@@ -14,5 +14,5 @@ FROM golang:1.18-alpine
 # Merak
 WORKDIR /
 RUN mkdir -p /merak-bin
-COPY services/merak-compute/build/merak-ntest-worker /merak-bin/merak-ntest-worker
+COPY services/merak-ntest/build/merak-ntest-worker /merak-bin/merak-ntest-worker
 CMD [ "/merak-bin/merak-ntest-worker" ]
