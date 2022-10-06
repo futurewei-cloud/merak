@@ -15,13 +15,13 @@ package activities
 
 import (
 	"context"
-	"log"
 	"strconv"
 
 	commonPB "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
+	"go.temporal.io/sdk/activity"
 )
 
 // Deletes a VM given by the vmID
@@ -31,9 +31,12 @@ func VmGenerate(ctx context.Context,
 	subnet *commonPB.InternalSubnetInfo,
 	sg string,
 	i int, j int, k int) (*pb.InternalVMInfo, error) {
+	logger := activity.GetLogger(ctx)
+	suffix := strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
+	logger.Info("Starting create activity for VM v" + suffix)
 
 	vmID := pod.Id + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
-	suffix := strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
+
 	if err := common.RedisClient.SAdd(
 		ctx,
 		constants.COMPUTE_REDIS_VM_SET,
@@ -72,11 +75,11 @@ func VmGenerate(ctx context.Context,
 		Status:          commonPB.Status(1),
 	}
 	// Store VM to Pod list
-	log.Println("Added VM " + vmID + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(k+1) + " of " + strconv.Itoa(int(subnet.NumberVms)))
+	logger.Info("Added VM " + vmID + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(k+1) + " of " + strconv.Itoa(int(subnet.NumberVms)))
 	if err := common.RedisClient.LPush(ctx, "l"+pod.Id, vmID).Err(); err != nil {
-		log.Println("Failed to add pod -> vm mapping " + vmID)
+		logger.Info("Failed to add pod -> vm mapping " + vmID)
 		return &returnVM, nil
 	}
-	log.Println("Added pod -> vm mapping " + vmID)
+	logger.Info("Added pod -> vm mapping " + vmID)
 	return &returnVM, nil
 }

@@ -97,7 +97,7 @@ func GenerateVMs(ctx workflow.Context,
 	}
 	returnVMs := []*pb.InternalVMInfo{}
 	returnVM := pb.InternalVMInfo{}
-	logger.Info("Started all VMGenerate workflows for pod at" + pod.ContainerIp)
+	logger.Info("Started all VMGenerate workflows for pod at " + pod.ContainerIp)
 	for _, future := range futures {
 		err := future.Get(ctx, &returnVM)
 		logger.Info("Activity completed!")
