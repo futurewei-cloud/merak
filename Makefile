@@ -161,8 +161,8 @@ docker-all-ci:
 	docker push meraksim/merak-topo:ci
 	docker push meraksim/scenario-manager:ci
 
-.PHONY: kind-compute
-kind-compute:
+.PHONY: deploy-kind
+deploy-kind:
 	kind create cluster --config=configs/kind-config.yaml
 
 .PHONY: deploy-compute-test

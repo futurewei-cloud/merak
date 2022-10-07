@@ -22,6 +22,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
@@ -51,25 +52,31 @@ func main() {
 	var err error
 	log.Printf("Connecting to Temporal server at %s", sb.String())
 
-	handler.TemporalClient, err = client.Dial(client.Options{
-		HostPort: sb.String(),
-	})
-	if err != nil {
-		log.Fatalln("ERROR: Unable to create Temporal client", err)
-	}
-	log.Println("Successfully connected to Temporal!")
-	defer handler.TemporalClient.Close()
-
-	client, err := client.NewNamespaceClient(client.Options{HostPort: sb.String()})
+	namespaceClient, err := client.NewNamespaceClient(client.Options{HostPort: sb.String()})
 	if err != nil {
 		log.Fatalln("ERROR: Unable to create Temporal client for namespace creation", err)
 	}
-	err = client.Register(ctx, &workflowservice.RegisterNamespaceRequest{
-		Namespace: constants.TEMPORAL_NAMESPACE,
+	retention := time.Duration(time.Hour * 48)
+	err = namespaceClient.Register(ctx, &workflowservice.RegisterNamespaceRequest{
+		Namespace:                        constants.TEMPORAL_NAMESPACE,
+		WorkflowExecutionRetentionPeriod: &retention,
 	})
 	if err != nil {
 		log.Fatalln("ERROR: Unable to create Temporal namespace "+constants.TEMPORAL_NAMESPACE, err)
 	}
+	namespaceClient.Close()
+
+	log.Println("Successfully created created temporal namespace " + constants.TEMPORAL_NAMESPACE)
+
+	handler.TemporalClient, err = client.Dial(client.Options{
+		HostPort:  sb.String(),
+		Namespace: constants.TEMPORAL_NAMESPACE,
+	})
+	if err != nil {
+		log.Fatalln("ERROR: Unable to create Temporal client", err)
+	}
+	log.Println("Successfully connected to Temporal on namespace " + constants.TEMPORAL_NAMESPACE)
+	defer handler.TemporalClient.Close()
 
 	//Connect to Redis
 	var redisAddress strings.Builder

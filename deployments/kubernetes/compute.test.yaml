@@ -145,7 +145,7 @@ metadata:
 spec:
   containers:
   - name: merak-agent
-    image: meraksim/merak-agent:standalone3
+    image: meraksim/merak-agent:standalone-test
     securityContext:
         privileged: true
     ports:

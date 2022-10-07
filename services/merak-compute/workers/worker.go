@@ -44,12 +44,13 @@ func main() {
 	sb.WriteString(strconv.Itoa(constants.TEMPORAL_PORT))
 
 	c, err := client.Dial(client.Options{
-		HostPort: sb.String(),
+		HostPort:  sb.String(),
+		Namespace: constants.TEMPORAL_NAMESPACE,
 	})
 	if err != nil {
 		log.Fatalln("Unable to create client", err)
 	}
-	log.Println("Connected to Temporal!")
+	log.Println("Connected to Temporal namespace " + constants.TEMPORAL_NAMESPACE)
 	defer c.Close()
 
 	//Connect to Redis

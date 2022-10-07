@@ -5,7 +5,7 @@ const (
 	TEMPORAL_PORT      = 7233
 	TEMPORAL_ENV       = "TEMPORAL"
 	LOCALHOST          = "127.0.0.1"
-	TEMPORAL_NAMESPACE = "default"
+	TEMPORAL_NAMESPACE = "merak"
 
 	COMPUTE_GRPC_SERVER_ADDRESS         = "merak-compute-service.merak.svc.cluster.local"
 	COMPUTE_GRPC_SERVER_ADDRESS_DEFAULT = "merak-compute-service.default.svc.cluster.local"
