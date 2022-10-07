@@ -161,7 +161,16 @@ docker-all-ci:
 	docker push meraksim/merak-topo:ci
 	docker push meraksim/scenario-manager:ci
 
+.PHONY: kind-compute
+kind-compute:
+	kind create cluster --config=configs/kind-config.yaml
 
+.PHONY: deploy-compute-test
+deploy-compute-test:
+	kubectl apply -f deployments/kubernetes/compute.test.yaml
+.PHONY: delete-compute-test
+delete-compute-test:
+	kubectl delete -f deployments/kubernetes/compute.test.yaml
 
 .PHONY: clean
 clean:

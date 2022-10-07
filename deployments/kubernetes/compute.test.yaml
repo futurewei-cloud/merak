@@ -8,12 +8,15 @@
 #     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: merak
+---
 apiVersion: v1
 kind: Service
 metadata:
   name: merak-compute-service
-  namespace: merak
 spec:
   selector:
     app: merak-compute
@@ -29,7 +32,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: merak-compute
-  namespace: merak
 spec:
   replicas: 1
   selector:
@@ -60,9 +62,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: merak-compute-vm-worker
-  namespace: merak
 spec:
-  replicas: 5
+  replicas: 1
   selector:
     matchLabels:
       app: merak-compute-vm-worker
@@ -136,3 +137,66 @@ spec:
         ports:
         - containerPort: 6379
           name: compute-redis
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: merak-agent
+spec:
+  containers:
+  - name: merak-agent
+    image: meraksim/merak-agent:standalone3
+    securityContext:
+        privileged: true
+    ports:
+    - containerPort: 40054
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-driver
+spec:
+  containers:
+  - name: test-driver
+    image: meraksim/test-merak-compute:test
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporaltest-frontend
+spec:
+  selector:
+    app: temporalite
+  ports:
+    - protocol: TCP
+      name: temporaltest-frontend
+      port: 7233
+      targetPort: temporal
+  type: ClusterIP
+---
+# Merak Compute Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporalite
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temporalite
+  template:
+    metadata:
+      labels:
+        app: temporalite
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: temporalite
+        image: meraksim/temporalite:dev
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 7233
+            name: temporal

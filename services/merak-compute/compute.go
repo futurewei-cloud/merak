@@ -27,6 +27,7 @@ import (
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/handler"
 	"github.com/go-redis/redis/v9"
+	"go.temporal.io/api/workflowservice/v1"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc"
 )
@@ -41,7 +42,7 @@ func main() {
 	temporal_address, ok := os.LookupEnv(constants.TEMPORAL_ENV)
 	if !ok {
 		log.Println("Temporal environment variable not set, using default address.")
-		temporal_address = constants.TEMPORAL_ADDRESS
+		temporal_address = constants.LOCALHOST
 	}
 	var sb strings.Builder
 	sb.WriteString(temporal_address)
@@ -58,6 +59,17 @@ func main() {
 	}
 	log.Println("Successfully connected to Temporal!")
 	defer handler.TemporalClient.Close()
+
+	client, err := client.NewNamespaceClient(client.Options{HostPort: sb.String()})
+	if err != nil {
+		log.Fatalln("ERROR: Unable to create Temporal client for namespace creation", err)
+	}
+	err = client.Register(ctx, &workflowservice.RegisterNamespaceRequest{
+		Namespace: constants.TEMPORAL_NAMESPACE,
+	})
+	if err != nil {
+		log.Fatalln("ERROR: Unable to create Temporal namespace "+constants.TEMPORAL_NAMESPACE, err)
+	}
 
 	//Connect to Redis
 	var redisAddress strings.Builder

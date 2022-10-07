@@ -36,7 +36,7 @@ func main() {
 	temporal_address, ok := os.LookupEnv(constants.TEMPORAL_ENV)
 	if !ok {
 		log.Println("Temporal environment variable not set, using default address.")
-		temporal_address = constants.TEMPORAL_ADDRESS
+		temporal_address = constants.LOCALHOST
 	}
 	var sb strings.Builder
 	sb.WriteString(temporal_address)
