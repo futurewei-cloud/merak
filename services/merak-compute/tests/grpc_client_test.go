@@ -24,20 +24,36 @@ import (
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 func TestGrpcClient(t *testing.T) {
 	var compute_address strings.Builder
-	compute_address.WriteString(constants.COMPUTE_GRPC_SERVER_ADDRESS)
+	compute_address.WriteString(constants.COMPUTE_GRPC_SERVER_ADDRESS_DEFAULT)
 	compute_address.WriteString(":")
 	compute_address.WriteString(strconv.Itoa(constants.COMPUTE_GRPC_SERVER_PORT))
 	ctx := context.Background()
 	conn, err := grpc.Dial(compute_address.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		t.Fatalf("Failed to dial gRPC server address!: %v", err)
+		t.Fatalf("Failed to dial gRPC server address!: %v\n", err)
 	}
 	client := pb.NewMerakComputeServiceClient(conn)
 
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		t.Fatalf("Failed to get in cluster config!: %v\n", err)
+	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create kube client!: %v\n", err.Error())
+	}
+	kubePod, err := clientset.CoreV1().Pods("").Get(ctx, "merak-agent", metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("Failed to get merak-agent pod!\n")
+	}
+	t.Log("Found merak agent pod! " + kubePod.String())
 	var ip string = "10.244.0.91"
 	var hostname string = "merak-agent-55847876d9-rp5n8"
 
