@@ -49,13 +49,14 @@ func TestGrpcClient(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create kube client!: %v\n", err.Error())
 	}
-	kubePod, err := clientset.CoreV1().Pods("").Get(ctx, "merak-agent", metav1.GetOptions{})
+	kubePod, err := clientset.CoreV1().Pods("default").Get(ctx, "merak-agent", metav1.GetOptions{})
 	if err != nil {
-		t.Fatalf("Failed to get merak-agent pod!\n")
+		t.Fatalf("Failed to get merak-agent pod! %v\n", err)
 	}
-	t.Log("Found merak agent pod! " + kubePod.String())
-	var ip string = "10.244.0.91"
-	var hostname string = "merak-agent-55847876d9-rp5n8"
+	var ip string = kubePod.Status.PodIP
+	var hostname string = kubePod.Spec.Hostname
+
+	t.Log("Found merak agent pod at " + ip + "on node " + hostname)
 
 	pod0 := pb.InternalVMPod{
 		OperationType: common_pb.OperationType_CREATE,

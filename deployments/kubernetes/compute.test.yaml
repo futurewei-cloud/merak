@@ -13,6 +13,28 @@ kind: Namespace
 metadata:
   name: merak
 ---
+---
+# Test service account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: merak-compute
+  namespace: default
+---
+# Cluster role binding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: merak-compute
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: merak-compute
+    namespace: default
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -143,6 +165,7 @@ kind: Pod
 metadata:
   name: merak-agent
 spec:
+  serviceAccountName: merak-compute
   containers:
   - name: merak-agent
     image: meraksim/merak-agent:standalone-test
@@ -156,6 +179,7 @@ kind: Pod
 metadata:
   name: test-driver
 spec:
+  serviceAccountName: merak-compute
   containers:
   - name: test-driver
     image: meraksim/test-merak-compute:test
@@ -200,21 +224,3 @@ spec:
         ports:
           - containerPort: 7233
             name: temporal
-# Test service account
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: merak-compute
----
-# Cluster role binding
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: merak-compute
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-  - kind: ServiceAccount
-    name: merak-compute
