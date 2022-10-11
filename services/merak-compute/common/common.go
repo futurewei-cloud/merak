@@ -16,18 +16,20 @@ package common
 import (
 	"time"
 
+	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	"github.com/go-redis/redis/v9"
 )
 
 var RedisClient redis.Client
+var ClientMapGRPC map[string]agent_pb.MerakAgentServiceClient
 
 const (
 	TEMPORAL_SUCESS_CODE = "SUCCESS"
 	TEMPORAL_FAIL_CODE   = "FAILED"
 
-	TEMPORAL_WF_TASK_TIMEOUT = time.Second * 600
-	TEMPORAL_WF_EXEC_TIMEOUT = time.Second * 600
-	TEMPORAL_WF_RUN_TIMEOUT  = time.Second * 600
+	TEMPORAL_WF_TASK_TIMEOUT = time.Second * 6000
+	TEMPORAL_WF_EXEC_TIMEOUT = time.Second * 6000
+	TEMPORAL_WF_RUN_TIMEOUT  = time.Second * 6000
 
 	TEMPORAL_WF_RETRY_INTERVAL = time.Second
 	TEMPORAL_WF_BACKOFF        = 1

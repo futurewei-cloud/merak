@@ -39,8 +39,8 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 
 	log.Println("Operation Create")
 	returnVMs := []*pb.InternalVMInfo{}
-	returnVMChunk := []*pb.InternalVMInfo{}
 	// Add pods to DB
+	count := 0
 	for n, pod := range in.Config.Pods {
 		if err := RedisClient.HSet(
 			ctx,
@@ -67,14 +67,12 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 			}, err
 		}
 
-		// Execute VM creation on a per pod basis
-		// Send a list of VMs to the Workflow
 		workflowOptions = client.StartWorkflowOptions{
 			ID:          common.VM_GENERATE_WORKFLOW_ID + strconv.Itoa(n),
 			TaskQueue:   common.VM_TASK_QUEUE,
 			RetryPolicy: retrypolicy,
 		}
-		log.Println("Executing VM Generate Workflow")
+		log.Println("Executing VM Generate Workflow for pod at " + pod.ContainerIp)
 		we, err := TemporalClient.ExecuteWorkflow(context.Background(),
 			workflowOptions,
 			create.GenerateVMs,
@@ -88,9 +86,8 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 				Vms:           returnVMs,
 			}, err
 		}
-		log.Println("Started VMGenerate workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
 
-		err = we.Get(context.Background(), &returnVMChunk)
+		err = we.Get(context.Background(), nil)
 		if err != nil {
 			return &pb.ReturnComputeMessage{
 				ReturnMessage: "Failed to Generate all VMs",
@@ -98,7 +95,6 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 				Vms:           returnVMs,
 			}, err
 		}
-		returnVMs = append(returnVMs, returnVMChunk...)
 
 		// Get VM to pod list
 		vms := RedisClient.LRange(ctx, "l"+pod.Id, 0, -1)
@@ -118,8 +114,10 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 			TaskQueue:   common.VM_TASK_QUEUE,
 			RetryPolicy: retrypolicy,
 		}
-		log.Println("Executing VM Create Workflow with VMs ", vms.Val())
-		we, err = TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create, vms.Val())
+		num_vms := strconv.Itoa(len(vms.Val()))
+		count += len(vms.Val())
+		log.Println("Executing VM Create Workflow with VMs " + num_vms + " on pod at " + pod.ContainerIp)
+		_, err = TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create, vms.Val(), pod.ContainerIp)
 		if err != nil {
 			return &pb.ReturnComputeMessage{
 				ReturnMessage: "Unable to execute create workflow",
@@ -127,9 +125,13 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 				Vms:           returnVMs,
 			}, err
 		}
-		log.Println("Started Create workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
 	}
 
+	returnVM := pb.InternalVMInfo{
+		Id: "Started deployment for " + strconv.Itoa(count) + " VMs",
+	}
+	returnVMs = append(returnVMs, &returnVM)
+	log.Println("Started deployment for " + strconv.Itoa(count) + " VMs")
 	return &pb.ReturnComputeMessage{
 		ReturnMessage: "Successfully started all create workflows!",
 		ReturnCode:    commonPB.ReturnCode_OK,

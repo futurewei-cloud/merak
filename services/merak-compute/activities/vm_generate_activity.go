@@ -18,7 +18,6 @@ import (
 	"strconv"
 
 	commonPB "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/activity"
@@ -30,7 +29,7 @@ func VmGenerate(ctx context.Context,
 	vpc *commonPB.InternalVpcInfo,
 	subnet *commonPB.InternalSubnetInfo,
 	sg string,
-	i int, j int, k int) (*pb.InternalVMInfo, error) {
+	i int, j int, k int) error {
 	logger := activity.GetLogger(ctx)
 	suffix := strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
 	logger.Info("Starting create activity for VM v" + suffix)
@@ -42,7 +41,7 @@ func VmGenerate(ctx context.Context,
 		constants.COMPUTE_REDIS_VM_SET,
 		vmID,
 	).Err(); err != nil {
-		return nil, err
+		return err
 	}
 	if err := common.RedisClient.HSet(
 		ctx,
@@ -61,25 +60,14 @@ func VmGenerate(ctx context.Context,
 		"hostname", pod.Name,
 		"status", "1",
 	).Err(); err != nil {
-		return nil, err
+		return err
 	}
-	returnVM := pb.InternalVMInfo{
-		Id:              vmID,
-		Name:            "v" + suffix,
-		VpcId:           vpc.VpcId,
-		Ip:              "",
-		SecurityGroupId: sg,
-		SubnetId:        subnet.SubnetId,
-		DefaultGateway:  subnet.SubnetGw,
-		Host:            pod.Name,
-		Status:          commonPB.Status(1),
-	}
+
 	// Store VM to Pod list
 	logger.Info("Added VM " + vmID + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(k+1) + " of " + strconv.Itoa(int(subnet.NumberVms)))
 	if err := common.RedisClient.LPush(ctx, "l"+pod.Id, vmID).Err(); err != nil {
 		logger.Info("Failed to add pod -> vm mapping " + vmID)
-		return &returnVM, nil
+		return err
 	}
-	logger.Info("Added pod -> vm mapping " + vmID)
-	return &returnVM, nil
+	return nil
 }

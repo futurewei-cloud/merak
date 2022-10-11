@@ -56,7 +56,7 @@ func TestGrpcClient(t *testing.T) {
 	var ip string = kubePod.Status.PodIP
 	var hostname string = kubePod.Spec.Hostname
 
-	t.Log("Found merak agent pod at " + ip + "on node " + hostname)
+	t.Log("Found merak agent pod at " + ip + " on node " + hostname)
 
 	pod0 := pb.InternalVMPod{
 		OperationType: common_pb.OperationType_CREATE,
@@ -69,7 +69,7 @@ func TestGrpcClient(t *testing.T) {
 		SubnetId:   "8182a4d4-ffff-4ece-b3f0-8d36e3d88000",
 		SubnetCidr: "10.0.1.0/24",
 		SubnetGw:   "10.0.1.1",
-		NumberVms:  10,
+		NumberVms:  5000,
 	}
 	vpc := common_pb.InternalVpcInfo{
 		VpcId:     "9192a4d4-ffff-4ece-b3f0-8d36e3d88001",

@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 
+	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
@@ -33,6 +34,7 @@ import (
 var ctx = context.Background()
 
 func main() {
+	common.ClientMapGRPC = make(map[string]agent_pb.MerakAgentServiceClient)
 	temporal_address, ok := os.LookupEnv(constants.TEMPORAL_ENV)
 	if !ok {
 		log.Println("Temporal environment variable not set, using default address.")

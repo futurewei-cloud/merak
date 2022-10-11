@@ -168,7 +168,7 @@ spec:
   serviceAccountName: merak-compute
   containers:
   - name: merak-agent
-    image: meraksim/merak-agent:standalone-test
+    image: meraksim/merak-agent:standalone
     securityContext:
         privileged: true
     ports:

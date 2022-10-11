@@ -56,15 +56,19 @@ func main() {
 	if err != nil {
 		log.Fatalln("ERROR: Unable to create Temporal client for namespace creation", err)
 	}
-	retention := time.Duration(time.Hour * 48)
-	err = namespaceClient.Register(ctx, &workflowservice.RegisterNamespaceRequest{
-		Namespace:                        constants.TEMPORAL_NAMESPACE,
-		WorkflowExecutionRetentionPeriod: &retention,
-	})
+	_, err = namespaceClient.Describe(ctx, constants.TEMPORAL_NAMESPACE)
 	if err != nil {
-		log.Fatalln("ERROR: Unable to create Temporal namespace "+constants.TEMPORAL_NAMESPACE, err)
+		log.Println("Temporal namespace " + constants.TEMPORAL_NAMESPACE + " doesn't exist! Creating...")
+		retention := time.Duration(time.Hour * 48)
+		err = namespaceClient.Register(ctx, &workflowservice.RegisterNamespaceRequest{
+			Namespace:                        constants.TEMPORAL_NAMESPACE,
+			WorkflowExecutionRetentionPeriod: &retention,
+		})
+		if err != nil {
+			log.Fatalln("ERROR: Unable to create Temporal namespace "+constants.TEMPORAL_NAMESPACE, err)
+		}
+		namespaceClient.Close()
 	}
-	namespaceClient.Close()
 
 	log.Println("Successfully created created temporal namespace " + constants.TEMPORAL_NAMESPACE)
 

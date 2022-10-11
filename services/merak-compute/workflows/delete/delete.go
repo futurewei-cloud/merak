@@ -31,17 +31,17 @@ func Delete(ctx workflow.Context, vms []string, podID string) (err error) {
 		MaximumInterval:    common.TEMPORAL_ACTIVITY_MAX_INTERVAL,
 		MaximumAttempts:    common.TEMPORAL_ACTIVITY_MAX_ATTEMPT,
 	}
-	ao := workflow.ActivityOptions{
+	lao := workflow.LocalActivityOptions{
 		StartToCloseTimeout: common.TEMPORAL_ACTIVITY_TIMEOUT,
 		RetryPolicy:         retrypolicy,
 	}
 
-	ctx = workflow.WithActivityOptions(ctx, ao)
+	ctx = workflow.WithLocalActivityOptions(ctx, lao)
 	logger := workflow.GetLogger(ctx)
 
 	var futures []workflow.Future
 	for _, vm := range vms {
-		future := workflow.ExecuteActivity(ctx, activities.VmDelete, vm)
+		future := workflow.ExecuteLocalActivity(ctx, activities.VmDelete, vm)
 		futures = append(futures, future)
 	}
 	logger.Info("Started VmDelete workflows for vms" + strings.Join(vms, " "))
