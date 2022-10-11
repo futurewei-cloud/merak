@@ -67,33 +67,55 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 			}, err
 		}
 
-		workflowOptions = client.StartWorkflowOptions{
-			ID:          common.VM_GENERATE_WORKFLOW_ID + strconv.Itoa(n),
-			TaskQueue:   common.VM_TASK_QUEUE,
-			RetryPolicy: retrypolicy,
-		}
-		log.Println("Executing VM Generate Workflow for pod at " + pod.ContainerIp)
-		we, err := TemporalClient.ExecuteWorkflow(context.Background(),
-			workflowOptions,
-			create.GenerateVMs,
-			in.Config.VmDeploy.Vpcs,
-			pod,
-			in.Config.VmDeploy.Secgroups[0])
-		if err != nil {
-			return &pb.ReturnComputeMessage{
-				ReturnMessage: "Unable to execute VMGenerate workflow",
-				ReturnCode:    commonPB.ReturnCode_FAILED,
-				Vms:           returnVMs,
-			}, err
-		}
+		for i, vpc := range in.Config.VmDeploy.Vpcs {
+			for j, subnet := range vpc.Subnets {
+				for k := 0; k < int(subnet.NumberVms); k++ {
+					vmID := pod.Id + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
+					suffix := strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
+					if err := RedisClient.SAdd(
+						ctx,
+						constants.COMPUTE_REDIS_VM_SET,
+						vmID,
+					).Err(); err != nil {
+						return &pb.ReturnComputeMessage{
+							ReturnMessage: "Unable to VM to DB Hash Set",
+							ReturnCode:    commonPB.ReturnCode_FAILED,
+						}, err
+					}
+					if err := RedisClient.HSet(
+						ctx,
+						vmID,
+						"id", vmID,
+						"name", "v"+suffix,
+						"vpc", vpc.VpcId,
+						"tenantID", vpc.TenantId,
+						"projectID", vpc.ProjectId,
+						"subnetID", subnet.SubnetId,
+						"cidr", subnet.SubnetCidr,
+						"gw", subnet.SubnetGw,
+						"sg", in.Config.VmDeploy.Secgroups[0],
+						"hostIP", pod.ContainerIp,
+						"hostmac", pod.Mac,
+						"hostname", pod.Name,
+						"status", "1",
+					).Err(); err != nil {
+						return &pb.ReturnComputeMessage{
+							ReturnMessage: "Unable add VM to DB Hash Map",
+							ReturnCode:    commonPB.ReturnCode_FAILED,
+						}, err
+					}
 
-		err = we.Get(context.Background(), nil)
-		if err != nil {
-			return &pb.ReturnComputeMessage{
-				ReturnMessage: "Failed to Generate all VMs",
-				ReturnCode:    commonPB.ReturnCode_FAILED,
-				Vms:           returnVMs,
-			}, err
+					// Store VM to Pod list
+					if err := RedisClient.LPush(ctx, "l"+pod.Id, vmID).Err(); err != nil {
+						log.Println("Failed to add pod -> vm mapping " + vmID)
+						return &pb.ReturnComputeMessage{
+							ReturnMessage: "Unable add VM to pod list",
+							ReturnCode:    commonPB.ReturnCode_FAILED,
+							Vms:           returnVMs,
+						}, err
+					}
+				}
+			}
 		}
 
 		// Get VM to pod list
@@ -110,14 +132,17 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		// Execute VM creation on a per pod basis
 		// Send a list of VMs to the Workflow
 		workflowOptions = client.StartWorkflowOptions{
-			ID:          common.VM_CREATE_WORKFLOW_ID + strconv.Itoa(n),
-			TaskQueue:   common.VM_TASK_QUEUE,
-			RetryPolicy: retrypolicy,
+			ID:                       common.VM_CREATE_WORKFLOW_ID + strconv.Itoa(n),
+			TaskQueue:                common.VM_TASK_QUEUE,
+			RetryPolicy:              retrypolicy,
+			WorkflowExecutionTimeout: common.TEMPORAL_WF_EXEC_TIMEOUT,
+			WorkflowRunTimeout:       common.TEMPORAL_WF_RUN_TIMEOUT,
+			WorkflowTaskTimeout:      common.TEMPORAL_WF_TASK_TIMEOUT,
 		}
 		num_vms := strconv.Itoa(len(vms.Val()))
 		count += len(vms.Val())
 		log.Println("Executing VM Create Workflow with VMs " + num_vms + " on pod at " + pod.ContainerIp)
-		_, err = TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create, vms.Val(), pod.ContainerIp)
+		_, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create, vms.Val(), pod.ContainerIp)
 		if err != nil {
 			return &pb.ReturnComputeMessage{
 				ReturnMessage: "Unable to execute create workflow",
