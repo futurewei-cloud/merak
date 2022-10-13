@@ -39,7 +39,7 @@ func ConnectDatabase() error {
 	})
 
 	if err := client.Ping(Ctx).Err(); err != nil {
-		log.Printf("DB ConnectDatabase Issue: %s", err.Error())
+		log.Fatalf("DB ConnectDatabase Issue: %s", err.Error())
 		return err
 	}
 
