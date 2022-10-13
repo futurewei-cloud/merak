@@ -127,7 +127,7 @@ func main() {
 		OperationType: common_pb.OperationType_CREATE,
 		Id:            "2",
 		Name:          "Service 2",
-		Cmd:           "serviceIp",
+		Cmd:           "alcorIp",
 		Url:           "54.244.201.51",
 		Parameters:    []string{"Parameters"},
 		ReturnCode:    nil,

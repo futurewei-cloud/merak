@@ -45,7 +45,7 @@ func DoServices(services []*pb.InternalServiceInfo) (string, error) {
 					log.Printf("numberOfService %s", numberOfService)
 				}
 			}
-			if service.Cmd == "serviceIp" {
+			if service.Cmd == "alcorIp" {
 				utils.ALCORURL = service.Url
 				log.Printf("idServiceMap[currentId].Url %s", service.Url)
 				log.Printf("utils.ALCORURL %s", utils.ALCORURL)
