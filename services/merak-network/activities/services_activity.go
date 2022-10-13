@@ -17,6 +17,7 @@ import (
 	"fmt"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	"github.com/futurewei-cloud/merak/services/merak-network/http"
+	"github.com/futurewei-cloud/merak/services/merak-network/utils"
 	"log"
 	"os/exec"
 	"strings"
@@ -43,6 +44,11 @@ func DoServices(services []*pb.InternalServiceInfo) (string, error) {
 					runSequenceMap[service.Name] = strings.Split(service.WhenToRun, ":")[1]
 					log.Printf("numberOfService %s", numberOfService)
 				}
+			}
+			if service.Cmd == "serviceIp" {
+				utils.ALCORURL = service.Url
+				log.Printf("idServiceMap[currentId].Url %s", service.Url)
+				log.Printf("utils.ALCORURL %s", utils.ALCORURL)
 			}
 			if service.WhenToRun == "INIT" {
 				runIds = append(runIds, service.Name)
