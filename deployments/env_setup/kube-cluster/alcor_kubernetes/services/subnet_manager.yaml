@@ -1,0 +1,105 @@
+# MIT License
+# Copyright(c) 2020 Futurewei Cloud
+#
+#     Permission is hereby granted,
+#     free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+#     including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+#     to whom the Software is furnished to do so, subject to the following conditions:
+#
+#     The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+#     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+#     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: subnet-configmap
+  namespace: default
+data:
+  application.properties: |
+    ignite.thin.client.enable=true
+    ignite.kubeNamespace=ignite-alcor
+    ignite.kubeServiceName=ignite-alcor-service
+    ignite.host=ignite-alcor-service.ignite-alcor.svc.cluster.local
+    ignite.port=10800
+    logging.level.root=DEBUG
+    logging.level.org.springframework.web=info
+    logging.file.path=.
+    logging.type=file
+    apache.kafka.address=172.17.0.1:9092
+    microservices.vpc.service.url=http://vpcmanager-service.default.svc.cluster.local:9001/project/
+    microservices.mac.service.url=http://macmanager-service.default.svc.cluster.local:9005/macs
+    microservices.route.service.url=http://routemanager-service.default.svc.cluster.local:9003/
+    microservices.ip.service.url=http://ipmanager-service.default.svc.cluster.local:9004/ips/
+    microservices.port.service.url=http://portmanager-service.default.svc.cluster.local:9006/
+
+    rbac.policy.type=Enforced
+    management.health.redis.enabled=false
+
+    opentracing.jaeger.udp-sender.host=10.101.70.203
+    opentracing.jaeger.udp-sender.port=6831
+    opentracing.jaeger.const-sampler.decision=true
+    opentracing.jaeger.enabled=false
+    opentracing.jaeger.log-spans=true
+    opentracing.jaeger.enable-w3c-propagation=true
+    opentracing.jaeger.enable-b3-propagation=true
+    opentracing.jaeger.service-name=alcor-subnet
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: subnetmanager
+  name: subnetmanager
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: subnetmanager
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: subnetmanager
+    spec:
+      serviceAccountName: alcor-account
+      volumes:
+        - name: subnet-volume
+          configMap:
+            name: subnet-configmap
+            items:
+              - key: application.properties
+                path: application.properties
+      containers:
+        - image: yanmo96/subnet_manager:portmanagertest1 
+        #- image: fwnetworking/controller:subnet_manager-v0.3.0
+          name: subnetmanager-web
+          imagePullPolicy: IfNotPresent
+          command: ["java", "-jar", "/app/AlcorSubnetManager-0.1.0.jar", "--spring.config.location=/etc/subnet/application.properties"]
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: subnet-volume
+              mountPath: /etc/subnet
+          envFrom:
+            - configMapRef:
+                name: subnet-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: subnetmanager-service
+  namespace: default
+  labels:
+    name: subnetmanager-service
+spec:
+  type: NodePort
+  ports:
+    - port: 9002
+      targetPort: 8080
+      nodePort: 30002
+  selector:
+    app: subnetmanager
+

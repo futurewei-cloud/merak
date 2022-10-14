@@ -1,0 +1,146 @@
+# MIT License
+# Copyright(c) 2020 Futurewei Cloud
+#
+#     Permission is hereby granted,
+#     free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+#     including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+#     to whom the Software is furnished to do so, subject to the following conditions:
+#
+#     The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+#     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+#     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ignite-alcor-mac
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ignite-alcor-mac
+  namespace: ignite-alcor-mac
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ignite-alcor-mac
+  namespace: ignite-alcor-mac
+rules:
+  - apiGroups:
+      - ""
+    resources: # Here are resources you can access
+      - pods
+      - endpoints
+    verbs: # That is what you can do with them
+      - get
+      - list
+      - watch
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ignite-alcor-mac
+roleRef:
+  kind: ClusterRole
+  name: ignite-alcor-mac
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: ignite-alcor-mac
+    namespace: ignite-alcor-mac
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # The name must be equal to TcpDiscoveryKubernetesIpFinder.serviceName
+  name: ignite-alcor-mac-service
+  # The name must be equal to TcpDiscoveryKubernetesIpFinder.namespaceName
+  namespace: ignite-alcor-mac
+  labels:
+    app: ignite-alcor-mac
+spec:
+  type: LoadBalancer
+  ports:
+    - name: rest
+      port: 8080
+      targetPort: 8080
+    - name: sql
+      port: 10803
+      targetPort: 10800
+    - name: thinclients
+      port: 10900
+      targetPort: 10900
+  selector:
+    app: ignite-alcor-mac
+status:
+  loadBalancer: {}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: ignite-alcor-mac
+  name: ignite-alcor-mac
+  namespace: ignite-alcor-mac
+spec:
+  selector:
+    matchLabels:
+      app: ignite-alcor-mac
+  serviceName: ignite-alcor-mac-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ignite-alcor-mac
+    spec:
+      serviceAccountName: ignite-alcor-mac
+      containers:
+        - name: ignite-alcor-mac-node
+          image: yanmo96/ignite_alcor:aws
+          imagePullPolicy: IfNotPresent
+          #resources:
+            #requests:
+              #cpu: "16"
+          env:
+            - name: OPTION_LIBS
+              value: ignite-kubernetes,ignite-rest-http
+            - name: CONFIG_URI
+              value: https://raw.githubusercontent.com/futurewei-cloud/alcor/master/kubernetes/db/ignite/ignite_mac_config.xml
+            - name: IGNITE_QUIET
+              value: "false"
+            - name: JVM_OPTS
+              value: "-Djava.net.preferIPv4Stack=true"
+            #- name: JVM_OPTS
+              #value: "-Djava.net.preferIPv4Stack=true
+                      #-server 
+                      #-Xms20g
+                      #-Xmx20g
+                      #-XX:+AlwaysPreTouch
+                      #-XX:+UseG1GC
+                      #-XX:+ScavengeBeforeFullGC
+                      #-XX:+DisableExplicitGC"
+          ports:
+            - name: port8080
+              containerPort: 8080
+            - name: port11211
+              containerPort: 11211 # REST port number.
+            - name: port47100
+              containerPort: 47100 # communication SPI port number.
+            - name: port47500
+              containerPort: 47500 # discovery SPI port number.
+            - name: port49112
+              containerPort: 49112 # JMX port number.
+            - name: port10800
+              containerPort: 10800 # SQL port number.
+            - name: port10900
+              containerPort: 10900 # Thin clients port number.
+          volumeMounts:
+            - name: ignite-alcor-mac-config-volume
+              mountPath: /opt/mac
+      volumes:
+        - name: ignite-alcor-mac-config-volume
+          hostPath: 
+            path: /root/work/mac

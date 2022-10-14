@@ -77,6 +77,39 @@ cd meshnet
 kubectl apply -k manifests/base  
 ```  
 
+## Install Temporal
+___  
+```
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+git clone https://github.com/temporalio/helm-charts.git
+cd helm-charts/
+helm dependencies update
 
+helm install \
+    --set server.replicaCount=20 \
+    --set cassandra.config.cluster_size=5 \
+    --set prometheus.enabled=false \
+    --set grafana.enabled=false \
+    --set elasticsearch.enabled=false \
+    temporaltest . --timeout 25m
+    
+cd ~
+git clone https://github.com/temporalio/tctl.git
+cd tctl
+make
 
+# in a new window, or in screen run 
+kubectl port-forward services/temporaltest-frontend 7233:7233
 
+# back to the main window
+./tctl namespace register
+```
+
+## Install Alcor
+```
+# install alcor
+./alcor_kubernetes/createYaml.sh
+
+# after deploy run create default talble 
+./alcor_kubernetes/createDefaultTable.sh
+```

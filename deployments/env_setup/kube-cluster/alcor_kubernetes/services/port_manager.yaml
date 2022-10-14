@@ -1,0 +1,114 @@
+# MIT License
+# Copyright(c) 2020 Futurewei Cloud
+#
+#     Permission is hereby granted,
+#     free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+#     including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+#     to whom the Software is furnished to do so, subject to the following conditions:
+#
+#     The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+#     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+#     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: port-configmap
+  namespace: default
+data:
+  application.properties: |
+    ignite.thin.client.enable=true
+    ignite.kubeNamespace=ignite-alcor-port
+    ignite.kubeServiceName=ignite-alcor-port-service
+    ignite.host=ignite-alcor-port-service.ignite-alcor-port.svc.cluster.local
+    ignite.port=10802
+    server.max-http-header-size=16384
+    server.max-initial-line-length=65536
+
+    microservices.connectTimeout=300
+    microservices.readTimeout=300
+
+    protobuf.goal-state-message.version = 102
+    logging.level.root=INFO
+
+    microservices.vpc.service.url=http://vpcmanager-service.default.svc.cluster.local:9001
+    microservices.subnet.service.url=http://subnetmanager-service.default.svc.cluster.local:9002
+    microservices.ip.service.url=http://ipmanager-service.default.svc.cluster.local:9004/ips
+    microservices.mac.service.url=http://macmanager-service.default.svc.cluster.local:9005/macs
+    microservices.sg.service.url=http://sgmanager-service.default.svc.cluster.local:9008
+    microservices.route.service.url=http://routemanager-service.default.svc.cluster.local:9003/routes
+    microservices.router.service.url=http://routemanager-service.default.svc.cluster.local:9003
+    microservices.node.service.url=http://nodemanager-service.default.svc.cluster.local:9007/nodes
+    microservices.dataplane.service.url=http://dataplanemanager-service.default.svc.cluster.local:9010/network-configuration
+    microservices.elasticip.service.url=http://eipmanager-service.default.svc.cluster.local:9011
+    alcor.vif_type=ovs
+    Spring.mvc.async.request-timeout=30000
+
+    opentracing.jaeger.udp-sender.host=10.101.70.203
+    opentracing.jaeger.udp-sender.port=6831
+    opentracing.jaeger.const-sampler.decision=true
+    opentracing.jaeger.enabled=false
+    opentracing.jaeger.log-spans=true
+    opentracing.jaeger.enable-w3c-propagation=true
+    opentracing.jaeger.enable-b3-propagation=true
+    opentracing.jaeger.service-name=alcor-port
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: portmanager
+  name: portmanager
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: portmanager
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: portmanager
+    spec:
+      serviceAccountName: alcor-account
+      volumes:
+        - name: port-volume
+          configMap:
+            name: port-configmap
+            items:
+              - key: application.properties
+                path: application.properties
+      containers:
+        - image: yanmo96/portmanager:portmanagertest1_v2 
+        #- image: fwnetworking/controller:port_manager-v0.3.0
+          name: portmanager-web
+          imagePullPolicy: IfNotPresent
+          command: ["java", "-jar", "/app/AlcorPortManager-0.1.0.jar", "--spring.config.location=/etc/port/application.properties"]
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: port-volume
+              mountPath: /etc/port
+          envFrom:
+            - configMapRef:
+                name: port-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portmanager-service
+  namespace: default
+  labels:
+    name: portmanager-service
+spec:
+  type: NodePort
+  ports:
+    - port: 9006
+      targetPort: 8080
+      nodePort: 30006
+  selector:
+    app: portmanager
+
