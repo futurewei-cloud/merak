@@ -46,9 +46,11 @@ func DoServices(services []*pb.InternalServiceInfo) (string, error) {
 				}
 			}
 			if service.Cmd == "alcorIp" {
+				if service.Url == "" {
+					log.Printf("service.Url is empty")
+					return "service.Url is empty", nil
+				}
 				utils.ALCORURL = service.Url
-				log.Printf("idServiceMap[currentId].Url %s", service.Url)
-				log.Printf("utils.ALCORURL %s", utils.ALCORURL)
 			}
 			if service.WhenToRun == "INIT" {
 				runIds = append(runIds, service.Name)
