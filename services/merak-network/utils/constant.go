@@ -24,4 +24,4 @@ const SECURITYGROUP string = "securityGroup:"
 const NETCONFIG string = "netconfig:"
 const NODEGROUP string = "nodeGroup:"
 
-const ALCORURL string = "10.213.43.77"
+var ALCORURL = ""

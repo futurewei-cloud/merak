@@ -99,6 +99,7 @@ func (s *Server) NetConfigHandler(ctx context.Context, in *pb.InternalNetConfigI
 			}
 		}()
 
+		wg.Wait()
 		//compute info done
 		log.Println(in.Config.Computes)
 		wg.Add(1)
