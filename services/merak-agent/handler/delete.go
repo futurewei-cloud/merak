@@ -16,6 +16,7 @@ package handler
 import (
 	"bytes"
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os/exec"
@@ -44,22 +45,18 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println("Failed to delete port to Alcor!")
-		// Ignore delete-port failure for now
-
-		// return &pb.AgentReturnInfo{
-		// 	ReturnMessage: "Failed Delete port!",
-		// 	ReturnCode:    common_pb.ReturnCode_FAILED,
-		// }, err
+		return &pb.AgentReturnInfo{
+			ReturnMessage: "Failed Delete port!",
+			ReturnCode:    common_pb.ReturnCode_FAILED,
+		}, err
 	}
 	log.Println("VM Name: "+in.Name+" Port ID: "+in.Remoteid+" Response code from Alcor delete-port ", resp.StatusCode)
 	if resp.StatusCode != constants.HTTP_OK {
 		log.Println("Alcor failed to delete, response " + strconv.Itoa(resp.StatusCode))
-		// Ignore delete-port failure for now
-
-		// return &pb.AgentReturnInfo{
-		// 	ReturnMessage: "Failed to Delete Port ! Response Code: " + strconv.Itoa(resp.StatusCode),
-		// 	ReturnCode:    common_pb.ReturnCode_FAILED,
-		// }, errors.New("Failed to delete port! Response Code: " + strconv.Itoa(resp.StatusCode))
+		return &pb.AgentReturnInfo{
+			ReturnMessage: "Failed to Delete Port ! Response Code: " + strconv.Itoa(resp.StatusCode),
+			ReturnCode:    common_pb.ReturnCode_FAILED,
+		}, errors.New("Failed to delete port! Response Code: " + strconv.Itoa(resp.StatusCode))
 	}
 
 	log.Println("Deleting Namespace")

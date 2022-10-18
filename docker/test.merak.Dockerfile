@@ -9,12 +9,11 @@
 #     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-FROM golang:1.18-alpine
+FROM golang:bullseye
 
 # Merak
 COPY . /merak
 WORKDIR /merak
 RUN go mod download
-RUN apk add --no-cache git make bash gcc libc-dev
-ENTRYPOINT [ "tail" ]
-CMD [ "-f", "/dev/null" ]
+RUN apt update
+RUN apt install -y git make bash gcc libc-dev iproute2

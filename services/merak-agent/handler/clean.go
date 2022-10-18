@@ -25,7 +25,7 @@ import (
 func caseClean(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
 
 	log.Println("Deleting all namespace")
-	cmd := exec.Command("bash", "-c", "ip netns delete "+in.Name)
+	cmd := exec.Command("bash", "-c", "for name in $(ip netns ls); do ip netns delete $name; done")
 	stdout, err := cmd.Output()
 	if err != nil {
 		log.Println("Namespace deletion failed! " + string(stdout))
@@ -34,8 +34,21 @@ func caseClean(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnI
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 		}, err
 	}
+
+	log.Println("Deleting all tap devices")
+	cmd = exec.Command("bash", "-c", "for name in $(ovs-vsctl list-ports br-int | grep tap); do ovs-vsctl del-port br-int $name; done")
+	stdout, err = cmd.Output()
+	if err != nil {
+		log.Println("Failed to delete all tap devices " + string(stdout))
+		return &pb.AgentReturnInfo{
+			ReturnMessage: "Failed to delete tap " + string(stdout),
+			ReturnCode:    common_pb.ReturnCode_FAILED,
+		}, err
+	}
+
+	//ip l | grep -Po "bridgev\d+:"
 	log.Println("Deleting all bridge devices")
-	cmd = exec.Command("bash", "-c", "ip link delete bridge"+in.Name)
+	cmd = exec.Command("bash", "-c", "for name in $( ip l | grep -Po 'bridgev\\d+:'); do ip l delete ${name::-1} ; done")
 	stdout, err = cmd.Output()
 	if err != nil {
 		log.Println("Bridge deletion failed! " + string(stdout))
@@ -44,18 +57,6 @@ func caseClean(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnI
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 		}, err
 	}
-
-	log.Println("Getting all tap names")
-	cmd = exec.Command("bash", "-c", "ovs-vsctl del-port br-int ")
-	stdout, err = cmd.Output()
-	if err != nil {
-		log.Println("Failed to delete tap " + string(stdout))
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed to delete tap " + string(stdout),
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, err
-	}
-
 	return &pb.AgentReturnInfo{
 		ReturnMessage: "Delete Success!",
 		ReturnCode:    common_pb.ReturnCode_OK,
