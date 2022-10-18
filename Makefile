@@ -135,6 +135,10 @@ docker-topo:
 	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
 	docker push meraksim/merak-topo:dev
 
+.PHONY: docker-test
+docker-test:
+	docker build -t meraksim/test-merak-compute:test -f docker/test.merak.Dockerfile .
+	docker push meraksim/test-merak-compute:test
 
 .PHONY: docker-all
 docker-all:
@@ -168,7 +172,10 @@ docker-all-ci:
 	docker push meraksim/merak-topo:ci
 	docker push meraksim/scenario-manager:ci
 
-
+.PHONY: deploy-kind
+deploy-kind:
+	kind create cluster --config=configs/kind-config.yaml
+	kubectl apply -f deployments/kubernetes/compute.test.yaml
 
 .PHONY: clean
 clean:

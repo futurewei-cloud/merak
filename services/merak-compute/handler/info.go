@@ -38,32 +38,20 @@ func caseInfo(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Return
 	}
 	vms := []*pb.InternalVMInfo{}
 	log.Println("Success in getting VM IDs!")
+	count := 0
+	total := 0
 	for _, vmID := range ids.Val() {
-		vm := pb.InternalVMInfo{
-			// TODO: Write a helper to check error before returning Val for each redis HGet
-			Id:              RedisClient.HGet(ctx, vmID, "id").Val(),
-			Name:            RedisClient.HGet(ctx, vmID, "name").Val(),
-			VpcId:           RedisClient.HGet(ctx, vmID, "vpc").Val(),
-			Ip:              RedisClient.HGet(ctx, vmID, "ip").Val(),
-			SecurityGroupId: RedisClient.HGet(ctx, vmID, "sg").Val(),
-			SubnetId:        RedisClient.HGet(ctx, vmID, "subnetID").Val(),
-			DefaultGateway:  RedisClient.HGet(ctx, vmID, "gw").Val(),
-			Host:            RedisClient.HGet(ctx, vmID, "hostname").Val(),
-			RemoteId:        RedisClient.HGet(ctx, vmID, "remoteID").Val(),
+		status, _ := strconv.Atoi(RedisClient.HGet(ctx, vmID, "status").Val())
+		if commonPB.Status(status) == commonPB.Status_DONE {
+			count += 1
 		}
-		status, err := strconv.Atoi(RedisClient.HGet(ctx, vmID, "status").Val())
-		if err != nil {
-			log.Println("Failed to convert status string to int!", err)
-			return &pb.ReturnComputeMessage{
-				ReturnCode:    commonPB.ReturnCode_FAILED,
-				ReturnMessage: "Failed to convert status string to int!",
-				Vms:           vms,
-			}, err
-		}
-		vm.Status = commonPB.Status(status)
-		vms = append(vms, &vm)
+		total += 1
 	}
-
+	returnVM := pb.InternalVMInfo{
+		Id: strconv.Itoa(count) + " out of " + strconv.Itoa(total) + " done!",
+	}
+	log.Println(strconv.Itoa(count) + " out of " + strconv.Itoa(total) + " done!")
+	vms = append(vms, &returnVM)
 	return &pb.ReturnComputeMessage{
 		ReturnCode:    commonPB.ReturnCode_OK,
 		ReturnMessage: "Success!",

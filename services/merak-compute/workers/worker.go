@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 
+	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
@@ -33,10 +34,11 @@ import (
 var ctx = context.Background()
 
 func main() {
+	common.ClientMapGRPC = make(map[string]agent_pb.MerakAgentServiceClient)
 	temporal_address, ok := os.LookupEnv(constants.TEMPORAL_ENV)
 	if !ok {
 		log.Println("Temporal environment variable not set, using default address.")
-		temporal_address = constants.TEMPORAL_ADDRESS
+		temporal_address = constants.LOCALHOST
 	}
 	var sb strings.Builder
 	sb.WriteString(temporal_address)
@@ -44,12 +46,13 @@ func main() {
 	sb.WriteString(strconv.Itoa(constants.TEMPORAL_PORT))
 
 	c, err := client.Dial(client.Options{
-		HostPort: sb.String(),
+		HostPort:  sb.String(),
+		Namespace: constants.TEMPORAL_NAMESPACE,
 	})
 	if err != nil {
 		log.Fatalln("Unable to create client", err)
 	}
-	log.Println("Connected to Temporal!")
+	log.Println("Connected to Temporal namespace " + constants.TEMPORAL_NAMESPACE)
 	defer c.Close()
 
 	//Connect to Redis
@@ -73,8 +76,10 @@ func main() {
 
 	w := worker.New(c, common.VM_TASK_QUEUE, worker.Options{})
 	w.RegisterWorkflow(create.Create)
+	w.RegisterWorkflow(create.GenerateVMs)
 	w.RegisterWorkflow(delete.Delete)
 	w.RegisterActivity(activities.VmCreate)
+	w.RegisterActivity(activities.VmGenerate)
 	w.RegisterActivity(activities.VmDelete)
 	log.Println("Registered VM Workflows and activities.")
 	log.Println("Starting VM Worker.")

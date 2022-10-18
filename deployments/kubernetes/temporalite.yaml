@@ -9,21 +9,43 @@
 #     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
-FROM ubuntu:18.04
-
-# Install Go
-ENV GOLANG_VERSION 1.18.3
-RUN apt update && apt install -y build-essential wget
-RUN wget https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz
-RUN tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-amd64.tar.gz
-RUN rm -f go${GOLANG_VERSION}.linux-amd64.tar.gz
-ENV PATH "$PATH:/usr/local/go/bin"
-
-# ACA
-WORKDIR /
-RUN mkdir -p /merak-bin
-COPY services/merak-agent/plugins/alcor-control-agent/build/bin/AlcorControlAgent /merak-bin/AlcorControlAgent
-COPY services/merak-agent/plugins/alcor-control-agent/build/aca-machine-init.sh /aca-machine-init.sh
-RUN apt install -y git make bash gcc libc-dev openvswitch-switch=2.9.8-0ubuntu0.18.04.2 libevent-dev rsyslog
-RUN ./aca-machine-init.sh
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporaltest-frontend
+spec:
+  selector:
+    app: temporalite
+  ports:
+    - protocol: TCP
+      name: temporaltest-frontend
+      port: 7233
+      targetPort: temporal
+  type: ClusterIP
+---
+# Merak Compute Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporalite
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temporalite
+  template:
+    metadata:
+      labels:
+        app: temporalite
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: temporalite
+        image: meraksim/temporalite:dev
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 7233
+            name: temporal

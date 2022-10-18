@@ -40,6 +40,7 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 	log.Println("Operation Create")
 	returnVMs := []*pb.InternalVMInfo{}
 	// Add pods to DB
+	count := 0
 	for n, pod := range in.Config.Pods {
 		if err := RedisClient.HSet(
 			ctx,
@@ -66,7 +67,6 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 			}, err
 		}
 
-		// Generate VMs for each VPC and Subnet
 		for i, vpc := range in.Config.VmDeploy.Vpcs {
 			for j, subnet := range vpc.Subnets {
 				for k := 0; k < int(subnet.NumberVms); k++ {
@@ -104,20 +104,8 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 							ReturnCode:    commonPB.ReturnCode_FAILED,
 						}, err
 					}
-					returnVM := pb.InternalVMInfo{
-						Id:              vmID,
-						Name:            "v" + suffix,
-						VpcId:           vpc.VpcId,
-						Ip:              "",
-						SecurityGroupId: in.Config.VmDeploy.Secgroups[0],
-						SubnetId:        subnet.SubnetId,
-						DefaultGateway:  subnet.SubnetGw,
-						Host:            pod.Name,
-						Status:          commonPB.Status(1),
-					}
-					returnVMs = append(returnVMs, &returnVM)
+
 					// Store VM to Pod list
-					log.Println("Added VM " + vmID + " for vpc " + vpc.VpcId + " for subnet " + subnet.SubnetId + " vm number " + strconv.Itoa(k+1) + " of " + strconv.Itoa(int(subnet.NumberVms)))
 					if err := RedisClient.LPush(ctx, "l"+pod.Id, vmID).Err(); err != nil {
 						log.Println("Failed to add pod -> vm mapping " + vmID)
 						return &pb.ReturnComputeMessage{
@@ -126,10 +114,10 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 							Vms:           returnVMs,
 						}, err
 					}
-					log.Println("Added pod -> vm mapping " + vmID)
 				}
 			}
 		}
+
 		// Get VM to pod list
 		vms := RedisClient.LRange(ctx, "l"+pod.Id, 0, -1)
 		if vms.Err() != nil {
@@ -144,12 +132,17 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		// Execute VM creation on a per pod basis
 		// Send a list of VMs to the Workflow
 		workflowOptions = client.StartWorkflowOptions{
-			ID:          common.VM_CREATE_WORKFLOW_ID + strconv.Itoa(n),
-			TaskQueue:   common.VM_TASK_QUEUE,
-			RetryPolicy: retrypolicy,
+			ID:                       common.VM_CREATE_WORKFLOW_ID + strconv.Itoa(n),
+			TaskQueue:                common.VM_TASK_QUEUE,
+			RetryPolicy:              retrypolicy,
+			WorkflowExecutionTimeout: common.TEMPORAL_WF_EXEC_TIMEOUT,
+			WorkflowRunTimeout:       common.TEMPORAL_WF_RUN_TIMEOUT,
+			WorkflowTaskTimeout:      common.TEMPORAL_WF_TASK_TIMEOUT,
 		}
-		log.Println("Executing VM Create Workflow with VMs ", vms.Val())
-		we, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create, vms.Val())
+		num_vms := strconv.Itoa(len(vms.Val()))
+		count += len(vms.Val())
+		log.Println("Executing VM Create Workflow with VMs " + num_vms + " on pod at " + pod.ContainerIp)
+		_, err := TemporalClient.ExecuteWorkflow(context.Background(), workflowOptions, create.Create, vms.Val(), pod.ContainerIp)
 		if err != nil {
 			return &pb.ReturnComputeMessage{
 				ReturnMessage: "Unable to execute create workflow",
@@ -157,9 +150,13 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 				Vms:           returnVMs,
 			}, err
 		}
-		log.Println("Started Create workflow WorkflowID "+we.GetID()+" RunID ", we.GetRunID())
 	}
 
+	returnVM := pb.InternalVMInfo{
+		Id: "Started deployment for " + strconv.Itoa(count) + " VMs",
+	}
+	returnVMs = append(returnVMs, &returnVM)
+	log.Println("Started deployment for " + strconv.Itoa(count) + " VMs")
 	return &pb.ReturnComputeMessage{
 		ReturnMessage: "Successfully started all create workflows!",
 		ReturnCode:    commonPB.ReturnCode_OK,

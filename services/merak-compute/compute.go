@@ -22,11 +22,13 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/handler"
 	"github.com/go-redis/redis/v9"
+	"go.temporal.io/api/workflowservice/v1"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc"
 )
@@ -41,7 +43,7 @@ func main() {
 	temporal_address, ok := os.LookupEnv(constants.TEMPORAL_ENV)
 	if !ok {
 		log.Println("Temporal environment variable not set, using default address.")
-		temporal_address = constants.TEMPORAL_ADDRESS
+		temporal_address = constants.LOCALHOST
 	}
 	var sb strings.Builder
 	sb.WriteString(temporal_address)
@@ -50,13 +52,34 @@ func main() {
 	var err error
 	log.Printf("Connecting to Temporal server at %s", sb.String())
 
+	namespaceClient, err := client.NewNamespaceClient(client.Options{HostPort: sb.String()})
+	if err != nil {
+		log.Fatalln("ERROR: Unable to create Temporal client for namespace creation", err)
+	}
+	_, err = namespaceClient.Describe(ctx, constants.TEMPORAL_NAMESPACE)
+	if err != nil {
+		log.Println("Temporal namespace " + constants.TEMPORAL_NAMESPACE + " doesn't exist! Creating...")
+		retention := time.Duration(time.Hour * 48)
+		err = namespaceClient.Register(ctx, &workflowservice.RegisterNamespaceRequest{
+			Namespace:                        constants.TEMPORAL_NAMESPACE,
+			WorkflowExecutionRetentionPeriod: &retention,
+		})
+		if err != nil {
+			log.Fatalln("ERROR: Unable to create Temporal namespace "+constants.TEMPORAL_NAMESPACE, err)
+		}
+		namespaceClient.Close()
+	}
+
+	log.Println("Successfully created created temporal namespace " + constants.TEMPORAL_NAMESPACE)
+
 	handler.TemporalClient, err = client.Dial(client.Options{
-		HostPort: sb.String(),
+		HostPort:  sb.String(),
+		Namespace: constants.TEMPORAL_NAMESPACE,
 	})
 	if err != nil {
 		log.Fatalln("ERROR: Unable to create Temporal client", err)
 	}
-	log.Println("Successfully connected to Temporal!")
+	log.Println("Successfully connected to Temporal on namespace " + constants.TEMPORAL_NAMESPACE)
 	defer handler.TemporalClient.Close()
 
 	//Connect to Redis

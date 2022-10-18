@@ -129,6 +129,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			Port:          &vmInfo,
 		}, err
 	}
+
 	tapName := "tap" + portID[:11]
 	vmInfo = pb.ReturnPortInfo{
 		Ip:       ip,
@@ -366,7 +367,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	log.Println("Sending update_port request to Alcor")
+	log.Println("Sending update_port request to Alcor for " + in.Name + " ID " + portID)
 	client := &http.Client{}
 	resp, err = client.Do(req)
 	if err != nil {

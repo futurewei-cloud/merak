@@ -14,32 +14,52 @@ Copyright(c) 2022 Futurewei Cloud
 package create
 
 import (
+	"strconv"
 	"strings"
 
+	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
+	commonPB "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
-func Create(ctx workflow.Context, vms []string) (err error) {
+func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 	retrypolicy := &temporal.RetryPolicy{
 		InitialInterval:    common.TEMPORAL_ACTIVITY_RETRY_INTERVAL,
 		BackoffCoefficient: common.TEMPORAL_ACTIVITY_BACKOFF,
 		MaximumInterval:    common.TEMPORAL_ACTIVITY_MAX_INTERVAL,
 		MaximumAttempts:    common.TEMPORAL_ACTIVITY_MAX_ATTEMPT,
 	}
-	ao := workflow.ActivityOptions{
+	lao := workflow.LocalActivityOptions{
 		StartToCloseTimeout: common.TEMPORAL_ACTIVITY_TIMEOUT,
 		RetryPolicy:         retrypolicy,
 	}
-
-	ctx = workflow.WithActivityOptions(ctx, ao)
+	ctx = workflow.WithLocalActivityOptions(ctx, lao)
 	logger := workflow.GetLogger(ctx)
+
+	// Workflow is on a per pod basis
+	// Each "VMCreate" workflow populates a table mapping podIP -> gRPC client
+	var agent_address strings.Builder
+	agent_address.WriteString(podIP)
+	logger.Info("Connecting to pod at: " + podIP)
+	agent_address.WriteString(":")
+	agent_address.WriteString(strconv.Itoa(constants.AGENT_GRPC_SERVER_PORT))
+	conn, err := grpc.Dial(agent_address.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.Info("Failed to dial gRPC server address: "+agent_address.String(), err)
+		return err
+	}
+	client := agent_pb.NewMerakAgentServiceClient(conn)
+	common.ClientMapGRPC[podIP] = client
 
 	var futures []workflow.Future
 	for _, vm := range vms {
-		future := workflow.ExecuteActivity(ctx, activities.VmCreate, vm)
+		future := workflow.ExecuteLocalActivity(ctx, activities.VmCreate, vm, podIP)
 		logger.Info("VmCreate activity started for vm_id " + vm)
 		futures = append(futures, future)
 	}
@@ -49,7 +69,58 @@ func Create(ctx workflow.Context, vms []string) (err error) {
 		err = future.Get(ctx, nil)
 		logger.Info("Activity completed!")
 		if err != nil {
-			return
+			return nil
+		}
+	}
+	logger.Info("All activities completed")
+	defer conn.Close()
+	return nil
+}
+
+func GenerateVMs(ctx workflow.Context,
+	vpcs []*commonPB.InternalVpcInfo,
+	pod *commonPB.InternalComputeInfo,
+	sg string) error {
+	retrypolicy := &temporal.RetryPolicy{
+		InitialInterval:    common.TEMPORAL_ACTIVITY_RETRY_INTERVAL,
+		BackoffCoefficient: common.TEMPORAL_ACTIVITY_BACKOFF,
+		MaximumInterval:    common.TEMPORAL_ACTIVITY_MAX_INTERVAL,
+		MaximumAttempts:    common.TEMPORAL_ACTIVITY_MAX_ATTEMPT,
+	}
+	lao := workflow.LocalActivityOptions{
+		StartToCloseTimeout: common.TEMPORAL_ACTIVITY_TIMEOUT,
+		RetryPolicy:         retrypolicy,
+	}
+
+	ctx = workflow.WithLocalActivityOptions(ctx, lao)
+	logger := workflow.GetLogger(ctx)
+
+	var futures []workflow.Future
+	for i, vpc := range vpcs {
+		for j, subnet := range vpc.Subnets {
+			for k := 0; k < int(subnet.NumberVms); k++ {
+				future := workflow.ExecuteLocalActivity(
+					ctx,
+					activities.VmGenerate,
+					pod,
+					vpc,
+					subnet,
+					sg,
+					i,
+					j,
+					k)
+				logger.Info("VmGenerate activity started for subnet " + subnet.SubnetId)
+				futures = append(futures, future)
+			}
+		}
+	}
+
+	logger.Info("Started all VMGenerate workflows for pod at " + pod.ContainerIp)
+	for _, future := range futures {
+		err := future.Get(ctx, nil)
+		logger.Info("Activity completed!")
+		if err != nil {
+			return err
 		}
 	}
 	logger.Info("All activities completed")
