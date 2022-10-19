@@ -40,6 +40,28 @@ func main() {
 		log.Println("Temporal environment variable not set, using default address.")
 		temporal_address = constants.LOCALHOST
 	}
+	rps, ok := os.LookupEnv(constants.TEMPORAL_CONCURRENCY_ENV)
+	if !ok {
+		log.Println("RPS environment variable not set, using default.")
+		rps = "1000"
+	}
+	rps_int, err := strconv.ParseFloat(rps, 64)
+	if err != nil {
+		log.Fatalln("RPS " + rps + " is NaN!")
+	}
+	concurrency, ok := os.LookupEnv(constants.TEMPORAL_CONCURRENCY_ENV)
+	if !ok {
+		log.Println("Concurrency environment variable not set, using default.")
+		concurrency = "1000"
+	}
+	concurrency_int, err := strconv.Atoi(concurrency)
+	if err != nil {
+		log.Fatalln("Concurrency " + concurrency + " is NaN!")
+	}
+
+	log.Println("Starting worker with " +
+		rps + " activities/sec and max " +
+		concurrency + " concurrent activities")
 	var sb strings.Builder
 	sb.WriteString(temporal_address)
 	sb.WriteString(":")
@@ -74,7 +96,10 @@ func main() {
 	defer common.RedisClient.Close()
 	log.Println("Connected to DB!")
 
-	w := worker.New(c, common.VM_TASK_QUEUE, worker.Options{})
+	w := worker.New(c, common.VM_TASK_QUEUE, worker.Options{
+		MaxConcurrentActivityExecutionSize: concurrency_int,
+		WorkerActivitiesPerSecond:          rps_int,
+	})
 	w.RegisterWorkflow(create.Create)
 	w.RegisterWorkflow(create.GenerateVMs)
 	w.RegisterWorkflow(delete.Delete)

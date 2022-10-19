@@ -1,11 +1,13 @@
 package constants
 
 const (
-	TEMPORAL_ADDRESS   = "temporaltest-frontend.default.svc.cluster.local"
-	TEMPORAL_PORT      = 7233
-	TEMPORAL_ENV       = "TEMPORAL"
-	LOCALHOST          = "127.0.0.1"
-	TEMPORAL_NAMESPACE = "merak"
+	TEMPORAL_ADDRESS         = "temporaltest-frontend.default.svc.cluster.local"
+	TEMPORAL_PORT            = 7233
+	TEMPORAL_ENV             = "TEMPORAL"
+	TEMPORAL_RPS_ENV         = "RPS"
+	TEMPORAL_CONCURRENCY_ENV = "CONCURRENCY"
+	LOCALHOST                = "127.0.0.1"
+	TEMPORAL_NAMESPACE       = "merak"
 
 	COMPUTE_GRPC_SERVER_ADDRESS         = "merak-compute-service.merak.svc.cluster.local"
 	COMPUTE_GRPC_SERVER_ADDRESS_DEFAULT = "merak-compute-service.default.svc.cluster.local"

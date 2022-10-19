@@ -82,6 +82,10 @@ spec:
         env:
         - name: "TEMPORAL"
           value: "temporaltest-frontend.default.svc.cluster.local"
+        - name: RPS
+          value: "1000"
+        - name: CONCURRENCY
+          value: "1000"
 # Single Redis Leader.
 # TODO: Add followers and follower service
 ---
