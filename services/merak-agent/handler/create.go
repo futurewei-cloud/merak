@@ -233,7 +233,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 	}
 
 	log.Println("Bringing up loopback")
-	cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" ifconfig lo up")
+	cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" ip link set dev lo up")
 	stdout, err = cmd.Output()
 	if err != nil {
 		log.Println("Failed to bring up loopback! " + string(stdout))
@@ -245,7 +245,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 	}
 
 	log.Println("Assigning MAC " + mac + " address to veth")
-	cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" ifconfig in"+in.Name+" hw ether "+mac)
+	cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" ip link set dev in"+in.Name+" address "+mac)
 	stdout, err = cmd.Output()
 	if err != nil {
 		log.Println("Assign mac! " + string(stdout))
@@ -257,7 +257,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 	}
 
 	log.Println("Adding default Gateway " + in.Gw)
-	cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" route add default gw "+in.Gw)
+	cmd = exec.Command("bash", "-c", "ip netns exec "+in.Name+" ip r add default via "+in.Gw)
 	stdout, err = cmd.Output()
 	if err != nil {
 		log.Println("Failed add default gw! " + string(stdout))
