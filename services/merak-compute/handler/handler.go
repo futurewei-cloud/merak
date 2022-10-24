@@ -48,6 +48,10 @@ func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfi
 
 		return caseDelete(ctx, in)
 
+	case common_pb.OperationType_CLEAN:
+
+		return caseClean(ctx, in)
+
 	default:
 		log.Println("Unknown Operation")
 		return &pb.ReturnComputeMessage{

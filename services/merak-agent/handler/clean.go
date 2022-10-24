@@ -15,52 +15,50 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"log"
+	"os/exec"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 )
 
-type Server struct {
-	pb.UnimplementedMerakAgentServiceServer
-}
+func caseClean(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
 
-var RemoteServer string
-
-func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
-	log.Println("Received on PortHandler", in)
-
-	// Parse input d
-	switch op := in.OperationType; op {
-	case common_pb.OperationType_CREATE:
-		log.Println("Operation Create")
-		return caseCreate(ctx, in)
-
-	case common_pb.OperationType_UPDATE:
-
-		log.Println("Update Unimplemented")
+	log.Println("Deleting all namespace")
+	cmd := exec.Command("bash", "-c", "ip netns delete "+in.Name)
+	stdout, err := cmd.Output()
+	if err != nil {
+		log.Println("Namespace deletion failed! " + string(stdout))
 		return &pb.AgentReturnInfo{
-			ReturnMessage: "Update Unimplemented",
+			ReturnMessage: "Namespace deletion failed! " + string(stdout),
 			ReturnCode:    common_pb.ReturnCode_FAILED,
-			Port:          nil,
-		}, errors.New("update unimplemented")
-
-	case common_pb.OperationType_DELETE:
-
-		log.Println("Operation Delete")
-		return caseDelete(ctx, in)
-
-	case common_pb.OperationType_CLEAN:
-
-		log.Println("Operation Clean")
-		return caseClean(ctx, in)
-
-	default:
-		log.Println("Unknown Operation")
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Unknown Operation",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, errors.New("unknown operation")
+		}, err
 	}
+	log.Println("Deleting all bridge devices")
+	cmd = exec.Command("bash", "-c", "ip link delete bridge"+in.Name)
+	stdout, err = cmd.Output()
+	if err != nil {
+		log.Println("Bridge deletion failed! " + string(stdout))
+		return &pb.AgentReturnInfo{
+			ReturnMessage: "Bridge deletion failed! " + string(stdout),
+			ReturnCode:    common_pb.ReturnCode_FAILED,
+		}, err
+	}
+
+	log.Println("Getting all tap names")
+	cmd = exec.Command("bash", "-c", "ovs-vsctl del-port br-int ")
+	stdout, err = cmd.Output()
+	if err != nil {
+		log.Println("Failed to delete tap " + string(stdout))
+		return &pb.AgentReturnInfo{
+			ReturnMessage: "Failed to delete tap " + string(stdout),
+			ReturnCode:    common_pb.ReturnCode_FAILED,
+		}, err
+	}
+
+	return &pb.AgentReturnInfo{
+		ReturnMessage: "Delete Success!",
+		ReturnCode:    common_pb.ReturnCode_OK,
+	}, nil
+
 }
