@@ -1,0 +1,10 @@
+# OVS-Test
+
+This tool is for testing the total concurrent ovs add-port commands on a single vhost.
+
+You can build this tool with ```make```
+
+You can run the binary as follows
+```./ovs-test number_of_calls rps```
+
+For example ```./ovs-test 1000 30``` will make 1000 total add-port commands at a rate of 30/second
