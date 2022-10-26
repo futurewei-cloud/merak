@@ -27,6 +27,7 @@ Based on the requests, it will invoke workers via the temporal client to run the
 
 ### VM Workers
 The VM Worker will be responsible for making calls to the Merak Agent to Create/Update/Delete VMs by running workflows.
+
 #### VM Worklfows
 
 The VM workers will be responsible for running the following workflows
@@ -35,6 +36,12 @@ The VM workers will be responsible for running the following workflows
 - VM Delete
 - VM Update
 - VM Info
+
+
+##### Merak Compute Create Workflow
+
+![merak compute create workflow diagram](../images/merak_compute_workflow_diagram.png)
+
 
 ## Scheduling
 
