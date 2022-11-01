@@ -27,7 +27,9 @@ Based on the requests, it will invoke workers via the temporal client to run the
 
 ### VM Workers
 The VM Worker will be responsible for making calls to the Merak Agent to Create/Update/Delete VMs by running workflows.
-#### VM Worklfows
+In the current deployment model, workflows are defined on a per host basis.
+A single worker will connect to one Merak Agent via gRPC at a time.
+#### VM Workflows
 
 The VM workers will be responsible for running the following workflows
 
@@ -35,6 +37,19 @@ The VM workers will be responsible for running the following workflows
 - VM Delete
 - VM Update
 - VM Info
+
+
+#### Merak Compute Create Workflow
+
+![merak compute create workflow diagram](../images/merak_compute_workflow_diagram.png)
+
+Workflows for the VMCreate process are created on a per host basis and are assigned to workers by the [Temporal Cluster](https://docs.temporal.io/workers)
+
+A single VMCreate workflow consists of three steps.
+
+1. Establish a gRPC connection with the desired host(EPM).
+2. Create the number of requested VMs(EVM) on the host(EPM).
+3. Update the database on the status of each VMs(EVM) creation status.
 
 ## Scheduling
 
