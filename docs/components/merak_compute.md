@@ -27,8 +27,9 @@ Based on the requests, it will invoke workers via the temporal client to run the
 
 ### VM Workers
 The VM Worker will be responsible for making calls to the Merak Agent to Create/Update/Delete VMs by running workflows.
-
-#### VM Worklfows
+In the current deployment model, workflows are defined on a per host basis.
+A single worker will connect to one Merak Agent via gRPC at a time.
+#### VM Workflows
 
 The VM workers will be responsible for running the following workflows
 
