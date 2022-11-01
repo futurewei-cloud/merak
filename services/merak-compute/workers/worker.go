@@ -97,8 +97,10 @@ func main() {
 	log.Println("Connected to DB!")
 
 	w := worker.New(c, common.VM_TASK_QUEUE, worker.Options{
-		MaxConcurrentActivityExecutionSize: concurrency_int,
-		WorkerActivitiesPerSecond:          rps_int,
+		MaxConcurrentActivityExecutionSize:      concurrency_int,
+		WorkerActivitiesPerSecond:               rps_int,
+		MaxConcurrentLocalActivityExecutionSize: concurrency_int,
+		WorkerLocalActivitiesPerSecond:          rps_int,
 	})
 	w.RegisterWorkflow(create.Create)
 	w.RegisterWorkflow(create.GenerateVMs)
