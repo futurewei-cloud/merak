@@ -11,50 +11,48 @@ Copyright(c) 2022 Futurewei Cloud
 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-package handler
+package entities
 
 import (
-	"context"
-	"errors"
-	"log"
+	"time"
 
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	"github.com/go-redis/redis/v9"
-	"go.temporal.io/sdk/client"
 )
 
-var (
-	workflowOptions client.StartWorkflowOptions
-	TemporalClient  client.Client
-	RedisClient     redis.Client
-)
-
-type Server struct {
-	pb.UnimplementedMerakComputeServiceServer
+type Host struct {
+	ID           string
+	Name         string
+	IP           string
+	MAC          string
+	Interface    string
+	VMs          []string
+	RegisteredAt time.Time
+	UpdatedAt    time.Time
 }
 
-func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
-	log.Println("Received on ComputeHandler", in)
-
-	switch op := in.OperationType; op {
-	case common_pb.OperationType_INFO:
-
-		return caseInfo(ctx, in)
-
-	case common_pb.OperationType_CREATE:
-
-		return caseCreate(ctx, in)
-
-	case common_pb.OperationType_DELETE:
-
-		return caseDelete(ctx, in)
-
-	default:
-		log.Println("Unknown Operation")
-		return &pb.ReturnComputeMessage{
-			ReturnMessage: "Unknown Operation",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, errors.New("unknown operation")
+// Create a new host
+func NewHost(ID, Name, IP, MAC, Interface string, VMs []string) (*Host, error) {
+	h := &Host{
+		ID:           ID,
+		Name:         Name,
+		IP:           IP,
+		MAC:          MAC,
+		Interface:    Interface,
+		VMs:          VMs,
+		RegisteredAt: time.Now(),
+		UpdatedAt:    time.Now(),
 	}
+	return h, nil
+}
+
+func (*Host) Update(redisClient redis.Client) error {
+	return nil
+}
+
+func GetHost(id string, redisClient redis.Client) (*VM, error) {
+	return nil, nil
+}
+
+func SetAddHost(id string, redisClient redis.Client) error {
+	return nil
 }

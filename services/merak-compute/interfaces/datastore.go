@@ -11,50 +11,26 @@ Copyright(c) 2022 Futurewei Cloud
 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-package handler
+package interfaces
 
 import (
 	"context"
-	"errors"
-	"log"
-
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
-	"github.com/go-redis/redis/v9"
-	"go.temporal.io/sdk/client"
 )
 
-var (
-	workflowOptions client.StartWorkflowOptions
-	TemporalClient  client.Client
-	RedisClient     redis.Client
-)
-
-type Server struct {
-	pb.UnimplementedMerakComputeServiceServer
+type Store struct {
+	Client any
 }
 
-func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
-	log.Println("Received on ComputeHandler", in)
+type DataStore interface {
+	Get(ctx context.Context, id string, field string) (any, error)
+	Update(ctx context.Context, id string, object any) error
+	Delete(ctx context.Context, id string) error
 
-	switch op := in.OperationType; op {
-	case common_pb.OperationType_INFO:
+	GetList(ctx context.Context, id string) (any, error)
+	AddToList(ctx context.Context, id string, object any) error
+	DeleteList(ctx context.Context, id string) error
 
-		return caseInfo(ctx, in)
-
-	case common_pb.OperationType_CREATE:
-
-		return caseCreate(ctx, in)
-
-	case common_pb.OperationType_DELETE:
-
-		return caseDelete(ctx, in)
-
-	default:
-		log.Println("Unknown Operation")
-		return &pb.ReturnComputeMessage{
-			ReturnMessage: "Unknown Operation",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, errors.New("unknown operation")
-	}
+	GetSet(ctx context.Context, id string) (any, error)
+	AddToSet(ctx context.Context, id string, object any) error
+	DeleteSet(ctx context.Context, id string) error
 }

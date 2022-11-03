@@ -11,50 +11,48 @@ Copyright(c) 2022 Futurewei Cloud
 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-package handler
+package datastore
 
 import (
 	"context"
-	"errors"
-	"log"
 
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	"github.com/go-redis/redis/v9"
-	"go.temporal.io/sdk/client"
+	//"github.com/futurewei-cloud/merak/services/merak-compute/interfaces"
 )
 
-var (
-	workflowOptions client.StartWorkflowOptions
-	TemporalClient  client.Client
-	RedisClient     redis.Client
-)
-
-type Server struct {
-	pb.UnimplementedMerakComputeServiceServer
+type Store struct {
+	Client redis.Client
 }
 
-func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
-	log.Println("Received on ComputeHandler", in)
+func (store *Store) Get(ctx context.Context, id string, field string) (string, error) {
+	res := store.Client.HGet(ctx, id, field)
+	return res.Val(), nil
+}
+func (store *Store) Update(ctx context.Context, id string, obj []byte) error {
+	store.Client.HSet(ctx, id, obj)
+	return nil
+}
+func (store *Store) Delete(ctx context.Context, id string) error {
+	store.Client.HDel(ctx, id)
+	return nil
+}
 
-	switch op := in.OperationType; op {
-	case common_pb.OperationType_INFO:
+func (store *Store) GetList(ctx context.Context, id string) ([]byte, error) {
+	return nil, nil
+}
+func (store *Store) AddToList(ctx context.Context, id string, json []byte) error {
+	return nil
+}
+func (store *Store) DeleteList(ctx context.Context, id string) error {
+	return nil
+}
 
-		return caseInfo(ctx, in)
-
-	case common_pb.OperationType_CREATE:
-
-		return caseCreate(ctx, in)
-
-	case common_pb.OperationType_DELETE:
-
-		return caseDelete(ctx, in)
-
-	default:
-		log.Println("Unknown Operation")
-		return &pb.ReturnComputeMessage{
-			ReturnMessage: "Unknown Operation",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, errors.New("unknown operation")
-	}
+func (store *Store) GetSet(ctx context.Context, id string) ([]byte, error) {
+	return nil, nil
+}
+func (store *Store) AddToSet(ctx context.Context, id string, json []byte) error {
+	return nil
+}
+func (store *Store) DeleteSet(ctx context.Context, id string) error {
+	return nil
 }
