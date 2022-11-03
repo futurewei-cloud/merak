@@ -11,17 +11,13 @@ Copyright(c) 2022 Futurewei Cloud
 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-package interfaces
+package datastore
 
 import (
 	"context"
 )
 
-type Store struct {
-	Client any
-}
-
-type DataStore interface {
+type Store interface {
 	Get(ctx context.Context, id string, field string) (any, error)
 	Update(ctx context.Context, id string, object any) error
 	Delete(ctx context.Context, id string) error
