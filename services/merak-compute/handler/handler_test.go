@@ -97,6 +97,7 @@ func TestHandler(t *testing.T) {
 	}
 
 	server, _ := miniredis.Run()
+
 	RedisClient = *redis.NewClient(&redis.Options{
 		Addr: server.Addr(),
 	})

@@ -14,9 +14,11 @@ Copyright(c) 2022 Futurewei Cloud
 package entities
 
 import (
+	"context"
+	"encoding/json"
 	"time"
 
-	"github.com/go-redis/redis/v9"
+	"github.com/futurewei-cloud/merak/services/merak-compute/datastore"
 )
 
 type VM struct {
@@ -33,8 +35,8 @@ type VM struct {
 	HostMAC       string
 	HostName      string
 	Status        string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	CreatedAt     string
+	UpdatedAt     string
 }
 
 // Create a new VM
@@ -51,7 +53,7 @@ func NewVM(
 	HostIP,
 	HostMAC,
 	HostName,
-	Status string) (*VM, error) {
+	Status string) *VM {
 	v := &VM{
 		ID:            ID,
 		Name:          Name,
@@ -66,20 +68,34 @@ func NewVM(
 		HostMAC:       HostMAC,
 		HostName:      HostName,
 		Status:        Status,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		CreatedAt:     time.Now().String(),
+		UpdatedAt:     time.Now().String(),
 	}
-	return v, nil
+	return v
 }
 
-func (*VM) Update(redisClient redis.Client) error {
+func (v *VM) UpdateStore(ctx context.Context, id string, field string, datastore *datastore.DB) error {
+	jsonBytes, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	datastore.Update(ctx, id, field, jsonBytes)
 	return nil
 }
 
-func GetVM(id string, redisClient redis.Client) (*VM, error) {
-	return nil, nil
+func GetVM(ctx context.Context, id string, field string, datastore *datastore.DB) (*VM, error) {
+	vString, err := datastore.Get(ctx, id, field)
+	if err != nil {
+		return nil, err
+	}
+	var vm VM
+	err = json.Unmarshal(vString, &vm)
+	if err != nil {
+		return nil, err
+	}
+	return &vm, nil
 }
 
-func SetAddVM(id string, redisClient redis.Client) error {
+func SetAddVM(ctx context.Context, id string, datastore *datastore.DB) error {
 	return nil
 }

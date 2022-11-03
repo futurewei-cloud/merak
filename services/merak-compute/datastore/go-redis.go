@@ -11,6 +11,8 @@ Copyright(c) 2022 Futurewei Cloud
 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+//This is a wrapper for the redis go library "go-redis"
 package datastore
 
 import (
@@ -26,38 +28,48 @@ type redisError struct {
 	Message string
 }
 
-type Datastore struct {
-	Client redis.Client
+type DB struct {
+	Client *redis.Client
 }
 
 func (r redisError) Error() string {
 	return fmt.Sprintf("%s: %v", r.Message, r.Err)
 }
 
-func (store *Datastore) Get(ctx context.Context, id string, field string) (string, error) {
+func NewClient(ctx context.Context, address string, password string, db int) *DB {
+	client := redis.NewClient(&redis.Options{
+		Addr:     address,
+		Password: password, // no password set
+		DB:       db,       // use default DB
+	})
+	return &DB{client}
+}
+
+func (store *DB) Get(ctx context.Context, id string, field string) ([]byte, error) {
 	res := store.Client.HGet(ctx, id, field)
 	if err := res.Err(); err != nil {
-		return "", err
+		return nil, err
 	}
 	if res != nil {
-		return res.Val(), nil
+		return []byte(res.Val()), nil
 	}
-	return "", redisError{errors.New("key does not exist"), id}
+	return nil, redisError{errors.New("key does not exist"), id}
 }
-func (store *Datastore) Update(ctx context.Context, id string, obj []byte) error {
-	if err := store.Client.HSet(ctx, id, obj).Err(); err != nil {
+func (store *DB) Update(ctx context.Context, id string, field string, obj []byte) error {
+	if err := store.Client.HSet(ctx, id, field, obj).Err(); err != nil {
 		return err
 	}
 	return nil
 }
-func (store *Datastore) Delete(ctx context.Context, id string) error {
+
+func (store *DB) Delete(ctx context.Context, id string) error {
 	if err := store.Client.HDel(ctx, id).Err(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (store *Datastore) GetList(ctx context.Context, id string) ([]string, error) {
+func (store *DB) GetList(ctx context.Context, id string) ([]string, error) {
 	res := store.Client.LRange(ctx, id, 0, -1)
 	if err := res.Err(); err != nil {
 		return nil, err
@@ -67,20 +79,20 @@ func (store *Datastore) GetList(ctx context.Context, id string) ([]string, error
 	}
 	return nil, redisError{errors.New("key does not exist"), id}
 }
-func (store *Datastore) AddToList(ctx context.Context, id string, obj string) error {
+func (store *DB) AddToList(ctx context.Context, id string, obj string) error {
 	if err := store.Client.LPush(ctx, id, obj).Err(); err != nil {
 		return err
 	}
 	return nil
 }
-func (store *Datastore) DeleteList(ctx context.Context, id string) error {
+func (store *DB) DeleteList(ctx context.Context, id string) error {
 	if err := store.Client.Del(ctx, id).Err(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (store *Datastore) GetSet(ctx context.Context, id string) ([]string, error) {
+func (store *DB) GetSet(ctx context.Context, id string) ([]string, error) {
 	res := store.Client.SMembers(ctx, id)
 	if err := res.Err(); err != nil {
 		return nil, err
@@ -90,7 +102,7 @@ func (store *Datastore) GetSet(ctx context.Context, id string) ([]string, error)
 	}
 	return nil, redisError{errors.New("key does not exist"), id}
 }
-func (store *Datastore) AddToSet(ctx context.Context, id string, obj string) error {
+func (store *DB) AddToSet(ctx context.Context, id string, obj string) error {
 	if err := store.Client.SAdd(
 		ctx,
 		id,
@@ -100,7 +112,7 @@ func (store *Datastore) AddToSet(ctx context.Context, id string, obj string) err
 	}
 	return nil
 }
-func (store *Datastore) DeleteFromSet(ctx context.Context, id string, obj string) error {
+func (store *DB) DeleteFromSet(ctx context.Context, id string, obj string) error {
 	if err := store.Client.SRem(ctx, id, obj).Err(); err != nil {
 		return err
 	}
