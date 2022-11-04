@@ -36,6 +36,7 @@ func (r redisError) Error() string {
 	return fmt.Sprintf("%s: %v", r.Message, r.Err)
 }
 
+// Returns a new go-redis client
 func NewClient(ctx context.Context, address string, password string, db int) *DB {
 	client := redis.NewClient(&redis.Options{
 		Addr:     address,
@@ -45,6 +46,7 @@ func NewClient(ctx context.Context, address string, password string, db int) *DB
 	return &DB{client}
 }
 
+// Returns the byte array value at the given id and field
 func (store *DB) Get(ctx context.Context, id string, field string) ([]byte, error) {
 	res := store.Client.HGet(ctx, id, field)
 	if err := res.Err(); err != nil {
@@ -55,6 +57,8 @@ func (store *DB) Get(ctx context.Context, id string, field string) ([]byte, erro
 	}
 	return nil, redisError{errors.New("key does not exist"), id}
 }
+
+// Updates the byte array value at the give id and field with the given value
 func (store *DB) Update(ctx context.Context, id string, field string, obj []byte) error {
 	if err := store.Client.HSet(ctx, id, field, obj).Err(); err != nil {
 		return err
@@ -69,6 +73,7 @@ func (store *DB) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
+// Returns a string array at the given ID
 func (store *DB) GetList(ctx context.Context, id string) ([]string, error) {
 	res := store.Client.LRange(ctx, id, 0, -1)
 	if err := res.Err(); err != nil {
@@ -79,12 +84,16 @@ func (store *DB) GetList(ctx context.Context, id string) ([]string, error) {
 	}
 	return nil, redisError{errors.New("key does not exist"), id}
 }
-func (store *DB) AddToList(ctx context.Context, id string, obj string) error {
-	if err := store.Client.LPush(ctx, id, obj).Err(); err != nil {
+
+// Appends the given value to the list at the given ID
+func (store *DB) AppendToList(ctx context.Context, id string, obj string) error {
+	if err := store.Client.RPush(ctx, id, obj).Err(); err != nil {
 		return err
 	}
 	return nil
 }
+
+// Deletes the list at the given ID
 func (store *DB) DeleteList(ctx context.Context, id string) error {
 	if err := store.Client.Del(ctx, id).Err(); err != nil {
 		return err
@@ -92,6 +101,7 @@ func (store *DB) DeleteList(ctx context.Context, id string) error {
 	return nil
 }
 
+// Returns a string array representation of the values at the given ID
 func (store *DB) GetSet(ctx context.Context, id string) ([]string, error) {
 	res := store.Client.SMembers(ctx, id)
 	if err := res.Err(); err != nil {
@@ -102,6 +112,8 @@ func (store *DB) GetSet(ctx context.Context, id string) ([]string, error) {
 	}
 	return nil, redisError{errors.New("key does not exist"), id}
 }
+
+// Adds given value to the set at the given ID
 func (store *DB) AddToSet(ctx context.Context, id string, obj string) error {
 	if err := store.Client.SAdd(
 		ctx,
@@ -112,6 +124,8 @@ func (store *DB) AddToSet(ctx context.Context, id string, obj string) error {
 	}
 	return nil
 }
+
+// Deletes the given value from the set at the given
 func (store *DB) DeleteFromSet(ctx context.Context, id string, obj string) error {
 	if err := store.Client.SRem(ctx, id, obj).Err(); err != nil {
 		return err

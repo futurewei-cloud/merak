@@ -11,6 +11,9 @@ Copyright(c) 2022 Futurewei Cloud
 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+// VM entity
+
 package entities
 
 import (
@@ -35,11 +38,11 @@ type VM struct {
 	HostMAC       string
 	HostName      string
 	Status        string
-	CreatedAt     string
-	UpdatedAt     string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
-// Create a new VM
+// Create a new VM with timestamps
 func NewVM(
 	ID,
 	Name,
@@ -68,34 +71,31 @@ func NewVM(
 		HostMAC:       HostMAC,
 		HostName:      HostName,
 		Status:        Status,
-		CreatedAt:     time.Now().String(),
-		UpdatedAt:     time.Now().String(),
+		CreatedAt:     time.Now().Round(0), // Strip monotonic clock reading
+		UpdatedAt:     time.Now().Round(0), // Strip monotonic clock reading
 	}
 	return v
 }
 
-func (v *VM) UpdateStore(ctx context.Context, id string, field string, datastore *datastore.DB) error {
-	jsonBytes, err := json.Marshal(v)
+// Converts VM to json byte array and updates DB
+func (v *VM) UpdateVMStore(ctx context.Context, id string, datastore *datastore.DB) error {
+	v.UpdatedAt = time.Now().Round(0) // Strip monotonic clock reading before marshal
+	jsonBytes, _ := json.Marshal(v)   // Should never fail
+
+	err := datastore.Update(ctx, id, v.ID, jsonBytes)
 	if err != nil {
 		return err
 	}
-	datastore.Update(ctx, id, field, jsonBytes)
 	return nil
 }
 
-func GetVM(ctx context.Context, id string, field string, datastore *datastore.DB) (*VM, error) {
+// Unmarshals and returns VM struct from DB
+func GetVMStore(ctx context.Context, id string, field string, datastore *datastore.DB) (*VM, error) {
 	vString, err := datastore.Get(ctx, id, field)
 	if err != nil {
 		return nil, err
 	}
 	var vm VM
-	err = json.Unmarshal(vString, &vm)
-	if err != nil {
-		return nil, err
-	}
+	_ = json.Unmarshal(vString, &vm) // Should never fail
 	return &vm, nil
-}
-
-func SetAddVM(ctx context.Context, id string, datastore *datastore.DB) error {
-	return nil
 }

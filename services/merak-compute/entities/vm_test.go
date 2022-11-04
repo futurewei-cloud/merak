@@ -15,18 +15,17 @@ package entities
 
 import (
 	"context"
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/futurewei-cloud/merak/services/merak-compute/datastore"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestVM(t *testing.T) {
-	ctx := context.Background()
-	server, _ := miniredis.Run()
-	datastore := datastore.NewClient(ctx, server.Addr(), "", 0)
-	v := NewVM(
+func TestVMNew(t *testing.T) {
+	v0 := NewVM(
 		"0",
 		"v1",
 		"0",
@@ -41,11 +40,85 @@ func TestVM(t *testing.T) {
 		"0",
 		"0",
 	)
+	v1 := NewVM(
+		"0",
+		"v1",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+	)
+	assert.NotEqual(t, v0, v1)
+}
 
-	v.UpdateStore(ctx, v.ID, v.ID, datastore)
-	vNew, err := GetVM(ctx, v.ID, v.ID, datastore)
+func TestVMDBSuccess(t *testing.T) {
+	ctx := context.Background()
+	server, _ := miniredis.Run()
+	datastore := datastore.NewClient(ctx, server.Addr(), "", 0)
+	v0 := NewVM(
+		"1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"10",
+		"11",
+		"12",
+		"13",
+	)
+
+	oldUpdateAt := v0.UpdatedAt
+
+	time.Sleep(time.Nanosecond * 1)
+	v0.UpdateVMStore(ctx, v0.ID, datastore)
+	v0New, err := GetVMStore(ctx, v0.ID, v0.ID, datastore)
 	if err != nil {
 		t.Error("Failed to get VM!", err)
 	}
-	assert.Equal(t, v, vNew)
+
+	// Not equal since UpdatedAt field is changed
+	assert.NotEqual(t, oldUpdateAt, v0New.UpdatedAt)
+
+	// Test equality for all other fields fields
+	v0Reflect := reflect.ValueOf(*v0)
+	v0NewReflect := reflect.ValueOf(*v0New)
+	for i := 0; i < v0Reflect.NumField(); i++ {
+		assert.Equal(t, v0Reflect.Field(i).Interface(), v0NewReflect.Field(i).Interface())
+	}
+}
+
+func TestVMDBFail(t *testing.T) {
+	ctx := context.Background()
+
+	datastore := datastore.NewClient(ctx, "10.0.0.1", "", 0)
+	v0 := NewVM(
+		"1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"10",
+		"11",
+		"12",
+		"13",
+	)
+
+	assert.Error(t, v0.UpdateVMStore(ctx, v0.ID, datastore))
+	_, err := GetVMStore(ctx, v0.ID, "1", datastore)
+	assert.Error(t, err)
 }

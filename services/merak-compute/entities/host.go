@@ -11,6 +11,9 @@ Copyright(c) 2022 Futurewei Cloud
 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+// Host entity
+
 package entities
 
 import (
@@ -39,8 +42,8 @@ func NewHost(ID, Name, IP, MAC, Interface string, VMs []string) (*Host, error) {
 		MAC:          MAC,
 		Interface:    Interface,
 		VMs:          VMs,
-		RegisteredAt: time.Now(),
-		UpdatedAt:    time.Now(),
+		RegisteredAt: time.Now().Round(0), // Strip monotonic clock reading
+		UpdatedAt:    time.Now().Round(0), // Strip monotonic clock reading
 	}
 	return h, nil
 }

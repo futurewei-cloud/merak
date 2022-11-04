@@ -27,7 +27,7 @@ type Store interface {
 	Delete(ctx context.Context, id string) error
 
 	GetList(ctx context.Context, id string) (any, error)
-	AddToList(ctx context.Context, id string, object any) error
+	AppendToList(ctx context.Context, id string, object any) error
 	DeleteList(ctx context.Context, id string) error
 
 	GetSet(ctx context.Context, id string) (any, error)
