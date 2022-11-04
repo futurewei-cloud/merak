@@ -17,9 +17,11 @@ Copyright(c) 2022 Futurewei Cloud
 package entities
 
 import (
+	"context"
+	"encoding/json"
 	"time"
 
-	"github.com/go-redis/redis/v9"
+	"github.com/futurewei-cloud/merak/services/merak-compute/datastore"
 )
 
 type Host struct {
@@ -34,7 +36,7 @@ type Host struct {
 }
 
 // Create a new host
-func NewHost(ID, Name, IP, MAC, Interface string, VMs []string) (*Host, error) {
+func NewHost(ID, Name, IP, MAC, Interface string, VMs []string) *Host {
 	h := &Host{
 		ID:           ID,
 		Name:         Name,
@@ -45,17 +47,28 @@ func NewHost(ID, Name, IP, MAC, Interface string, VMs []string) (*Host, error) {
 		RegisteredAt: time.Now().Round(0), // Strip monotonic clock reading
 		UpdatedAt:    time.Now().Round(0), // Strip monotonic clock reading
 	}
-	return h, nil
+	return h
 }
 
-func (*Host) Update(redisClient redis.Client) error {
+// Converts Host to json byte array and updates DB
+func (h *Host) UpdateHostStore(ctx context.Context, id string, datastore *datastore.DB) error {
+	h.UpdatedAt = time.Now().Round(0) // Strip monotonic clock reading before marshal
+	jsonBytes, _ := json.Marshal(h)   // Should never fail
+
+	err := datastore.Update(ctx, id, h.ID, jsonBytes)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func GetHost(id string, redisClient redis.Client) (*VM, error) {
-	return nil, nil
-}
-
-func SetAddHost(id string, redisClient redis.Client) error {
-	return nil
+// Unmarshals and returns Host struct from DB
+func GetHostStore(ctx context.Context, id string, field string, datastore *datastore.DB) (*Host, error) {
+	vString, err := datastore.Get(ctx, id, field)
+	if err != nil {
+		return nil, err
+	}
+	var host Host
+	_ = json.Unmarshal(vString, &host) // Should never fail
+	return &host, nil
 }
