@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/futurewei-cloud/merak/services/merak-compute/datastore"
+	"github.com/futurewei-cloud/merak/services/datastore"
 )
 
 type VM struct {
@@ -82,7 +82,7 @@ func (v *VM) UpdateVMStore(ctx context.Context, id string, datastore *datastore.
 	v.UpdatedAt = time.Now().Round(0) // Strip monotonic clock reading before marshal
 	jsonBytes, _ := json.Marshal(v)   // Should never fail
 
-	err := datastore.Update(ctx, id, v.ID, jsonBytes)
+	err := datastore.HashUpdate(ctx, id, v.ID, jsonBytes)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (v *VM) UpdateVMStore(ctx context.Context, id string, datastore *datastore.
 
 // Unmarshals and returns VM struct from DB
 func GetVMStore(ctx context.Context, id string, field string, datastore *datastore.DB) (*VM, error) {
-	vString, err := datastore.Get(ctx, id, field)
+	vString, err := datastore.HashGet(ctx, id, field)
 	if err != nil {
 		return nil, err
 	}

@@ -20,7 +20,8 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
-	"github.com/futurewei-cloud/merak/services/merak-compute/datastore"
+	"github.com/futurewei-cloud/merak/services/datastore"
+	"github.com/go-redis/redis/v9"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -47,7 +48,9 @@ func TestHostNew(t *testing.T) {
 func TestHostDBSuccess(t *testing.T) {
 	ctx := context.Background()
 	server, _ := miniredis.Run()
-	datastore := datastore.NewClient(ctx, server.Addr(), "", 0)
+	defer server.Close()
+	datastore, _ := datastore.NewClient(ctx, server.Addr(), "", 0)
+	defer datastore.Close()
 	h0 := NewHost(
 		"0",
 		"h2",
@@ -80,7 +83,12 @@ func TestHostDBSuccess(t *testing.T) {
 func TestHostDBFail(t *testing.T) {
 	ctx := context.Background()
 
-	datastore := datastore.NewClient(ctx, "10.0.0.1", "", 0)
+	datastore := datastore.DB{Client: redis.NewClient(&redis.Options{
+		Addr:     "10.0.0.1",
+		Password: "0",
+		DB:       0,
+	})}
+	defer datastore.Close()
 	h0 := NewHost(
 		"0",
 		"h2",
@@ -90,7 +98,7 @@ func TestHostDBFail(t *testing.T) {
 		[]string{"10", "1"},
 	)
 
-	assert.Error(t, h0.UpdateHostStore(ctx, h0.ID, datastore))
-	_, err := GetHostStore(ctx, h0.ID, "1", datastore)
+	assert.Error(t, h0.UpdateHostStore(ctx, h0.ID, &datastore))
+	_, err := GetHostStore(ctx, h0.ID, "1", &datastore)
 	assert.Error(t, err)
 }

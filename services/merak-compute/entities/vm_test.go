@@ -20,7 +20,8 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
-	"github.com/futurewei-cloud/merak/services/merak-compute/datastore"
+	"github.com/futurewei-cloud/merak/services/datastore"
+	"github.com/go-redis/redis/v9"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,7 +62,9 @@ func TestVMNew(t *testing.T) {
 func TestVMDBSuccess(t *testing.T) {
 	ctx := context.Background()
 	server, _ := miniredis.Run()
-	datastore := datastore.NewClient(ctx, server.Addr(), "", 0)
+	defer server.Close()
+	datastore, _ := datastore.NewClient(ctx, server.Addr(), "", 0)
+	defer datastore.Close()
 	v0 := NewVM(
 		"1",
 		"2",
@@ -101,7 +104,11 @@ func TestVMDBSuccess(t *testing.T) {
 func TestVMDBFail(t *testing.T) {
 	ctx := context.Background()
 
-	datastore := datastore.NewClient(ctx, "10.0.0.1", "", 0)
+	datastore := datastore.DB{Client: redis.NewClient(&redis.Options{
+		Addr:     "10.0.0.1",
+		Password: "0",
+		DB:       0,
+	})}
 	v0 := NewVM(
 		"1",
 		"2",
@@ -118,7 +125,7 @@ func TestVMDBFail(t *testing.T) {
 		"13",
 	)
 
-	assert.Error(t, v0.UpdateVMStore(ctx, v0.ID, datastore))
-	_, err := GetVMStore(ctx, v0.ID, "1", datastore)
+	assert.Error(t, v0.UpdateVMStore(ctx, v0.ID, &datastore))
+	_, err := GetVMStore(ctx, v0.ID, "1", &datastore)
 	assert.Error(t, err)
 }

@@ -21,10 +21,11 @@ import (
 
 type Store interface {
 	NewClient(ctx context.Context, address string, password string, db int) any
+	Close() error
 
-	Get(ctx context.Context, id string, field string) (any, error)
-	Update(ctx context.Context, id string, object any) error
-	Delete(ctx context.Context, id string) error
+	HashGet(ctx context.Context, id string, field string) (any, error)
+	HashUpdate(ctx context.Context, id string, object any) error
+	HashDelete(ctx context.Context, id string) error
 
 	GetList(ctx context.Context, id string) (any, error)
 	AppendToList(ctx context.Context, id string, object any) error

@@ -64,7 +64,12 @@ proto:
 
 .PHONY: unit-tests
 unit-tests:
-	go test -v github.com/futurewei-cloud/merak/services/merak-compute/entities/ -cover
+	go test -v github.com/futurewei-cloud/merak/services/merak-compute/entities/ -coverprofile=cov_entities.out
+	go test -v github.com/futurewei-cloud/merak/services/datastore/ -coverprofile=cov_datastore.out
+	go tool cover -func=cov_entities.out
+	go tool cover -func=cov_datastore.out
+	rm cov_entities.out
+	rm cov_datastore.out
 
 .PHONY: deploy-dev
 deploy-dev:
