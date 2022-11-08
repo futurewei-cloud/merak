@@ -77,7 +77,7 @@ func (store *DB) Close() error {
 }
 
 // Returns the byte array value at the given key and field
-func (store *DB) HashGet(ctx context.Context, key string, field string) ([]byte, error) {
+func (store *DB) HashBytesGet(ctx context.Context, key string, field string) ([]byte, error) {
 	res := store.Client.HGet(ctx, key, field)
 	if err := res.Err(); err != nil {
 		return nil, redisError{errors.New("failed to get, key or field does not exist"), key + " " + field}
@@ -86,7 +86,7 @@ func (store *DB) HashGet(ctx context.Context, key string, field string) ([]byte,
 }
 
 // Updates the byte array value at the give key and field with the given value
-func (store *DB) HashUpdate(ctx context.Context, key string, field string, obj []byte) error {
+func (store *DB) HashBytesUpdate(ctx context.Context, key string, field string, obj []byte) error {
 	if err := store.Client.HSet(ctx, key, field, obj).Err(); err != nil {
 		return redisError{errors.New("failed to update, key already in use for a different data structure"), key}
 	}

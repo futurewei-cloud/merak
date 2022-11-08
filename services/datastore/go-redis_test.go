@@ -90,10 +90,10 @@ func TestDatastoreHashGet(t *testing.T) {
 	defer server.Close()
 	client, _ := NewClient(ctx, server.Addr(), "", 0)
 	defer client.Close()
-	client.HashUpdate(ctx, "123", "1", []byte("1234"))
+	client.HashBytesUpdate(ctx, "123", "1", []byte("1234"))
 	for _, tt := range tests {
 		t.Run(tt.give[0], func(t *testing.T) {
-			res, err := client.HashGet(ctx, tt.give[0], tt.give[1])
+			res, err := client.HashBytesGet(ctx, tt.give[0], tt.give[1])
 			assert.Equal(t, tt.exp, res)
 			assert.Equal(t, tt.err, err)
 		})
@@ -149,9 +149,9 @@ func TestDatastoreHashUpdate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("key: %s, field: %s, give: %s, exp: %s", tt.key, tt.field, tt.give, tt.exp), func(t *testing.T) {
-			err := client.HashUpdate(ctx, tt.key, tt.field, tt.give)
+			err := client.HashBytesUpdate(ctx, tt.key, tt.field, tt.give)
 			assert.Equal(t, err, tt.err)
-			obj, _ := client.HashGet(ctx, tt.key, tt.field)
+			obj, _ := client.HashBytesGet(ctx, tt.key, tt.field)
 			assert.Equal(t, tt.exp, obj)
 		})
 	}
@@ -197,7 +197,7 @@ func TestDatastoreHashDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("key: %s, field: %s, give: %s", tt.key, tt.field, tt.give), func(t *testing.T) {
-			err := client.HashUpdate(ctx, tt.key, tt.field, tt.give)
+			err := client.HashBytesUpdate(ctx, tt.key, tt.field, tt.give)
 			assert.Nil(t, err)
 			err = client.HashDelete(ctx, tt.key, tt.field)
 			assert.Equal(t, tt.err, err)
@@ -262,7 +262,7 @@ func TestDatastoreGetList(t *testing.T) {
 			assert.Equal(t, tt.exp, res)
 		})
 	}
-	client.HashUpdate(ctx, "3", "3", []byte{1, 2, 3})
+	client.HashBytesUpdate(ctx, "3", "3", []byte{1, 2, 3})
 	for _, tt := range testsFail {
 		t.Run("Test GetList Fail", func(t *testing.T) {
 			res, err := client.GetList(ctx, tt.key)
@@ -325,7 +325,7 @@ func TestDatastoreAppendToList(t *testing.T) {
 			assert.Equal(t, tt.exp, res)
 		})
 	}
-	client.HashUpdate(ctx, "3", "3", []byte{1, 2, 3})
+	client.HashBytesUpdate(ctx, "3", "3", []byte{1, 2, 3})
 	for _, tt := range testsFail {
 		t.Run("Test GetList Fail", func(t *testing.T) {
 			err := client.AppendToList(ctx, tt.key, "1")
@@ -444,7 +444,7 @@ func TestDatastoreGetSet(t *testing.T) {
 
 		})
 	}
-	client.HashUpdate(ctx, "2", "2", []byte{1})
+	client.HashBytesUpdate(ctx, "2", "2", []byte{1})
 	res, err := client.GetSet(ctx, "2")
 	expErr := redisError{errors.New("failed to get set at key"), "2"}
 	assert.Equal(t, expErr, err)
@@ -491,7 +491,7 @@ func TestDatastoreAddToSet(t *testing.T) {
 
 		})
 	}
-	client.HashUpdate(ctx, "2", "2", []byte{1})
+	client.HashBytesUpdate(ctx, "2", "2", []byte{1})
 	err := client.AddToSet(ctx, "2", "2")
 	expErr := redisError{errors.New("failed to add to set at key"), "2"}
 	assert.Equal(t, expErr, err)
@@ -542,7 +542,7 @@ func TestDatastoreDeleteSet(t *testing.T) {
 
 		})
 	}
-	client.HashUpdate(ctx, "2", "2", []byte{1})
+	client.HashBytesUpdate(ctx, "2", "2", []byte{1})
 	err := client.DeleteFromSet(ctx, "2", "2")
 	expErr := redisError{errors.New("failed to delete from set at key"), "2"}
 	assert.Equal(t, expErr, err)

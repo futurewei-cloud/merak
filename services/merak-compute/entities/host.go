@@ -55,7 +55,7 @@ func (h *Host) UpdateHostStore(ctx context.Context, id string, datastore *datast
 	h.UpdatedAt = time.Now().Round(0) // Strip monotonic clock reading before marshal
 	jsonBytes, _ := json.Marshal(h)   // Should never fail
 
-	err := datastore.HashUpdate(ctx, id, h.ID, jsonBytes)
+	err := datastore.HashBytesUpdate(ctx, id, h.ID, jsonBytes)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (h *Host) UpdateHostStore(ctx context.Context, id string, datastore *datast
 
 // Unmarshals and returns Host struct from DB
 func GetHostStore(ctx context.Context, id string, field string, datastore *datastore.DB) (*Host, error) {
-	vString, err := datastore.HashGet(ctx, id, field)
+	vString, err := datastore.HashBytesGet(ctx, id, field)
 	if err != nil {
 		return nil, err
 	}
