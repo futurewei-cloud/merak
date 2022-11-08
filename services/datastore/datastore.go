@@ -23,8 +23,8 @@ type Store interface {
 	NewClient(ctx context.Context, address string, password string, db int) any
 	Close() error
 
-	HashGet(ctx context.Context, id string, field string) (any, error)
-	HashUpdate(ctx context.Context, id string, object any) error
+	HashBytesGet(ctx context.Context, id string, field string) (any, error)
+	HashBytesUpdate(ctx context.Context, id string, object any) error
 	HashDelete(ctx context.Context, id string) error
 
 	GetList(ctx context.Context, id string) (any, error)
