@@ -37,6 +37,8 @@ type DB struct {
 	Client *redis.Client
 }
 
+var _ Store = (*DB)(nil)
+
 func (r redisError) Error() string {
 	return fmt.Sprintf("%s: %v", r.Message, r.Err)
 }
@@ -71,14 +73,14 @@ func NewClient(ctx context.Context, address string, password string, db int) (*D
 }
 
 // Closes the go-redis client
-func (store *DB) Close() error {
-	err := store.Client.Close()
+func (Store *DB) Close() error {
+	err := Store.Client.Close()
 	return err
 }
 
 // Returns the byte array value at the given key and field
-func (store *DB) HashBytesGet(ctx context.Context, key string, field string) ([]byte, error) {
-	res := store.Client.HGet(ctx, key, field)
+func (Store *DB) HashBytesGet(ctx context.Context, key string, field string) ([]byte, error) {
+	res := Store.Client.HGet(ctx, key, field)
 	if err := res.Err(); err != nil {
 		return nil, redisError{errors.New("failed to get, key or field does not exist"), key + " " + field}
 	}
@@ -86,24 +88,24 @@ func (store *DB) HashBytesGet(ctx context.Context, key string, field string) ([]
 }
 
 // Updates the byte array value at the give key and field with the given value
-func (store *DB) HashBytesUpdate(ctx context.Context, key string, field string, obj []byte) error {
-	if err := store.Client.HSet(ctx, key, field, obj).Err(); err != nil {
+func (Store *DB) HashBytesUpdate(ctx context.Context, key string, field string, obj []byte) error {
+	if err := Store.Client.HSet(ctx, key, field, obj).Err(); err != nil {
 		return redisError{errors.New("failed to update, key already in use for a different data structure"), key}
 	}
 	return nil
 }
 
 // Deletes the value at the given key
-func (store *DB) HashDelete(ctx context.Context, key string, field string) error {
-	if err := store.Client.HDel(ctx, key, field).Err(); err != nil {
+func (Store *DB) HashDelete(ctx context.Context, key string, field string) error {
+	if err := Store.Client.HDel(ctx, key, field).Err(); err != nil {
 		return redisError{errors.New("failed to delete, key in use for a different data structure"), key}
 	}
 	return nil
 }
 
 // Returns a string array at the given key
-func (store *DB) GetList(ctx context.Context, key string) ([]string, error) {
-	res := store.Client.LRange(ctx, key, 0, -1)
+func (Store *DB) GetList(ctx context.Context, key string) ([]string, error) {
+	res := Store.Client.LRange(ctx, key, 0, -1)
 	if err := res.Err(); err != nil {
 		return nil, redisError{errors.New("failed to get, key in use for a different data structure"), key}
 	}
@@ -111,24 +113,29 @@ func (store *DB) GetList(ctx context.Context, key string) ([]string, error) {
 }
 
 // Appends the given value to the list at the given key
-func (store *DB) AppendToList(ctx context.Context, key string, obj string) error {
-	if err := store.Client.RPush(ctx, key, obj).Err(); err != nil {
+func (Store *DB) AppendToList(ctx context.Context, key string, obj string) error {
+	if err := Store.Client.RPush(ctx, key, obj).Err(); err != nil {
 		return redisError{errors.New("failed to append to list, key in use for a different data structure"), key}
 	}
 	return nil
 }
 
+func (Store *DB) PopList(ctx context.Context, id string) (string, error) {
+
+	return "", nil
+}
+
 // Deletes the data structure at the given key
-func (store *DB) Delete(ctx context.Context, key string) error {
-	if err := store.Client.Del(ctx, key).Err(); err != nil {
+func (Store *DB) Delete(ctx context.Context, key string) error {
+	if err := Store.Client.Del(ctx, key).Err(); err != nil {
 		return redisError{errors.New("failed to delete key"), key}
 	}
 	return nil
 }
 
 // Returns a string array representation of the values at the given key
-func (store *DB) GetSet(ctx context.Context, key string) ([]string, error) {
-	res := store.Client.SMembers(ctx, key)
+func (Store *DB) GetSet(ctx context.Context, key string) ([]string, error) {
+	res := Store.Client.SMembers(ctx, key)
 	if err := res.Err(); err != nil {
 		return nil, redisError{errors.New("failed to get set at key"), key}
 	}
@@ -136,8 +143,8 @@ func (store *DB) GetSet(ctx context.Context, key string) ([]string, error) {
 }
 
 // Adds given value to the set at the given key
-func (store *DB) AddToSet(ctx context.Context, key string, obj string) error {
-	if err := store.Client.SAdd(
+func (Store *DB) AddToSet(ctx context.Context, key string, obj string) error {
+	if err := Store.Client.SAdd(
 		ctx,
 		key,
 		obj,
@@ -148,28 +155,28 @@ func (store *DB) AddToSet(ctx context.Context, key string, obj string) error {
 }
 
 // Deletes the given value from the set at the given
-func (store *DB) DeleteFromSet(ctx context.Context, key string, obj string) error {
-	if err := store.Client.SRem(ctx, key, obj).Err(); err != nil {
+func (Store *DB) DeleteFromSet(ctx context.Context, key string, obj string) error {
+	if err := Store.Client.SRem(ctx, key, obj).Err(); err != nil {
 		return redisError{errors.New("failed to delete from set at key"), key}
 	}
 	return nil
 }
 
 // TODO: @cj-chung add tests and comments for functions below
-func (store *DB) Set(ctx context.Context, key string, val interface{}) error {
+func (Store *DB) Set(ctx context.Context, key string, val interface{}) error {
 	jsonVal, err := json.Marshal(val)
 	if err != nil {
 		return err
 	}
-	err = store.Client.Set(ctx, key, jsonVal, 0).Err()
+	err = Store.Client.Set(ctx, key, jsonVal, 0).Err()
 	if err != nil {
 		return redisError{errors.New("failed to append to list, key in use for a different data structure"), fmt.Sprintf("Key: %s Value: %s Error: %s", key, jsonVal, err.Error())}
 	}
 	return nil
 }
 
-func (store *DB) Get(ctx context.Context, key string) (string, error) {
-	val, err := store.Client.Get(ctx, key).Result()
+func (Store *DB) Get(ctx context.Context, key string) (string, error) {
+	val, err := Store.Client.Get(ctx, key).Result()
 	if err != nil {
 		return "", redisError{errors.New("database GET failed"), fmt.Sprintf("Key: %s Error: %s", key, err.Error())}
 	}
@@ -177,11 +184,11 @@ func (store *DB) Get(ctx context.Context, key string) (string, error) {
 }
 
 // Function for finding an entity from database
-func (store *DB) FindEntity(ctx context.Context, id string, prefix string, entity interface{}) error {
+func (Store *DB) FindEntity(ctx context.Context, id string, prefix string, entity interface{}) error {
 	if id == "" {
 		return redisError{errors.New("invalid ID"), id}
 	}
-	value, err := store.Client.Get(ctx, prefix+id).Result()
+	value, err := Store.Client.Get(ctx, prefix+id).Result()
 	if err != nil {
 		return redisError{errors.New("failed to get"), prefix + id}
 	}
@@ -189,13 +196,13 @@ func (store *DB) FindEntity(ctx context.Context, id string, prefix string, entit
 	return redisError{errors.New("unmarshal failed"), fmt.Sprintf("ID: %s, Error: %s", prefix+id, err.Error())}
 }
 
-func (store *DB) GetAllValuesWithKeyPrefix(ctx context.Context, prefix string) (map[string]string, error) {
-	keys, err := getKeys(ctx, fmt.Sprintf("%s*", prefix), store)
+func (Store *DB) GetAllValuesWithKeyPrefix(ctx context.Context, prefix string) (map[string]string, error) {
+	keys, err := getKeys(ctx, fmt.Sprintf("%s*", prefix), Store)
 	if err != nil {
 		return nil, err
 	}
 
-	values, err := getKeyAndValueMap(ctx, keys, prefix, store)
+	values, err := getKeyAndValueMap(ctx, keys, prefix, Store)
 	if err != nil {
 		return nil, err
 	}

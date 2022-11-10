@@ -20,18 +20,17 @@ import (
 )
 
 type Store interface {
-	NewClient(ctx context.Context, address string, password string, db int) any
 	Close() error
 
-	HashBytesGet(ctx context.Context, id string, field string) (any, error)
-	HashBytesUpdate(ctx context.Context, id string, object any) error
-	HashDelete(ctx context.Context, id string) error
+	HashBytesGet(ctx context.Context, key string, field string) ([]byte, error)
+	HashBytesUpdate(ctx context.Context, key string, field string, obj []byte) error
+	HashDelete(ctx context.Context, key string, field string) error
 
-	GetList(ctx context.Context, id string) (any, error)
-	AppendToList(ctx context.Context, id string, object any) error
-	DeleteList(ctx context.Context, id string) error
+	GetList(ctx context.Context, key string) ([]string, error)
+	AppendToList(ctx context.Context, id string, object string) error
+	PopList(ctx context.Context, id string) (string, error)
 
-	GetSet(ctx context.Context, id string) (any, error)
-	AddToSet(ctx context.Context, id string, object any) error
-	DeleteSet(ctx context.Context, id string) error
+	GetSet(ctx context.Context, key string) ([]string, error)
+	AddToSet(ctx context.Context, id string, object string) error
+	DeleteFromSet(ctx context.Context, key string, obj string) error
 }
