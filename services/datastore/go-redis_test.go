@@ -333,6 +333,53 @@ func TestDatastoreAppendToList(t *testing.T) {
 		})
 	}
 }
+
+func TestDatastorePopFromList(t *testing.T) {
+	tests := []struct {
+		key string
+		exp string
+		err error
+	}{
+		{
+			key: "1",
+			exp: "3",
+			err: nil,
+		},
+		{
+			key: "1",
+			exp: "2",
+			err: nil,
+		},
+		{
+			key: "1",
+			exp: "1",
+			err: nil,
+		},
+	}
+	ctx := context.Background()
+	server, _ := miniredis.Run()
+	defer server.Close()
+	client, _ := NewClient(ctx, server.Addr(), "", 0)
+	defer client.Close()
+
+	client.AppendToList(ctx, "1", "1")
+	client.AppendToList(ctx, "1", "2")
+	client.AppendToList(ctx, "1", "3")
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("Test Pop from list Success: key: %s", tt.key), func(t *testing.T) {
+			val, err := client.PopFromList(ctx, tt.key)
+			assert.Nil(t, tt.err, err)
+			assert.Equal(t, tt.exp, val)
+		})
+	}
+	client.HashBytesUpdate(ctx, "2", "2", []byte{1})
+	val, err := client.PopFromList(ctx, "2")
+	expErr := redisError{errors.New("failed to pop from list, key in use for a different data structure"), "2"}
+	assert.Equal(t, expErr, err)
+	assert.Equal(t, "", val)
+}
+
 func TestDatastoreDelete(t *testing.T) {
 	tests := []struct {
 		key  string

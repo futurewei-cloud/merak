@@ -27,10 +27,10 @@ type Store interface {
 	HashDelete(ctx context.Context, key string, field string) error
 
 	GetList(ctx context.Context, key string) ([]string, error)
-	AppendToList(ctx context.Context, id string, object string) error
-	PopList(ctx context.Context, id string) (string, error)
+	AppendToList(ctx context.Context, key string, object string) error
+	PopFromList(ctx context.Context, key string) (string, error)
 
 	GetSet(ctx context.Context, key string) ([]string, error)
-	AddToSet(ctx context.Context, id string, object string) error
+	AddToSet(ctx context.Context, key string, object string) error
 	DeleteFromSet(ctx context.Context, key string, obj string) error
 }

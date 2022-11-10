@@ -120,9 +120,12 @@ func (Store *DB) AppendToList(ctx context.Context, key string, obj string) error
 	return nil
 }
 
-func (Store *DB) PopList(ctx context.Context, id string) (string, error) {
-
-	return "", nil
+func (Store *DB) PopFromList(ctx context.Context, key string) (string, error) {
+	res := Store.Client.RPop(ctx, key)
+	if res.Err() != nil {
+		return "", redisError{errors.New("failed to pop from list, key in use for a different data structure"), key}
+	}
+	return res.Val(), nil
 }
 
 // Deletes the data structure at the given key
