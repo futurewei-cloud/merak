@@ -13,12 +13,15 @@ Copyright(c) 2022 Futurewei Cloud
 */
 package logger
 
+// Interface for the Merak Logger
 type Logger interface {
 	Flush() error
-	Infoln(msg string, args ...any)
-	Warnln(msg string, args ...any)
-	Debugln(msg string, args ...any)
-	Errorln(msg string, args ...any)
-	Fatalln(msg string, args ...any)
-	Panicln(msg string, args ...any)
+	Info(msg string, args ...any)
+	Warn(msg string, args ...any)
+	Debug(msg string, args ...any)
+	Error(msg string, args ...any)
+	Fatal(msg string, args ...any)
+	Panic(msg string, args ...any)
+	SetLevel(level Level)
+	GetLevel() Level
 }

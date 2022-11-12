@@ -13,47 +13,88 @@ Copyright(c) 2022 Futurewei Cloud
 */
 package logger
 
-import "go.uber.org/zap"
+import (
+	"os"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
 
 var _ Logger = (*MerakLog)(nil)
 
 type MerakLog struct {
-	Zap *zap.SugaredLogger
+	Zap   *zap.SugaredLogger
+	Level zap.AtomicLevel
 }
 
-func NewLogger() (*MerakLog, error) {
-	zap_logger, err := zap.NewProduction()
-	if err != nil {
-		return nil, err
-	}
+type Level int8
+
+// The supported Log Levels
+const (
+	DEBUG Level = Level(zap.DebugLevel)
+	INFO  Level = Level(zap.InfoLevel)
+	WARN  Level = Level(zap.WarnLevel)
+	ERROR Level = Level(zap.ErrorLevel)
+	PANIC Level = Level(zap.PanicLevel)
+	FATAL Level = Level(zap.FatalLevel)
+)
+
+// Creates a new logger with the given log level
+func NewLogger(level Level) (*MerakLog, error) {
+	atomicLevel := zap.NewAtomicLevel()
+	config := zap.NewProductionEncoderConfig()
+
+	atomicLevel.SetLevel(zapcore.Level(level))
+	zap_logger := zap.New(zapcore.NewCore(
+		zapcore.NewJSONEncoder(config),
+		zapcore.Lock(os.Stdout),
+		atomicLevel,
+	))
 	sugar := zap_logger.Sugar()
-	return &MerakLog{sugar}, nil
+	return &MerakLog{sugar, atomicLevel}, nil
 }
 
-func (log *MerakLog) Infoln(msg string, args ...any) {
-	log.Zap.Infoln(msg)
+// Changes the log level to the given level
+func (log *MerakLog) SetLevel(level Level) {
+	log.Level.SetLevel(zapcore.Level(level))
 }
 
-func (log *MerakLog) Errorln(msg string, args ...any) {
-	log.Zap.Error(msg)
+// Returns the current log level
+func (log *MerakLog) GetLevel() Level {
+	return Level(log.Level.Level())
 }
 
-func (log *MerakLog) Warnln(msg string, args ...any) {
-	log.Zap.Warn(msg)
+// Writes an info log
+func (log *MerakLog) Info(msg string, kv ...any) {
+	log.Zap.Infow(msg, kv...)
 }
 
-func (log *MerakLog) Debugln(msg string, args ...any) {
-	log.Zap.Debugln(msg)
+// Writes an error log
+func (log *MerakLog) Error(msg string, kv ...any) {
+	log.Zap.Errorw(msg, kv...)
 }
 
-func (log *MerakLog) Fatalln(msg string, args ...any) {
-	log.Zap.Fatalln(msg, args)
+// Writes a warning log
+func (log *MerakLog) Warn(msg string, kv ...any) {
+	log.Zap.Warnw(msg, kv...)
 }
 
-func (log *MerakLog) Panicln(msg string, args ...any) {
-	log.Zap.Panicln(msg, args)
+// Writes a debug log
+func (log *MerakLog) Debug(msg string, kv ...any) {
+	log.Zap.Debugw(msg, kv...)
 }
 
+// Writes a fatal log
+func (log *MerakLog) Fatal(msg string, kv ...any) {
+	log.Zap.Fatalw(msg, kv...)
+}
+
+// Writes a panic log
+func (log *MerakLog) Panic(msg string, kv ...any) {
+	log.Zap.Panicw(msg, kv...)
+}
+
+// Flushes the logs
 func (log *MerakLog) Flush() error {
 	return log.Zap.Sync()
 }
