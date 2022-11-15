@@ -1,6 +1,7 @@
 /*
 MIT License
 Copyright(c) 2022 Futurewei Cloud
+
 	Permission is hereby granted,
 	free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
 	including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
@@ -14,6 +15,7 @@ package logger
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,9 +24,10 @@ import (
 	"go.uber.org/zap/zaptest/observer"
 )
 
+// Used for validating log output
 func createObservedLogger(level Level) (*MerakLog, *observer.ObservedLogs) {
 	observedZapCore, observedLogs := observer.New(zapcore.Level(level))
-	observedLogger := zap.New(observedZapCore)
+	observedLogger := zap.New(observedZapCore, zap.OnFatal(zapcore.CheckWriteAction(zapcore.WriteThenPanic)))
 	atomicLevel := zap.NewAtomicLevel()
 	atomicLevel.SetLevel(zapcore.Level(level))
 	logger := MerakLog{observedLogger.Sugar(), atomicLevel}
@@ -36,7 +39,23 @@ func TestLoggerNewLogger(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, logger)
 	logger.Info("hi", "1", "2")
+}
+
+func TestLoggerNewSysLogger(t *testing.T) {
+	logger, err := NewSysLogger(INFO, "Wrapper Test")
+	assert.Nil(t, err)
+	assert.NotNil(t, logger)
+	logger.Info("hi", "1", "2")
 	defer assert.Nil(t, logger.Flush())
+}
+func TestLoggerNewFileLogger(t *testing.T) {
+	logger, err := NewFileLogger(INFO, "/tmp/zap_test")
+	assert.Nil(t, err)
+	assert.NotNil(t, logger)
+	logger.Info("hi", "1", "2")
+	assert.Nil(t, logger.Flush())
+	e := os.Remove("/tmp/zap_test")
+	assert.Nil(t, e)
 }
 
 func loggerLevelsTest(t *testing.T, level Level) {
@@ -77,6 +96,20 @@ func loggerLevelsTest(t *testing.T, level Level) {
 				logger.Error(test.message, test.fields[0], test.fields[1], test.fields[2], test.fields[3])
 			case WARN:
 				logger.Warn(test.message, test.fields[0], test.fields[1], test.fields[2], test.fields[3])
+			case PANIC:
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Logger did not trigger panic")
+					}
+				}()
+				logger.Panic(test.message, test.fields[0], test.fields[1], test.fields[2], test.fields[3])
+			case FATAL:
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Logger did not trigger fatal")
+					}
+				}()
+				logger.Fatal(test.message, test.fields[0], test.fields[1], test.fields[2], test.fields[3])
 			}
 			logs := observedLogs.All()[i]
 			assert.Equal(t, i+1, observedLogs.Len())
@@ -108,17 +141,25 @@ func TestLoggerError(t *testing.T) {
 }
 
 func TestLoggerPanic(t *testing.T) {
+	loggerLevelsTest(t, PANIC)
 }
 func TestLoggerFatal(t *testing.T) {
+	loggerLevelsTest(t, FATAL)
 }
 
 func TestLoggerFlush(t *testing.T) {
-	logger, err := NewLogger(INFO)
+	logger, _ := createObservedLogger(INFO)
 	logger.Info("hi", "1", 2)
-	assert.Nil(t, err)
-	assert.Nil(t, logger.Flush())
+	defer assert.Nil(t, logger.Flush())
 }
 func TestLoggerSetLevel(t *testing.T) {
+	logger, err := NewLogger(INFO)
+	assert.Nil(t, err)
+	logger.SetLevel(DEBUG)
+	assert.Equal(t, DEBUG, logger.GetLevel())
 }
 func TestLoggerGetLevel(t *testing.T) {
+	logger, err := NewLogger(INFO)
+	assert.Nil(t, err)
+	assert.Equal(t, INFO, logger.GetLevel())
 }

@@ -56,7 +56,12 @@ spec:
         env:
         - name: "TEMPORAL"
           value: "temporaltest-frontend.default.svc.cluster.local"
+<<<<<<< HEAD
 
+=======
+        - name: "LOGLEVEL"
+          value: "INFO"
+>>>>>>> 1622303 (Add logging to syslog and file)
 ---
 # Merak Compute VM Worker Deployment
 apiVersion: apps/v1
@@ -91,6 +96,8 @@ spec:
           value: "1000"
         - name: CONCURRENCY
           value: "1000"
+        - name: "LOGLEVEL"
+          value: "INFO"
 # Single Redis Leader.
 # TODO: Add followers and follower service
 ---

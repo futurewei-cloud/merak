@@ -13,9 +13,16 @@ Copyright(c) 2022 Futurewei Cloud
 */
 package logger
 
+// Merak's wrapper for the zap logger
+
 import (
+	"flag"
+	"fmt"
+	"log/syslog"
 	"os"
 
+	"github.com/pkg/errors"
+	"github.com/tchap/zapext/zapsyslog"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -39,17 +46,60 @@ const (
 	FATAL Level = Level(zap.FatalLevel)
 )
 
-// Creates a new logger with the given log level
+// Creates a new logger that writes to stdout with the given log level
 func NewLogger(level Level) (*MerakLog, error) {
-	atomicLevel := zap.NewAtomicLevel()
 	config := zap.NewProductionEncoderConfig()
-
+	config.TimeKey = "time"
+	encoder := zapcore.NewJSONEncoder(config)
+	atomicLevel := zap.NewAtomicLevel()
 	atomicLevel.SetLevel(zapcore.Level(level))
-	zap_logger := zap.New(zapcore.NewCore(
-		zapcore.NewJSONEncoder(config),
-		zapcore.Lock(os.Stdout),
-		atomicLevel,
-	))
+
+	core := zapcore.NewCore(encoder, os.Stdout, atomicLevel)
+	zap_logger := zap.New(
+		core,
+		zap.Development(),
+		zap.AddStacktrace(zapcore.ErrorLevel))
+	sugar := zap_logger.Sugar()
+	return &MerakLog{sugar, atomicLevel}, nil
+}
+
+// Creates a new logger that writes to syslog with the given log level
+func NewSysLogger(level Level, serviceName string) (*MerakLog, error) {
+	flagTag := flag.String("app", serviceName, "syslog tag")
+	writer, err := syslog.New(syslog.LOG_ERR|syslog.LOG_LOCAL0, *flagTag)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to set up syslog")
+	}
+	config := zap.NewProductionEncoderConfig()
+	config.TimeKey = "time"
+	encoder := zapcore.NewJSONEncoder(config)
+	atomicLevel := zap.NewAtomicLevel()
+	atomicLevel.SetLevel(zapcore.Level(level))
+	core := zapsyslog.NewCore(atomicLevel, encoder, writer)
+	zap_logger := zap.New(
+		core,
+		zap.Development(),
+		zap.AddStacktrace(zapcore.ErrorLevel))
+	sugar := zap_logger.Sugar()
+	return &MerakLog{sugar, atomicLevel}, nil
+}
+
+// Creates a new logger that writes to the given filepath with the given log level
+func NewFileLogger(level Level, filepath string) (*MerakLog, error) {
+	config := zap.NewProductionEncoderConfig()
+	config.TimeKey = "time"
+	encoder := zapcore.NewJSONEncoder(config)
+	atomicLevel := zap.NewAtomicLevel()
+	atomicLevel.SetLevel(zapcore.Level(level))
+	f, err := os.Create(filepath)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("failed to write to file %s", filepath))
+	}
+	core := zapcore.NewCore(encoder, zapcore.AddSync(f), atomicLevel)
+	zap_logger := zap.New(
+		core,
+		zap.Development(),
+		zap.AddStacktrace(zapcore.ErrorLevel))
 	sugar := zap_logger.Sugar()
 	return &MerakLog{sugar, atomicLevel}, nil
 }

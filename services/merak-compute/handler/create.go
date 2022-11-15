@@ -26,7 +26,6 @@ import (
 	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/create"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
-	"go.uber.org/zap"
 )
 
 func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
@@ -37,11 +36,6 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		MaximumInterval:    common.TEMPORAL_WF_MAX_INTERVAL,
 		MaximumAttempts:    common.TEMPORAL_WF_MAX_ATTEMPT,
 	}
-	logger, _ := zap.NewProduction()
-	defer logger.Sync()
-	sugar := logger.Sugar()
-	sugar.Infow("Failed to fetch URL")
-
 	log.Println("Operation Create")
 	returnVMs := []*pb.InternalVMInfo{}
 	// Add pods to DB
