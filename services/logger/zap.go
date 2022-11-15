@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log/syslog"
 	"os"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/tchap/zapext/zapsyslog"
@@ -46,15 +47,72 @@ const (
 	FATAL Level = Level(zap.FatalLevel)
 )
 
-// Creates a new logger that writes to stdout with the given log level
-func NewLogger(level Level) (*MerakLog, error) {
+// Where to log
+type Location int
+
+const (
+	Syslog Location = iota + 1
+	File
+	Stdout
+)
+
+type options struct {
+	location    Location
+	level       zap.AtomicLevel
+	serviceName string
+	fileName    string
+}
+
+type merakLogError struct {
+	Err     error
+	Message string
+}
+
+func (e merakLogError) Error() string {
+	return fmt.Sprintf("%s: %v", e.Message, e.Err)
+}
+
+func newCore(opts *options) (any, error) {
 	config := zap.NewProductionEncoderConfig()
 	config.TimeKey = "time"
 	encoder := zapcore.NewJSONEncoder(config)
+	switch loc := opts.location; loc {
+	case Syslog:
+		flagTag := flag.String("app", opts.serviceName, "syslog tag")
+		writer, err := syslog.New(syslog.LOG_ERR|syslog.LOG_LOCAL0, *flagTag)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to set up syslog")
+		}
+		core := zapsyslog.NewCore(opts.level, encoder, writer)
+		return core, nil
+	case File:
+		f, err := os.Create(opts.fileName)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("failed to write to file %s", opts.fileName))
+		}
+		core := zapcore.NewCore(encoder, zapcore.AddSync(f), opts.level)
+		return core, nil
+	case Stdout:
+		return zapcore.NewCore(encoder, os.Stdout, opts.level), nil
+	}
+	return nil, merakLogError{errors.New("invalid logger case"), strconv.Itoa(int(opts.location))}
+}
+
+// Creates a new logger that writes to stdout with the given log level
+func NewLogger(level Level) (*MerakLog, error) {
 	atomicLevel := zap.NewAtomicLevel()
 	atomicLevel.SetLevel(zapcore.Level(level))
-
-	core := zapcore.NewCore(encoder, os.Stdout, atomicLevel)
+	c, err := newCore(&options{
+		level:    atomicLevel,
+		location: Stdout,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create core for stdout")
+	}
+	core, ok := c.(zapcore.Core)
+	if !ok {
+		return nil, merakLogError{errors.New("invalid zap core"), ""}
+	}
 	zap_logger := zap.New(
 		core,
 		zap.Development(),
@@ -65,17 +123,20 @@ func NewLogger(level Level) (*MerakLog, error) {
 
 // Creates a new logger that writes to syslog with the given log level
 func NewSysLogger(level Level, serviceName string) (*MerakLog, error) {
-	flagTag := flag.String("app", serviceName, "syslog tag")
-	writer, err := syslog.New(syslog.LOG_ERR|syslog.LOG_LOCAL0, *flagTag)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to set up syslog")
-	}
-	config := zap.NewProductionEncoderConfig()
-	config.TimeKey = "time"
-	encoder := zapcore.NewJSONEncoder(config)
 	atomicLevel := zap.NewAtomicLevel()
 	atomicLevel.SetLevel(zapcore.Level(level))
-	core := zapsyslog.NewCore(atomicLevel, encoder, writer)
+	c, err := newCore(&options{
+		level:       atomicLevel,
+		serviceName: serviceName,
+		location:    Syslog,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create core for syslog")
+	}
+	core, ok := c.(zapcore.Core)
+	if !ok {
+		return nil, merakLogError{errors.New("invalid zap core"), ""}
+	}
 	zap_logger := zap.New(
 		core,
 		zap.Development(),
@@ -86,16 +147,20 @@ func NewSysLogger(level Level, serviceName string) (*MerakLog, error) {
 
 // Creates a new logger that writes to the given filepath with the given log level
 func NewFileLogger(level Level, filepath string) (*MerakLog, error) {
-	config := zap.NewProductionEncoderConfig()
-	config.TimeKey = "time"
-	encoder := zapcore.NewJSONEncoder(config)
 	atomicLevel := zap.NewAtomicLevel()
 	atomicLevel.SetLevel(zapcore.Level(level))
-	f, err := os.Create(filepath)
+	c, err := newCore(&options{
+		level:    atomicLevel,
+		location: File,
+		fileName: filepath,
+	})
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("failed to write to file %s", filepath))
+		return nil, errors.Wrap(err, "failed to create core for syslog")
 	}
-	core := zapcore.NewCore(encoder, zapcore.AddSync(f), atomicLevel)
+	core, ok := c.(zapcore.Core)
+	if !ok {
+		return nil, merakLogError{errors.New("invalid zap core"), ""}
+	}
 	zap_logger := zap.New(
 		core,
 		zap.Development(),
