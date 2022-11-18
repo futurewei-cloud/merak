@@ -43,7 +43,6 @@ var (
 	SDN_PORT = "6653"
 	Ctx      = context.Background()
 
-	// namespace        = "default"
 	topologyClassGVR = schema.GroupVersionResource{
 		Group:    "networkop.co.uk",
 		Version:  "v1beta1",
@@ -494,12 +493,6 @@ func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData, nam
 	}
 
 	for _, node := range topo.Vnodes {
-
-		// err_del := k8client.CoreV1().Pods(namespace).Delete(Ctx, node.Name, metav1.DeleteOptions{})
-
-		// if err_del != nil {
-		// 	return fmt.Errorf("delete pod container error %s", err_del)
-		// }
 
 		err_del_t := DeleteTopologyClasses(dclient, node.Name, namespace)
 		if err_del_t != nil {
