@@ -43,7 +43,7 @@ var (
 	SDN_PORT = "6653"
 	Ctx      = context.Background()
 
-	namespace        = "default"
+	// namespace        = "default"
 	topologyClassGVR = schema.GroupVersionResource{
 		Group:    "networkop.co.uk",
 		Version:  "v1beta1",
@@ -51,8 +51,8 @@ var (
 	}
 )
 
-func CreateTopologyClasses(client dynamic.Interface, name string, links []database.Vlink) error {
-	rc := NewTopologyClass(name, links)
+func CreateTopologyClasses(client dynamic.Interface, name string, links []database.Vlink, namespace string) error {
+	rc := NewTopologyClass(name, links, namespace)
 
 	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Create(Ctx, rc, metav1.CreateOptions{})
 
@@ -64,7 +64,7 @@ func CreateTopologyClasses(client dynamic.Interface, name string, links []databa
 
 }
 
-func GetTopologyClasses(client dynamic.Interface, name string) error {
+func GetTopologyClasses(client dynamic.Interface, name string, namespace string) error {
 
 	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Get(Ctx, name, metav1.GetOptions{})
 
@@ -78,7 +78,7 @@ func GetTopologyClasses(client dynamic.Interface, name string) error {
 
 }
 
-func DeleteTopologyClasses(client dynamic.Interface, name string) error {
+func DeleteTopologyClasses(client dynamic.Interface, name string, namespace string) error {
 
 	err := client.Resource(topologyClassGVR).Namespace(namespace).Delete(Ctx, name, metav1.DeleteOptions{})
 
@@ -92,7 +92,7 @@ func DeleteTopologyClasses(client dynamic.Interface, name string) error {
 
 }
 
-func NewTopologyClass(name string, links []database.Vlink) *unstructured.Unstructured {
+func NewTopologyClass(name string, links []database.Vlink, namespace string) *unstructured.Unstructured {
 	var clinks []map[string]interface{}
 	for _, link := range links {
 		config_clink := map[string]interface{}{
@@ -122,7 +122,7 @@ func NewTopologyClass(name string, links []database.Vlink) *unstructured.Unstruc
 	return out
 }
 
-func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image string, topo database.TopologyData, aca_parameters string) error {
+func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image string, topo database.TopologyData, aca_parameters string, namespace string) error {
 	/*comment gw creation function*/
 	// var k8snodes []string
 
@@ -158,7 +158,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 		// Create topology class
 
-		err := CreateTopologyClasses(dclient, node.Name, node.Flinks)
+		err := CreateTopologyClasses(dclient, node.Name, node.Flinks, namespace)
 
 		if err != nil {
 			return fmt.Errorf("failed to create runtime class %s", err)
@@ -359,7 +359,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 		log.Printf("+++++ newpod %v+++++", newPod.Name)
 
-		_, err_create := k8client.CoreV1().Pods("default").Create(Ctx, newPod, metav1.CreateOptions{})
+		_, err_create := k8client.CoreV1().Pods(namespace).Create(Ctx, newPod, metav1.CreateOptions{})
 		log.Printf("+++++ k8s create pod %v+++++", newPod.Name)
 
 		if err_create != nil {
@@ -377,7 +377,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 		log.Printf("+++++ newpod %v+++++", newPod.Name)
 
-		_, err_create := k8client.CoreV1().Pods("default").Create(Ctx, newPod, metav1.CreateOptions{})
+		_, err_create := k8client.CoreV1().Pods(namespace).Create(Ctx, newPod, metav1.CreateOptions{})
 		log.Printf("+++++ k8s create pod %v+++++", newPod.Name)
 
 		if err_create != nil {
@@ -395,7 +395,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 		log.Printf("+++++ newpod %v+++++", newPod.Name)
 
-		_, err_create := k8client.CoreV1().Pods("default").Create(Ctx, newPod, metav1.CreateOptions{})
+		_, err_create := k8client.CoreV1().Pods(namespace).Create(Ctx, newPod, metav1.CreateOptions{})
 		log.Printf("+++++ k8s create pod %v+++++", newPod.Name)
 
 		if err_create != nil {
@@ -436,9 +436,9 @@ func ovs_config(topo database.TopologyData, node_name string, sdn_ip string, sdn
 
 }
 
-func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod, cmd []string) (string, error) {
+func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod, cmd []string, namespace string) (string, error) {
 
-	req := k8client.CoreV1().RESTClient().Post().Resource("pods").Name(pod.Name).Namespace("default").SubResource("exec") // .Param("container", containerName)
+	req := k8client.CoreV1().RESTClient().Post().Resource("pods").Name(pod.Name).Namespace(namespace).SubResource("exec") // .Param("container", containerName)
 	scheme := runtime.NewScheme()
 	if err1 := corev1.AddToScheme(scheme); err1 != nil {
 		return " ", fmt.Errorf("fail: addtoscheme %s", err1.Error())
@@ -478,7 +478,7 @@ func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod, cmd []string) (s
 
 }
 
-func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData) error {
+func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData, namespace string) error {
 
 	config := ctrl.GetConfigOrDie()
 	dclient, err := dynamic.NewForConfig(config)
@@ -495,18 +495,21 @@ func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData) err
 
 	for _, node := range topo.Vnodes {
 
-		err_del := k8client.CoreV1().Pods("default").Delete(Ctx, node.Name, metav1.DeleteOptions{})
+		// err_del := k8client.CoreV1().Pods(namespace).Delete(Ctx, node.Name, metav1.DeleteOptions{})
 
-		if err_del != nil {
-			return fmt.Errorf("delete pod container error %s", err_del)
-		}
+		// if err_del != nil {
+		// 	return fmt.Errorf("delete pod container error %s", err_del)
+		// }
 
-		err_del_t := DeleteTopologyClasses(dclient, node.Name)
+		err_del_t := DeleteTopologyClasses(dclient, node.Name, namespace)
 		if err_del_t != nil {
 			return fmt.Errorf("delete pod topology error %s", err_del_t)
 		}
 
 	}
+
+	k8client.CoreV1().Namespaces().Delete(context.Background(), namespace, metav1.DeleteOptions{})
+
 	return nil
 }
 

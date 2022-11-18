@@ -28,6 +28,7 @@ import (
 	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -215,6 +216,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	log.Println("=== Topology Deployment === ")
 	var aca_image string
 	var ovs_image string
+	var namespace string
 
 	for _, img := range images {
 		if strings.Contains(img.Name, "ACA") {
@@ -224,7 +226,13 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 		}
 	}
 
-	go Topo_deploy(k8client, aca_image, ovs_image, topo, aca_parameters)
+	namespace = topo_id[:7]
+
+	nsSpec := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
+
+	k8client.CoreV1().Namespaces().Create(context.Background(), nsSpec, metav1.CreateOptions{})
+
+	go Topo_deploy(k8client, aca_image, ovs_image, topo, aca_parameters, namespace)
 
 	return nil
 
@@ -509,7 +517,9 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 
 	}
 
-	go Topo_delete(k8client, topo)
+	namespace := topo_id[:7]
+
+	go Topo_delete(k8client, topo, namespace)
 
 	return nil
 }
