@@ -28,7 +28,6 @@ import (
 	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -228,7 +227,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 	namespace = topo_id[:7]
 
-	nsSpec := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
+	nsSpec := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
 
 	k8client.CoreV1().Namespaces().Create(context.Background(), nsSpec, metav1.CreateOptions{})
 
