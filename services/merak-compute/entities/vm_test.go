@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
-	"github.com/futurewei-cloud/merak/services/datastore"
+	"github.com/futurewei-cloud/merak/services/common/datastore"
 	"github.com/go-redis/redis/v9"
 	"github.com/stretchr/testify/assert"
 )

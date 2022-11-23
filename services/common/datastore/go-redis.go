@@ -120,6 +120,7 @@ func (Store *DB) AppendToList(ctx context.Context, key string, obj string) error
 	return nil
 }
 
+// Pops and returns the first element from the list
 func (Store *DB) PopFromList(ctx context.Context, key string) (string, error) {
 	res := Store.Client.RPop(ctx, key)
 	if res.Err() != nil {

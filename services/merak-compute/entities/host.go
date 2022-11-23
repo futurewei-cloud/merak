@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/futurewei-cloud/merak/services/datastore"
+	"github.com/futurewei-cloud/merak/services/common/datastore"
 )
 
 type Host struct {
