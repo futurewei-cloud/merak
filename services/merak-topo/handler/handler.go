@@ -237,7 +237,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 }
 
-func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string) error {
+func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, namespace string) error {
 	start_time := time.Now()
 	topo, err := database.FindTopoEntity(topo_id, "")
 
@@ -302,7 +302,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string) error
 
 			var cnode database.ComputeNode
 
-			res, err := k8client.CoreV1().Pods("default").Get(Ctx, node.Name, metav1.GetOptions{})
+			res, err := k8client.CoreV1().Pods(namespace).Get(Ctx, node.Name, metav1.GetOptions{})
 
 			if err != nil {
 				log.Printf("updatecomputenode: get pod info from k8s error %s", err)
@@ -444,7 +444,8 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 
 	}
 
-	go UpdateComputenodeInfo(k8client, topo_id)
+	namespace := topo_id[:7]
+	go UpdateComputenodeInfo(k8client, topo_id, namespace)
 
 	return nil
 }
