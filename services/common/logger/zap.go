@@ -257,7 +257,6 @@ func (log *MerakLog) Flush() error {
 	macError := errors.New("sync /dev/stdout: bad file descriptor")
 	linuxError := errors.New("sync /dev/stdout: invalid argument")
 	e := log.Zap.Sync()
-	fmt.Println(e)
 	if e != nil {
 		// Will get error when flushing stdout logs. Ok to ignore EINVAL https://github.com/uber-go/zap/issues/328
 		if e.Error() == macError.Error() || e.Error() == linuxError.Error() {
