@@ -3,6 +3,7 @@ module github.com/futurewei-cloud/merak
 go 1.18
 
 require (
+	github.com/alicebob/miniredis/v2 v2.23.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redis/v9 v9.0.0-beta.3
 	github.com/tidwall/gjson v1.14.3

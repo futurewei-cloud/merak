@@ -62,6 +62,15 @@ proto:
 	--go-grpc_opt=paths=source_relative \
 	-I api/proto/v1/ api/proto/v1/ntest.proto
 
+.PHONY: unit-tests
+unit-tests:
+	go test -v github.com/futurewei-cloud/merak/services/merak-compute/entities/ -coverprofile=cov_entities.out
+	go test -v github.com/futurewei-cloud/merak/services/datastore/ -coverprofile=cov_datastore.out
+	go tool cover -func=cov_entities.out
+	go tool cover -func=cov_datastore.out
+	rm cov_entities.out
+	rm cov_datastore.out
+
 .PHONY: deploy-dev
 deploy-dev:
 	kubectl apply -f deployments/kubernetes/scenario.dev.yaml
