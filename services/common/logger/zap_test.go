@@ -18,6 +18,7 @@ import (
 	"os"
 	"testing"
 
+	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -34,27 +35,38 @@ func createObservedLogger(level Level) (*MerakLog, *observer.ObservedLogs) {
 	return &logger, observedLogs
 }
 
-func TestLoggerNewLogger(t *testing.T) {
-	logger, err := NewLogger(INFO)
+func TestNewConsoleLogger(t *testing.T) {
+	logger, err := NewConsoleLogger(INFO)
 	assert.Nil(t, err)
 	assert.NotNil(t, logger)
+	assert.Nil(t, logger.Flush())
 	logger.Info("hi", "1", "2")
 }
 
-func TestLoggerNewSysLogger(t *testing.T) {
+func TestNewSysLogger(t *testing.T) {
 	logger, err := NewSysLogger(INFO, "Wrapper Test")
 	assert.Nil(t, err)
 	assert.NotNil(t, logger)
 	logger.Info("hi", "1", "2")
 	defer assert.Nil(t, logger.Flush())
 }
-func TestLoggerNewFileLogger(t *testing.T) {
+func TestNewFileLogger(t *testing.T) {
 	logger, err := NewFileLogger(INFO, "/tmp/zap_test")
 	assert.Nil(t, err)
 	assert.NotNil(t, logger)
 	logger.Info("hi", "1", "2")
 	assert.Nil(t, logger.Flush())
 	e := os.Remove("/tmp/zap_test")
+	assert.Nil(t, e)
+}
+
+func TestFileAndConsoleLogger(t *testing.T) {
+	logger, err := NewLogger(INFO, "test")
+	assert.Nil(t, err)
+	assert.NotNil(t, logger)
+	logger.Info("hi", "1", "2")
+	assert.Nil(t, logger.Flush())
+	e := os.Remove(constants.LOG_LOCATION + "test")
 	assert.Nil(t, e)
 }
 
@@ -153,13 +165,13 @@ func TestLoggerFlush(t *testing.T) {
 	defer assert.Nil(t, logger.Flush())
 }
 func TestLoggerSetLevel(t *testing.T) {
-	logger, err := NewLogger(INFO)
+	logger, err := NewConsoleLogger(INFO)
 	assert.Nil(t, err)
 	logger.SetLevel(DEBUG)
 	assert.Equal(t, DEBUG, logger.GetLevel())
 }
 func TestLoggerGetLevel(t *testing.T) {
-	logger, err := NewLogger(INFO)
+	logger, err := NewConsoleLogger(INFO)
 	assert.Nil(t, err)
 	assert.Equal(t, INFO, logger.GetLevel())
 }

@@ -35,4 +35,6 @@ const (
 
 	GRPC_MAX_RECV_MSG_SIZE = 1024 * 1024 * 500
 	GRPC_MAX_SEND_MSG_SIZE = 1024 * 1024 * 500
+
+	LOG_LOCATION = "/var/log/merak/"
 )

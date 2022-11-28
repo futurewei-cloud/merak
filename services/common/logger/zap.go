@@ -22,6 +22,7 @@ import (
 	"os"
 	"strconv"
 
+	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/pkg/errors"
 	"github.com/tchap/zapext/zapsyslog"
 	"go.uber.org/zap"
@@ -54,6 +55,7 @@ const (
 	Syslog Location = iota + 1
 	File
 	Stdout
+	Default
 )
 
 type options struct {
@@ -75,9 +77,9 @@ func (e merakLogError) Error() string {
 func newCore(opts *options) (any, error) {
 	config := zap.NewProductionEncoderConfig()
 	config.TimeKey = "time"
-	encoder := zapcore.NewJSONEncoder(config)
 	switch loc := opts.location; loc {
 	case Syslog:
+		encoder := zapcore.NewJSONEncoder(config)
 		flagTag := flag.String("app", opts.serviceName, "syslog tag")
 		writer, err := syslog.New(syslog.LOG_ERR|syslog.LOG_LOCAL0, *flagTag)
 		if err != nil {
@@ -86,6 +88,7 @@ func newCore(opts *options) (any, error) {
 		core := zapsyslog.NewCore(opts.level, encoder, writer)
 		return core, nil
 	case File:
+		encoder := zapcore.NewJSONEncoder(config)
 		f, err := os.Create(opts.fileName)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("failed to write to file %s", opts.fileName))
@@ -93,18 +96,58 @@ func newCore(opts *options) (any, error) {
 		core := zapcore.NewCore(encoder, zapcore.AddSync(f), opts.level)
 		return core, nil
 	case Stdout:
+		encoder := zapcore.NewConsoleEncoder(config)
 		return zapcore.NewCore(encoder, os.Stdout, opts.level), nil
+	case Default:
+		f, err := os.Create(opts.fileName)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("failed to write to file %s", opts.fileName))
+		}
+		consoleEncoder := zapcore.NewConsoleEncoder(config)
+		fileEncoder := zapcore.NewJSONEncoder(config)
+		return zapcore.NewTee(
+			zapcore.NewCore(fileEncoder, zapcore.AddSync(f), opts.level),
+			zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), opts.level),
+		), nil
 	}
 	return nil, merakLogError{errors.New("invalid logger case"), strconv.Itoa(int(opts.location))}
 }
 
 // Creates a new logger that writes to stdout with the given log level
-func NewLogger(level Level) (*MerakLog, error) {
+func NewConsoleLogger(level Level) (*MerakLog, error) {
 	atomicLevel := zap.NewAtomicLevel()
 	atomicLevel.SetLevel(zapcore.Level(level))
 	c, err := newCore(&options{
 		level:    atomicLevel,
 		location: Stdout,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create core for stdout")
+	}
+	core, ok := c.(zapcore.Core)
+	if !ok {
+		return nil, merakLogError{errors.New("invalid zap core"), ""}
+	}
+	zap_logger := zap.New(
+		core,
+		zap.Development(),
+		zap.AddStacktrace(zapcore.ErrorLevel))
+	sugar := zap_logger.Sugar()
+	return &MerakLog{sugar, atomicLevel}, nil
+}
+
+// Creates a new logger that writes to stdout and /var/log/merak/serviceName
+func NewLogger(level Level, serviceName string) (*MerakLog, error) {
+	atomicLevel := zap.NewAtomicLevel()
+	atomicLevel.SetLevel(zapcore.Level(level))
+	err := os.MkdirAll(constants.LOG_LOCATION, os.ModePerm)
+	if err != nil {
+		return nil, errors.Wrap(err, "create path "+constants.LOG_LOCATION)
+	}
+	c, err := newCore(&options{
+		level:    atomicLevel,
+		location: Default,
+		fileName: constants.LOG_LOCATION + serviceName,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create core for stdout")
@@ -211,5 +254,15 @@ func (log *MerakLog) Panic(msg string, kv ...any) {
 
 // Flushes the logs
 func (log *MerakLog) Flush() error {
-	return log.Zap.Sync()
+	macError := errors.New("sync /dev/stdout: bad file descriptor")
+	linuxError := errors.New("sync /dev/stdout: invalid argument")
+	e := log.Zap.Sync()
+	fmt.Println(e)
+	if e != nil {
+		// Will get error when flushing stdout logs. Ok to ignore EINVAL https://github.com/uber-go/zap/issues/328
+		if e.Error() == macError.Error() || e.Error() == linuxError.Error() {
+			return nil
+		}
+	}
+	return e
 }
