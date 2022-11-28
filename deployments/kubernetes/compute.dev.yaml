@@ -56,12 +56,8 @@ spec:
         env:
         - name: "TEMPORAL"
           value: "temporaltest-frontend.default.svc.cluster.local"
-<<<<<<< HEAD
-
-=======
         - name: "LOGLEVEL"
           value: "INFO"
->>>>>>> 1622303 (Add logging to syslog and file)
 ---
 # Merak Compute VM Worker Deployment
 apiVersion: apps/v1
