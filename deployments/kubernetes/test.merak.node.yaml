@@ -37,3 +37,6 @@ spec:
             privileged: true
         ports:
         - containerPort: 40054
+        env:
+        - name: "MODE"
+          value: "Standalone"

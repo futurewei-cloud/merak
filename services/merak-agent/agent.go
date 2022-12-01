@@ -25,17 +25,63 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	constants "github.com/futurewei-cloud/merak/services/common"
+
+	// "github.com/futurewei-cloud/merak/services/common/metrics"
 	"github.com/futurewei-cloud/merak/services/merak-agent/handler"
+	// "github.com/prometheus/client_golang/prometheus"
+	// "github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 )
 
 var (
 	Port = flag.Int("port", constants.AGENT_GRPC_SERVER_PORT, "The server port")
+	// reg  = prometheus.NewRegistry()
 )
 
 func main() {
 
+	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
+	if !ok {
+		startPlugin()
+	}
+
+	// Start gRPC Server
+	flag.Parse()
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *Port))
+	if err != nil {
+		log.Fatalln("ERROR: Failed to listen", err)
+	}
+
+	enforcement := keepalive.EnforcementPolicy{
+		MinTime:             5 * time.Second,
+		PermitWithoutStream: true,
+	}
+	kpServerParam := keepalive.ServerParameters{
+		Time:    30 * time.Second,
+		Timeout: 90 * time.Second,
+	}
+
+	gRPCServer := grpc.NewServer(
+		grpc.MaxSendMsgSize(constants.GRPC_MAX_SEND_MSG_SIZE),
+		grpc.MaxRecvMsgSize(constants.GRPC_MAX_RECV_MSG_SIZE),
+		grpc.KeepaliveEnforcementPolicy(enforcement),
+		grpc.KeepaliveParams(kpServerParam))
+
+	// m := metrics.NewMetrics(reg, "merak agent")
+	// m.OpsProcessed.With(prometheus.Labels{"Ops": "test"}).Inc()
+	// go func() {
+	// 	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
+	// }()
+
+	pb.RegisterMerakAgentServiceServer(gRPCServer, &handler.Server{})
+	log.Printf("Starting gRPC server. Listening at %v", lis.Addr())
+	if err := gRPCServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v\n", err)
+	}
+}
+
+func startPlugin() {
 	if len(os.Args) < 3 {
 		log.Fatal("Not enough arguments")
 	}
@@ -63,32 +109,4 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Printf("Started ACA %d\n", cmd.Process.Pid)
-
-	// Start gRPC Server
-	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *Port))
-	if err != nil {
-		log.Fatalln("ERROR: Failed to listen", err)
-	}
-
-	enforcement := keepalive.EnforcementPolicy{
-		MinTime:             5 * time.Second,
-		PermitWithoutStream: true,
-	}
-	kpServerParam := keepalive.ServerParameters{
-		Time:    30 * time.Second,
-		Timeout: 90 * time.Second,
-	}
-
-	gRPCServer := grpc.NewServer(
-		grpc.MaxSendMsgSize(constants.GRPC_MAX_SEND_MSG_SIZE),
-		grpc.MaxRecvMsgSize(constants.GRPC_MAX_RECV_MSG_SIZE),
-		grpc.KeepaliveEnforcementPolicy(enforcement),
-		grpc.KeepaliveParams(kpServerParam))
-
-	pb.RegisterMerakAgentServiceServer(gRPCServer, &handler.Server{})
-	log.Printf("Starting gRPC server. Listening at %v", lis.Addr())
-	if err := gRPCServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v\n", err)
-	}
 }

@@ -14,83 +14,55 @@ Copyright(c) 2022 Futurewei Cloud
 package handler
 
 import (
-	"bytes"
 	"context"
 	"log"
-	"net/http"
-	"os/exec"
-	"strconv"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	constants "github.com/futurewei-cloud/merak/services/common"
+	merakEvm "github.com/futurewei-cloud/merak/services/merak-agent/evm"
 )
 
 func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
-	log.Println("Send Delete Port Request to Alcor")
 
-	req, err := http.NewRequest(http.MethodDelete, "http://"+RemoteServer+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports/"+in.Remoteid, bytes.NewBuffer(nil))
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	evm, err := merakEvm.NewEvm(in.Name, in.Ip, in.Mac, in.Remoteid, in.Deviceid, in.Cidr, in.Gw, common_pb.Status_DELETING)
 	if err != nil {
-		log.Println("Failed send Delete Port request to Alcor!", err)
 		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed send Delete Port request to Alcor!",
+			ReturnMessage: "Invalid info for Delete EVM",
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 		}, err
 	}
 
-	log.Println("Sending delete port request to Alcor", req)
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	err = evm.DeletePort(in, RemoteServer)
 	if err != nil {
-		log.Println("Failed to delete port to Alcor!")
-		// Ignore delete-port failure for now
-
-		// return &pb.AgentReturnInfo{
-		// 	ReturnMessage: "Failed Delete port!",
-		// 	ReturnCode:    common_pb.ReturnCode_FAILED,
-		// }, err
-	}
-	log.Println("VM Name: "+in.Name+" Port ID: "+in.Remoteid+" Response code from Alcor delete-port ", resp.StatusCode)
-	if resp.StatusCode != constants.HTTP_OK {
-		log.Println("Alcor failed to delete, response " + strconv.Itoa(resp.StatusCode))
-		// Ignore delete-port failure for now
-
-		// return &pb.AgentReturnInfo{
-		// 	ReturnMessage: "Failed to Delete Port ! Response Code: " + strconv.Itoa(resp.StatusCode),
-		// 	ReturnCode:    common_pb.ReturnCode_FAILED,
-		// }, errors.New("Failed to delete port! Response Code: " + strconv.Itoa(resp.StatusCode))
-	}
-
-	log.Println("Deleting Namespace")
-	cmd := exec.Command("bash", "-c", "ip netns delete "+in.Name)
-	stdout, err := cmd.Output()
-	if err != nil {
-		log.Println("Namespace deletion failed! " + string(stdout))
 		return &pb.AgentReturnInfo{
-			ReturnMessage: "Namespace deletion failed! " + string(stdout),
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, err
-	}
-	log.Println("Deleting bridge device")
-	cmd = exec.Command("bash", "-c", "ip link delete bridge"+in.Name)
-	stdout, err = cmd.Output()
-	if err != nil {
-		log.Println("Bridge deletion failed! " + string(stdout))
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Bridge deletion failed! " + string(stdout),
+			ReturnMessage: "Delete Port request to Alcor Failed!",
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 		}, err
 	}
 
-	tapName := "tap" + in.Remoteid[:11]
-	log.Println("Deleting TAP device " + tapName)
-	cmd = exec.Command("bash", "-c", "ovs-vsctl del-port br-int "+tapName)
-	stdout, err = cmd.Output()
+	err = evm.DeleteNamespace()
 	if err != nil {
-		log.Println("Failed to delete tap " + string(stdout))
+		log.Println("Namespace deletion failed!")
 		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed to delete tap " + string(stdout),
+			ReturnMessage: "Namespace deletion failed!",
+			ReturnCode:    common_pb.ReturnCode_FAILED,
+		}, err
+	}
+
+	err = evm.DeleteBridge()
+	if err != nil {
+		log.Println("Bridge deletion failed!")
+		return &pb.AgentReturnInfo{
+			ReturnMessage: "Bridge deletion failed!",
+			ReturnCode:    common_pb.ReturnCode_FAILED,
+		}, err
+	}
+
+	err = evm.DeleteDevice()
+	if err != nil {
+		log.Println("Failed to delete tap")
+		return &pb.AgentReturnInfo{
+			ReturnMessage: "Failed to delete tap",
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 		}, err
 	}

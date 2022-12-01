@@ -37,4 +37,12 @@ const (
 	GRPC_MAX_SEND_MSG_SIZE = 1024 * 1024 * 500
 
 	LOG_LOCATION = "/var/log/merak/"
+
+	AGENT_MODE_ENV             = "mode"
+	AGENT_MODE_STANDALONE      = "standalone"
+	AGENT_STANDALONE_IP        = "10.0.0.2"
+	AGENT_STANDALONE_MAC       = "aa:bb:cc:dd:ee:ff"
+	AGENT_STANDALONE_REMOTE_ID = "NO ALCOR"
+	AGENT_STANDALONE_GW        = "10.0.0.1"
+	AGENT_STANDALONE_CIDR      = "10.0.0.0/8"
 )
