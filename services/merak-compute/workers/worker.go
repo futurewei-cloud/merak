@@ -103,7 +103,6 @@ func main() {
 		WorkerLocalActivitiesPerSecond:          rps_int,
 	})
 	w.RegisterWorkflow(create.Create)
-	w.RegisterWorkflow(create.GenerateVMs)
 	w.RegisterWorkflow(delete.Delete)
 	w.RegisterActivity(activities.VmCreate)
 	w.RegisterActivity(activities.VmGenerate)

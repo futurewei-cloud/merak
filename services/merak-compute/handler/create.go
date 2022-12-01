@@ -26,6 +26,7 @@ import (
 	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/create"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
+	"golang.org/x/sync/errgroup"
 )
 
 func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
@@ -65,56 +66,30 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 				ReturnCode:    commonPB.ReturnCode_FAILED,
 			}, err
 		}
-
+		gen := new(errgroup.Group)
 		for i, vpc := range in.Config.VmDeploy.Vpcs {
 			for j, subnet := range vpc.Subnets {
 				for k := 0; k < int(subnet.NumberVms); k++ {
-					vmID := pod.Id + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
-					suffix := strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
-					if err := RedisClient.SAdd(
-						ctx,
-						constants.COMPUTE_REDIS_VM_SET,
-						vmID,
-					).Err(); err != nil {
-						return &pb.ReturnComputeMessage{
-							ReturnMessage: "Unable to VM to DB Hash Set",
-							ReturnCode:    commonPB.ReturnCode_FAILED,
-						}, err
-					}
-					if err := RedisClient.HSet(
-						ctx,
-						vmID,
-						"id", vmID,
-						"name", "v"+suffix,
-						"vpc", vpc.VpcId,
-						"tenantID", vpc.TenantId,
-						"projectID", vpc.ProjectId,
-						"subnetID", subnet.SubnetId,
-						"cidr", subnet.SubnetCidr,
-						"gw", subnet.SubnetGw,
-						"sg", in.Config.VmDeploy.Secgroups[0],
-						"hostIP", pod.ContainerIp,
-						"hostmac", pod.Mac,
-						"hostname", pod.Name,
-						"status", "1",
-					).Err(); err != nil {
-						return &pb.ReturnComputeMessage{
-							ReturnMessage: "Unable add VM to DB Hash Map",
-							ReturnCode:    commonPB.ReturnCode_FAILED,
-						}, err
-					}
-
-					// Store VM to Pod list
-					if err := RedisClient.LPush(ctx, "l"+pod.Id, vmID).Err(); err != nil {
-						log.Println("Failed to add pod -> vm mapping " + vmID)
-						return &pb.ReturnComputeMessage{
-							ReturnMessage: "Unable add VM to pod list",
-							ReturnCode:    commonPB.ReturnCode_FAILED,
-							Vms:           returnVMs,
-						}, err
-					}
+					func(i, j, k int,
+						subnet *commonPB.InternalSubnetInfo,
+						vpc *commonPB.InternalVpcInfo,
+						secgroup string,
+						pod *commonPB.InternalComputeInfo,
+						ctx context.Context) {
+						gen.Go(func() error {
+							return generateVMs(i, j, k, subnet, vpc, secgroup, pod, ctx)
+						})
+					}(i, j, k, subnet, vpc, in.Config.VmDeploy.Secgroups[0], pod, ctx)
 				}
 			}
+		}
+		if err := gen.Wait(); err != nil {
+			log.Println("Failed to generate VMs for pod ", pod.Name)
+			return &pb.ReturnComputeMessage{
+				ReturnMessage: "Failed to generate VMs!",
+				ReturnCode:    commonPB.ReturnCode_FAILED,
+				Vms:           returnVMs,
+			}, err
 		}
 
 		// Get VM to pod list
@@ -161,4 +136,47 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		ReturnCode:    commonPB.ReturnCode_OK,
 		Vms:           returnVMs,
 	}, nil
+}
+
+func generateVMs(i, j, k int,
+	subnet *commonPB.InternalSubnetInfo,
+	vpc *commonPB.InternalVpcInfo,
+	secgroup string,
+	pod *commonPB.InternalComputeInfo,
+	ctx context.Context) error {
+	vmID := pod.Id + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
+	suffix := strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
+	if err := RedisClient.SAdd(
+		ctx,
+		constants.COMPUTE_REDIS_VM_SET,
+		vmID,
+	).Err(); err != nil {
+		return err
+	}
+	if err := RedisClient.HSet(
+		ctx,
+		vmID,
+		"id", vmID,
+		"name", "v"+suffix,
+		"vpc", vpc.VpcId,
+		"tenantID", vpc.TenantId,
+		"projectID", vpc.ProjectId,
+		"subnetID", subnet.SubnetId,
+		"cidr", subnet.SubnetCidr,
+		"gw", subnet.SubnetGw,
+		"sg", secgroup,
+		"hostIP", pod.ContainerIp,
+		"hostmac", pod.Mac,
+		"hostname", pod.Name,
+		"status", "1",
+	).Err(); err != nil {
+		return err
+	}
+
+	// Store VM to Pod list
+	if err := RedisClient.LPush(ctx, "l"+pod.Id, vmID).Err(); err != nil {
+		log.Println("Failed to add pod -> vm mapping " + vmID)
+		return err
+	}
+	return nil
 }
