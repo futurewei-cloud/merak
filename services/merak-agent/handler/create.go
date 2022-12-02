@@ -22,9 +22,12 @@ import (
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	merakEvm "github.com/futurewei-cloud/merak/services/merak-agent/evm"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
+
+	met.OpsProcessed.With(prometheus.Labels{"Ops": "test"}).Inc()
 
 	var evm *merakEvm.AlcorEvm
 	var err error
@@ -249,7 +252,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	log.Println("Successfully created devices!")
+	log.Println("Successfully created devices for evm ", evm.GetName())
 
 	_, ok = os.LookupEnv(constants.AGENT_MODE_ENV)
 	if !ok {

@@ -114,20 +114,18 @@ docker-agent:
 	make agent
 	docker build -t meraksim/merak-agent:dev -f docker/agent.Dockerfile .
 	docker push meraksim/merak-agent:dev
+	docker build -t meraksim/merak-agent-prometheus:dev -f docker/agent.prometheus.Dockerfile .
+	docker push meraksim/merak-agent:dev
+	docker push meraksim/merak-agent-prometheus:dev
 
 .PHONY: docker-agent-test
 docker-agent-test:
 	make proto
 	make agent
 	docker build -t meraksim/merak-agent:test -f docker/agent.Dockerfile .
+	docker build -t meraksim/merak-agent-prometheus:test -f docker/agent.prometheus.Dockerfile .
 	docker push meraksim/merak-agent:test
-
-.PHONY: docker-agent-standalone
-docker-agent-standalone:
-	make proto
-	make agent
-	docker build -t meraksim/merak-agent:standalone -f docker/agent-standalone.Dockerfile .
-	docker push meraksim/merak-agent:standalone
+	docker push meraksim/merak-agent-prometheus:test
 
 .PHONY: docker-network
 docker-network:
@@ -194,4 +192,3 @@ clean:
 	rm -rf services/scenario-manager/build/*
 	rm -rf services/merak-network/build/*
 	rm -rf services/merak-topo/build/*
-	rm -rf services/merak-agent-standalone/build/*

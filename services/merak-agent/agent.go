@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -26,17 +27,15 @@ import (
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	constants "github.com/futurewei-cloud/merak/services/common"
 
-	// "github.com/futurewei-cloud/merak/services/common/metrics"
 	"github.com/futurewei-cloud/merak/services/merak-agent/handler"
-	// "github.com/prometheus/client_golang/prometheus"
-	// "github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 )
 
 var (
 	Port = flag.Int("port", constants.AGENT_GRPC_SERVER_PORT, "The server port")
-	// reg  = prometheus.NewRegistry()
+	reg  = handler.PrometheusRegistry
 )
 
 func main() {
@@ -67,12 +66,9 @@ func main() {
 		grpc.MaxRecvMsgSize(constants.GRPC_MAX_RECV_MSG_SIZE),
 		grpc.KeepaliveEnforcementPolicy(enforcement),
 		grpc.KeepaliveParams(kpServerParam))
-
-	// m := metrics.NewMetrics(reg, "merak agent")
-	// m.OpsProcessed.With(prometheus.Labels{"Ops": "test"}).Inc()
-	// go func() {
-	// 	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
-	// }()
+	go func() {
+		http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
+	}()
 
 	pb.RegisterMerakAgentServiceServer(gRPCServer, &handler.Server{})
 	log.Printf("Starting gRPC server. Listening at %v", lis.Addr())

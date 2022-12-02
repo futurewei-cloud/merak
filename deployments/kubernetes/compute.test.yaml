@@ -177,9 +177,13 @@ spec:
         privileged: true
     ports:
     - containerPort: 40054
+        - containerPort: 40054
     env:
     - name: "mode"
       value: "standalone"
+  - name: merak-agent-prometheus
+    image: meraksim/merak-agent-prometheus:test
+    imagePullPolicy: Always
 ---
 apiVersion: v1
 kind: Pod

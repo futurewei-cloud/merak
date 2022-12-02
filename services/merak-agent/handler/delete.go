@@ -16,6 +16,7 @@ package handler
 import (
 	"context"
 	"log"
+	"os"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
@@ -40,13 +41,15 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 		}, err
 	}
-
-	err = evm.DeletePort(in, RemoteServer)
-	if err != nil {
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Delete Port request to Alcor Failed!",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, err
+	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
+	if !ok {
+		err = evm.DeletePort(in, RemoteServer)
+		if err != nil {
+			return &pb.AgentReturnInfo{
+				ReturnMessage: "Delete Port request to Alcor Failed!",
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+			}, err
+		}
 	}
 
 	err = evm.DeleteNamespace()
@@ -67,18 +70,30 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.DeleteDevice()
-	if err != nil {
-		log.Println("Failed to delete tap")
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed to delete tap",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, err
+	_, ok = os.LookupEnv(constants.AGENT_MODE_ENV)
+	if !ok {
+		err = evm.DeleteDevice()
+		if err != nil {
+			log.Println("Failed to delete tap")
+			return &pb.AgentReturnInfo{
+				ReturnMessage: "Failed to delete tap",
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+			}, err
+		}
+	} else {
+		err = evm.DeleteStandaloneDevice()
+		if err != nil {
+			log.Println("Failed to delete tap")
+			return &pb.AgentReturnInfo{
+				ReturnMessage: "Failed to delete tap",
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+			}, err
+		}
 	}
 
+	log.Println("Successfully deleted devices for evm ", evm.GetName())
 	return &pb.AgentReturnInfo{
 		ReturnMessage: "Delete Success!",
 		ReturnCode:    common_pb.ReturnCode_OK,
 	}, nil
-
 }

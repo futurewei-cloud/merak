@@ -20,13 +20,19 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	"github.com/futurewei-cloud/merak/services/common/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Server struct {
 	pb.UnimplementedMerakAgentServiceServer
 }
 
-var RemoteServer string
+var (
+	RemoteServer       string
+	PrometheusRegistry = prometheus.NewRegistry()
+	met                = metrics.NewMetrics(PrometheusRegistry, "merak agent")
+)
 
 func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
 	log.Println("Received on PortHandler", in)
