@@ -350,7 +350,7 @@ func (evm *AlcorEvm) AddGateway() error {
 	return nil
 }
 
-func (evm *AlcorEvm) CreateBridge() error {
+func (evm *AlcorEvm) DeleteBridge() error {
 	log.Println("Deleting bridge device")
 	stdout, err := bashExec("ip link delete bridge" + evm.name)
 	if err != nil {
@@ -360,7 +360,7 @@ func (evm *AlcorEvm) CreateBridge() error {
 	return nil
 }
 
-func (evm *AlcorEvm) DeleteBridge() error {
+func (evm *AlcorEvm) CreateBridge() error {
 	log.Println("Creating bridge device bridge" + evm.name)
 	stdout, err := bashExec("ip link add name bridge" + evm.name + " type bridge")
 	if err != nil {
@@ -456,7 +456,7 @@ func (evm *AlcorEvm) SetIP(ip string) error {
 
 func (evm *AlcorEvm) SetMac(mac string) error {
 	_, err := net.ParseMAC(mac)
-	if err == nil {
+	if err != nil {
 		log.Fatalf("Invalid MAC address %s\n", mac)
 	}
 	evm.mac = mac
@@ -465,7 +465,7 @@ func (evm *AlcorEvm) SetMac(mac string) error {
 
 func (evm *AlcorEvm) SetCidr(cidr string) error {
 	_, _, err := net.ParseCIDR(cidr)
-	if err == nil {
+	if err != nil {
 		log.Fatalf("Invalid CIDR %s\n", cidr)
 	}
 	evm.cidr = cidr

@@ -89,9 +89,11 @@ func main() {
 	redisAddress.WriteString(strconv.Itoa(constants.COMPUTE_REDIS_PORT))
 
 	handler.RedisClient = *redis.NewClient(&redis.Options{
-		Addr:     redisAddress.String(),
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Addr:        redisAddress.String(),
+		Password:    "", // no password set
+		DB:          0,  // use default DB
+		PoolSize:    1000,
+		PoolTimeout: 60,
 	})
 
 	err = handler.RedisClient.Set(ctx, "key", "value", 0).Err()

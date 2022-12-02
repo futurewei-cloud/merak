@@ -61,6 +61,16 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			constants.AGENT_STANDALONE_GW,
 			common_pb.Status_DEPLOYING,
 		)
+		err := evm.CreateStandaloneDevice()
+		if err != nil {
+			return &pb.AgentReturnInfo{
+				ReturnMessage: "Failed to create tap",
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+				Port: &pb.ReturnPortInfo{
+					Status: common_pb.Status_ERROR,
+				},
+			}, err
+		}
 	}
 
 	err = evm.CreateNamespace()
@@ -173,10 +183,21 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.BringBridgeUp()
+	err = evm.CreateBridge()
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to create bridge!",
+			ReturnCode:    common_pb.ReturnCode_FAILED,
+			Port: &pb.ReturnPortInfo{
+				Status: common_pb.Status_ERROR,
+			},
+		}, err
+	}
+
+	err = evm.BringBridgeUp()
+	if err != nil {
+		return &pb.AgentReturnInfo{
+			ReturnMessage: "Failed to bring bridge up!",
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 			Port: &pb.ReturnPortInfo{
 				Status: common_pb.Status_ERROR,

@@ -19,12 +19,21 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	constants "github.com/futurewei-cloud/merak/services/common"
 	merakEvm "github.com/futurewei-cloud/merak/services/merak-agent/evm"
 )
 
 func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
 
-	evm, err := merakEvm.NewEvm(in.Name, in.Ip, in.Mac, in.Remoteid, in.Deviceid, in.Cidr, in.Gw, common_pb.Status_DELETING)
+	evm, err := merakEvm.NewEvm(
+		in.Name,
+		constants.AGENT_STANDALONE_IP,
+		constants.AGENT_STANDALONE_MAC,
+		in.Remoteid,
+		in.Deviceid,
+		constants.AGENT_STANDALONE_CIDR,
+		constants.AGENT_STANDALONE_GW,
+		common_pb.Status_DELETING)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Invalid info for Delete EVM",
