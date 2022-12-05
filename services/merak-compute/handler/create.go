@@ -36,7 +36,6 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		MaximumInterval:    common.TEMPORAL_WF_MAX_INTERVAL,
 		MaximumAttempts:    common.TEMPORAL_WF_MAX_ATTEMPT,
 	}
-
 	log.Println("Operation Create")
 	returnVMs := []*pb.InternalVMInfo{}
 	// Add pods to DB
