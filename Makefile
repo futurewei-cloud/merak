@@ -114,18 +114,13 @@ docker-agent:
 	make agent
 	docker build -t meraksim/merak-agent:dev -f docker/agent.Dockerfile .
 	docker push meraksim/merak-agent:dev
-	docker build -t meraksim/merak-agent-prometheus:dev -f docker/agent.prometheus.Dockerfile .
-	docker push meraksim/merak-agent:dev
-	docker push meraksim/merak-agent-prometheus:dev
 
 .PHONY: docker-agent-test
 docker-agent-test:
 	make proto
 	make agent
 	docker build -t meraksim/merak-agent:test -f docker/agent.Dockerfile .
-	docker build -t meraksim/merak-agent-prometheus:test -f docker/agent.prometheus.Dockerfile .
 	docker push meraksim/merak-agent:test
-	docker push meraksim/merak-agent-prometheus:test
 
 .PHONY: docker-network
 docker-network:
@@ -146,6 +141,11 @@ docker-topo:
 docker-test:
 	docker build -t meraksim/test-merak-compute:test -f docker/test.merak.Dockerfile .
 	docker push meraksim/test-merak-compute:test
+
+.PHONY: docker-prometheus
+docker-prometheus:
+	docker build -t meraksim/prometheus:dev -f docker/prometheus.Dockerfile .
+	docker push meraksim/prometheus:dev
 
 .PHONY: docker-all
 docker-all:

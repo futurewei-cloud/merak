@@ -26,8 +26,8 @@ import (
 )
 
 func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
-
-	met.OpsProcessed.With(prometheus.Labels{"Ops": "test"}).Inc()
+	PrometheusRegistry.Register(met.OpsProcessed)
+	met.OpsProcessed.With(prometheus.Labels{"operation": "test", "status": "hi"}).Inc()
 
 	var evm *merakEvm.AlcorEvm
 	var err error

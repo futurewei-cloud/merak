@@ -92,8 +92,8 @@ func main() {
 		Addr:        redisAddress.String(),
 		Password:    "", // no password set
 		DB:          0,  // use default DB
-		PoolSize:    1000,
-		PoolTimeout: 60,
+		PoolSize:    10000,
+		PoolTimeout: time.Second * 60,
 	})
 
 	err = handler.RedisClient.Set(ctx, "key", "value", 0).Err()

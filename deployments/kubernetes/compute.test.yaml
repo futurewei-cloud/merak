@@ -81,8 +81,6 @@ spec:
           value: "1000"
         - name: CONCURRENCY
           value: "1000"
-        - name: "LOGLEVEL"
-          value: "INFO"
 ---
 # Merak Compute VM Worker Deployment
 apiVersion: apps/v1
@@ -110,8 +108,6 @@ spec:
         env:
         - name: "TEMPORAL"
           value: "temporaltest-frontend.default.svc.cluster.local"
-        - name: "LOGLEVEL"
-          value: "INFO"
 # Single Redis Leader.
 # TODO: Add followers and follower service
 ---
@@ -166,7 +162,7 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: merak-agent
+  name: vhost0
 spec:
   serviceAccountName: merak-compute
   containers:
@@ -177,13 +173,12 @@ spec:
         privileged: true
     ports:
     - containerPort: 40054
-        - containerPort: 40054
+      name: grpc
+    - containerPort: 9001
+      name: prometheus
     env:
     - name: "mode"
       value: "standalone"
-  - name: merak-agent-prometheus
-    image: meraksim/merak-agent-prometheus:test
-    imagePullPolicy: Always
 ---
 apiVersion: v1
 kind: Pod

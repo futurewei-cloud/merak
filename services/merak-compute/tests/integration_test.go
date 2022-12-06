@@ -49,7 +49,7 @@ func TestGrpcClient(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create kube client!: %v\n", err.Error())
 	}
-	kubePod, err := clientset.CoreV1().Pods("default").Get(ctx, "merak-agent", metav1.GetOptions{})
+	kubePod, err := clientset.CoreV1().Pods("default").Get(ctx, "vhost0", metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Failed to get merak-agent pod! %v\n", err)
 	}
@@ -132,20 +132,20 @@ func TestGrpcClient(t *testing.T) {
 	}
 	t.Log("Response: ", resp.ReturnMessage)
 
-	// Test Info
-	compute_info.OperationType = common_pb.OperationType_INFO
-	resp, err = client.ComputeHandler(ctx, &compute_info)
-	if err != nil {
-		t.Fatalf("Compute Handler Info failed: %v", err)
-	}
-	t.Log("Response: ", resp.ReturnMessage)
+	// // Test Info
+	// compute_info.OperationType = common_pb.OperationType_INFO
+	// resp, err = client.ComputeHandler(ctx, &compute_info)
+	// if err != nil {
+	// 	t.Fatalf("Compute Handler Info failed: %v", err)
+	// }
+	// t.Log("Response: ", resp.ReturnMessage)
 
-	// Test Delete
-	compute_info.OperationType = common_pb.OperationType_DELETE
-	resp, err = client.ComputeHandler(ctx, &compute_info)
-	if err != nil {
-		t.Fatalf("Compute Handler Delete failed: %v", err)
-	}
+	// // Test Delete
+	// compute_info.OperationType = common_pb.OperationType_DELETE
+	// resp, err = client.ComputeHandler(ctx, &compute_info)
+	// if err != nil {
+	// 	t.Fatalf("Compute Handler Delete failed: %v", err)
+	// }
 	t.Log("Response: ", resp)
 
 	defer conn.Close()

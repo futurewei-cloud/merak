@@ -86,6 +86,7 @@ func NewEvm(name, ip, mac, remoteID, deviceID, cidr, gw string, status common_pb
 	}
 	err = evm.SetGw(gw)
 	if err != nil {
+
 		return nil, err
 	}
 	log.Println("Successfully recieved EVM info ", evm)

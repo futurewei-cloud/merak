@@ -31,7 +31,7 @@ type Server struct {
 var (
 	RemoteServer       string
 	PrometheusRegistry = prometheus.NewRegistry()
-	met                = metrics.NewMetrics(PrometheusRegistry, "merak agent")
+	met                = metrics.NewMetrics(PrometheusRegistry, "MerakAgent")
 )
 
 func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {

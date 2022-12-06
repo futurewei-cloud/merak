@@ -66,8 +66,10 @@ func main() {
 		grpc.MaxRecvMsgSize(constants.GRPC_MAX_RECV_MSG_SIZE),
 		grpc.KeepaliveEnforcementPolicy(enforcement),
 		grpc.KeepaliveParams(kpServerParam))
+
 	go func() {
 		http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
+		http.ListenAndServe(":9001", nil)
 	}()
 
 	pb.RegisterMerakAgentServiceServer(gRPCServer, &handler.Server{})
