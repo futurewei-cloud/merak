@@ -22,18 +22,14 @@ import (
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	merakEvm "github.com/futurewei-cloud/merak/services/merak-agent/evm"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
-	PrometheusRegistry.Register(met.OpsProcessed)
-	met.OpsProcessed.With(prometheus.Labels{"operation": "test", "status": "hi"}).Inc()
-
 	var evm *merakEvm.AlcorEvm
 	var err error
 	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
 	if !ok {
-		evm, err = merakEvm.CreateMinimalPort(in, RemoteServer)
+		evm, err = merakEvm.CreateMinimalPort(in, RemoteServer, MerakMetrics)
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Create Minimal Port Failed",
@@ -42,8 +38,9 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 					Status: common_pb.Status_ERROR,
 				},
 			}, err
+
 		}
-		err = evm.CreateDevice()
+		err = evm.CreateDevice(MerakMetrics)
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "ovs-vsctl command failed!",
@@ -64,7 +61,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			constants.AGENT_STANDALONE_GW,
 			common_pb.Status_DEPLOYING,
 		)
-		err := evm.CreateStandaloneDevice()
+		err := evm.CreateStandaloneDevice(MerakMetrics)
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to create tap",
@@ -76,7 +73,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}
 	}
 
-	err = evm.CreateNamespace()
+	err = evm.CreateNamespace(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Namespace creation failed!",
@@ -87,7 +84,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.CreateVethPair()
+	err = evm.CreateVethPair(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Inner and outer veth creation failed!",
@@ -98,7 +95,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.MoveVethToNamespace()
+	err = evm.MoveVethToNamespace(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Move veth into namespace failed!",
@@ -109,7 +106,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.AssignIP()
+	err = evm.AssignIP(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to give inner veth IP!",
@@ -120,7 +117,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.BringInnerVethUp()
+	err = evm.BringInnerVethUp(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed bring up inner veth!",
@@ -131,7 +128,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.SetMTUProbing()
+	err = evm.SetMTUProbing(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to set MTU probing!",
@@ -142,7 +139,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.BringOuterVethUp()
+	err = evm.BringOuterVethUp(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to bring up outer veth!",
@@ -153,7 +150,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.BringLoUp()
+	err = evm.BringLoUp(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to bring up loopback!",
@@ -164,7 +161,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.AssignMac()
+	err = evm.AssignMac(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Assign mac!",
@@ -175,7 +172,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.AddGateway()
+	err = evm.AddGateway(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed add default gw!",
@@ -186,7 +183,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.CreateBridge()
+	err = evm.CreateBridge(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to create bridge!",
@@ -197,7 +194,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.BringBridgeUp()
+	err = evm.BringBridgeUp(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to bring bridge up!",
@@ -208,7 +205,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.AddVethToBridge()
+	err = evm.AddVethToBridge(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to add veth to bridge!",
@@ -219,7 +216,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.AddDeviceToBridge()
+	err = evm.AddDeviceToBridge(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to add tap to bridge",
@@ -230,7 +227,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.BringBridgeUp()
+	err = evm.BringBridgeUp(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to bring up bridge",
@@ -241,7 +238,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.BringDeviceUp()
+	err = evm.BringDeviceUp(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to bring up tap device",
@@ -256,7 +253,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 
 	_, ok = os.LookupEnv(constants.AGENT_MODE_ENV)
 	if !ok {
-		err = evm.UpdatePort(in, RemoteServer)
+		err = evm.UpdatePort(in, RemoteServer, MerakMetrics)
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to update port",

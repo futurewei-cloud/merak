@@ -69,7 +69,7 @@ func TestGrpcClient(t *testing.T) {
 		SubnetId:   "8182a4d4-ffff-4ece-b3f0-8d36e3d88000",
 		SubnetCidr: "10.0.1.0/24",
 		SubnetGw:   "10.0.1.1",
-		NumberVms:  5000,
+		NumberVms:  1000,
 	}
 	vpc := common_pb.InternalVpcInfo{
 		VpcId:     "9192a4d4-ffff-4ece-b3f0-8d36e3d88001",

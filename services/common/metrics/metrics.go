@@ -14,21 +14,76 @@ Copyright(c) 2022 Futurewei Cloud
 package metrics
 
 import (
+	"runtime"
+	"time"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-type metrics struct {
-	OpsProcessed *prometheus.CounterVec
+type MerakMetrics struct {
+	ServiceName     string
+	OpsProcessed    *prometheus.CounterVec
+	OpsTotalLatency *prometheus.HistogramVec
+	OpsSuccess      *prometheus.CounterVec
+	OpsFail         *prometheus.CounterVec
 }
 
-func NewMetrics(reg *prometheus.Registry, serviceName string) *metrics {
+// Creates new metrics struct
+func NewMetrics(reg *prometheus.Registry, serviceName string) *MerakMetrics {
 	opsProcessed := promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: serviceName,
-		Help: "The total number of processed events",
-	}, []string{"operation", "status"})
-	m := metrics{
-		OpsProcessed: opsProcessed,
+		Name: serviceName + "_Operations_Processed",
+		Help: "operations",
+	}, []string{"operation"})
+	opsTotalLatency := promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name: serviceName + "_Operations_Latency",
+		Help: "latency_total",
+	}, []string{"operation"})
+	opsSuccess := promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: serviceName + "_Operations_Success",
+		Help: "success",
+	}, []string{"operation"})
+	opsFail := promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: serviceName + "_Operations_Failed",
+		Help: "fail",
+	}, []string{"operation"})
+
+	m := MerakMetrics{
+		ServiceName:     serviceName,
+		OpsProcessed:    opsProcessed,
+		OpsTotalLatency: opsTotalLatency,
+		OpsSuccess:      opsSuccess,
+		OpsFail:         opsFail,
 	}
+	reg.MustRegister(m.OpsProcessed)
+	reg.MustRegister(m.OpsTotalLatency)
+	reg.MustRegister(m.OpsSuccess)
+	reg.MustRegister(m.OpsFail)
 	return &m
+}
+
+// For use with defer statement to get metrics
+func GetMetrics(merakMetrics *MerakMetrics, err *error) func() {
+	name := getCallerName(1) // Returns callers name
+	start := time.Now()
+	return func() {
+		t := time.Since(start)
+		merakMetrics.OpsProcessed.With(prometheus.Labels{"operation": name}).Inc()
+		if *err != nil {
+			merakMetrics.OpsFail.With(prometheus.Labels{"operation": name}).Inc()
+		} else {
+			merakMetrics.OpsSuccess.With(prometheus.Labels{"operation": name}).Inc()
+		}
+		merakMetrics.OpsTotalLatency.With(prometheus.Labels{"operation": name}).Observe(float64(t.Milliseconds()))
+	}
+}
+
+func getCallerName(skipFrames int) string {
+	pc := make([]uintptr, 1)
+	n := runtime.Callers(skipFrames+2, pc)
+	if n < 1 {
+		return "unknown_caller"
+	}
+	frame, _ := runtime.CallersFrames(pc).Next()
+	return frame.Function
 }

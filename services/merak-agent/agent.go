@@ -26,8 +26,10 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	constants "github.com/futurewei-cloud/merak/services/common"
+	"github.com/futurewei-cloud/merak/services/common/metrics"
 
 	"github.com/futurewei-cloud/merak/services/merak-agent/handler"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -35,7 +37,6 @@ import (
 
 var (
 	Port = flag.Int("port", constants.AGENT_GRPC_SERVER_PORT, "The server port")
-	reg  = handler.PrometheusRegistry
 )
 
 func main() {
@@ -68,7 +69,15 @@ func main() {
 		grpc.KeepaliveParams(kpServerParam))
 
 	go func() {
-		http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
+		hostname, err := os.Hostname()
+		if err != nil {
+			log.Fatal("Unable to get hostname!")
+		}
+		handler.PrometheusRegistry = prometheus.NewRegistry()
+		handler.MerakMetrics = metrics.NewMetrics(handler.PrometheusRegistry, "MerakAgent_"+hostname)
+		http.Handle("/metrics", promhttp.HandlerFor(
+			handler.PrometheusRegistry,
+			promhttp.HandlerOpts{Registry: handler.PrometheusRegistry}))
 		http.ListenAndServe(":9001", nil)
 	}()
 

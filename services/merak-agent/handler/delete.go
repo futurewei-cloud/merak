@@ -43,7 +43,7 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 	}
 	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
 	if !ok {
-		err = evm.DeletePort(in, RemoteServer)
+		err = evm.DeletePort(in, RemoteServer, MerakMetrics)
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Delete Port request to Alcor Failed!",
@@ -52,7 +52,7 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}
 	}
 
-	err = evm.DeleteNamespace()
+	err = evm.DeleteNamespace(MerakMetrics)
 	if err != nil {
 		log.Println("Namespace deletion failed!")
 		return &pb.AgentReturnInfo{
@@ -61,7 +61,7 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.DeleteBridge()
+	err = evm.DeleteBridge(MerakMetrics)
 	if err != nil {
 		log.Println("Bridge deletion failed!")
 		return &pb.AgentReturnInfo{
@@ -72,7 +72,7 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 
 	_, ok = os.LookupEnv(constants.AGENT_MODE_ENV)
 	if !ok {
-		err = evm.DeleteDevice()
+		err = evm.DeleteDevice(MerakMetrics)
 		if err != nil {
 			log.Println("Failed to delete tap")
 			return &pb.AgentReturnInfo{
@@ -81,7 +81,7 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			}, err
 		}
 	} else {
-		err = evm.DeleteStandaloneDevice()
+		err = evm.DeleteStandaloneDevice(MerakMetrics)
 		if err != nil {
 			log.Println("Failed to delete tap")
 			return &pb.AgentReturnInfo{

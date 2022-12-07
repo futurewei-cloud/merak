@@ -12,10 +12,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/futurewei-cloud/merak/services/common/metrics"
+	"github.com/tidwall/gjson"
+
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	constants "github.com/futurewei-cloud/merak/services/common"
-	"github.com/tidwall/gjson"
 )
 
 type port struct {
@@ -65,6 +67,7 @@ type AlcorEvm struct {
 
 // Creates a new EVM with the given attributes
 func NewEvm(name, ip, mac, remoteID, deviceID, cidr, gw string, status common_pb.Status) (*AlcorEvm, error) {
+
 	evm := &AlcorEvm{}
 
 	evm.SetName(name)
@@ -94,8 +97,12 @@ func NewEvm(name, ip, mac, remoteID, deviceID, cidr, gw string, status common_pb
 }
 
 // Sends a create minimal port request to alcor
-func CreateMinimalPort(in *pb.InternalPortConfig, remoteServer string) (*AlcorEvm, error) {
+func CreateMinimalPort(in *pb.InternalPortConfig, remoteServer string, m *metrics.MerakMetrics) (*AlcorEvm, error) {
 	log.Println("Create minimal port")
+
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	minimalPortBody := port{
 		Port: minimalPort{
 			AdminState: true,
@@ -144,7 +151,10 @@ func CreateMinimalPort(in *pb.InternalPortConfig, remoteServer string) (*AlcorEv
 }
 
 // Sends an update port request to Alcor
-func (evm *AlcorEvm) UpdatePort(in *pb.InternalPortConfig, remoteServer string) error {
+func (evm *AlcorEvm) UpdatePort(in *pb.InternalPortConfig, remoteServer string, m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	updatePortBody := updatePortMain{
 		updatePort{
 			ProjectID:     in.Projectid,
@@ -190,7 +200,10 @@ func (evm *AlcorEvm) UpdatePort(in *pb.InternalPortConfig, remoteServer string) 
 }
 
 // Sends a delete port request to Alcor
-func (evm *AlcorEvm) DeletePort(in *pb.InternalPortConfig, remoteServer string) error {
+func (evm *AlcorEvm) DeletePort(in *pb.InternalPortConfig, remoteServer string, m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Send Delete Port Request to Alcor")
 	req, err := http.NewRequest(http.MethodDelete, "http://"+remoteServer+":"+strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT)+"/project/"+in.Projectid+"/ports/"+evm.remoteID, bytes.NewBuffer(nil))
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
@@ -215,7 +228,10 @@ func (evm *AlcorEvm) DeletePort(in *pb.InternalPortConfig, remoteServer string) 
 }
 
 // Creates a new Tap device and adds it to the ovs-bridge
-func (evm *AlcorEvm) CreateDevice() error {
+func (evm *AlcorEvm) CreateDevice(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Adding tap " + evm.deviceID + " to br-int!")
 	stdout, err := bashExec("ovs-vsctl add-port br-int " + evm.deviceID + " --  set Interface " + evm.deviceID + " type=internal")
 	if err != nil {
@@ -226,7 +242,10 @@ func (evm *AlcorEvm) CreateDevice() error {
 }
 
 // Creates a tap device for testing without Alcor
-func (evm *AlcorEvm) CreateStandaloneDevice() error {
+func (evm *AlcorEvm) CreateStandaloneDevice(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Adding tap (standalone)" + evm.deviceID)
 	stdout, err := bashExec("ip tuntap add mode tap " + evm.deviceID)
 	if err != nil {
@@ -237,7 +256,10 @@ func (evm *AlcorEvm) CreateStandaloneDevice() error {
 }
 
 // Deletes a Tap devices from the ovs bridge
-func (evm *AlcorEvm) DeleteDevice() error {
+func (evm *AlcorEvm) DeleteDevice(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Deleting Tap device from br-int" + evm.deviceID)
 	stdout, err := bashExec("ovs-vsctl del-port br-int " + evm.deviceID)
 	if err != nil {
@@ -248,7 +270,10 @@ func (evm *AlcorEvm) DeleteDevice() error {
 }
 
 // Deletes a Tap devices from the ovs bridge
-func (evm *AlcorEvm) DeleteStandaloneDevice() error {
+func (evm *AlcorEvm) DeleteStandaloneDevice(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Deleting TAP device (standalone) " + evm.deviceID)
 	stdout, err := bashExec("ip tuntap del mode tap " + evm.deviceID)
 	if err != nil {
@@ -259,7 +284,10 @@ func (evm *AlcorEvm) DeleteStandaloneDevice() error {
 }
 
 // Creates a new network namespace
-func (evm *AlcorEvm) CreateNamespace() error {
+func (evm *AlcorEvm) CreateNamespace(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Creating Namespace " + evm.name)
 	stdout, err := bashExec("ip netns add " + evm.name)
 	if err != nil {
@@ -270,7 +298,10 @@ func (evm *AlcorEvm) CreateNamespace() error {
 }
 
 // Deletes a network namespace
-func (evm *AlcorEvm) DeleteNamespace() error {
+func (evm *AlcorEvm) DeleteNamespace(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Deleting Namespace")
 	stdout, err := bashExec("ip netns delete " + evm.name)
 	if err != nil {
@@ -281,7 +312,10 @@ func (evm *AlcorEvm) DeleteNamespace() error {
 }
 
 // Creates a new veth pair
-func (evm *AlcorEvm) CreateVethPair() error {
+func (evm *AlcorEvm) CreateVethPair(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Creating veth pair in" + evm.name + " and out" + evm.name)
 	stdout, err := bashExec("ip link add in" + evm.name + " type veth peer name out" + evm.name)
 	if err != nil {
@@ -292,7 +326,10 @@ func (evm *AlcorEvm) CreateVethPair() error {
 }
 
 // Moves one end of the veth-pair to the network namespace
-func (evm *AlcorEvm) MoveVethToNamespace() error {
+func (evm *AlcorEvm) MoveVethToNamespace(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Moving veth in" + evm.name + " to namespace " + evm.name)
 	stdout, err := bashExec("ip link set in" + evm.name + " netns " + evm.name)
 	if err != nil {
@@ -303,7 +340,10 @@ func (evm *AlcorEvm) MoveVethToNamespace() error {
 }
 
 // Assigns an IP address to the inner veth-pair
-func (evm *AlcorEvm) AssignIP() error {
+func (evm *AlcorEvm) AssignIP(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Assigning IP " + evm.ip + " to veth device")
 	stdout, err := bashExec("ip netns exec " + evm.name + " ip addr add " + evm.ip + "/" + strings.Split(evm.cidr, "/")[1] + " dev in" + evm.name)
 	if err != nil {
@@ -314,7 +354,10 @@ func (evm *AlcorEvm) AssignIP() error {
 }
 
 // Brings the inner veth up
-func (evm *AlcorEvm) BringInnerVethUp() error {
+func (evm *AlcorEvm) BringInnerVethUp(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Bringing inner veth up")
 	stdout, err := bashExec("ip netns exec " + evm.name + " ip link set dev in" + evm.name + " up")
 	if err != nil {
@@ -325,7 +368,10 @@ func (evm *AlcorEvm) BringInnerVethUp() error {
 }
 
 // Sets MTU probing for the inner veth
-func (evm *AlcorEvm) SetMTUProbing() error {
+func (evm *AlcorEvm) SetMTUProbing(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Setting MTU probing")
 	stdout, err := bashExec("ip netns exec " + evm.name + " sysctl -w net.ipv4.tcp_mtu_probing=2")
 	if err != nil {
@@ -336,7 +382,10 @@ func (evm *AlcorEvm) SetMTUProbing() error {
 }
 
 // Brings the outer veth up
-func (evm *AlcorEvm) BringOuterVethUp() error {
+func (evm *AlcorEvm) BringOuterVethUp(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Bringing up outer veth")
 	stdout, err := bashExec("ip link set dev out" + evm.name + " up")
 	if err != nil {
@@ -347,7 +396,10 @@ func (evm *AlcorEvm) BringOuterVethUp() error {
 }
 
 // Brings the loopback device inside the network namespace up
-func (evm *AlcorEvm) BringLoUp() error {
+func (evm *AlcorEvm) BringLoUp(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Bringing up loopback")
 	stdout, err := bashExec("ip netns exec " + evm.name + " ip link set dev lo up")
 	if err != nil {
@@ -358,7 +410,10 @@ func (evm *AlcorEvm) BringLoUp() error {
 }
 
 // Assigns a mac address to the inner veth
-func (evm *AlcorEvm) AssignMac() error {
+func (evm *AlcorEvm) AssignMac(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Assigning MAC " + evm.mac + " address to veth")
 	stdout, err := bashExec("ip netns exec " + evm.name + " ip link set dev in" + evm.name + " address " + evm.mac)
 	if err != nil {
@@ -369,7 +424,10 @@ func (evm *AlcorEvm) AssignMac() error {
 }
 
 // Adds a gateway inside the network namespace
-func (evm *AlcorEvm) AddGateway() error {
+func (evm *AlcorEvm) AddGateway(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Adding default Gateway " + evm.gw)
 	stdout, err := bashExec("ip netns exec " + evm.name + " ip r add default via " + evm.gw)
 	if err != nil {
@@ -380,7 +438,10 @@ func (evm *AlcorEvm) AddGateway() error {
 }
 
 // Deletes a linux bridge
-func (evm *AlcorEvm) DeleteBridge() error {
+func (evm *AlcorEvm) DeleteBridge(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Deleting bridge device")
 	stdout, err := bashExec("ip link delete bridge" + evm.name)
 	if err != nil {
@@ -391,7 +452,10 @@ func (evm *AlcorEvm) DeleteBridge() error {
 }
 
 // Creates a linux bridge
-func (evm *AlcorEvm) CreateBridge() error {
+func (evm *AlcorEvm) CreateBridge(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Creating bridge device bridge" + evm.name)
 	stdout, err := bashExec("ip link add name bridge" + evm.name + " type bridge")
 	if err != nil {
@@ -402,7 +466,10 @@ func (evm *AlcorEvm) CreateBridge() error {
 }
 
 // Adds the outer veth to a linux bridge
-func (evm *AlcorEvm) AddVethToBridge() error {
+func (evm *AlcorEvm) AddVethToBridge(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Adding veth to bridge")
 	stdout, err := bashExec("ip link set out" + evm.name + " master bridge" + evm.name)
 	if err != nil {
@@ -413,7 +480,10 @@ func (evm *AlcorEvm) AddVethToBridge() error {
 }
 
 // Adds a tap device to the linux bridge
-func (evm *AlcorEvm) AddDeviceToBridge() error {
+func (evm *AlcorEvm) AddDeviceToBridge(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Adding TAP device to bridge " + evm.deviceID)
 	stdout, err := bashExec("ip link set " + evm.deviceID + " master bridge" + evm.name)
 	if err != nil {
@@ -424,7 +494,10 @@ func (evm *AlcorEvm) AddDeviceToBridge() error {
 }
 
 // Brings the linux bridge up
-func (evm *AlcorEvm) BringBridgeUp() error {
+func (evm *AlcorEvm) BringBridgeUp(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Bringing bridge up")
 	stdout, err := bashExec("ip link set dev bridge" + evm.name + " up")
 	if err != nil {
@@ -435,7 +508,10 @@ func (evm *AlcorEvm) BringBridgeUp() error {
 }
 
 // Brings the tap device up
-func (evm *AlcorEvm) BringDeviceUp() error {
+func (evm *AlcorEvm) BringDeviceUp(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
 	log.Println("Bringing Tap device up")
 	stdout, err := bashExec("ip link set dev " + evm.deviceID + " up")
 	if err != nil {
