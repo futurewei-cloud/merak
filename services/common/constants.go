@@ -17,6 +17,7 @@ const (
 	NETWORK_GRPC_SERVER_ADDRESS         = "merak-network-service.merak.svc.cluster.local"
 	AGENT_GRPC_SERVER_PORT              = 40054
 	COMPUTE_GRPC_SERVER_PORT            = 40051
+	AGENT_PROMETHEUS_PORT               = 9001
 
 	COMPUTE_REDIS_ADDRESS = "compute-redis-main.merak.svc.cluster.local"
 	COMPUTE_REDIS_PORT    = 30051

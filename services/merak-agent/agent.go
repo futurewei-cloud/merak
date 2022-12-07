@@ -36,7 +36,8 @@ import (
 )
 
 var (
-	Port = flag.Int("port", constants.AGENT_GRPC_SERVER_PORT, "The server port")
+	gRPCPort       = flag.Int("gRPC port", constants.AGENT_GRPC_SERVER_PORT, "The server port")
+	prometheusPort = flag.Int("Prometheus port", constants.AGENT_PROMETHEUS_PORT, "The server port")
 )
 
 func main() {
@@ -48,7 +49,7 @@ func main() {
 
 	// Start gRPC Server
 	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *gRPCPort))
 	if err != nil {
 		log.Fatalln("ERROR: Failed to listen", err)
 	}
@@ -78,7 +79,7 @@ func main() {
 		http.Handle("/metrics", promhttp.HandlerFor(
 			handler.PrometheusRegistry,
 			promhttp.HandlerOpts{Registry: handler.PrometheusRegistry}))
-		http.ListenAndServe(":9001", nil)
+		http.ListenAndServe(fmt.Sprintf(":%d", *gRPCPort), nil)
 	}()
 
 	pb.RegisterMerakAgentServiceServer(gRPCServer, &handler.Server{})
