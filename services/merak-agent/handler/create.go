@@ -227,17 +227,6 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.BringBridgeUp(MerakMetrics)
-	if err != nil {
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed to bring up bridge",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-			Port: &pb.ReturnPortInfo{
-				Status: common_pb.Status_ERROR,
-			},
-		}, err
-	}
-
 	err = evm.BringDeviceUp(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
