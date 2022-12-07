@@ -26,6 +26,7 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
+	"github.com/futurewei-cloud/merak/services/merak-compute/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/handler"
 	"github.com/go-redis/redis/v9"
 	"go.temporal.io/api/workflowservice/v1"
@@ -92,8 +93,8 @@ func main() {
 		Addr:        redisAddress.String(),
 		Password:    "", // no password set
 		DB:          0,  // use default DB
-		PoolSize:    10000,
-		PoolTimeout: time.Second * 60,
+		PoolSize:    common.COMPUTE_REDIS_POOL_SIZE,
+		PoolTimeout: common.COMPUTE_REDIS_POOL_TIMEOUT,
 	})
 
 	err = handler.RedisClient.Set(ctx, "key", "value", 0).Err()
