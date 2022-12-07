@@ -23,7 +23,6 @@ import (
 
 type MerakMetrics struct {
 	ServiceName     string
-	OpsProcessed    *prometheus.CounterVec
 	OpsTotalLatency *prometheus.HistogramVec
 	OpsSuccess      *prometheus.CounterVec
 	OpsFail         *prometheus.CounterVec
@@ -31,10 +30,6 @@ type MerakMetrics struct {
 
 // Creates new metrics struct
 func NewMetrics(reg *prometheus.Registry, serviceName string) *MerakMetrics {
-	opsProcessed := promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: serviceName + "_Operations_Processed",
-		Help: "operations",
-	}, []string{"operation"})
 	opsTotalLatency := promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name: serviceName + "_Operations_Latency",
 		Help: "latency_total",
@@ -50,12 +45,10 @@ func NewMetrics(reg *prometheus.Registry, serviceName string) *MerakMetrics {
 
 	m := MerakMetrics{
 		ServiceName:     serviceName,
-		OpsProcessed:    opsProcessed,
 		OpsTotalLatency: opsTotalLatency,
 		OpsSuccess:      opsSuccess,
 		OpsFail:         opsFail,
 	}
-	reg.MustRegister(m.OpsProcessed)
 	reg.MustRegister(m.OpsTotalLatency)
 	reg.MustRegister(m.OpsSuccess)
 	reg.MustRegister(m.OpsFail)
@@ -68,7 +61,6 @@ func GetMetrics(merakMetrics *MerakMetrics, err *error) func() {
 	start := time.Now()
 	return func() {
 		t := time.Since(start)
-		merakMetrics.OpsProcessed.With(prometheus.Labels{"operation": name}).Inc()
 		if *err != nil {
 			merakMetrics.OpsFail.With(prometheus.Labels{"operation": name}).Inc()
 		} else {
