@@ -2,13 +2,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: temporaltest-frontend
+  name: temporal-frontend
 spec:
   selector:
     app: temporalite
   ports:
     - protocol: TCP
-      name: temporaltest-frontend
+      name: temporal-frontend
       port: 7233
       targetPort: temporal
   type: ClusterIP

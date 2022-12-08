@@ -1,7 +1,7 @@
 package constants
 
 const (
-	TEMPORAL_ADDRESS         = "temporaltest-frontend.default.svc.cluster.local"
+	TEMPORAL_ADDRESS         = "temporal-frontend.default.svc.cluster.local"
 	TEMPORAL_PORT            = 7233
 	TEMPORAL_ENV             = "TEMPORAL"
 	TEMPORAL_RPS_ENV         = "RPS"
