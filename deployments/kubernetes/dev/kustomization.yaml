@@ -2,8 +2,38 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 bases:
 - ../base
+- ../alcor
 replicas:
+# Merak Service
 - name: merak-compute-vm-worker
+  count: 1
+# Alcor Service
+- name: apimanager
+  count: 1
+- name: dataplanemanager
+  count: 1
+- name: eipmanager
+  count: 1
+- name: gatewaymanager
+  count: 1
+- name: macmanager
+  count: 1
+- name: netwconfigmanager
+  count: 1
+- name: nodemanager
+  count: 1
+# Alcor DB
+- name: ignite-alcor-dpm
+  count: 1
+- name: ignite-alcor-ip
+  count: 1
+- name: ignite-alcor-mac
+  count: 1
+- name: ignite-alcor-ncm
+  count: 1
+- name: ignite-alcor-port
+  count: 1
+- name: ignite-alcor
   count: 1
 helmCharts:
 - releaseName: temporal

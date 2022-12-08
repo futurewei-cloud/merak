@@ -1,0 +1,152 @@
+# MIT License
+# Copyright(c) 2020 Futurewei Cloud
+#
+#     Permission is hereby granted,
+#     free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+#     including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+#     to whom the Software is furnished to do so, subject to the following conditions:
+#
+#     The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+#     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+#     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dpm-configmap
+  namespace: default
+data:
+  application.properties: |
+    dataplane.grpc.port = 50001
+    dataplane.grpc.topic-port = 50002
+    dataplane.isovs=true
+    # the zipkin host should be YOURS
+    # spring.zipkin.base-url=http://10.213.43.187:9411
+
+    grpc.min-threads = 100
+    grpc.max-threads = 200
+    grpc.threads-pool-name = grpc-thread-pool
+
+    grpc.number-of-channels-per-host = 10
+    grpc.number-of-warmups-per-channel = 1
+    grpc.monitor-hosts = 0.0.0.0,0.0.0.1
+
+
+    #DPM v1 is statically using version 101
+    #DPM v2 will start with version 102
+    protobuf.goal-state-message.version = 102
+
+    #logging.file.path=./
+    #logging.file.name=data-plane-manager.log
+    logging.level.root=INFO
+
+
+    ignite.kubeNamespace=ignite-alcor-dpm
+    ignite.kubeServiceName=ignite-alcor-dpm-service
+    ignite.host=ignite-alcor-dpm-service.ignite-alcor-dpm.svc.cluster.local
+
+    ignite.port=10800
+    ignite.thin.client.enable=true
+    #ignite.key-store-path=keystore.jks
+    #ignite.key-store-password=123456
+    #ignite.trust-store-path=truststore.jks
+    #ignite.trust-store-password=123456
+
+    mq.type=pulsar
+    mq.mode=vpc
+    pulsar.url=pulsar://localhost:6650
+    pulsar.unicast.topic=unicast-topic1
+    host.ip.to.group.topic.map=group-topic1:192.168.131.131,10.10.10.11 group-topic2:192.168.131.131,11.11.11.12
+    group.topic.to.multicast.topic.map=multicast-topic1:group-topic1,group-topic3 multicast-topic2:group-topic2,group-topic4
+
+
+    arionGateway.enabled = false
+    arionMaster.server = 127.0.0.1
+    arionMaster.port = 9090
+
+    zetaGateway.enabled=false
+    zetaGateway.node.mac=e0:97:96:02:45:53
+    microservices.node.service.url=http://nodemanager-service.default.svc.cluster.local:9007/nodes
+    microservices.netwconfigmanager.service.url=netwconfigmanager-service
+    microservices.zeta.management.url=http://10.213.43.90
+    microservices.gateway.service.url=http://gatewaymanager-service.default.svc.cluster.local:9015
+    microservices.connectTimeout=300
+    zetaGateway.check.timeout = 30
+    zetaGateway.check.interval = 2
+
+    opentracing.jaeger.udp-sender.host=10.101.70.203
+    opentracing.jaeger.udp-sender.port=6831
+    opentracing.jaeger.const-sampler.decision=true
+    opentracing.jaeger.enabled=false
+    opentracing.jaeger.log-spans=true
+    opentracing.jaeger.enable-w3c-propagation=true
+    opentracing.jaeger.enable-b3-propagation=true
+    opentracing.jaeger.service-name=alcor-dpm
+
+    ####Path switch configuration####
+    path.mode=GRPC
+    #"GRPC", "MQ", "AUTO" are available.
+    path.UPPER_VPC_SIZE = 1000
+    path.LOWER_VPC_SIZE = 100
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dataplanemanager
+  name: dataplanemanager
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: dataplanemanager
+  replicas: 5
+  template:
+    metadata:
+      annotations:
+        linkerd.io/inject: enabled
+      labels:
+        app: dataplanemanager
+    spec:
+      serviceAccountName: alcor-account
+      volumes:
+        - name: dpm-volume
+          configMap:
+            name: dpm-configmap
+            items:
+              - key: application.properties
+                path: application.properties
+      containers:
+        - image: yanmo96/data_plane_manager:5fceae8_v3 
+        #- image: fwnetworking/controller:dpm_manager-v0.3.0
+          name: dataplanemanager-web
+          imagePullPolicy: IfNotPresent
+          command: ["java", "-jar", "/app/AlcorDataPlaneManager-0.1.0.jar", "--spring.config.location=/etc/dpm/application.properties"]
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: dpm-volume
+              mountPath: /etc/dpm
+          envFrom:
+            - configMapRef:
+                name: dpm-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dataplanemanager-service
+  namespace: default
+  labels:
+    name: dataplanemanager-service
+spec:
+  type: NodePort
+  ports:
+    - port: 9010
+      targetPort: 8080
+      nodePort: 30010
+  selector:
+    app: dataplanemanager
+
