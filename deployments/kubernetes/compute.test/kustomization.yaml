@@ -1,0 +1,133 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+bases:
+- ../base
+images:
+- name: meraksim/merak-compute
+  newTag: test
+- name: meraksim/merak-compute-vm-worker
+  newTag: test
+resources:
+- temporal.test.yaml
+- test.driver.yaml
+- test.vhost.yaml
+- service.account.yaml
+replicas:
+- name: merak-compute-vm-worker
+  count: 1
+patches:
+- patch: |-
+    $patch: delete
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: merak-network-service
+      namespace: merak
+- patch: |-
+    $patch: delete
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: merak-network
+      namespace: merak
+- patch: |-
+    $patch: delete
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: redis-network
+      namespace: merak
+- patch: |-
+    $patch: delete
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: merak-redis-network
+      namespace: merak
+# Exclude Scenario
+- patch: |-
+    $patch: delete
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: scenario-manager-service
+      namespace: merak
+- patch: |-
+    $patch: delete
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: scenario-manager
+      namespace: merak
+- patch: |-
+    $patch: delete
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: scenario-redis-master
+      namespace: merak
+- patch: |-
+    $patch: delete
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: scenario-redis-master
+      namespace: merak
+
+# Exclude Topology
+- patch: |-
+    $patch: delete
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: merak-topology-service
+      namespace: merak
+- patch: |-
+    $patch: delete
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: merak-topology
+      namespace: merak
+- patch: |-
+    $patch: delete
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: topology-redis-master
+      namespace: merak
+- patch: |-
+    $patch: delete
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: topology-redis-master
+      namespace: merak
+- patch: |-
+    $patch: delete
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: merak-topology
+      namespace: merak
+- patch: |-
+    $patch: delete
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: merak-topology
+- patch: |-
+    $patch: delete
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: sdn-controller
+      namespace: merak
+- patch: |-
+    $patch: delete
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: sdn-controller
+      namespace: merak
+

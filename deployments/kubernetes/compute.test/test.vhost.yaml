@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vhost0
+spec:
+  serviceAccountName: merak-compute
+  containers:
+  - name: merak-agent
+    image: meraksim/merak-agent:test
+    imagePullPolicy: Always
+    securityContext:
+        privileged: true
+    ports:
+    - containerPort: 40054
+      name: grpc
+    - containerPort: 9001
+      name: prometheus
+    env:
+    - name: "mode"
+      value: "standalone"

@@ -1,3 +1,1 @@
-# /deployments/kubernetes
-
-Put kubernetes deployment yaml file here.
+# Kustomize Base Files

@@ -1,5 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: merak
 resources:
-- compute.test.yaml
-- network.dev.yaml
-- scenario.dev.yaml
-- topo.dev.yaml
+- prometheus.yaml
+- compute.yaml
+- network.yaml
+- scenario.yaml
+- topo.yaml
+- namespace.yaml

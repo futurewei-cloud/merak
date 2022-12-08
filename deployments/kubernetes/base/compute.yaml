@@ -44,8 +44,8 @@ spec:
       - key: "node-role.kubernetes.io/master"
         operator: "Exists"
         effect: "NoSchedule"
-      nodeSelector:
-        serviceHost: merak
+      # nodeSelector:
+      #   serviceHost: merak
       containers:
       - name: merak-compute
         image: meraksim/merak-compute:dev
@@ -79,8 +79,8 @@ spec:
       - key: "node-role.kubernetes.io/master"
         operator: "Exists"
         effect: "NoSchedule"
-      nodeSelector:
-        serviceHost: merak
+      # nodeSelector:
+      #   serviceHost: merak
       containers:
       - name: merak-compute-vm-worker
         image: meraksim/merak-compute-vm-worker:dev
@@ -138,8 +138,8 @@ spec:
         role: main
         tier: backend
     spec:
-      nodeSelector:
-        serviceHost: merak
+      # nodeSelector:
+      #   serviceHost: merak
       containers:
       - name: main
         image: "redis:7.0.0"
