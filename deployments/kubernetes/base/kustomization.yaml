@@ -1,0 +1,5 @@
+resources:
+- compute.test.yaml
+- network.dev.yaml
+- scenario.dev.yaml
+- topo.dev.yaml
