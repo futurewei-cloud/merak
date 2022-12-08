@@ -3,6 +3,15 @@ kind: Kustomization
 bases:
 - ../base
 - ../alcor
+- https://github.com/networkop/meshnet-cni.git/manifests/base
+images:
+- name: yanmo96/network_config_manager
+  newName: yongqi166/ncm
+  newTag: "1.0"
+- name: meraksim/merak-compute-vm-worker
+  newTag: ovs-batch
+- name: meraksim/merak-compute-vm
+  newTag: ovs-batch
 replicas:
 # Merak Service
 - name: merak-compute-vm-worker
@@ -26,7 +35,7 @@ replicas:
 - name: ignite-alcor-dpm
   count: 1
 - name: ignite-alcor-ip
-  count: 1
+  count: 3
 - name: ignite-alcor-mac
   count: 1
 - name: ignite-alcor-ncm
