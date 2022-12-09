@@ -1,6 +1,0 @@
-[submodule "services/merak-agent/plugins/alcor-control-agent"]
-	path = services/merak-agent/plugins/alcor-control-agent
-	url = https://github.com/futurewei-cloud/alcor-control-agent.git
-[submodule "deployments/kubernetes/helm-charts"]
-	path = deployments/kubernetes/helm-charts
-	url = https://github.com/temporalio/helm-charts.git
