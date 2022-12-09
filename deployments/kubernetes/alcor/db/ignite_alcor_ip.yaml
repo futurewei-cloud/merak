@@ -102,6 +102,7 @@ spec:
         - name: ignite-alcor-ip-node
           image: yanmo96/ignite_alcor:rio
           imagePullPolicy: IfNotPresent
+          command: ["/opt/ignite/apache-ignite/bin/control.sh --activate"]
           #resources:
             #requests:
               #cpu: "16"

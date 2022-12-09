@@ -99,6 +99,7 @@ spec:
         - name: ignite-alcor-ncm-node
           image: yanmo96/ignite_alcor:rio
           imagePullPolicy: IfNotPresent
+          command: ["/opt/ignite/apache-ignite/bin/control.sh --activate"]
           #resources:
             #requests:
               #cpu: "16"

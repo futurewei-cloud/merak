@@ -102,6 +102,7 @@ spec:
           #resources:
             #requests:
               #cpu: "16"
+          command: ["/opt/ignite/apache-ignite/bin/control.sh --activate"]
           env:
             - name: OPTION_LIBS
               value: ignite-kubernetes,ignite-rest-http
@@ -115,7 +116,7 @@ spec:
               value: "-Djava.net.preferIPv4Stack=true"
             #- name: JVM_OPTS
               #value: "-Djava.net.preferIPv4Stack=true
-                      #-server 
+                      #-server
                       #-Xms20g
                       #-Xmx20g
                       #-XX:+AlwaysPreTouch
@@ -142,5 +143,5 @@ spec:
               mountPath: /opt/dpm
       volumes:
         - name: ignite-alcor-dpm-config-volume
-          hostPath: 
+          hostPath:
             path: /root/work/dpm
