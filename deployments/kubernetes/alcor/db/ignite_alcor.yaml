@@ -114,7 +114,7 @@ spec:
               value: "-Djava.net.preferIPv4Stack=true"
             #- name: JVM_OPTS
               #value: "-Djava.net.preferIPv4Stack=true
-                      #-server 
+                      #-server
                       #-Xms20g
                       #-Xmx20g
                       #-XX:+AlwaysPreTouch
@@ -145,15 +145,15 @@ spec:
               #mountPath: /db/wal/archive
       volumes:
         - name: ignite-alcor-config-volume
-          hostPath: 
+          hostPath:
             path: /root/work/storage
         #- name: ignite-alcor-wal-volume
-          #hostPath: 
+          #hostPath:
             #path: /root/work/db
         #- name: ignite-alcor-walArchive-volume
-          #hostPath: 
+          #hostPath:
             #path: /root/work/db/archive
-            
+
           #persistentVolumeClaim:
             #claimName: ignite-alcor
   #volumeClaimTemplates:

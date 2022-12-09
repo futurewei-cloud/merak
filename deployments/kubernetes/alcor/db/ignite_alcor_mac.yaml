@@ -101,7 +101,7 @@ spec:
         - name: ignite-alcor-mac-node
           image: yanmo96/ignite_alcor:rio
           imagePullPolicy: IfNotPresent
-          command: ["/opt/ignite/apache-ignite/bin/control.sh --activate"]
+          command: ["/bin/sh", "-ec", 'bash -ec "$IGNITE_HOME/run.sh &" && bash -ec "sleep 20 && /opt/ignite/apache-ignite/bin/control.sh --activate && sleep infinity"']
           #resources:
             #requests:
               #cpu: "16"

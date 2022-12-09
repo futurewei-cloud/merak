@@ -52,7 +52,6 @@ helmCharts:
   repo: https://charts.wener.tech
   name: temporal
   version: 0.15.1
-  includeCRDs: true
   valuesInline:
     server:
       replicatCount: 1
