@@ -5,9 +5,11 @@ bases:
 - ../alcor
 - https://github.com/networkop/meshnet-cni.git/manifests/base
 images:
+# Alcor Images
 - name: yanmo96/network_config_manager
   newName: yongqi166/ncm
   newTag: "1.0"
+# Merak Images
 - name: meraksim/merak-compute-vm-worker
   newTag: ovs-batch
 - name: meraksim/merak-compute-vm
@@ -44,6 +46,7 @@ replicas:
   count: 1
 - name: ignite-alcor
   count: 1
+# Temporal Helm Chart
 helmCharts:
 - releaseName: temporal
   repo: https://charts.wener.tech

@@ -31,7 +31,7 @@ import (
 
 func TestGrpcClient(t *testing.T) {
 	var compute_address strings.Builder
-	compute_address.WriteString(constants.COMPUTE_GRPC_SERVER_ADDRESS_DEFAULT)
+	compute_address.WriteString(constants.COMPUTE_GRPC_SERVER_ADDRESS)
 	compute_address.WriteString(":")
 	compute_address.WriteString(strconv.Itoa(constants.COMPUTE_GRPC_SERVER_PORT))
 	ctx := context.Background()

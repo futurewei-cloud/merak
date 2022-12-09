@@ -15,6 +15,7 @@ resources:
 replicas:
 - name: merak-compute-vm-worker
   count: 1
+# Exclude Merak Network
 patches:
 - patch: |-
     $patch: delete
