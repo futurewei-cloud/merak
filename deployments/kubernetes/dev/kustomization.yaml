@@ -1,19 +1,69 @@
+# MIT License
+# Copyright(c) 2022 Futurewei Cloud
+#     Permission is hereby granted,
+#     free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+#     including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+#     to whom the Software is furnished to do so, subject to the following conditions:
+#     The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+#     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 bases:
 - ../base
-- ../alcor
+- https://github.com/phudtran/alcor.git/kubernetes
 - https://github.com/networkop/meshnet-cni.git/manifests/base
 images:
 # Alcor Images
-- name: yanmo96/network_config_manager
+- name: network_config_manager:v1.0
   newName: yongqi166/ncm
   newTag: "1.0"
+
+- name: ignite_alcor:lib8
+  newName: yanmo96/ignite_alcor
+  newTag: "rio"
+
+- name: api_gateway:v1.0
+  newName: yanmo96/api_gateway
+  newTag: "rio"
+
+- name: data_plane_manager:v1.0
+  newName: yanmo96/data_plane_manager
+  newTag: "5fceae8_v3"
+
+- name: data_plane_manager:v1.0
+  newName: yanmo96/data_plane_manager
+  newTag: "5fceae8_v3"
+
+- name: elastic_ip_manager:v1.0
+  newName: yanmo96/elastic_ip_manager
+  newTag: "5fceae8"
+
+- name: elastic_ip_manager:v1.0
+  newName: yanmo96/elastic_ip_manager
+  newTag: "5fceae8"
+
+- name: gateway_manager:v1.0
+  newName: yanmo96/gateway_manager
+  newTag: "rio"
+
+- name: mac_manager:v1.0
+  newName: yanmo96/mac_manager
+  newTag: "5fceae8"
+
+- name: node_manager:v1.0
+  newName: yanmo96/node_manager
+  newTag: "rio"
+
 # Merak Images
 - name: meraksim/merak-compute-vm-worker
   newTag: ovs-batch
+
 - name: meraksim/merak-compute-vm
   newTag: ovs-batch
+
 replicas:
 # Merak Service
 - name: merak-compute-vm-worker
@@ -37,7 +87,7 @@ replicas:
 - name: ignite-alcor-dpm
   count: 1
 - name: ignite-alcor-ip
-  count: 3
+  count: 1
 - name: ignite-alcor-mac
   count: 1
 - name: ignite-alcor-ncm
