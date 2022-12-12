@@ -8,36 +8,12 @@
 #     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: merak
----
-# Test service account
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: merak-compute
-  namespace: default
----
-# Cluster role binding
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: merak-compute
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-  - kind: ServiceAccount
-    name: merak-compute
-    namespace: default
----
+
 apiVersion: v1
 kind: Service
 metadata:
   name: merak-compute-service
+  namespace: merak
 spec:
   selector:
     app: merak-compute
@@ -53,6 +29,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: merak-compute
+  namespace: merak
 spec:
   replicas: 1
   selector:
@@ -67,20 +44,18 @@ spec:
       - key: "node-role.kubernetes.io/master"
         operator: "Exists"
         effect: "NoSchedule"
+      # nodeSelector:
+      #   serviceHost: merak
       containers:
       - name: merak-compute
-        image: meraksim/merak-compute:test
+        image: meraksim/merak-compute:dev
         imagePullPolicy: Always
         ports:
           - containerPort: 40051
             name: compute-grpc
         env:
         - name: "TEMPORAL"
-          value: "temporaltest-frontend.default.svc.cluster.local"
-        - name: RPS
-          value: "1000"
-        - name: CONCURRENCY
-          value: "1000"
+          value: "temporal-frontend.default.svc.cluster.local"
         - name: "LOGLEVEL"
           value: "INFO"
 ---
@@ -89,8 +64,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: merak-compute-vm-worker
+  namespace: merak
 spec:
-  replicas: 1
+  replicas: 5
   selector:
     matchLabels:
       app: merak-compute-vm-worker
@@ -103,13 +79,19 @@ spec:
       - key: "node-role.kubernetes.io/master"
         operator: "Exists"
         effect: "NoSchedule"
+      # nodeSelector:
+      #   serviceHost: merak
       containers:
       - name: merak-compute-vm-worker
-        image: meraksim/merak-compute-vm-worker:test
+        image: meraksim/merak-compute-vm-worker:dev
         imagePullPolicy: Always
         env:
         - name: "TEMPORAL"
-          value: "temporaltest-frontend.default.svc.cluster.local"
+          value: "temporal-frontend.default.svc.cluster.local"
+        - name: RPS
+          value: "1000"
+        - name: CONCURRENCY
+          value: "1000"
         - name: "LOGLEVEL"
           value: "INFO"
 # Single Redis Leader.
@@ -156,78 +138,11 @@ spec:
         role: main
         tier: backend
     spec:
+      # nodeSelector:
+      #   serviceHost: merak
       containers:
       - name: main
         image: "redis:7.0.0"
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
         ports:
         - containerPort: 6379
           name: compute-redis
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: merak-agent
-spec:
-  serviceAccountName: merak-compute
-  containers:
-  - name: merak-agent
-    image: meraksim/merak-agent:standalone
-    securityContext:
-        privileged: true
-    ports:
-    - containerPort: 40054
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: test-driver
-spec:
-  serviceAccountName: merak-compute
-  containers:
-  - name: test-driver
-    image: meraksim/test-merak-compute:test
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: temporaltest-frontend
-spec:
-  selector:
-    app: temporalite
-  ports:
-    - protocol: TCP
-      name: temporaltest-frontend
-      port: 7233
-      targetPort: temporal
-  type: ClusterIP
----
-# Merak Compute Deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: temporalite
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: temporalite
-  template:
-    metadata:
-      labels:
-        app: temporalite
-    spec:
-      tolerations:
-      - key: "node-role.kubernetes.io/master"
-        operator: "Exists"
-        effect: "NoSchedule"
-      containers:
-      - name: temporalite
-        image: meraksim/temporalite:dev
-        imagePullPolicy: Always
-        ports:
-          - containerPort: 7233
-            name: temporal

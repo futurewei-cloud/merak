@@ -9,31 +9,7 @@
 #     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# Merak namespace
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: merak-agent
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: merak-agent
-  namespace: merak-agent
-spec:
-  selector:
-    matchLabels:
-      app: merak-agent
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: merak-agent
-    spec:
-      containers:
-      - name: merak-agent
-        image: meraksim/merak-agent:dev
-        securityContext:
-            privileged: true
-        ports:
-        - containerPort: 40054
+  name: merak

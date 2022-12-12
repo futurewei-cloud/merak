@@ -9,9 +9,23 @@
 #     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-module := merak-agent-standalone
-
-merak-agent-standalone: standalone-agent
-
-standalone-agent:
-	$(GFLAGS) go build -o services/merak-agent-standalone/build/merak-agent services/merak-agent-standalone/agent.go
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vhost0
+spec:
+  serviceAccountName: merak-compute
+  containers:
+  - name: merak-agent
+    image: meraksim/merak-agent:test
+    imagePullPolicy: Always
+    securityContext:
+        privileged: true
+    ports:
+    - containerPort: 40054
+      name: grpc
+    - containerPort: 9001
+      name: prometheus
+    env:
+    - name: "mode"
+      value: "standalone"

@@ -31,10 +31,10 @@ jobs:
       run: make docker-all-ci
 
     - name: deploy merak
-      run: kubectl apply -f deployments/kubernetes/merak.ci.yaml
+      run: kubectl apply -k deployments/kubernetes/ci/
 
 ### CLEAN-UP ####
     - name: delete merak
-      run: kubectl delete -f deployments/kubernetes/merak.ci.yaml
+      run: kubectl apply -k deployments/kubernetes/ci/
     - name: Clean up images
       run: sudo crictl rmi --prune

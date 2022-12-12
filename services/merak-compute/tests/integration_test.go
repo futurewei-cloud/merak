@@ -31,7 +31,7 @@ import (
 
 func TestGrpcClient(t *testing.T) {
 	var compute_address strings.Builder
-	compute_address.WriteString(constants.COMPUTE_GRPC_SERVER_ADDRESS_DEFAULT)
+	compute_address.WriteString(constants.COMPUTE_GRPC_SERVER_ADDRESS)
 	compute_address.WriteString(":")
 	compute_address.WriteString(strconv.Itoa(constants.COMPUTE_GRPC_SERVER_PORT))
 	ctx := context.Background()
@@ -49,7 +49,7 @@ func TestGrpcClient(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create kube client!: %v\n", err.Error())
 	}
-	kubePod, err := clientset.CoreV1().Pods("default").Get(ctx, "merak-agent", metav1.GetOptions{})
+	kubePod, err := clientset.CoreV1().Pods("default").Get(ctx, "vhost0", metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("Failed to get merak-agent pod! %v\n", err)
 	}
@@ -69,7 +69,7 @@ func TestGrpcClient(t *testing.T) {
 		SubnetId:   "8182a4d4-ffff-4ece-b3f0-8d36e3d88000",
 		SubnetCidr: "10.0.1.0/24",
 		SubnetGw:   "10.0.1.1",
-		NumberVms:  5000,
+		NumberVms:  1000,
 	}
 	vpc := common_pb.InternalVpcInfo{
 		VpcId:     "9192a4d4-ffff-4ece-b3f0-8d36e3d88001",
@@ -132,20 +132,20 @@ func TestGrpcClient(t *testing.T) {
 	}
 	t.Log("Response: ", resp.ReturnMessage)
 
-	// Test Info
-	compute_info.OperationType = common_pb.OperationType_INFO
-	resp, err = client.ComputeHandler(ctx, &compute_info)
-	if err != nil {
-		t.Fatalf("Compute Handler Info failed: %v", err)
-	}
-	t.Log("Response: ", resp.ReturnMessage)
+	// // Test Info
+	// compute_info.OperationType = common_pb.OperationType_INFO
+	// resp, err = client.ComputeHandler(ctx, &compute_info)
+	// if err != nil {
+	// 	t.Fatalf("Compute Handler Info failed: %v", err)
+	// }
+	// t.Log("Response: ", resp.ReturnMessage)
 
-	// Test Delete
-	compute_info.OperationType = common_pb.OperationType_DELETE
-	resp, err = client.ComputeHandler(ctx, &compute_info)
-	if err != nil {
-		t.Fatalf("Compute Handler Delete failed: %v", err)
-	}
+	// // Test Delete
+	// compute_info.OperationType = common_pb.OperationType_DELETE
+	// resp, err = client.ComputeHandler(ctx, &compute_info)
+	// if err != nil {
+	// 	t.Fatalf("Compute Handler Delete failed: %v", err)
+	// }
 	t.Log("Response: ", resp)
 
 	defer conn.Close()
