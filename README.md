@@ -71,7 +71,7 @@ A successful deployment should take roughly 5 minutes for all pods to come to `r
 
 ![Successful Merak Deployment](docs/images/merak_successful_deployment.jpg)
 
-This deployment settings such as container image and replicas can be changed by editing the kustomize file under `deployments/kubernetes/dev/kustomization.yaml` and redeploying with
+The deployment settings such as container image and replicas can be changed by editing the kustomize file under `deployments/kubernetes/dev/kustomization.yaml` and redeploying with
 ```
 kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
 ```
