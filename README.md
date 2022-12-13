@@ -61,7 +61,7 @@ Before deploying Merak, you will need the following.
 
 ### Deployment
 
-Once your cluster is ready, you can deploy the latest small scale development (one replica for every service) build of Merak and [Alcor](https://github.com/futurewei-cloud/alcor)) with the command below.
+Once your cluster is ready, you can deploy the latest small scale development (one replica for every service) build of Merak and [Alcor](https://github.com/futurewei-cloud/alcor) with the command below.
 
 ```
 kubectl kustomize https://github.com/futurewei-cloud/merak/deployments/kubernetes/dev --enable-helm | kubectl apply -f -
@@ -77,7 +77,7 @@ The deployed components are as follows:
 - [Meshnet CNI](https://github.com/networkop/meshnet-cni)
 - [Temporal](https://github.com/temporalio/temporal)
 - [Prometheus](https://github.com/prometheus/prometheus)
-- [Alcor Microservices](https://github.com/futurewei-cloud/alcor) and their (Ignite)[https://github.com/apache/ignite] instances
+- [Alcor Microservices](https://github.com/futurewei-cloud/alcor) and their [Ignite](https://github.com/apache/ignite) instances
   - Port Manager
   - Network Config Manager
   - API Manager
