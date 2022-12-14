@@ -11,50 +11,26 @@ Copyright(c) 2022 Futurewei Cloud
 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-package handler
+
+// This is the datastore interface used by merak-compute
+package datastore
 
 import (
 	"context"
-	"errors"
-	"log"
-
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
-	"github.com/go-redis/redis/v9"
-	"go.temporal.io/sdk/client"
 )
 
-var (
-	workflowOptions client.StartWorkflowOptions
-	TemporalClient  client.Client
-	RedisClient     redis.Client
-)
+type Store interface {
+	Close() error
 
-type Server struct {
-	pb.UnimplementedMerakComputeServiceServer
-}
+	HashBytesGet(ctx context.Context, key string, field string) ([]byte, error)
+	HashBytesUpdate(ctx context.Context, key string, field string, obj []byte) error
+	HashDelete(ctx context.Context, key string, field string) error
 
-func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
-	log.Println("Received on ComputeHandler", in)
+	GetList(ctx context.Context, key string) ([]string, error)
+	AppendToList(ctx context.Context, key string, object string) error
+	PopFromList(ctx context.Context, key string) (string, error)
 
-	switch op := in.OperationType; op {
-	case common_pb.OperationType_INFO:
-
-		return caseInfo(ctx, in)
-
-	case common_pb.OperationType_CREATE:
-
-		return caseCreate(ctx, in)
-
-	case common_pb.OperationType_DELETE:
-
-		return caseDelete(ctx, in)
-
-	default:
-		log.Println("Unknown Operation")
-		return &pb.ReturnComputeMessage{
-			ReturnMessage: "Unknown Operation",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, errors.New("unknown operation")
-	}
+	GetSet(ctx context.Context, key string) ([]string, error)
+	AddToSet(ctx context.Context, key string, object string) error
+	DeleteFromSet(ctx context.Context, key string, obj string) error
 }

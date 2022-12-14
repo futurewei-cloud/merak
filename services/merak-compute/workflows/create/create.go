@@ -18,7 +18,6 @@ import (
 	"strings"
 
 	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
-	commonPB "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
@@ -74,55 +73,5 @@ func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 	}
 	logger.Info("All activities completed")
 	defer conn.Close()
-	return nil
-}
-
-func GenerateVMs(ctx workflow.Context,
-	vpcs []*commonPB.InternalVpcInfo,
-	pod *commonPB.InternalComputeInfo,
-	sg string) error {
-	retrypolicy := &temporal.RetryPolicy{
-		InitialInterval:    common.TEMPORAL_ACTIVITY_RETRY_INTERVAL,
-		BackoffCoefficient: common.TEMPORAL_ACTIVITY_BACKOFF,
-		MaximumInterval:    common.TEMPORAL_ACTIVITY_MAX_INTERVAL,
-		MaximumAttempts:    common.TEMPORAL_ACTIVITY_MAX_ATTEMPT,
-	}
-	lao := workflow.LocalActivityOptions{
-		StartToCloseTimeout: common.TEMPORAL_ACTIVITY_TIMEOUT,
-		RetryPolicy:         retrypolicy,
-	}
-
-	ctx = workflow.WithLocalActivityOptions(ctx, lao)
-	logger := workflow.GetLogger(ctx)
-
-	var futures []workflow.Future
-	for i, vpc := range vpcs {
-		for j, subnet := range vpc.Subnets {
-			for k := 0; k < int(subnet.NumberVms); k++ {
-				future := workflow.ExecuteLocalActivity(
-					ctx,
-					activities.VmGenerate,
-					pod,
-					vpc,
-					subnet,
-					sg,
-					i,
-					j,
-					k)
-				logger.Info("VmGenerate activity started for subnet " + subnet.SubnetId)
-				futures = append(futures, future)
-			}
-		}
-	}
-
-	logger.Info("Started all VMGenerate workflows for pod at " + pod.ContainerIp)
-	for _, future := range futures {
-		err := future.Get(ctx, nil)
-		logger.Info("Activity completed!")
-		if err != nil {
-			return err
-		}
-	}
-	logger.Info("All activities completed")
 	return nil
 }

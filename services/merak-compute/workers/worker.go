@@ -43,7 +43,7 @@ func main() {
 	rps, ok := os.LookupEnv(constants.TEMPORAL_CONCURRENCY_ENV)
 	if !ok {
 		log.Println("RPS environment variable not set, using default.")
-		rps = "1000"
+		rps = common.DEFAULT_WORKER_RPS
 	}
 	rps_int, err := strconv.ParseFloat(rps, 64)
 	if err != nil {
@@ -52,7 +52,7 @@ func main() {
 	concurrency, ok := os.LookupEnv(constants.TEMPORAL_CONCURRENCY_ENV)
 	if !ok {
 		log.Println("Concurrency environment variable not set, using default.")
-		concurrency = "1000"
+		concurrency = common.DEFAULT_WORKER_CONCURRENCY
 	}
 	concurrency_int, err := strconv.Atoi(concurrency)
 	if err != nil {
@@ -103,10 +103,8 @@ func main() {
 		WorkerLocalActivitiesPerSecond:          rps_int,
 	})
 	w.RegisterWorkflow(create.Create)
-	w.RegisterWorkflow(create.GenerateVMs)
 	w.RegisterWorkflow(delete.Delete)
 	w.RegisterActivity(activities.VmCreate)
-	w.RegisterActivity(activities.VmGenerate)
 	w.RegisterActivity(activities.VmDelete)
 	log.Println("Registered VM Workflows and activities.")
 	log.Println("Starting VM Worker.")
