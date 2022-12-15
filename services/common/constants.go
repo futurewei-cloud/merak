@@ -1,7 +1,21 @@
+/*
+MIT License
+Copyright(c) 2022 Futurewei Cloud
+
+	Permission is hereby granted,
+	free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+	including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+	to whom the Software is furnished to do so, subject to the following conditions:
+	The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
 package constants
 
 const (
-	TEMPORAL_ADDRESS         = "temporaltest-frontend.default.svc.cluster.local"
+	TEMPORAL_ADDRESS         = "temporal-frontend.default.svc.cluster.local"
 	TEMPORAL_PORT            = 7233
 	TEMPORAL_ENV             = "TEMPORAL"
 	TEMPORAL_RPS_ENV         = "RPS"
@@ -9,14 +23,14 @@ const (
 	LOCALHOST                = "127.0.0.1"
 	TEMPORAL_NAMESPACE       = "merak"
 
-	COMPUTE_GRPC_SERVER_ADDRESS         = "merak-compute-service.merak.svc.cluster.local"
-	COMPUTE_GRPC_SERVER_ADDRESS_DEFAULT = "merak-compute-service.default.svc.cluster.local"
-	TOPLOGY_GRPC_SERVER_PORT            = 40052
-	TOPLOGY_GRPC_SERVER_ADDRESS         = "merak-topology-service.merak.svc.cluster.local"
-	NETWORK_GRPC_SERVER_PORT            = 40053
-	NETWORK_GRPC_SERVER_ADDRESS         = "merak-network-service.merak.svc.cluster.local"
-	AGENT_GRPC_SERVER_PORT              = 40054
-	COMPUTE_GRPC_SERVER_PORT            = 40051
+	COMPUTE_GRPC_SERVER_ADDRESS = "merak-compute-service.merak.svc.cluster.local"
+	TOPLOGY_GRPC_SERVER_PORT    = 40052
+	TOPLOGY_GRPC_SERVER_ADDRESS = "merak-topology-service.merak.svc.cluster.local"
+	NETWORK_GRPC_SERVER_PORT    = 40053
+	NETWORK_GRPC_SERVER_ADDRESS = "merak-network-service.merak.svc.cluster.local"
+	AGENT_GRPC_SERVER_PORT      = 40054
+	COMPUTE_GRPC_SERVER_PORT    = 40051
+	AGENT_PROMETHEUS_PORT       = 9001
 
 	COMPUTE_REDIS_ADDRESS = "compute-redis-main.merak.svc.cluster.local"
 	COMPUTE_REDIS_PORT    = 30051
@@ -35,4 +49,14 @@ const (
 
 	GRPC_MAX_RECV_MSG_SIZE = 1024 * 1024 * 500
 	GRPC_MAX_SEND_MSG_SIZE = 1024 * 1024 * 500
+
+	LOG_LOCATION = "/var/log/merak/"
+
+	AGENT_MODE_ENV             = "mode"
+	AGENT_MODE_STANDALONE      = "standalone"
+	AGENT_STANDALONE_IP        = "10.0.0.2"
+	AGENT_STANDALONE_MAC       = "aa:bb:cc:dd:ee:ff"
+	AGENT_STANDALONE_REMOTE_ID = "NO ALCOR"
+	AGENT_STANDALONE_GW        = "10.0.0.1"
+	AGENT_STANDALONE_CIDR      = "10.0.0.0/8"
 )

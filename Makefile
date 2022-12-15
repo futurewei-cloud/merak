@@ -62,6 +62,15 @@ proto:
 	--go-grpc_opt=paths=source_relative \
 	-I api/proto/v1/ api/proto/v1/ntest.proto
 
+.PHONY: unit-tests
+unit-tests:
+	go test -v github.com/futurewei-cloud/merak/services/merak-compute/entities/ -coverprofile=cov_entities.out
+	go test -v github.com/futurewei-cloud/merak/services/datastore/ -coverprofile=cov_datastore.out
+	go tool cover -func=cov_entities.out
+	go tool cover -func=cov_datastore.out
+	rm cov_entities.out
+	rm cov_datastore.out
+
 .PHONY: deploy-dev
 deploy-dev:
 	kubectl apply -f deployments/kubernetes/scenario.dev.yaml
@@ -113,13 +122,6 @@ docker-agent-test:
 	docker build -t meraksim/merak-agent:test -f docker/agent.Dockerfile .
 	docker push meraksim/merak-agent:test
 
-.PHONY: docker-agent-standalone
-docker-agent-standalone:
-	make proto
-	make agent
-	docker build -t meraksim/merak-agent:standalone -f docker/agent-standalone.Dockerfile .
-	docker push meraksim/merak-agent:standalone
-
 .PHONY: docker-network
 docker-network:
 	make proto
@@ -139,6 +141,11 @@ docker-topo:
 docker-test:
 	docker build -t meraksim/test-merak-compute:test -f docker/test.merak.Dockerfile .
 	docker push meraksim/test-merak-compute:test
+
+.PHONY: docker-prometheus
+docker-prometheus:
+	docker build -t meraksim/prometheus:dev -f docker/prometheus.Dockerfile .
+	docker push meraksim/prometheus:dev
 
 .PHONY: docker-all
 docker-all:
@@ -185,4 +192,3 @@ clean:
 	rm -rf services/scenario-manager/build/*
 	rm -rf services/merak-network/build/*
 	rm -rf services/merak-topo/build/*
-	rm -rf services/merak-agent-standalone/build/*

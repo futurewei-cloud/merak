@@ -9,9 +9,7 @@
 #     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-module := services
-
-submodules := proto merak-compute scenario-manager merak-agent merak-network merak-topo
--include $(patsubst %, $(module)/%/module.mk, $(submodules))
-
-all:: $(submodules)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: merak

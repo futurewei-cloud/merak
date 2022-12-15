@@ -11,6 +11,13 @@
 
 services/merak-agent @phudtran @cj-chung
 services/merak-compute @phudtran @cj-chung
+services/common @phudtran @cj-chung
+deployments/kubernetes @phudtran @cj-chung
+configs @phudtran @cj-chung
+docker @phudtran @cj-chung
+
 services/merak-network @yanmo96 @cj-chung
+
 services/scenario-manager @cj-chung
+
 services/merak-topo @zzengcs @cj-chung

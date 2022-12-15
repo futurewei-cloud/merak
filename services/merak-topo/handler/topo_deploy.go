@@ -228,6 +228,10 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 							ImagePullPolicy: "IfNotPresent",
 							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent " + aca_parameters},
 							SecurityContext: &sc,
+							Ports: []corev1.ContainerPort{
+								{Name: "gRPC", ContainerPort: 40054},
+								{Name: "prometheus", ContainerPort: 9001},
+							},
 						},
 					},
 

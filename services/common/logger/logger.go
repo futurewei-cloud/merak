@@ -11,50 +11,17 @@ Copyright(c) 2022 Futurewei Cloud
 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-package handler
+package logger
 
-import (
-	"context"
-	"errors"
-	"log"
-
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
-	"github.com/go-redis/redis/v9"
-	"go.temporal.io/sdk/client"
-)
-
-var (
-	workflowOptions client.StartWorkflowOptions
-	TemporalClient  client.Client
-	RedisClient     redis.Client
-)
-
-type Server struct {
-	pb.UnimplementedMerakComputeServiceServer
-}
-
-func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
-	log.Println("Received on ComputeHandler", in)
-
-	switch op := in.OperationType; op {
-	case common_pb.OperationType_INFO:
-
-		return caseInfo(ctx, in)
-
-	case common_pb.OperationType_CREATE:
-
-		return caseCreate(ctx, in)
-
-	case common_pb.OperationType_DELETE:
-
-		return caseDelete(ctx, in)
-
-	default:
-		log.Println("Unknown Operation")
-		return &pb.ReturnComputeMessage{
-			ReturnMessage: "Unknown Operation",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, errors.New("unknown operation")
-	}
+// Interface for the Merak Logger
+type Logger interface {
+	Flush() error
+	Info(msg string, args ...any)
+	Warn(msg string, args ...any)
+	Debug(msg string, args ...any)
+	Error(msg string, args ...any)
+	Fatal(msg string, args ...any)
+	Panic(msg string, args ...any)
+	SetLevel(level Level)
+	GetLevel() Level
 }
