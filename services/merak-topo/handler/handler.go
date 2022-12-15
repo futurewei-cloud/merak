@@ -225,7 +225,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 		}
 	}
 
-	namespace = topo_id[:7]
+	namespace = "merak-" + topo_id[:5]
 
 	nsSpec := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
 
@@ -441,7 +441,7 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 
 	}
 
-	namespace := topo_id[:7]
+	namespace := "merak-" + topo_id[:5]
 	go UpdateComputenodeInfo(k8client, topo_id, namespace)
 
 	return nil
@@ -517,7 +517,7 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 
 	}
 
-	namespace := topo_id[:7]
+	namespace := "merak-" + topo_id[:5]
 
 	go Topo_delete(k8client, topo, namespace)
 
