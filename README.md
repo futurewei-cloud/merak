@@ -53,10 +53,12 @@ make
 
 ### Prerequisites
 
-Before deploying Merak, you will need the following.
+Before deploying Merak with Alcor, you will need the following.
 
 - A Kubernetes cluster with [flannel](https://github.com/flannel-io/flannel) installed
-- [Linkerd](https://linkerd.io/2.12/getting-started/) installed on the cluster (Needed for [Alcor](https://github.com/futurewei-cloud/alcor))
+- Needed for [Alcor](https://github.com/futurewei-cloud/alcor)
+  - [Linkerd](https://linkerd.io/2.12/getting-started/) installed on the cluster
+  - openvswitch-switch installed on every node (`apt install openvswitch-switch`)
 
 
 ### Deployment
@@ -96,6 +98,16 @@ The deployed components are as follows:
 ![Successful Merak Deployment](docs/images/merak_successful_deployment.jpg)
 
 The deployment settings such as container image and replicas can be changed by editing the kustomize file under `deployments/kubernetes/dev/kustomization.yaml` and redeploying with
+
 ```
 kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
 ```
+
+### Simple Test
+To do a simple test. Please use the cli tool as follows
+```
+./tools/cli/bin/cli 10
+```
+This will create 10 vhosts with 1 EVM each.
+
+Once everything is created, you can test network connnectivity as shown below

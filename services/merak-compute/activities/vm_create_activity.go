@@ -29,7 +29,7 @@ func VmCreate(ctx context.Context, vmID string, podIP string) error {
 	logger.Info("Starting create activity for VM " + vmID)
 
 	client := common.ClientMapGRPC[podIP]
-	logger.Info("Sending to agent at" + podIP)
+
 	port := agent_pb.InternalPortConfig{
 		OperationType: commonPB.OperationType_CREATE,
 		Name:          common.RedisClient.HGet(ctx, vmID, "name").Val(),
@@ -42,9 +42,10 @@ func VmCreate(ctx context.Context, vmID string, podIP string) error {
 		Cidr:          common.RedisClient.HGet(ctx, vmID, "cidr").Val(),
 		Hostname:      common.RedisClient.HGet(ctx, vmID, "hostname").Val(),
 	}
+	logger.Info("Sending to agent at " + podIP)
 	resp, err := client.PortHandler(ctx, &port)
 	if err != nil {
-		logger.Error("Unable to create vm on" + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
+		logger.Error("Unable to create vm on " + podIP + " Reason: " + resp.GetReturnMessage() + "\n")
 		if err := common.RedisClient.HSet(
 			ctx,
 			vmID,

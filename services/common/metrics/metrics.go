@@ -31,15 +31,15 @@ type MerakMetrics struct {
 // Creates new metrics struct
 func NewMetrics(reg *prometheus.Registry, serviceName string) *MerakMetrics {
 	opsTotalLatency := promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name: serviceName + "_Operations_Latency_Milliseconds",
+		Name: serviceName + "latency_milliseconds",
 		Help: "latency_total",
 	}, []string{"operation"})
 	opsSuccess := promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: serviceName + "_Operations_Success",
+		Name: serviceName + "_operations_success",
 		Help: "success",
 	}, []string{"operation"})
 	opsFail := promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: serviceName + "_Operations_Failed",
+		Name: serviceName + "_operations_failed",
 		Help: "fail",
 	}, []string{"operation"})
 

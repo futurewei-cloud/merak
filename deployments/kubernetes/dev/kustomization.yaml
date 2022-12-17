@@ -16,10 +16,6 @@ bases:
 - https://github.com/futurewei-cloud/alcor.git/kubernetes
 - https://github.com/networkop/meshnet-cni.git/manifests/base
 images:
-# Merak Images
-- name: meraksim/merak-topo
-  newTag: dev1122
-
 # Alcor DB Images
 - name: ignite_alcor:lib8
   newName: yanmo96/ignite_alcor
@@ -82,13 +78,6 @@ images:
   newName: yanmo96/vpc_manager
   newTag: "5fceae8"
 
-# Merak Images
-- name: meraksim/merak-compute-vm-worker
-  newTag: ovs-batch
-
-- name: meraksim/merak-compute-vm
-  newTag: ovs-batch
-
 replicas:
 # Merak Service
 - name: merak-compute-vm-worker
@@ -135,6 +124,19 @@ replicas:
   count: 1
 - name: ignite-alcor
   count: 1
+
+configMapGenerator:
+- name: api-configmap
+  namespace: default
+  behavior: replace
+  files:
+    - alcor/api-gateway/application.properties
+- name: ncm-configmap
+  namespace: default
+  behavior: replace
+  files:
+    - alcor/ncm/application.properties
+
 # Temporal Helm Chart
 helmCharts:
 - releaseName: temporal

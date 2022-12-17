@@ -67,8 +67,11 @@ func main() {
 	scenarioNodePortAddress, scenarioNodePort := getServiceAddress(clientset, "merak", "scenario-manager-service")
 	scenarioConfigID := config(clientset, scenarioNodePortAddress, scenarioNodePort, uint(numVhost))
 
+	fmt.Printf("Deploying topology with %d vhosts\n", numVhost)
 	deployTopo(scenarioConfigID, scenarioNodePortAddress, scenarioNodePort, numVhost)
+	fmt.Printf("Deploying Network\n")
 	deployNetwork(scenarioConfigID, scenarioNodePortAddress, scenarioNodePort)
+	fmt.Printf("Deploying Compute\n")
 	deployCompute(scenarioConfigID, scenarioNodePortAddress, scenarioNodePort)
 
 }
@@ -128,7 +131,6 @@ func config(clientset *kubernetes.Clientset,
 	respBodyByte, _ := io.ReadAll(resp.Body)
 	respBody := string(respBodyByte[:])
 	topoConfigID := gjson.Get(respBody, "data.id").Str
-	fmt.Println("TOPO ID: ", string(topoConfigID))
 
 	netConfig := entities.NetworkConfig{
 		Gateways: []entities.Gateway{
@@ -175,11 +177,12 @@ func config(clientset *kubernetes.Clientset,
 				ProjectId:       "123456789",
 				VpcId:           "10.1.0.0/16",
 				NumberOfSubnets: 1,
+				VpcCidr:         "10.1.0.0/16",
 				SubnetInfo: []entities.SubnetInfo{
 					{
-						SubnetId:      "10.1.0.0/16",
+						SubnetCidr:    "10.1.0.0/16",
 						SubnetGateway: "10.1.0.1",
-						NumberOfVMs:   1000,
+						NumberOfVMs:   10,
 					},
 				},
 			},
@@ -192,7 +195,6 @@ func config(clientset *kubernetes.Clientset,
 	respBodyByte, _ = io.ReadAll(resp.Body)
 	respBody = string(respBodyByte[:])
 	netConfigID := gjson.Get(respBody, "data.id").Str
-	fmt.Println("Netconfig ID: ", string(topoConfigID))
 
 	vpcManagerNodePortAddress, vpcNodePort := getServiceAddress(clientset, "default", "vpcmanager-service")
 	nodeManagerNodePortAddress, nodeNodePort := getServiceAddress(clientset, "default", "nodemanager-service")
@@ -215,7 +217,7 @@ func config(clientset *kubernetes.Clientset,
 				ReturnString: []string{""},
 				Url:          vpcManagerNodePortAddress,
 				WhenToRun:    "INIT",
-				WhereToRun:   "INIT",
+				WhereToRun:   "NETWORK",
 			},
 			{
 				Cmd:  "curl",
@@ -256,9 +258,9 @@ func config(clientset *kubernetes.Clientset,
 				Cmd:  "/root/alcor-control-agent/build/bin/AlcorControlAgent",
 				Name: "aca-cmd",
 				Parameters: []string{
-					"d",
+					"-d",
 					fmt.Sprintf("-a %s", ncmPortAddress),
-					fmt.Sprintf("-f %d", ncmPort),
+					fmt.Sprintf("-p %d", ncmPort),
 				},
 				ReturnCode: []uint32{
 					0,
@@ -270,19 +272,19 @@ func config(clientset *kubernetes.Clientset,
 			},
 		},
 	}
+
 	body, _ = json.Marshal(serviceConfig)
 	resp, _ = http.Post("http://"+scenarioNodePortAddress+":"+strconv.Itoa(int(scenarioNodePort))+"/api/service-config", "application/json", bytes.NewBuffer(body))
 
 	respBodyByte, _ = io.ReadAll(resp.Body)
 	respBody = string(respBodyByte[:])
 	serviceConfigID := gjson.Get(respBody, "data.id").Str
-	fmt.Println("ServiceConfig ID: ", string(serviceConfigID))
 
 	computeConfig := entities.ComputeConfig{
 		Name:                 "compute-config-1",
 		NumberOfComputeNodes: numVhost,
 		NumberOfPortPerVm:    1,
-		NumberOfVmPerVpc:     100,
+		NumberOfVmPerVpc:     10,
 		Scheduler:            "SEQUENTIAL",
 		VmDeployType:         "UNIFORM",
 		VPCInfo: []entities.VPCInfo{
@@ -295,7 +297,7 @@ func config(clientset *kubernetes.Clientset,
 					{
 						SubnetCidr:    "10.1.0.0/16",
 						SubnetGateway: "10.1.0.1",
-						NumberOfVMs:   10000,
+						NumberOfVMs:   10,
 					},
 				},
 			},
@@ -308,7 +310,6 @@ func config(clientset *kubernetes.Clientset,
 	respBodyByte, _ = io.ReadAll(resp.Body)
 	respBody = string(respBodyByte[:])
 	computeConfigID := gjson.Get(respBody, "data.id").Str
-	fmt.Println("ComputeConfig ID: ", string(computeConfigID))
 
 	testConfig := entities.TestConfig{
 		Name: "test-config-1",
@@ -331,7 +332,6 @@ func config(clientset *kubernetes.Clientset,
 	respBodyByte, _ = io.ReadAll(resp.Body)
 	respBody = string(respBodyByte[:])
 	testConfigID := gjson.Get(respBody, "data.id").Str
-	fmt.Println("TestConfig ID: ", string(testConfigID))
 
 	scenarioConfig := entities.Scenario{
 		Name:          "scenario-test-1",
@@ -349,7 +349,6 @@ func config(clientset *kubernetes.Clientset,
 	respBodyByte, _ = io.ReadAll(resp.Body)
 	respBody = string(respBodyByte[:])
 	scenarioConfigID := gjson.Get(respBody, "data.id").Str
-	fmt.Println("ScenarioConfig ID: ", string(scenarioConfigID))
 	return scenarioConfigID
 }
 
@@ -366,7 +365,6 @@ func getServiceAddress(clientset *kubernetes.Clientset, namespace string, servic
 	node, _ := clientset.CoreV1().Nodes().Get(context.Background(), nodename, v1.GetOptions{})
 	nodePortAddress := node.Status.Addresses[0].Address
 	nodePort := service.Spec.Ports[len(service.Spec.Ports)-1].NodePort
-	fmt.Printf("Found %s\nservice ip %s\nservice port %d\n", serviceName, nodePortAddress, nodePort)
 	return nodePortAddress, nodePort
 }
 
@@ -394,16 +392,19 @@ func checkTopo(scenarioConfigID string, scenarioNodePortAddress string, scenario
 	}
 	body, _ := json.Marshal(deployTopo)
 
+	fmt.Println("Waiting for vhost to be ready.")
 	for {
 		resp, _ := http.Post("http://"+scenarioNodePortAddress+":"+strconv.Itoa(int(scenarioNodePort))+"/api/scenarios/actions", "application/json", bytes.NewBuffer(body))
 		respBodyByte, _ := io.ReadAll(resp.Body)
 		respBody := string(respBodyByte[:])
-		readyNodes, _ := strconv.Atoi(strings.Split(strings.Split(gjson.Get(respBody, "message").Str, ",")[1], ":")[1])
+		readyNodes, _ := strconv.Atoi(strings.TrimSpace(strings.Split(strings.Split(gjson.Get(respBody, "message").Str, ",")[1], ":")[1]))
 		if readyNodes == expReady {
 			break
 		}
 		time.Sleep(time.Second * 2)
+		fmt.Printf(".")
 	}
+	fmt.Println()
 }
 
 func deployNetwork(scenarioConfigID string, scenarioNodePortAddress string, scenarioNodePort int32) {
@@ -417,7 +418,7 @@ func deployNetwork(scenarioConfigID string, scenarioNodePortAddress string, scen
 
 	body, _ := json.Marshal(deployNetwork)
 	http.Post("http://"+scenarioNodePortAddress+":"+strconv.Itoa(int(scenarioNodePort))+"/api/scenarios/actions", "application/json", bytes.NewBuffer(body))
-	checkNetwork(scenarioConfigID, scenarioNodePortAddress, scenarioNodePort)
+	// checkNetwork(scenarioConfigID, scenarioNodePortAddress, scenarioNodePort)
 }
 
 func checkNetwork(scenarioConfigID string, scenarioNodePortAddress string, scenarioNodePort int32) {
@@ -453,13 +454,25 @@ func checkCompute(scenarioConfigID string, scenarioNodePortAddress string, scena
 	checkCompute := entities.ScenarioAction{
 		ScenarioId: scenarioConfigID,
 		Service: entities.ServiceAction{
-			Action:      "DEPLOY",
+			Action:      "CHECK",
 			ServiceName: "compute",
 		},
 	}
-	body, _ := json.Marshal(checkCompute)
-	resp, _ := http.Post("http://"+scenarioNodePortAddress+":"+strconv.Itoa(int(scenarioNodePort))+"/api/scenarios/actions", "application/json", bytes.NewBuffer(body))
-	respBodyByte, _ := io.ReadAll(resp.Body)
-	respBody := string(respBodyByte[:])
-	fmt.Println(respBody)
+
+	var expReady int
+	var ready int
+	fmt.Println("Waiting for EVM to be ready.")
+	for {
+		body, _ := json.Marshal(checkCompute)
+		resp, _ := http.Post("http://"+scenarioNodePortAddress+":"+strconv.Itoa(int(scenarioNodePort))+"/api/scenarios/actions", "application/json", bytes.NewBuffer(body))
+		respBodyByte, _ := io.ReadAll(resp.Body)
+		respBody := string(respBodyByte[:])
+		ready, _ = strconv.Atoi(strings.TrimSpace(strings.Split(gjson.Get(respBody, "data.vms.0.id").Str, " ")[0]))
+		expReady, _ = strconv.Atoi(strings.TrimSpace(strings.Split(gjson.Get(respBody, "data.vms.0.id").Str, " ")[3]))
+		if ready == expReady {
+			break
+		}
+		time.Sleep(time.Second * 2)
+		fmt.Printf("%d of %d VMs ready\n", ready, expReady)
+	}
 }

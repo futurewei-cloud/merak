@@ -36,8 +36,7 @@ var (
 
 func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
 	log.Println("Received on PortHandler", in)
-
-	// Parse input d
+	log.Println("Received on PortHandler OP", in.OperationType)
 	switch op := in.OperationType; op {
 	case common_pb.OperationType_CREATE:
 		log.Println("Operation Create")
