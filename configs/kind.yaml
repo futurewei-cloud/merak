@@ -14,11 +14,7 @@ kind: Cluster
 nodes:
 - role: control-plane
   extraPortMappings:
-  - containerPort: 30000
-    hostPort: 30000
-    listenAddress: "0.0.0.0"
-    protocol: tcp
-  - containerPort: 30000
-    hostPort: 30000
+  - containerPort: 32000
+    hostPort: 32000
     listenAddress: "0.0.0.0"
     protocol: tcp

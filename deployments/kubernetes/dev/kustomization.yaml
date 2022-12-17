@@ -23,8 +23,8 @@ images:
 
 # Alcor Service Images
 - name: network_config_manager:v1.0
-  newName: yongqi166/ncm
-  newTag: "1.0"
+  newName: yanmo96/network_config_manager
+  newTag: "5fceae8_v3"
 
 - name: api_gateway:v1.0
   newName: yanmo96/api_gateway

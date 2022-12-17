@@ -105,9 +105,11 @@ kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
 
 ### Simple Test
 To do a simple test. Please use the cli tool as follows
+
 ```
 ./tools/cli/bin/cli 10
 ```
+
 This will create 10 vhosts with 1 EVM each.
 
 Once everything is created, you can test network connnectivity as shown below
