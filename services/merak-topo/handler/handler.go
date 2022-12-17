@@ -25,6 +25,8 @@ import (
 
 	"strings"
 
+	entities "github.com/futurewei-cloud/merak/services/merak-topo/entities"
+
 	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	corev1 "k8s.io/api/core/v1"
@@ -74,7 +76,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	}
 
 	for _, s := range k8s_nodes.Items {
-		var hnode database.HostNode
+		var hnode entities.HostNode
 
 		node_yaml, err2 := k8client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})
 		if err2 != nil {
@@ -83,7 +85,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 		for _, c := range s.Status.Conditions {
 			if c.Type == corev1.NodeReady {
-				hnode.Status = database.STATUS_READY
+				hnode.Status = entities.STATUS_READY
 				break
 			}
 
@@ -107,7 +109,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	}
 
 	for _, s := range k8s_nodes.Items {
-		var hnode database.HostNode
+		var hnode entities.HostNode
 		var hrm pb_common.InternalHostInfo
 
 		h, err := database.FindHostEntity(topo_id+":"+s.Name, "")
@@ -120,7 +122,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 			log.Printf("INFO: get host node info from DB error %s", err)
 		} else {
 			hrm.Ip = hnode.Ip
-			if hnode.Status == database.STATUS_READY {
+			if hnode.Status == entities.STATUS_READY {
 				hrm.Status = pb_common.Status_READY
 
 			} else {
@@ -140,16 +142,16 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	log.Println("CREATE: === Return deployed compute nodes information ===")
 
 	for _, node := range topo.Vnodes {
-		var cnode database.ComputeNode
+		var cnode entities.ComputeNode
 		if strings.Contains(node.Name, "vhost") {
 			cnode.Name = node.Name
 			cnode.Id = node.Id
 			cnode.DatapathIp = strings.Split(node.Nics[len(node.Nics)-1].Ip, "/")[0]
 			cnode.Veth = node.Nics[len(node.Nics)-1].Intf
 
-			cnode.OperationType = database.OPERATION_CREATE
+			cnode.OperationType = entities.OPERATION_CREATE
 			cnode.Mac = "ff:ff:ff:ff:ff:ff"
-			cnode.Status = database.STATUS_DEPLOYING
+			cnode.Status = entities.STATUS_DEPLOYING
 
 			log.Printf("create== cnode %v", cnode)
 
@@ -163,7 +165,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 	for _, node := range topo.Vnodes {
 		if strings.Contains(node.Name, "vhost") {
-			var cnode database.ComputeNode
+			var cnode entities.ComputeNode
 			var crm pb_common.InternalComputeInfo
 
 			c, err := database.FindComputeEntity(topo_id+":"+node.Name, "")
@@ -182,22 +184,22 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 			crm.ContainerIp = cnode.ContainerIp
 			crm.Mac = cnode.Mac
 			crm.Veth = cnode.Veth
-			if cnode.Status == database.STATUS_READY {
+			if cnode.Status == entities.STATUS_READY {
 				crm.Status = pb_common.Status_READY
-			} else if cnode.Status == database.STATUS_DELETING {
+			} else if cnode.Status == entities.STATUS_DELETING {
 				crm.Status = pb_common.Status_DELETING
-			} else if cnode.Status == database.STATUS_DEPLOYING {
+			} else if cnode.Status == entities.STATUS_DEPLOYING {
 				crm.Status = pb_common.Status_DEPLOYING
 			} else {
 				crm.Status = pb_common.Status_NONE
 			}
-			if cnode.OperationType == database.OPERATION_CREATE {
+			if cnode.OperationType == entities.OPERATION_CREATE {
 				crm.OperationType = pb_common.OperationType_CREATE
-			} else if cnode.OperationType == database.OPERATION_INFO {
+			} else if cnode.OperationType == entities.OPERATION_INFO {
 				crm.OperationType = pb_common.OperationType_INFO
-			} else if cnode.OperationType == database.OPERATION_DELETE {
+			} else if cnode.OperationType == entities.OPERATION_DELETE {
 				crm.OperationType = pb_common.OperationType_DELETE
-			} else if cnode.OperationType == database.OPERATION_UPDATE {
+			} else if cnode.OperationType == entities.OPERATION_UPDATE {
 				crm.OperationType = pb_common.OperationType_UPDATE
 			}
 
@@ -251,7 +253,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, names
 	}
 
 	for _, s := range k8s_nodes.Items {
-		var hnode database.HostNode
+		var hnode entities.HostNode
 
 		node_yaml, err2 := k8client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})
 		if err2 != nil {
@@ -260,7 +262,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, names
 
 		for _, c := range s.Status.Conditions {
 			if c.Type == corev1.NodeReady {
-				hnode.Status = database.STATUS_READY
+				hnode.Status = entities.STATUS_READY
 				break
 			}
 
@@ -300,7 +302,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, names
 
 		if strings.Contains(node.Name, "vhost") {
 
-			var cnode database.ComputeNode
+			var cnode entities.ComputeNode
 
 			res, err := k8client.CoreV1().Pods(namespace).Get(Ctx, node.Name, metav1.GetOptions{})
 
@@ -329,14 +331,14 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, names
 				// }
 
 				cnode.Mac = "ff:ff:ff:ff:ff:ff"
-				cnode.OperationType = database.OPERATION_INFO
+				cnode.OperationType = entities.OPERATION_INFO
 
 				if len(res.Status.ContainerStatuses) == 0 {
-					cnode.Status = database.STATUS_NONE
+					cnode.Status = entities.STATUS_NONE
 					log.Printf("updatecomputenode: container status is not available %v", res.Name)
 				} else {
 					if res.Status.ContainerStatuses[len(res.Status.ContainerStatuses)-1].Ready {
-						cnode.Status = database.STATUS_READY
+						cnode.Status = entities.STATUS_READY
 					}
 
 				}
@@ -374,7 +376,7 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 	}
 
 	for _, s := range k8s_nodes.Items {
-		var hnode database.HostNode
+		var hnode entities.HostNode
 		var hrm pb_common.InternalHostInfo
 
 		h, err := database.FindHostEntity(topo_id+":"+s.Name, "")
@@ -383,7 +385,7 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 			log.Printf("INFO: get host node info from DB error %s", err)
 		} else {
 			hrm.Ip = hnode.Ip
-			if hnode.Status == database.STATUS_READY {
+			if hnode.Status == entities.STATUS_READY {
 				hrm.Status = pb_common.Status_READY
 
 			} else {
@@ -402,7 +404,7 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 
 	for _, node := range topo.Vnodes {
 		if strings.Contains(node.Name, "vhost") {
-			var cnode database.ComputeNode
+			var cnode entities.ComputeNode
 			var crm pb_common.InternalComputeInfo
 
 			c, err := database.FindComputeEntity(topo_id+":"+node.Name, "")
@@ -421,20 +423,20 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 
 			if cnode.Status == database.STATUS_READY {
 				crm.Status = pb_common.Status_READY
-			} else if cnode.Status == database.STATUS_DELETING {
+			} else if cnode.Status == entities.STATUS_DELETING {
 				crm.Status = pb_common.Status_DELETING
-			} else if cnode.Status == database.STATUS_DEPLOYING {
+			} else if cnode.Status == entities.STATUS_DEPLOYING {
 				crm.Status = pb_common.Status_DEPLOYING
 			} else {
 				crm.Status = pb_common.Status_NONE
 			}
-			if cnode.OperationType == database.OPERATION_CREATE {
+			if cnode.OperationType == entities.OPERATION_CREATE {
 				crm.OperationType = pb_common.OperationType_CREATE
-			} else if cnode.OperationType == database.OPERATION_INFO {
+			} else if cnode.OperationType == entities.OPERATION_INFO {
 				crm.OperationType = pb_common.OperationType_INFO
-			} else if cnode.OperationType == database.OPERATION_DELETE {
+			} else if cnode.OperationType == entities.OPERATION_DELETE {
 				crm.OperationType = pb_common.OperationType_DELETE
-			} else if cnode.OperationType == database.OPERATION_UPDATE {
+			} else if cnode.OperationType == entities.OPERATION_UPDATE {
 				crm.OperationType = pb_common.OperationType_UPDATE
 			}
 
@@ -464,7 +466,7 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 	}
 
 	for _, s := range k8s_nodes.Items {
-		var hnode database.HostNode
+		var hnode entities.HostNode
 		var hrm pb_common.InternalHostInfo
 
 		h, err := database.FindHostEntity(topo_id+":"+s.Name, "")
@@ -475,7 +477,7 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 			log.Printf("INFO: get host node info from DB error %s", err)
 		} else {
 			hrm.Ip = hnode.Ip
-			if hnode.Status == database.STATUS_READY {
+			if hnode.Status == entities.STATUS_READY {
 				hrm.Status = pb_common.Status_READY
 
 			} else {
@@ -494,7 +496,7 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 
 	for _, node := range topo.Vnodes {
 		if strings.Contains(node.Name, "vhost") {
-			var cnode database.ComputeNode
+			var cnode entities.ComputeNode
 			var crm pb_common.InternalComputeInfo
 
 			c, err := database.FindComputeEntity(topo_id+":"+node.Name, "")

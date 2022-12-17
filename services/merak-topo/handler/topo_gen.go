@@ -19,9 +19,8 @@ import (
 	"strconv"
 	"strings"
 
+	entities "github.com/futurewei-cloud/merak/services/merak-topo/entities"
 	"github.com/google/uuid"
-
-	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 )
 
 func GenUUID() string {
@@ -45,9 +44,9 @@ func ip_gen(vhost_idx int, data_plane_cidr string, upper int) string {
 	return ip
 }
 
-func create_vswitches(racks []database.Vnode, init_idx_vs int, ports_per_vswitch int, uid_initial int) (error, []database.Vnode, []database.Vnode) {
-	var vswitches []database.Vnode
-	var racks_attached []database.Vnode
+func create_vswitches(racks []entities.Vnode, init_idx_vs int, ports_per_vswitch int, uid_initial int) (error, []entities.Vnode, []entities.Vnode) {
+	var vswitches []entities.Vnode
+	var racks_attached []entities.Vnode
 	num_of_vs := len(racks) / ports_per_vswitch
 
 	if len(racks)%ports_per_vswitch > 0 {
@@ -77,11 +76,11 @@ func create_vswitches(racks []database.Vnode, init_idx_vs int, ports_per_vswitch
 	return nil, vswitches, racks_attached
 }
 
-func create_vhosts(init int, vhosts_per_rack int, data_plane_cidr string, upper int) []database.Vnode {
-	var vhosts []database.Vnode
+func create_vhosts(init int, vhosts_per_rack int, data_plane_cidr string, upper int) []entities.Vnode {
+	var vhosts []entities.Vnode
 
 	for j := init; j < init+vhosts_per_rack; j++ {
-		var vhost database.Vnode
+		var vhost entities.Vnode
 		vhost.Id = GenUUID()
 		vhost.Type = "vhost"
 		vhost.Name = "vhost-" + strconv.FormatInt(int64(j), 10)
@@ -96,11 +95,11 @@ func create_vhosts(init int, vhosts_per_rack int, data_plane_cidr string, upper 
 
 }
 
-func rack_nics_gen(idx int, vhosts_per_rack int) []database.Nic {
-	var nics []database.Nic
+func rack_nics_gen(idx int, vhosts_per_rack int) []entities.Nic {
+	var nics []entities.Nic
 
 	for nintf := 1; nintf <= (vhosts_per_rack + 1); nintf++ {
-		var nic database.Nic
+		var nic entities.Nic
 		nic.Id = GenUUID()
 		nic.Intf = "r" + strconv.FormatInt(int64(idx), 10) + "-eth" + strconv.FormatInt(int64(nintf), 10)
 
@@ -110,10 +109,10 @@ func rack_nics_gen(idx int, vhosts_per_rack int) []database.Nic {
 	return nics
 }
 
-func vhost_nics_gen(idx int, data_plane_cidr string, upper int) []database.Nic {
-	var nics []database.Nic
+func vhost_nics_gen(idx int, data_plane_cidr string, upper int) []entities.Nic {
+	var nics []entities.Nic
 
-	var nic database.Nic
+	var nic entities.Nic
 	nic.Id = GenUUID()
 	nic.Intf = "vh" + strconv.FormatInt(int64(idx), 10) + "-eth1"
 	nic.Ip = ip_gen(idx, data_plane_cidr, upper)
@@ -124,11 +123,11 @@ func vhost_nics_gen(idx int, data_plane_cidr string, upper int) []database.Nic {
 
 }
 
-func vswitch_nics_gen(idx int, ports_per_vswitch int) []database.Nic {
-	var nics []database.Nic
+func vswitch_nics_gen(idx int, ports_per_vswitch int) []entities.Nic {
+	var nics []entities.Nic
 
 	for nintf := 1; nintf <= (ports_per_vswitch + 1); nintf++ {
-		var nic database.Nic
+		var nic entities.Nic
 		nic.Id = GenUUID()
 		nic.Intf = "vs" + strconv.FormatInt(int64(idx), 10) + "-eth" + strconv.FormatInt(int64(nintf), 10)
 
@@ -140,11 +139,11 @@ func vswitch_nics_gen(idx int, ports_per_vswitch int) []database.Nic {
 
 }
 
-func core_nics_gen(idx int, nports int) []database.Nic {
-	var nics []database.Nic
+func core_nics_gen(idx int, nports int) []entities.Nic {
+	var nics []entities.Nic
 
 	for nintf := 1; nintf < (nports + 1); nintf++ {
-		var nic database.Nic
+		var nic entities.Nic
 		nic.Id = GenUUID()
 		nic.Intf = "c" + strconv.FormatInt(int64(idx), 10) + "-eth" + strconv.FormatInt(int64(nintf), 10)
 
@@ -156,9 +155,9 @@ func core_nics_gen(idx int, nports int) []database.Nic {
 
 }
 
-func create_a_rack(idx int, vhosts_per_rack int) database.Vnode {
+func create_a_rack(idx int, vhosts_per_rack int) entities.Vnode {
 
-	var rack database.Vnode
+	var rack entities.Vnode
 	rack.Type = "rack"
 	rack.Name = "rack-" + strconv.FormatInt(int64(idx), 10)
 	nics := rack_nics_gen(idx, vhosts_per_rack)
@@ -169,8 +168,8 @@ func create_a_rack(idx int, vhosts_per_rack int) database.Vnode {
 
 }
 
-func create_and_attach_a_vswitch(vs []database.Vnode, idx_vs int, ports_per_vswitch int, uid_initial int) (database.Vnode, []database.Vnode) {
-	var vswitch database.Vnode
+func create_and_attach_a_vswitch(vs []entities.Vnode, idx_vs int, ports_per_vswitch int, uid_initial int) (entities.Vnode, []entities.Vnode) {
+	var vswitch entities.Vnode
 	var nports int
 
 	vswitch.Type = "vswitch"
@@ -193,8 +192,8 @@ func create_and_attach_a_vswitch(vs []database.Vnode, idx_vs int, ports_per_vswi
 	return vswitch_attached, vs_attached
 }
 
-func create_and_attach_a_core(vs []database.Vnode, j int, nports int, uid_initial int) (error, database.Vnode, []database.Vnode) {
-	var core database.Vnode
+func create_and_attach_a_core(vs []entities.Vnode, j int, nports int, uid_initial int) (error, entities.Vnode, []entities.Vnode) {
+	var core entities.Vnode
 
 	core.Type = "core"
 	core.Id = GenUUID()
@@ -213,14 +212,14 @@ func create_and_attach_a_core(vs []database.Vnode, j int, nports int, uid_initia
 	return err, core_attached, vs_attached
 }
 
-func attach_vswitches_to_core(core database.Vnode, vswitches []database.Vnode, uid_initial int) (error, database.Vnode, []database.Vnode) {
+func attach_vswitches_to_core(core entities.Vnode, vswitches []entities.Vnode, uid_initial int) (error, entities.Vnode, []entities.Vnode) {
 
-	var core_links []database.Vlink
-	var vswitches_attached []database.Vnode
+	var core_links []entities.Vlink
+	var vswitches_attached []entities.Vnode
 
 	for i, nic := range core.Nics {
-		var link_c database.Vlink
-		var link_v database.Vlink
+		var link_c entities.Vlink
+		var link_v entities.Vlink
 
 		uid := uid_initial + i
 
@@ -253,16 +252,16 @@ func attach_vswitches_to_core(core database.Vnode, vswitches []database.Vnode, u
 	return nil, core, vswitches_attached
 }
 
-func attach_vhosts_to_rack(rack database.Vnode, hosts []database.Vnode, uid_initial int) (error, database.Vnode, []database.Vnode) {
+func attach_vhosts_to_rack(rack entities.Vnode, hosts []entities.Vnode, uid_initial int) (error, entities.Vnode, []entities.Vnode) {
 
-	var rack_links []database.Vlink
-	var hosts_attached []database.Vnode
+	var rack_links []entities.Vlink
+	var hosts_attached []entities.Vnode
 
 	for i, nic := range rack.Nics {
 
 		if i < len(rack.Nics)-1 {
-			var link_r database.Vlink
-			var link_h database.Vlink
+			var link_r entities.Vlink
+			var link_h entities.Vlink
 
 			uid := uid_initial + i
 
@@ -298,15 +297,15 @@ func attach_vhosts_to_rack(rack database.Vnode, hosts []database.Vnode, uid_init
 	return nil, rack, hosts_attached
 }
 
-func attach_racks_to_vswitch(vswitch database.Vnode, racks []database.Vnode, uid_initial int) (database.Vnode, []database.Vnode) {
+func attach_racks_to_vswitch(vswitch entities.Vnode, racks []entities.Vnode, uid_initial int) (entities.Vnode, []entities.Vnode) {
 
-	var vswitch_links []database.Vlink
-	var racks_attached []database.Vnode
+	var vswitch_links []entities.Vlink
+	var racks_attached []entities.Vnode
 
 	for i, nic := range vswitch.Nics {
 		if i < len(vswitch.Nics)-1 {
-			var link_v database.Vlink
-			var link_r database.Vlink
+			var link_v entities.Vlink
+			var link_r entities.Vlink
 
 			uid := uid_initial + i
 
@@ -341,22 +340,22 @@ func attach_racks_to_vswitch(vswitch database.Vnode, racks []database.Vnode, uid
 	return vswitch, racks_attached
 }
 
-func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_rack int, ports_per_vswitch int, data_plane_cidr string) (error, database.TopologyData) {
-	var topo database.TopologyData
+func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_rack int, ports_per_vswitch int, data_plane_cidr string) (error, entities.TopologyData) {
+	var topo entities.TopologyData
 	upper := 250
 	nvhosts := vhost_num
 	idx := 1
-	var racks_full_attached []database.Vnode
-	var racks []database.Vnode
-	var vhosts []database.Vnode
-	var vswitches []database.Vnode
+	var racks_full_attached []entities.Vnode
+	var racks []entities.Vnode
+	var vhosts []entities.Vnode
+	var vswitches []entities.Vnode
 
 	uid_initial := 1
 	init_idx_host := 0
 	init_idx_vs := 1
 
 	for nvhosts > 0 && idx < rack_num+1 {
-		var vhs []database.Vnode
+		var vhs []entities.Vnode
 		rack := create_a_rack(idx, vhosts_per_rack)
 
 		idx = idx + 1
@@ -396,7 +395,7 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 	log.Printf("vs number %v", len(vs_attached))
 	flag := false
 
-	var vs_to_core []database.Vnode
+	var vs_to_core []entities.Vnode
 
 	for nvswitch > ports_per_vswitch {
 		flag = true

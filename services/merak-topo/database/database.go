@@ -22,6 +22,8 @@ import (
 
 	"strings"
 
+	entities "github.com/futurewei-cloud/merak/services/merak-topo/entities"
+
 	"github.com/go-redis/redis/v8"
 )
 
@@ -93,8 +95,8 @@ func FindEntity(id string, prefix string, entity interface{}) error {
 	return nil
 }
 
-func FindHostEntity(id string, prefix string) (HostNode, error) {
-	var entity HostNode
+func FindHostEntity(id string, prefix string) (entities.HostNode, error) {
+	var entity entities.HostNode
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
@@ -108,8 +110,8 @@ func FindHostEntity(id string, prefix string) (HostNode, error) {
 	return entity, nil
 }
 
-func FindComputeEntity(id string, prefix string) (ComputeNode, error) {
-	var entity ComputeNode
+func FindComputeEntity(id string, prefix string) (entities.ComputeNode, error) {
+	var entity entities.ComputeNode
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
@@ -181,8 +183,8 @@ func getKeyAndValueMap(keys []string, prefix string) (map[string]string, error) 
 	return values, nil
 }
 
-func FindTopoEntity(id string, prefix string) (TopologyData, error) {
-	var entity TopologyData
+func FindTopoEntity(id string, prefix string) (entities.TopologyData, error) {
+	var entity entities.TopologyData
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {

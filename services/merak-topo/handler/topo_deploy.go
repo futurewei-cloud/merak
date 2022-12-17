@@ -25,6 +25,7 @@ import (
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 
+	entities "github.com/futurewei-cloud/merak/services/merak-topo/entities"
 	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,7 +52,7 @@ var (
 	}
 )
 
-func CreateTopologyClasses(client dynamic.Interface, name string, links []database.Vlink, namespace string) error {
+func CreateTopologyClasses(client dynamic.Interface, name string, links []entities.Vlink, namespace string) error {
 	rc := NewTopologyClass(name, links, namespace)
 
 	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Create(Ctx, rc, metav1.CreateOptions{})
@@ -92,7 +93,7 @@ func DeleteTopologyClasses(client dynamic.Interface, name string, namespace stri
 
 }
 
-func NewTopologyClass(name string, links []database.Vlink, namespace string) *unstructured.Unstructured {
+func NewTopologyClass(name string, links []entities.Vlink, namespace string) *unstructured.Unstructured {
 	var clinks []map[string]interface{}
 	for _, link := range links {
 		config_clink := map[string]interface{}{
@@ -122,7 +123,7 @@ func NewTopologyClass(name string, links []database.Vlink, namespace string) *un
 	return out
 }
 
-func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image string, topo database.TopologyData, aca_parameters string, namespace string) error {
+func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image string, topo entities.TopologyData, aca_parameters string, namespace string) error {
 	/*comment gw creation function*/
 	// var k8snodes []string
 
@@ -421,7 +422,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 }
 
-func ovs_config(topo database.TopologyData, node_name string, sdn_ip string, sdn_port string) (string, error) {
+func ovs_config(topo entities.TopologyData, node_name string, sdn_ip string, sdn_port string) (string, error) {
 
 	nodes := topo.Vnodes
 	ovs_set := "ovs-vsctl add-br br0; ovs-vsctl set-controller br0 tcp:" + sdn_ip + ":" + sdn_port + "; "
@@ -482,7 +483,7 @@ func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod, cmd []string, na
 
 }
 
-func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData, namespace string) error {
+func Topo_delete(k8client *kubernetes.Clientset, topo entities.TopologyData, namespace string) error {
 
 	config := ctrl.GetConfigOrDie()
 	dclient, err := dynamic.NewForConfig(config)
@@ -512,7 +513,7 @@ func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData, nam
 }
 
 // save topology to redis
-func Topo_save(topo database.TopologyData) error {
+func Topo_save(topo entities.TopologyData) error {
 	// check pod status
 	topo_id := topo.Topology_id
 
