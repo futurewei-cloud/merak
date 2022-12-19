@@ -16,6 +16,11 @@ bases:
 - https://github.com/futurewei-cloud/alcor.git/kubernetes
 - https://github.com/networkop/meshnet-cni.git/manifests/base
 images:
+
+- name: meraksim/merak-topo:dev
+  newName: meraksim/merak-topo
+  newTag: "dev1122"
+
 # Alcor DB Images
 - name: ignite_alcor:lib8
   newName: yanmo96/ignite_alcor
@@ -23,32 +28,36 @@ images:
 
 # Alcor Service Images
 - name: network_config_manager:v1.0
-  newName: yanmo96/network_config_manager
-  newTag: "5fceae8_v3"
+  newName: cjchung4849/network_config_manager
+  newTag: "1005"
 
 - name: api_gateway:v1.0
   newName: yanmo96/api_gateway
-  newTag: "rio"
+  newTag: "portmanagertest1"
+
+# - name: api_gateway:v1.0
+#   newName: yanmo96/api_gateway
+#   newTag: "rio"
 
 - name: data_plane_manager:v1.0
-  newName: yanmo96/data_plane_manager
-  newTag: "5fceae8_v3"
+  newName: yanmo96/dpm
+  newTag: "portmanagertest1"
 
 - name: elastic_ip_manager:v1.0
   newName: yanmo96/elastic_ip_manager
-  newTag: "5fceae8"
+  newTag: "portmanagertest1"
 
 - name: gateway_manager:v1.0
   newName: yanmo96/gateway_manager
-  newTag: "rio"
+  newTag: "portmanagertest1"
 
 - name: mac_manager:v1.0
   newName: yanmo96/mac_manager
-  newTag: "5fceae8"
+  newTag: "portmanagertest1"
 
 - name: node_manager:v1.0
   newName: yanmo96/node_manager
-  newTag: "rio"
+  newTag: "portmanagertest1"
 
 - name: port_manager:v1.0
   newName: yanmo96/port_manager
@@ -56,23 +65,23 @@ images:
 
 - name: private_ip_manager:v1.0
   newName: yanmo96/private_ip_manager
-  newTag: "5fceae8"
+  newTag: "portmanagertest1"
 
 - name: quota_manager:v1.0
   newName: yanmo96/quota_manager
-  newTag: "5fceae8"
+  newTag: "portmanagertest1"
 
 - name: route_manager:v1.0
   newName: yanmo96/route_manager
-  newTag: "5fceae8"
+  newTag: "portmanagertest1"
 
 - name: security_group_manager:v1.0
   newName: yanmo96/security_group_manager
-  newTag: "rio"
+  newTag: "portmanagertest1"
 
 - name: subnet_manager:v1.0
   newName: yanmo96/subnet_manager
-  newTag: "5fceae8"
+  newTag: "portmanagertest1"
 
 - name: vpc_manager:v1.0
   newName: yanmo96/vpc_manager
