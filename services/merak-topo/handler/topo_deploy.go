@@ -225,7 +225,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 						{
 							Name:            "vhost",
 							Image:           aca_image,
-							ImagePullPolicy: "IfNotPresent",
+							ImagePullPolicy: "Always",
 							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent " + aca_parameters},
 							SecurityContext: &sc,
 							Ports: []corev1.ContainerPort{
