@@ -35,10 +35,6 @@ images:
   newName: yanmo96/api_gateway
   newTag: "portmanagertest1"
 
-# - name: api_gateway:v1.0
-#   newName: yanmo96/api_gateway
-#   newTag: "rio"
-
 - name: data_plane_manager:v1.0
   newName: yanmo96/dpm
   newTag: "portmanagertest1"
@@ -73,7 +69,7 @@ images:
 
 - name: route_manager:v1.0
   newName: yanmo96/route_manager
-  newTag: "portmanagertest1"
+  newTag: "5fceae8"
 
 - name: security_group_manager:v1.0
   newName: yanmo96/security_group_manager
