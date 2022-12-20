@@ -32,7 +32,7 @@ In order to provide more virtual and emulated resources with limited hardware re
 - Kubernetes-in-Kubernetes (KinK)
 - Kubernetes cluster in virtual machines
 
-For more detail design and information, please refer to the docs folder in this repository. 
+For more detail design and information, please refer to the docs folder in this repository.
 
 ## Getting started with development
 
@@ -61,7 +61,7 @@ Before deploying Merak with Alcor, you will need the following.
   - openvswitch-switch installed on every node (`apt install openvswitch-switch`)
 
 
-**NOTE: Please wait for all LinkerD pods and conainers to be fully running before moving the the step below.**
+**NOTE: Please wait for all LinkerD pods and containers to be fully running before moving on to the steps below.**
 
 ![LinkerD](docs/images/linkerd_ready.jpg)
 
