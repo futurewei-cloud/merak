@@ -35,17 +35,9 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-// VERY basic CLI tool for testing
 func main() {
 
-	// total VMs =  num vhost * 100
-	if len(os.Args) < 2 {
-		log.Fatal("Not enough arguments")
-	}
-	numVhost, err := strconv.Atoi(os.Args[1])
-	if err != nil {
-		log.Fatalf("Number of VHost: %d is not a valid number!\n", numVhost)
-	}
+	numVhost := 10
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -53,6 +45,7 @@ func main() {
 		os.Exit(1)
 	}
 	kubeConfigPath := filepath.Join(homeDir, ".kube", "config")
+
 	kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
 		log.Printf("error getting Kubernetes config: %v\n", err)
@@ -73,7 +66,6 @@ func main() {
 	deployNetwork(scenarioConfigID, scenarioNodePortAddress, scenarioNodePort)
 	fmt.Printf("Deploying Compute\n")
 	deployCompute(scenarioConfigID, scenarioNodePortAddress, scenarioNodePort)
-
 }
 
 func config(clientset *kubernetes.Clientset,
