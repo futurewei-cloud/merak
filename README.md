@@ -32,7 +32,7 @@ In order to provide more virtual and emulated resources with limited hardware re
 - Kubernetes-in-Kubernetes (KinK)
 - Kubernetes cluster in virtual machines
 
-For more detail design and information, please refer to the docs folder in this repository. 
+For more detail design and information, please refer to the docs folder in this repository.
 
 ## Getting started with development
 
@@ -53,14 +53,19 @@ make
 
 ### Prerequisites
 
-Before deploying Merak, you will need the following.
+Before deploying Merak with Alcor, you will need the following.
 
 - A Kubernetes cluster with [flannel](https://github.com/flannel-io/flannel) installed
-- [Linkerd](https://linkerd.io/2.12/getting-started/) installed on the cluster (Needed for [Alcor](https://github.com/futurewei-cloud/alcor))
+- Needed for [Alcor](https://github.com/futurewei-cloud/alcor)
+  - [Linkerd](https://linkerd.io/2.12/getting-started/) installed on the cluster
+  - openvswitch-switch installed on every node (`apt install openvswitch-switch`)
 
+
+**NOTE: Please wait for all LinkerD pods and containers to be fully running before moving on to the steps below.**
+
+![LinkerD](docs/images/linkerd_ready.jpg)
 
 ### Deployment
-
 Once your cluster is ready, you can deploy the latest small scale development (one replica for every service) build of Merak and [Alcor](https://github.com/futurewei-cloud/alcor) with the command below.
 
 ```
@@ -96,6 +101,27 @@ The deployed components are as follows:
 ![Successful Merak Deployment](docs/images/merak_successful_deployment.jpg)
 
 The deployment settings such as container image and replicas can be changed by editing the kustomize file under `deployments/kubernetes/dev/kustomization.yaml` and redeploying with
+
 ```
 kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
 ```
+
+### Simple Test
+To do a simple test. Please use the below tool as follows
+
+```
+./tools/teste2e/bin/teste2e
+```
+
+This will create 10 hosts with 1 VM each.
+
+Once everything is created, you can test network connnectivity as shown below.
+
+1. Run ```kubectl get pods -A``` to see all vhost pods.
+![Step 1](docs/images/merak_e2e_step1.jpg)
+
+2. Merak uses network namespaces to emulate VMs, run ``` kubectl exec -it vhost-0 ip netns exec v000 ip a ``` to get the IP address of the emulated VM `v000` inside of the emulated host `vhost-0`.
+![Step 2](docs/images/merak_e2e_step2.jpg)
+
+1. Ping the VM `v000` on `vhost-0` from a different VM on `vhost-1` with the following command ``` kubectl exec -it vhost-1 ip netns exec v000 ping (IP address from step 2)```
+![Step 2](docs/images/merak_e2e_step3.jpg)

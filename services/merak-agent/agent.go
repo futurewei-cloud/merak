@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"time"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
@@ -74,8 +75,11 @@ func main() {
 		if err != nil {
 			log.Fatal("Unable to get hostname!")
 		}
+		// Prometheus no hyphens allowed
+		hostname = "vhost" + strings.Split(hostname, "-")[1]
+
 		handler.PrometheusRegistry = prometheus.NewRegistry()
-		handler.MerakMetrics = metrics.NewMetrics(handler.PrometheusRegistry, "MerakAgent_"+hostname)
+		handler.MerakMetrics = metrics.NewMetrics(handler.PrometheusRegistry, "merak_agent_"+hostname)
 		http.Handle("/metrics", promhttp.HandlerFor(
 			handler.PrometheusRegistry,
 			promhttp.HandlerOpts{Registry: handler.PrometheusRegistry}))

@@ -181,8 +181,7 @@ docker-all-ci:
 
 .PHONY: deploy-kind
 deploy-kind:
-	kind create cluster --config=configs/kind-config.yaml
-	kubectl apply -f deployments/kubernetes/compute.test.yaml
+	kind create cluster --config=configs/kind.yaml
 
 .PHONY: clean
 clean:

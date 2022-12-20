@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 
 	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
@@ -226,12 +227,12 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 						{
 							Name:            "vhost",
 							Image:           aca_image,
-							ImagePullPolicy: "IfNotPresent",
+							ImagePullPolicy: "Always",
 							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent " + aca_parameters},
 							SecurityContext: &sc,
 							Ports: []corev1.ContainerPort{
-								{Name: "gRPC", ContainerPort: 40054},
-								{Name: "prometheus", ContainerPort: 9001},
+								{Name: "gRPC", ContainerPort: constants.AGENT_GRPC_SERVER_PORT},
+								{Name: "prometheus", ContainerPort: constants.AGENT_PROMETHEUS_PORT},
 							},
 						},
 					},

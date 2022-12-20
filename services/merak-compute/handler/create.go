@@ -133,7 +133,7 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		Id: "Started deployment for " + strconv.Itoa(count) + " VMs",
 	}
 	returnVMs = append(returnVMs, &returnVM)
-	log.Println("Started deployment for " + strconv.Itoa(count) + " VMs")
+	log.Println("Successfully started deployment for " + strconv.Itoa(count) + " VMs")
 	return &pb.ReturnComputeMessage{
 		ReturnMessage: "Successfully started all create workflows!",
 		ReturnCode:    commonPB.ReturnCode_OK,
