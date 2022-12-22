@@ -394,7 +394,8 @@ func checkTopo(scenarioConfigID string, scenarioNodePortAddress string, scenario
 			break
 		}
 		time.Sleep(time.Second * 2)
-		fmt.Printf(".")
+		time.Sleep(time.Second * 2)
+		fmt.Printf("%d of %d vHosts ready\n", readyNodes, expReady)
 	}
 	fmt.Println()
 }
@@ -467,4 +468,5 @@ func checkCompute(scenarioConfigID string, scenarioNodePortAddress string, scena
 		time.Sleep(time.Second * 2)
 		fmt.Printf("%d of %d VMs ready\n", ready, expReady)
 	}
+	fmt.Println("All VMs Ready!!")
 }

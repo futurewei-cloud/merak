@@ -179,9 +179,24 @@ docker-all-ci:
 	docker push meraksim/merak-topo:ci
 	docker push meraksim/scenario-manager:ci
 
-.PHONY: deploy-kind
-deploy-kind:
+.PHONY: kind
+kind:
 	kind create cluster --config=configs/kind.yaml
+	linkerd install --crds | kubectl apply -f -
+	linkerd install | kubectl apply -f -
+	linkerd check
+	kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
+
+.PHONY: deploy
+deploy:
+	sudo rm -rf /root/work && sudo kubeadm init --pod-network-cidr 10.244.0.0/16
+	mkdir -p $HOME/.kube
+	sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+	sudo chown $(id -u):$(id -g) $HOME/.kube/config
+	linkerd install --crds | kubectl apply -f -
+	linkerd install | kubectl apply -f -
+	linkerd check
+	kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
 
 .PHONY: clean
 clean:
