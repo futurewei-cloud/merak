@@ -156,7 +156,7 @@ newgrp docker
 You can deploy Merak and [Alcor](https://github.com/futurewei-cloud/alcor) in [Kind](https://kind.sigs.k8s.io) with the command below.
 
 ```
-https://github.com/futurewei-cloud/merak.git
+git clone https://github.com/futurewei-cloud/merak.git
 cd merak
 make kind
 ```
