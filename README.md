@@ -34,7 +34,7 @@ In order to provide more virtual and emulated resources with limited hardware re
 
 For more detail design and information, please refer to the docs folder in this repository.
 
-## [Kind](https://kind.sigs.k8s.io): Simple Test
+## [Kind](https://kind.sigs.k8s.io): Simple Deployment and E2E Test
 
 This test will bring up Merak and [Alcor](https://github.com/futurewei-cloud/alcor) in a
 single master node [Kind](https://kind.sigs.k8s.io) Kubernetes cluster.
@@ -45,6 +45,10 @@ single master node [Kind](https://kind.sigs.k8s.io) Kubernetes cluster.
   - 16GB RAM
   - 8 Core CPU
 
+- Update
+```
+sudo apt-get update
+```
 - [Make](https://www.gnu.org/software/make/)
 ```
 sudo apt-get install make
@@ -92,7 +96,7 @@ before proceeding to the next step. This should take approximately 5 minutes.
 
 ![Successful Merak Deployment](docs/images/merak_successful_deployment.jpg)
 
-### Step 2: Run test
+### Step 2: Run The Test
 
 You can use the prebuilt test tool as shown below.
 
@@ -118,7 +122,7 @@ Run the command below to clean up the [Kind](https://kind.sigs.k8s.io) environme
 kind delete cluster
 ```
 
-## Getting started with development
+## Getting Started With Development
 
 To build this project, please make sure the following things are installed:
 
@@ -133,7 +137,7 @@ Then, the project can be built with:
 make
 ```
 
-## How to deploy
+## How to Deploy a Development Cluster
 
 ### Prerequisites
 
