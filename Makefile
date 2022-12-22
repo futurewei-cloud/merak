@@ -179,9 +179,12 @@ docker-all-ci:
 	docker push meraksim/merak-topo:ci
 	docker push meraksim/scenario-manager:ci
 
-.PHONY: deploy-kind
-deploy-kind:
+.PHONY: kind
+kind:
 	kind create cluster --config=configs/kind.yaml
+	linkerd install --crds | kubectl apply -f -
+	linkerd install | kubectl apply -f -
+	linkerd check
 
 .PHONY: clean
 clean:

@@ -56,6 +56,8 @@ make
 Before deploying Merak with Alcor, you will need the following.
 
 - A Kubernetes cluster with [flannel](https://github.com/flannel-io/flannel) installed
+- [Helm](https://helm.sh/docs/intro/install/)
+  - ``` curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash ```
 - Needed for [Alcor](https://github.com/futurewei-cloud/alcor)
   - [Linkerd](https://linkerd.io/2.12/getting-started/) installed on the cluster
   - openvswitch-switch installed on every node (`apt install openvswitch-switch`)
@@ -107,14 +109,52 @@ kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
 ```
 
 ### Simple Test
-To do a simple test. Please use the below tool as follows
 
+This test will bring up Merak and [Alcor](https://github.com/futurewei-cloud/alcor) in a
+single master node [Kind](https://kind.sigs.k8s.io) Kubernetes cluster.
+
+#### Prerequisites
+- [Make](https://www.gnu.org/software/make/)
+```
+apt-get install make
+```
+- [Helm](https://helm.sh/docs/intro/install/)
+```
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+```
+- [Linkerd CLI](https://linkerd.io/2.12/getting-started/)
+```
+curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
+```
+- [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+```
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.17.0/kind-linux-amd64 && chmod +x ./kind && sudo mv ./kind /usr/local/bin/kind
+```
+- [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
+```
+curl -LO https://dl.k8s.io/release/v1.26.0/bin/linux/amd64/kubectl && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+```
+
+#### Step 1: Deploy
+
+You can deploy Merak and [Alcor](https://github.com/futurewei-cloud/alcor) with the command below.
+
+```
+make kind
+```
+
+Please wait for all pods to be in running state as shown in the picture below
+before proceeding to the next step. This should take approximately 5 minutes.
+
+![Successful Merak Deployment](docs/images/merak_successful_deployment.jpg)
+
+#### Step 2: Run test
+
+You can use the prebuilt test tool as shown below.
 ```
 ./tools/teste2e/bin/teste2e
 ```
-
 This will create 10 hosts with 1 VM each.
-
 Once everything is created, you can test network connnectivity as shown below.
 
 1. Run ```kubectl get pods -A``` to see all vhost pods.
@@ -123,5 +163,5 @@ Once everything is created, you can test network connnectivity as shown below.
 2. Merak uses network namespaces to emulate VMs, run ``` kubectl exec -it vhost-0 ip netns exec v000 ip a ``` to get the IP address of the emulated VM `v000` inside of the emulated host `vhost-0`.
 ![Step 2](docs/images/merak_e2e_step2.jpg)
 
-1. Ping the VM `v000` on `vhost-0` from a different VM on `vhost-1` with the following command ``` kubectl exec -it vhost-1 ip netns exec v000 ping (IP address from step 2)```
+3. Ping the VM `v000` on `vhost-0` from a different VM on `vhost-1` with the following command ``` kubectl exec -it vhost-1 ip netns exec v000 ping (IP address from step 2)```
 ![Step 2](docs/images/merak_e2e_step3.jpg)
