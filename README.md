@@ -34,7 +34,7 @@ In order to provide more virtual and emulated resources with limited hardware re
 
 For more detail design and information, please refer to the docs folder in this repository.
 
-### [Kind](https://kind.sigs.k8s.io): Simple Test
+## [Kind](https://kind.sigs.k8s.io): Simple Test
 
 This test will bring up Merak and [Alcor](https://github.com/futurewei-cloud/alcor) in a
 single master node [Kind](https://kind.sigs.k8s.io) Kubernetes cluster.
