@@ -181,6 +181,7 @@ docker-all-ci:
 
 .PHONY: kind
 kind:
+	kind delete cluster
 	kind create cluster --config=configs/kind.yaml
 	linkerd install --crds | kubectl apply -f -
 	linkerd install | kubectl apply -f -
