@@ -185,6 +185,18 @@ kind:
 	linkerd install --crds | kubectl apply -f -
 	linkerd install | kubectl apply -f -
 	linkerd check
+	kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
+
+.PHONY: deploy
+deploy:
+	sudo rm -rf /root/work && sudo kubeadm init --pod-network-cidr 10.244.0.0/16
+	mkdir -p $HOME/.kube
+	sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+	sudo chown $(id -u):$(id -g) $HOME/.kube/config
+	linkerd install --crds | kubectl apply -f -
+	linkerd install | kubectl apply -f -
+	linkerd check
+	kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
 
 .PHONY: clean
 clean:
