@@ -325,29 +325,27 @@ func (evm *AlcorEvm) DeleteNamespace(m *metrics.MerakMetrics) error {
 	return nil
 }
 
-// Creates a new veth pair
-func (evm *AlcorEvm) CreateVethPair(m *metrics.MerakMetrics) error {
+func (evm *AlcorEvm) MoveDeviceToNamespace(m *metrics.MerakMetrics) error {
 	var err error
 	defer metrics.GetMetrics(m, &err)()
 
-	log.Println("Creating veth pair in" + evm.name + " and out" + evm.name)
-	stdout, err := bashExec("ip link add in" + evm.name + " type veth peer name out" + evm.name)
+	log.Println("Moving tap " + evm.deviceID + " to namespace " + evm.name)
+	stdout, err := bashExec("ip link set " + evm.deviceID + " netns " + evm.name)
 	if err != nil {
-		log.Println("Inner and outer veth creation failed! " + string(stdout))
+		log.Println("Move tap into namespace failed! " + string(stdout))
 		return err
 	}
 	return nil
 }
 
-// Moves one end of the veth-pair to the network namespace
-func (evm *AlcorEvm) MoveVethToNamespace(m *metrics.MerakMetrics) error {
+func (evm *AlcorEvm) MoveDeviceRootNamespace(m *metrics.MerakMetrics) error {
 	var err error
 	defer metrics.GetMetrics(m, &err)()
 
-	log.Println("Moving veth in" + evm.name + " to namespace " + evm.name)
-	stdout, err := bashExec("ip link set in" + evm.name + " netns " + evm.name)
+	log.Println("Moving tap " + evm.deviceID + " to root namespace " + evm.name)
+	stdout, err := bashExec("ip netns exec " + evm.name + " ip link set " + evm.deviceID + " netns 1")
 	if err != nil {
-		log.Println("Move veth into namespace failed! " + string(stdout))
+		log.Println("Move tap to root namespace failed! " + string(stdout))
 		return err
 	}
 	return nil
@@ -358,24 +356,10 @@ func (evm *AlcorEvm) AssignIP(m *metrics.MerakMetrics) error {
 	var err error
 	defer metrics.GetMetrics(m, &err)()
 
-	log.Println("Assigning IP " + evm.ip + " to veth device")
-	stdout, err := bashExec("ip netns exec " + evm.name + " ip addr add " + evm.ip + "/" + strings.Split(evm.cidr, "/")[1] + " dev in" + evm.name)
+	log.Println("Assigning IP " + evm.ip + " to tap device")
+	stdout, err := bashExec("ip netns exec " + evm.name + " ip addr add " + evm.ip + "/" + strings.Split(evm.cidr, "/")[1] + " dev " + evm.deviceID)
 	if err != nil {
-		log.Println("Failed to give inner veth IP! " + string(stdout))
-		return err
-	}
-	return nil
-}
-
-// Brings the inner veth up
-func (evm *AlcorEvm) BringInnerVethUp(m *metrics.MerakMetrics) error {
-	var err error
-	defer metrics.GetMetrics(m, &err)()
-
-	log.Println("Bringing inner veth up")
-	stdout, err := bashExec("ip netns exec " + evm.name + " ip link set dev in" + evm.name + " up")
-	if err != nil {
-		log.Println("Failed bring up inner veth! " + string(stdout))
+		log.Println("Failed to give tap IP! " + string(stdout))
 		return err
 	}
 	return nil
@@ -390,20 +374,6 @@ func (evm *AlcorEvm) SetMTUProbing(m *metrics.MerakMetrics) error {
 	stdout, err := bashExec("ip netns exec " + evm.name + " sysctl -w net.ipv4.tcp_mtu_probing=2")
 	if err != nil {
 		log.Println("Failed to set MTU probing! " + string(stdout))
-		return err
-	}
-	return nil
-}
-
-// Brings the outer veth up
-func (evm *AlcorEvm) BringOuterVethUp(m *metrics.MerakMetrics) error {
-	var err error
-	defer metrics.GetMetrics(m, &err)()
-
-	log.Println("Bringing up outer veth")
-	stdout, err := bashExec("ip link set dev out" + evm.name + " up")
-	if err != nil {
-		log.Println("Failed to bring up outer veth!  " + string(stdout))
 		return err
 	}
 	return nil
@@ -429,7 +399,7 @@ func (evm *AlcorEvm) AssignMac(m *metrics.MerakMetrics) error {
 	defer metrics.GetMetrics(m, &err)()
 
 	log.Println("Assigning MAC " + evm.mac + " address to veth")
-	stdout, err := bashExec("ip netns exec " + evm.name + " ip link set dev in" + evm.name + " address " + evm.mac)
+	stdout, err := bashExec("ip netns exec " + evm.name + " ip link set dev " + evm.deviceID + " address " + evm.mac)
 	if err != nil {
 		log.Println("Assign mac! " + string(stdout))
 		return err
@@ -451,83 +421,13 @@ func (evm *AlcorEvm) AddGateway(m *metrics.MerakMetrics) error {
 	return nil
 }
 
-// Deletes a linux bridge
-func (evm *AlcorEvm) DeleteBridge(m *metrics.MerakMetrics) error {
-	var err error
-	defer metrics.GetMetrics(m, &err)()
-
-	log.Println("Deleting bridge device")
-	stdout, err := bashExec("ip link delete bridge" + evm.name)
-	if err != nil {
-		log.Println("Bridge deletion failed! " + string(stdout))
-		return err
-	}
-	return nil
-}
-
-// Creates a linux bridge
-func (evm *AlcorEvm) CreateBridge(m *metrics.MerakMetrics) error {
-	var err error
-	defer metrics.GetMetrics(m, &err)()
-
-	log.Println("Creating bridge device bridge" + evm.name)
-	stdout, err := bashExec("ip link add name bridge" + evm.name + " type bridge")
-	if err != nil {
-		log.Println("Failed to create bridge! " + string(stdout))
-		return err
-	}
-	return nil
-}
-
-// Adds the outer veth to a linux bridge
-func (evm *AlcorEvm) AddVethToBridge(m *metrics.MerakMetrics) error {
-	var err error
-	defer metrics.GetMetrics(m, &err)()
-
-	log.Println("Adding veth to bridge")
-	stdout, err := bashExec("ip link set out" + evm.name + " master bridge" + evm.name)
-	if err != nil {
-		log.Println("Failed to add veth to bridge! " + string(stdout))
-		return err
-	}
-	return nil
-}
-
-// Adds a tap device to the linux bridge
-func (evm *AlcorEvm) AddDeviceToBridge(m *metrics.MerakMetrics) error {
-	var err error
-	defer metrics.GetMetrics(m, &err)()
-
-	log.Println("Adding TAP device to bridge " + evm.deviceID)
-	stdout, err := bashExec("ip link set " + evm.deviceID + " master bridge" + evm.name)
-	if err != nil {
-		log.Println("Failed to add tap to bridge " + string(stdout))
-		return err
-	}
-	return nil
-}
-
-// Brings the linux bridge up
-func (evm *AlcorEvm) BringBridgeUp(m *metrics.MerakMetrics) error {
-	var err error
-	defer metrics.GetMetrics(m, &err)()
-
-	log.Println("Bringing bridge up")
-	stdout, err := bashExec("ip link set dev bridge" + evm.name + " up")
-	if err != nil {
-		log.Println("Failed to bring up bridge " + string(stdout))
-		return err
-	}
-	return nil
-}
-
 // Brings the tap device up
 func (evm *AlcorEvm) BringDeviceUp(m *metrics.MerakMetrics) error {
 	var err error
 	defer metrics.GetMetrics(m, &err)()
 
 	log.Println("Bringing Tap device up")
-	stdout, err := bashExec("ip link set dev " + evm.deviceID + " up")
+	stdout, err := bashExec("ip netns exec " + evm.name + " ip link set dev " + evm.deviceID + " up")
 	if err != nil {
 		log.Println("Failed to bring up tap device " + string(stdout))
 		return err

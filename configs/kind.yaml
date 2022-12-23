@@ -19,3 +19,7 @@ nodes:
     hostPort: 32000
     listenAddress: "0.0.0.0"
     protocol: tcp
+  - containerPort: 30900
+    hostPort: 30900
+    listenAddress: "0.0.0.0"
+    protocol: tcp
