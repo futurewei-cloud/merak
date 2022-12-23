@@ -16,11 +16,6 @@ bases:
 - https://github.com/futurewei-cloud/alcor.git/kubernetes
 - https://github.com/networkop/meshnet-cni.git/manifests/base
 images:
-
-- name: meraksim/merak-topo:dev
-  newName: meraksim/merak-topo
-  newTag: "dev1122"
-
 # Alcor DB Images
 - name: ignite_alcor:lib8
   newName: yanmo96/ignite_alcor
