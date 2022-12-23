@@ -15,11 +15,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+
 	"net"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
+
 	"github.com/futurewei-cloud/merak/services/merak-topo/grpc/service"
+	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
 	"google.golang.org/grpc"
 )
 
@@ -27,16 +29,19 @@ import (
 func main() {
 	flag.Parse()
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *service.Port))
-	if err != nil {
-		log.Fatalln("ERROR: Fail to listen", err)
+	lis, err1 := net.Listen("tcp", fmt.Sprintf(":%d", *service.Port))
+	if err1 != nil {
+		utils.Logger.Fatal("Fail to listen", err1)
 	}
+
 	gRPCServer := grpc.NewServer()
 	pb.RegisterMerakTopologyServiceServer(gRPCServer, &service.Server{})
 
-	log.Printf("Starting gRPC server. Listening at %v", lis.Addr())
-	if err := gRPCServer.Serve(lis); err != nil {
-		log.Fatalf("fail to serve: %v", err)
+	utils.Logger.Info("Starting gRPC server. Listening at %v", lis.Addr())
+
+	err2 := gRPCServer.Serve(lis)
+	if err2 != nil {
+		utils.Logger.Fatal("Can not connect to gPRCServe: %v", err2)
 	}
 
 }

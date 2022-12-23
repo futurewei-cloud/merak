@@ -15,40 +15,45 @@ package handler
 
 import (
 	"context"
-	"log"
 
 	"time"
 
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 
-	"fmt"
-
 	"strings"
 
 	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
+	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
+// var (
+// 	Logger logger.Logger
+// )
+
 //function CREATE
 /* save the part of gw creation and mac learning for future requirment, comment the related code now*/
+
 func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack_num uint32, aca_per_rack uint32, cgw_num uint32, data_plane_cidr string, ports_per_vswitch uint32, images []*pb.InternalTopologyImage, aca_parameters string, returnMessage *pb.ReturnTopologyMessage) error {
 
 	start_time := time.Now()
-	log.Println("CREATE: ====== Start: Parse gRPC message ======= ")
-	log.Printf("Vhost number is: %v\n", aca_num)
-	log.Printf("Rack number is: %v\n", rack_num)
-	log.Printf("Vhosts per rack is: %v\n", aca_per_rack)
-
-	log.Printf("Ports per vswitch is: %v\n", ports_per_vswitch)
-
-	log.Println("CREATE:====== Start: Generate multi-layer topology structure ======= ")
+	utils.Logger.Info("CREATE: ====== Start: Parse gRPC message ======= ")
+	utils.Logger.Debug("Vhost number is: %v\n", aca_num)
+	utils.Logger.Debug("Rack number is: %v\n", rack_num)
+	utils.Logger.Debug("Vhosts per rack is: %v\n", aca_per_rack)
+	utils.Logger.Debug("Ports per vswitch is: %v\n", ports_per_vswitch)
+	utils.Logger.Info("CREATE:====== Start: Generate multi-layer topology structure ======= ")
 
 	err_create, topo := Create_multiple_layers_vswitches(int(aca_num), int(rack_num), int(aca_per_rack), int(ports_per_vswitch), data_plane_cidr)
 	if err_create != nil {
-		return fmt.Errorf("create multiple layers vswitches error %s", err_create)
+		utils.Logger.Error("Can not create multiple layers vswitches %v", err_create.Error())
+		returnMessage.ReturnMessage = "Can not create multiple layers vswitches"
+		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
+
+		return err_create
 	}
 
 	topo.Topology_id = topo_id
@@ -56,29 +61,38 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	elaps0 := time.Since(start_time)
 	start0 := time.Now()
 
-	log.Printf("CREATE:=== Complete: Generate topology data === %v", elaps0)
+	utils.Logger.Info("CREATE:=== Complete: Generate topology data === %v", elaps0)
 
 	err1 := Topo_save(topo)
 	if err1 != nil {
-		return fmt.Errorf("save topology to redis error %s", err1)
+		utils.Logger.Error("Can not save topology to redis %v", err1.Error())
+		returnMessage.ReturnMessage = "Can not save topology to redis"
+		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
+		return err1
 	}
 
 	elaps1 := time.Since(start0)
 	start1 := time.Now()
-	log.Printf("CREATE:=== Complete: Save topology to redis DB === %v", elaps1)
+	utils.Logger.Info("CREATE:=== Complete: Save topology to redis DB === %v", elaps1)
 
-	k8s_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	k8s_nodes, err2 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 
-	if err1 != nil {
-		return fmt.Errorf("CREATE: failed to list k8s host nodes info %s", err1)
+	if err2 != nil {
+		utils.Logger.Error("Can not save topology to redis %v", err2.Error())
+		returnMessage.ReturnMessage = "CREATE: can not list k8s host nodes info"
+		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
+		return err2
 	}
 
 	for _, s := range k8s_nodes.Items {
 		var hnode database.HostNode
 
-		node_yaml, err2 := k8client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})
-		if err2 != nil {
-			return fmt.Errorf("CREATE: get k8s host node info from k8s cluster error %s", err2)
+		node_yaml, err3 := k8client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})
+		if err3 != nil {
+			utils.Logger.Error("CREATE: can not get k8s host node info from k8s cluster %v", err3)
+			returnMessage.ReturnMessage = "CREATE: can not get k8s host node info from k8s cluster"
+			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
+			return err3
 		}
 
 		for _, c := range s.Status.Conditions {
@@ -96,12 +110,15 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 			}
 		}
 
-		log.Printf("create== hnode %v", hnode)
+		utils.Logger.Debug("create== hnode %v", hnode)
 
 		// Make return message with k8s cluster nodes info
 		err := database.SetValue(topo_id+":"+s.Name, hnode)
 		if err != nil {
-			return fmt.Errorf("updatecomputenode: save host node info in DB error %s", err.Error())
+			utils.Logger.Error("updatecomputenode: can not save host node info in DB %v", err)
+			returnMessage.ReturnMessage = "updatecomputenode: can not save host node info in DB"
+			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
+			return err
 		}
 
 	}
@@ -114,10 +131,13 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 		hnode = h
 
-		log.Printf("create== hnode= get from DB %v", hnode)
+		utils.Logger.Debug("create== hnode= get from DB %v", hnode)
 
 		if err != nil {
-			log.Printf("INFO: get host node info from DB error %s", err)
+			utils.Logger.Error("INFO: cannot query host node info from DB %v", err)
+			returnMessage.ReturnMessage = "INFO: cannot query host node info from DB"
+			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
+			return err
 		} else {
 			hrm.Ip = hnode.Ip
 			if hnode.Status == database.STATUS_READY {
@@ -128,16 +148,13 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 			}
 
 			hrm.RoutingRules = hnode.Routing_rule
-			if err1 != nil {
-				log.Printf("INFO: make host node return message error %s", err1)
-			}
 
 			returnMessage.Hosts = append(returnMessage.Hosts, &hrm)
 		}
 
 	}
 
-	log.Println("CREATE: === Return deployed compute nodes information ===")
+	utils.Logger.Info("CREATE: === Return deployed compute nodes information ===")
 
 	for _, node := range topo.Vnodes {
 		var cnode database.ComputeNode
@@ -151,11 +168,14 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 			cnode.Mac = "ff:ff:ff:ff:ff:ff"
 			cnode.Status = database.STATUS_DEPLOYING
 
-			log.Printf("create== cnode %v", cnode)
+			utils.Logger.Debug("create== cnode %v", cnode)
 
 			err := database.SetValue(topo_id+":"+cnode.Name, cnode)
 			if err != nil {
-				return fmt.Errorf("updatecomputenode: save compute node error %s", err.Error())
+				utils.Logger.Error("updatecomputenode: can not save compute node info in DB %v", err)
+				returnMessage.ReturnMessage = "updatecomputenode: can not save compute node info in DB"
+				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
+				return err
 			}
 		}
 
@@ -170,10 +190,10 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 			cnode = c
 
-			log.Printf("create== cnode get from DB %v", cnode)
+			utils.Logger.Debug("create== cnode get from DB %v", cnode)
 
 			if err != nil {
-				log.Printf("INFO: check compute node from DB error %s", err.Error())
+				utils.Logger.Error("INFO: check compute node from DB error %s", err.Error())
 			}
 
 			crm.Id = cnode.Id
@@ -208,11 +228,10 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	}
 	elaps2 := time.Since(start1)
 
-	log.Printf("CREATE: === Complete: Return compute nodes and k8s cluster information to Scenario Manager=== %v", elaps2)
+	utils.Logger.Debug("CREATE: === Complete: Return compute nodes and k8s cluster information to Scenario Manager=== %v", elaps2)
 
-	log.Println("CREATE:=== Start: Deploy topology structure in k8s cluster === ")
+	utils.Logger.Info("CREATE:=== Start: Deploy topology structure in k8s cluster === ")
 
-	log.Println("=== Topology Deployment === ")
 	var aca_image string
 	var ovs_image string
 	var namespace string
@@ -242,12 +261,14 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, names
 	topo, err := database.FindTopoEntity(topo_id, "")
 
 	if err != nil {
-		return fmt.Errorf("update compute node info: query topology_id error %s", err)
+		utils.Logger.Error("update compute node info: query topology_id error %s", err)
+		return err
 	}
 
 	k8s_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err1 != nil {
-		return fmt.Errorf("UpdateComputenodeInfo: failed to list k8s host nodes info %s", err1)
+		utils.Logger.Error("UpdateComputenodeInfo: failed to list k8s host nodes info %s", err1)
+		return err1
 	}
 
 	for _, s := range k8s_nodes.Items {
@@ -255,7 +276,8 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, names
 
 		node_yaml, err2 := k8client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})
 		if err2 != nil {
-			return fmt.Errorf("CREATE: failed to get k8s host node info %s", err2)
+			utils.Logger.Error("CREATE: failed to get k8s host node info %s", err2)
+			return err2
 		}
 
 		for _, c := range s.Status.Conditions {
@@ -276,7 +298,8 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, names
 		// Make return message with k8s cluster nodes info
 		err := database.SetValue(topo_id+":"+s.Name, hnode)
 		if err != nil {
-			return fmt.Errorf("updatecomputenode: save host node error %s", err.Error())
+			utils.Logger.Error("updatecomputenode: save host node error %s", err.Error())
+			return err
 		}
 
 	}
@@ -284,7 +307,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, names
 	elaps0 := time.Since(start_time)
 	start_time0 := time.Now()
 
-	log.Printf("updatecomputenode:=========compelete updating host node info in DB =========== %v", elaps0)
+	utils.Logger.Debug("updatecomputenode:=========compelete updating host node info in DB =========== %v", elaps0)
 
 	/*comment mac learning function*/
 
@@ -305,7 +328,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, names
 			res, err := k8client.CoreV1().Pods(namespace).Get(Ctx, node.Name, metav1.GetOptions{})
 
 			if err != nil {
-				log.Printf("updatecomputenode: get pod info from k8s error %s", err)
+				utils.Logger.Error("updatecomputenode: get pod info from k8s error %s", err)
 			} else {
 				cnode.Name = res.Name
 				cnode.Id = string(res.UID)
@@ -315,7 +338,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, names
 				if res.Status.PodIP != "" {
 					cnode.ContainerIp = res.Status.PodIP
 				} else {
-					log.Printf("pod ip is not ready %v", res.Name)
+					utils.Logger.Debug("pod ip is not ready %v", res.Name)
 				}
 
 				/*comment mac learning function*/
@@ -332,7 +355,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, names
 
 				if len(res.Status.ContainerStatuses) == 0 {
 					cnode.Status = database.STATUS_NONE
-					log.Printf("updatecomputenode: container status is not available %v", res.Name)
+					utils.Logger.Error("updatecomputenode: container status is not available %v", res.Name)
 				} else {
 					if res.Status.ContainerStatuses[len(res.Status.ContainerStatuses)-1].Ready {
 						cnode.Status = database.STATUS_READY
@@ -342,7 +365,8 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, names
 
 				err_db := database.SetValue(topo_id+":"+node.Name, cnode)
 				if err_db != nil {
-					return fmt.Errorf("updatecomputenode: save compute node error %s", err_db.Error())
+					utils.Logger.Error("updatecomputenode: save compute node error %s", err_db.Error())
+					return err_db
 				}
 
 			}
@@ -353,8 +377,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string, names
 
 	elaps := time.Since(start_time0)
 
-	log.Printf("updatecomputenode:=========complete updating compute nodes info in DB =========== %v", elaps)
-
+	utils.Logger.Debug("updatecomputenode:=========complete updating compute nodes info in DB =========== %v", elaps)
 	return nil
 }
 
@@ -363,13 +386,15 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 	topo, err := database.FindTopoEntity(topo_id, "")
 
 	if err != nil {
-		return fmt.Errorf("update compute node info: query topology_id error %s", err)
+		utils.Logger.Error("update compute node info: query topology_id error %s", err)
+		return err
 	}
 
 	k8s_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 
 	if err1 != nil {
-		return fmt.Errorf("INFO: list k8s host nodes info error %s", err1)
+		utils.Logger.Error("INFO: list k8s host nodes info error %s", err1.Error())
+		return err1
 	}
 
 	for _, s := range k8s_nodes.Items {
@@ -379,7 +404,8 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 		h, err := database.FindHostEntity(topo_id+":"+s.Name, "")
 		hnode = h
 		if err != nil {
-			log.Printf("INFO: get host node info from DB error %s", err)
+			utils.Logger.Error("INFO: get host node info from DB error %s", err.Error())
+			return err
 		} else {
 			hrm.Ip = hnode.Ip
 			if hnode.Status == database.STATUS_READY {
@@ -390,9 +416,6 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 			}
 
 			hrm.RoutingRules = hnode.Routing_rule
-			if err1 != nil {
-				log.Printf("INFO: make host node return message error %s", err1)
-			}
 
 			returnMessage.Hosts = append(returnMessage.Hosts, &hrm)
 		}
@@ -407,7 +430,8 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 			c, err := database.FindComputeEntity(topo_id+":"+node.Name, "")
 			cnode = c
 			if err != nil {
-				log.Printf("INFO: check compute node from DB error %s", err.Error())
+				utils.Logger.Error("INFO: check compute node from DB error %s", err.Error())
+				return err
 			}
 
 			crm.Id = cnode.Id
@@ -451,13 +475,16 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 	topo, err_db := database.FindTopoEntity(topo_id, "")
 
 	if err_db != nil {
-		return fmt.Errorf("query topology_id error %s", err_db)
+		utils.Logger.Error("query topology_id error %s", err_db.Error())
+		return err_db
 	}
 
 	k8s_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 
 	if err1 != nil {
-		return fmt.Errorf("INFO: list k8s host nodes info error %s", err1)
+
+		utils.Logger.Error("INFO: list k8s host nodes info error %s", err1.Error())
+		return err1
 	}
 
 	for _, s := range k8s_nodes.Items {
@@ -469,7 +496,8 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 		hnode = h
 
 		if err != nil {
-			log.Printf("INFO: get host node info from DB error %s", err)
+			utils.Logger.Error("INFO: get host node info from DB error %s", err.Error())
+			return err
 		} else {
 			hrm.Ip = hnode.Ip
 			if hnode.Status == database.STATUS_READY {
@@ -480,9 +508,6 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 			}
 
 			hrm.RoutingRules = hnode.Routing_rule
-			if err1 != nil {
-				log.Printf("INFO: make host node return message error %s", err1)
-			}
 
 			returnMessage.Hosts = append(returnMessage.Hosts, &hrm)
 		}
@@ -499,7 +524,7 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 			cnode = c
 
 			if err != nil {
-				log.Printf("INFO: check compute node from DB error %s", err.Error())
+				utils.Logger.Error("INFO: check compute node from DB error %s", err.Error())
 			}
 
 			crm.Id = cnode.Id
