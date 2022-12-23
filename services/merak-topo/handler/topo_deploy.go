@@ -231,8 +231,8 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent " + aca_parameters},
 							SecurityContext: &sc,
 							Ports: []corev1.ContainerPort{
-								{Name: "gRPC", ContainerPort: constants.AGENT_GRPC_SERVER_PORT},
-								{Name: "prometheus", ContainerPort: constants.AGENT_PROMETHEUS_PORT},
+								{ContainerPort: constants.AGENT_GRPC_SERVER_PORT},
+								{ContainerPort: constants.AGENT_PROMETHEUS_PORT},
 							},
 						},
 					},
