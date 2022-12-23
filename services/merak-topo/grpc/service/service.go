@@ -16,13 +16,13 @@ package service
 import (
 	"context"
 	"flag"
-	"fmt"
-	"log"
+
 	"strings"
 
 	pb_common "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
 	constants "github.com/futurewei-cloud/merak/services/common"
+
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 	"github.com/futurewei-cloud/merak/services/merak-topo/handler"
 	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
@@ -37,18 +37,21 @@ type Server struct {
 }
 
 func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
-	log.Printf("Received on TopologyHandler %s", in)
 
 	var returnMessage pb.ReturnTopologyMessage
 
+	utils.Logger.Info("Received on TopologyHandler %s", in)
+
 	k8client, err := utils.K8sClient()
 	if err != nil {
-		return nil, fmt.Errorf("create k8s client error %s", err.Error())
+		utils.Logger.Error("create k8s client error %s", err.Error())
+		return &returnMessage, err
 	}
 
 	err1 := database.ConnectDatabase()
 	if err1 != nil {
-		fmt.Printf("connect to DB error %s", err1)
+		utils.Logger.Error("connect to DB error %s", err1.Error())
+		return &returnMessage, err1
 	}
 
 	// Operation&Return
@@ -59,18 +62,20 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 		if in.Config.GetTopologyId() != "" {
 			err_info := handler.Info(k8client, in.Config.GetTopologyId(), &returnMessage)
 			if err_info != nil {
+				utils.Logger.Error("INFO can not get the topology information %s", err_info.Error())
 				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 				returnMessage.ReturnMessage = "INFO fails."
 
 			} else {
+				utils.Logger.Info("INFO get the topology information")
 				returnMessage.ReturnCode = pb_common.ReturnCode_OK
 				returnMessage.ReturnMessage = "INFO successes."
 			}
 
-			log.Printf("return message %v", returnMessage.ReturnMessage)
-			log.Printf("return code %v", returnMessage.ReturnCode)
-			log.Printf("return compute node %+v", returnMessage.ComputeNodes)
-			log.Printf("return host node %v", returnMessage.Hosts)
+			utils.Logger.Debug("return message %v", returnMessage.ReturnMessage)
+			utils.Logger.Debug("return code %v", returnMessage.ReturnCode)
+			utils.Logger.Debug("return compute node %+v", returnMessage.ComputeNodes)
+			utils.Logger.Debug("return host node %v", returnMessage.Hosts)
 		}
 
 	case pb_common.OperationType_CREATE:
@@ -108,6 +113,8 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 		// if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 || cgw_num == 0 {
 		if data_plane_cidr == "" || aca_num == 0 || aca_per_rack == 0 || rack_num == 0 || ports_per_vswitch == 0 {
 
+			utils.Logger.Info("Invalid input info for valid data plane cider, aca number, aca per rack number, rack number, ports per vswitch, and control plane gateways")
+
 			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 			returnMessage.ReturnMessage = "Must provide a valid data plane cider, aca number, aca per rack number, rack number, ports per vswitch, and control plane gateways"
 
@@ -131,16 +138,17 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			err_create := handler.Create(k8client, topo_id, uint32(aca_num), uint32(rack_num), uint32(aca_per_rack), uint32(cgw_num), data_plane_cidr, uint32(ports_per_vswitch), images, aca_parameters, &returnMessage)
 
 			if err_create != nil {
+				utils.Logger.Error("Fail to create topology %s", err_create.Error())
 				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 				returnMessage.ReturnMessage = "Fail to Create Topology."
 			} else {
 				returnMessage.ReturnCode = pb_common.ReturnCode_OK
 				returnMessage.ReturnMessage = "Success to create topology"
 			}
-			log.Printf("return message %v", returnMessage.ReturnMessage)
-			log.Printf("return code %v", returnMessage.ReturnCode)
-			log.Printf("return compute node %+v", returnMessage.ComputeNodes)
-			log.Printf("return host node %v", returnMessage.Hosts)
+			utils.Logger.Debug("return message %v", returnMessage.ReturnMessage)
+			utils.Logger.Debug("return code %v", returnMessage.ReturnCode)
+			utils.Logger.Debug("return compute node %+v", returnMessage.ComputeNodes)
+			utils.Logger.Debug("return host node %v", returnMessage.Hosts)
 
 			return &returnMessage, err_create
 		}
@@ -152,20 +160,22 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 		//return topology message-- compute info
 
 		if err != nil {
+			utils.Logger.Error("Delete topology - fail %s", err.Error())
 			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 			returnMessage.ReturnMessage = "Fail to Delete Topology."
 		} else {
+			utils.Logger.Info("Delete topology - success")
 			returnMessage.ReturnCode = pb_common.ReturnCode_OK
 			returnMessage.ReturnMessage = "Success to Delete Topology"
 		}
 
-		log.Printf("return message %v", returnMessage.ReturnMessage)
-		log.Printf("return code %v", returnMessage.ReturnCode)
+		utils.Logger.Debug("return message %v", returnMessage.ReturnMessage)
+		utils.Logger.Debug("return code %v", returnMessage.ReturnCode)
 
 	case pb_common.OperationType_UPDATE:
 		// update topology
 	default:
-		log.Println("Unknown Operation")
+		utils.Logger.Info("Unknown Operation")
 		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "TopologyHandler: Unknown Operation"
 	}
@@ -174,7 +184,7 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 }
 
 func (s *Server) TestHandler(ctx context.Context, in *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
-	log.Printf("Received on TopologyHandler %s", in)
+	utils.Logger.Info("Received on TopologyHandler %s", in)
 	var returnMessage pb.ReturnTopologyMessage
 	return &returnMessage, nil
 }

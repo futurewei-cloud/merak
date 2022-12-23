@@ -15,12 +15,31 @@ package utils
 
 import (
 	"fmt"
+	"log"
+
+	"github.com/futurewei-cloud/merak/services/common/logger"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
+var (
+	Logger logger.Logger
+)
+
 const K8SAPIURL string = "https://kubernetes.default:6443"
+
+func init_logger() {
+	var err error
+
+	Logger, err = logger.NewLogger(logger.DEBUG, "merak-topo logger")
+
+	if err != nil {
+		log.Fatalln("Can not build a new logger", err)
+	} else {
+		Logger.Info("Create logger for merak-topo")
+	}
+}
 
 func K8sClient() (*kubernetes.Clientset, error) {
 
