@@ -61,15 +61,6 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.DeleteBridge(MerakMetrics)
-	if err != nil {
-		log.Println("Bridge deletion failed!")
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Bridge deletion failed!",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, err
-	}
-
 	_, ok = os.LookupEnv(constants.AGENT_MODE_ENV)
 	if !ok {
 		err = evm.DeleteDevice(MerakMetrics)
