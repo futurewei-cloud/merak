@@ -24,6 +24,7 @@ type Evm interface {
 	CreateDevice(m *metrics.MerakMetrics) error
 	DeleteDevice(m *metrics.MerakMetrics) error
 	MoveDeviceToNamespace(m *metrics.MerakMetrics) error
+	MoveDeviceRootNamespace(m *metrics.MerakMetrics) error
 	AssignIP(m *metrics.MerakMetrics) error
 	SetMTUProbing(m *metrics.MerakMetrics) error
 	BringLoUp(m *metrics.MerakMetrics) error

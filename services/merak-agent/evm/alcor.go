@@ -325,7 +325,6 @@ func (evm *AlcorEvm) DeleteNamespace(m *metrics.MerakMetrics) error {
 	return nil
 }
 
-// Moves one end of the veth-pair to the network namespace
 func (evm *AlcorEvm) MoveDeviceToNamespace(m *metrics.MerakMetrics) error {
 	var err error
 	defer metrics.GetMetrics(m, &err)()
@@ -334,6 +333,19 @@ func (evm *AlcorEvm) MoveDeviceToNamespace(m *metrics.MerakMetrics) error {
 	stdout, err := bashExec("ip link set " + evm.deviceID + " netns " + evm.name)
 	if err != nil {
 		log.Println("Move tap into namespace failed! " + string(stdout))
+		return err
+	}
+	return nil
+}
+
+func (evm *AlcorEvm) MoveDeviceRootNamespace(m *metrics.MerakMetrics) error {
+	var err error
+	defer metrics.GetMetrics(m, &err)()
+
+	log.Println("Moving tap " + evm.deviceID + " to root namespace " + evm.name)
+	stdout, err := bashExec("ip netns exec " + evm.name + " ip link set " + evm.deviceID + " netns 1")
+	if err != nil {
+		log.Println("Move tap to root namespace failed! " + string(stdout))
 		return err
 	}
 	return nil
