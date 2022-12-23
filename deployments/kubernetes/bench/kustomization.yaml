@@ -15,8 +15,6 @@ bases:
 - ../base
 - https://github.com/futurewei-cloud/alcor.git/kubernetes
 - https://github.com/networkop/meshnet-cni.git/manifests/base
-resources:
-- temporal.test.yaml
 images:
 # Alcor DB Images
 - name: ignite_alcor:lib8
@@ -134,4 +132,21 @@ configMapGenerator:
   files:
     - alcor/api-gateway/application.properties
 
-
+# Temporal Helm Chart
+helmCharts:
+- releaseName: temporal
+  repo: https://charts.wener.tech
+  name: temporal
+  version: 0.15.1
+  valuesInline:
+    server:
+      replicatCount: 1
+    cassandra:
+      config:
+        cluster_size: 1
+    prometheus:
+      enabled: false
+    grafana:
+      enabled: false
+    elasticsearch:
+      enabled: false

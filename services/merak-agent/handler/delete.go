@@ -41,6 +41,14 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 		}, err
 	}
+	err = evm.MoveDeviceRootNamespace(MerakMetrics)
+	if err != nil {
+		return &pb.AgentReturnInfo{
+			ReturnMessage: "Failed to move device to root namespace",
+			ReturnCode:    common_pb.ReturnCode_FAILED,
+		}, err
+	}
+
 	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
 	if !ok {
 		err = evm.DeletePort(in, RemoteServer, MerakMetrics)
