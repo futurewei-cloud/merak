@@ -19,7 +19,6 @@ import (
 	"strings"
 	"time"
 
-	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 
 	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
