@@ -15,7 +15,6 @@ package handler
 import (
 	"bytes"
 	"context"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -152,8 +151,6 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 	// 	}
 	// }
 
-	log.Printf("============ k8s create topology for pods =====================")
-
 	start_time := time.Now()
 
 	for _, node := range nodes {
@@ -233,8 +230,8 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 							Command:         []string{"/bin/sh", "-c", "/merak-bin/merak-agent " + aca_parameters},
 							SecurityContext: &sc,
 							Ports: []corev1.ContainerPort{
-								{Name: "gRPC", ContainerPort: constants.AGENT_GRPC_SERVER_PORT},
-								{Name: "prometheus", ContainerPort: constants.AGENT_PROMETHEUS_PORT},
+								{ContainerPort: constants.AGENT_GRPC_SERVER_PORT},
+								{ContainerPort: constants.AGENT_PROMETHEUS_PORT},
 							},
 						},
 					},
@@ -360,16 +357,16 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 	elaps0 := time.Since(start_time)
 	start0 := time.Now()
 
-	utils.Logger.Info("DEPLOY:=== Complete: create topology crd data in K8s === %v", elaps0)
+	utils.Logger.Info("DEPLOY:Complete: create topology crd data in K8s %v", elaps0)
 
-	utils.Logger.Debug("============ k8s create pods based on pod configuration data ==================")
+	utils.Logger.Debug("k8s create pods based on pod configuration data ")
 
 	for _, newPod := range vs_pods_config {
 
-		utils.Logger.Debug("+++++ newpod %v+++++", newPod.Name)
+		utils.Logger.Debug("newpod %v is deploying", newPod.Name)
 
 		_, err_create := k8client.CoreV1().Pods(namespace).Create(Ctx, newPod, metav1.CreateOptions{})
-		utils.Logger.Debug("+++++ k8s create pod %v+++++", newPod.Name)
+		utils.Logger.Debug("k8s create pod %v ", newPod.Name)
 
 		if err_create != nil {
 			utils.Logger.Error("fail to create pod in k8s cluster %s", err_create.Error())
@@ -384,10 +381,10 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 	for _, newPod := range rack_pods_config {
 
-		utils.Logger.Debug("+++++ newpod %v+++++", newPod.Name)
+		utils.Logger.Debug("newpod %v is deploying", newPod.Name)
 
 		_, err_create := k8client.CoreV1().Pods(namespace).Create(Ctx, newPod, metav1.CreateOptions{})
-		utils.Logger.Debug("+++++ k8s create pod %v+++++", newPod.Name)
+		utils.Logger.Debug(" k8s create pod %v ", newPod.Name)
 
 		if err_create != nil {
 			utils.Logger.Error("create pod error %s", err_create.Error())
@@ -402,10 +399,10 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 	for _, newPod := range vhost_pods_config {
 
-		utils.Logger.Debug("+++++ newpod %v+++++", newPod.Name)
+		utils.Logger.Debug("newpod %v is under deploying", newPod.Name)
 
 		_, err_create := k8client.CoreV1().Pods(namespace).Create(Ctx, newPod, metav1.CreateOptions{})
-		utils.Logger.Debug("+++++ k8s create pod %v+++++", newPod.Name)
+		utils.Logger.Debug("k8s create pod %v", newPod.Name)
 
 		if err_create != nil {
 			utils.Logger.Error("create pod error %s", err_create.Error())
@@ -420,7 +417,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 	elaps1 := time.Since(start0)
 
-	utils.Logger.Info("DEPLOY:=== Complete: create pod in K8s === %v", elaps1)
+	utils.Logger.Info("DEPLOY: Complete: create pod in K8s  %v", elaps1)
 
 	return nil
 
