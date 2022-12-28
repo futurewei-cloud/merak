@@ -28,6 +28,7 @@ import (
 //merak-top main
 func main() {
 	flag.Parse()
+	utils.Init_logger()
 
 	lis, err1 := net.Listen("tcp", fmt.Sprintf(":%d", *service.Port))
 	if err1 != nil {

@@ -18,9 +18,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 
 	"strings"
+
+	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -40,7 +41,8 @@ func ConnectDatabase() error {
 	})
 
 	if err := client.Ping(Ctx).Err(); err != nil {
-		return fmt.Errorf("ConnectDB: connect DB error %s", err.Error())
+		utils.Logger.Error("ConnectDB: connect DB error %s", err.Error())
+		return err
 	}
 
 	Rdb = client
@@ -50,11 +52,13 @@ func ConnectDatabase() error {
 func SetValue(key string, val interface{}) error {
 	j, err := json.Marshal(val)
 	if err != nil {
-		return fmt.Errorf("SetValue: save value json marshal error %s", err.Error())
+		utils.Logger.Error("SetValue: save value json marshal error %s", err.Error())
+		return err
 	}
 	err2 := Rdb.Set(Ctx, key, j, 0).Err()
 	if err2 != nil {
-		return fmt.Errorf("SetValue: save value in DB error %s", err2.Error())
+		utils.Logger.Error("SetValue: save value in DB error %s", err2.Error())
+		return err2
 	}
 
 	return nil
@@ -63,14 +67,16 @@ func SetValue(key string, val interface{}) error {
 func Get(key string) (string, error) {
 	val, err := Rdb.Get(Ctx, key).Result()
 	if err != nil {
-		return "", fmt.Errorf("Get: get from DB error %s", err.Error())
+		utils.Logger.Error("Get: get from DB error %s", err.Error())
+		return val, err
 	}
 	return val, nil
 }
 
 func Del(key string) error {
 	if err := Rdb.Del(Ctx, key).Err(); err != nil {
-		return fmt.Errorf("Del: delete error %s", err.Error())
+		utils.Logger.Error("Del: delete error %s", err.Error())
+		return err
 	}
 	return nil
 }
@@ -79,16 +85,18 @@ func Del(key string) error {
 func FindEntity(id string, prefix string, entity interface{}) error {
 
 	if (id + prefix) == "" {
-		log.Printf("GetPbReturnValue: get key is empty")
+		utils.Logger.Error("GetPbReturnValue: get key is empty")
 	}
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		return fmt.Errorf("FindEntity: get value for key in DB %s", err.Error())
+		utils.Logger.Error("FindEntity: get value for key in DB %s", err.Error())
+		return err
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
-		return fmt.Errorf("FindEntity: unmarshal key error %s", err2.Error())
+		utils.Logger.Error("FindEntity: unmarshal key error %s", err2.Error())
+		return err2
 	}
 	return nil
 }
@@ -98,12 +106,16 @@ func FindHostEntity(id string, prefix string) (HostNode, error) {
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		return entity, fmt.Errorf("FindHostEntity:get value from DB error %s", err.Error())
+
+		utils.Logger.Error("FindHostEntity:get value from DB error %s", err.Error())
+
+		return entity, err
 
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
-		return entity, fmt.Errorf("FindHostEntity: unmarshal error %s", err2.Error())
+		utils.Logger.Error("FindHostEntity: unmarshal error %s", err2.Error())
+		return entity, err2
 	}
 	return entity, nil
 }
@@ -113,11 +125,13 @@ func FindComputeEntity(id string, prefix string) (ComputeNode, error) {
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		return entity, fmt.Errorf("FindHostEntity:get value from DB error %s", err.Error())
+		utils.Logger.Error("FindHostEntity:get value from DB error %s", err.Error())
+		return entity, err
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
-		return entity, fmt.Errorf("FindHostEntity: unmarshal error %s", err2.Error())
+		utils.Logger.Error("FindHostEntity: unmarshal error %s", err2.Error())
+		return entity, err2
 	}
 	return entity, nil
 }
@@ -125,12 +139,13 @@ func FindComputeEntity(id string, prefix string) (ComputeNode, error) {
 func GetAllValuesWithKeyPrefix(prefix string) (map[string]string, error) {
 	keys, err := getKeys(fmt.Sprintf("%s*", prefix))
 	if err != nil {
-		return nil, fmt.Errorf("GetAllValuesWithKeyPrefix:get keys error %s", err.Error())
+		utils.Logger.Error("GetAllValuesWithKeyPrefix:get keys error %s", err.Error())
 	}
 
 	values, err2 := getKeyAndValueMap(keys, prefix)
 	if err2 != nil {
-		return nil, fmt.Errorf("GetAllValuesWithKeyPrefix:get key and value map error %s", err2.Error())
+		utils.Logger.Error("GetAllValuesWithKeyPrefix:get key and value map error %s", err2.Error())
+		return values, err2
 	}
 	return values, nil
 }
@@ -138,16 +153,16 @@ func GetAllValuesWithKeyPrefix(prefix string) (map[string]string, error) {
 func DeleteAllValuesWithKeyPrefix(prefix string) error {
 	keys, err := getKeys(fmt.Sprintf("%s*", prefix))
 	if err != nil {
-		return fmt.Errorf("DeleteAllValuesWithKeyPrefix: get keys error %s", err.Error())
+		utils.Logger.Error("DeleteAllValuesWithKeyPrefix: get keys error %s", err.Error())
+		return err
 	}
 
 	for _, key := range keys {
-
 		err2 := Del(key)
 		if err2 != nil {
-			return fmt.Errorf("DeleteAllValuesWithKeyPrefix: Del key %v error %s", key, err2.Error())
+			utils.Logger.Error("DeleteAllValuesWithKeyPrefix: Del key %v error %s", key, err2.Error())
+			return err2
 		}
-
 	}
 
 	return nil
@@ -162,7 +177,8 @@ func getKeys(prefix string) ([]string, error) {
 	}
 
 	if err := iter.Err(); err != nil {
-		return nil, fmt.Errorf("getKeys:scan db error '%s' when retriving key '%s' keys", err.Error(), prefix)
+		utils.Logger.Error("getKeys:scan db error '%s' when retriving key '%s' keys", err.Error(), prefix)
+		return nil, err
 	}
 
 	return allkeys, nil
@@ -172,7 +188,8 @@ func getKeyAndValueMap(keys []string, prefix string) (map[string]string, error) 
 	for _, key := range keys {
 		value, err := Rdb.Get(Ctx, key).Result()
 		if err != nil {
-			return nil, fmt.Errorf("getKeyAndValueMap:Get value error '%s' when retriving key '%s' keys", err.Error(), prefix)
+			utils.Logger.Error("getKeyAndValueMap:Get value error '%s' when retriving key '%s' keys", err.Error(), prefix)
+			return nil, err
 		}
 
 		strippedKey := strings.Split(key, prefix)
@@ -186,12 +203,14 @@ func FindTopoEntity(id string, prefix string) (TopologyData, error) {
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		return entity, fmt.Errorf("FindTopoEntity:get value from DB error %s", err.Error())
+		utils.Logger.Error("FindTopoEntity:get value from DB error %s", err.Error())
+		return entity, err
 
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
-		return entity, fmt.Errorf("FindTopoEntity: unmarshal error %s", err2.Error())
+		utils.Logger.Error("FindTopoEntity: unmarshal error %s", err2.Error())
+		return entity, err2
 	}
 	return entity, nil
 }

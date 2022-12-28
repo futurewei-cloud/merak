@@ -14,11 +14,7 @@ Copyright(c) 2022 Futurewei Cloud
 package utils
 
 import (
-	"fmt"
-	"log"
-
 	"github.com/futurewei-cloud/merak/services/common/logger"
-
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -29,28 +25,29 @@ var (
 
 const K8SAPIURL string = "https://kubernetes.default:6443"
 
-func init_logger() {
+func Init_logger() {
 	var err error
 
 	Logger, err = logger.NewLogger(logger.DEBUG, "merak-topo logger")
 
 	if err != nil {
-		log.Fatalln("Can not build a new logger", err)
+		Logger.Fatal("Can not build a new logger", err)
 	} else {
 		Logger.Info("Create logger for merak-topo")
 	}
+
 }
 
 func K8sClient() (*kubernetes.Clientset, error) {
 
 	config, err_config := K8sConfig()
 	if err_config != nil {
-		return nil, fmt.Errorf(err_config.Error())
+		Logger.Error("k8s client initiate error", err_config.Error())
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, fmt.Errorf(err.Error())
+		Logger.Fatal("k8s clientset with config initiate error", err.Error())
 	}
 
 	return clientset, err
@@ -61,7 +58,7 @@ func K8sConfig() (*rest.Config, error) {
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		panic(err.Error())
+		Logger.Fatal("k8s config initiate error", err.Error())
 	}
 
 	return config, nil
