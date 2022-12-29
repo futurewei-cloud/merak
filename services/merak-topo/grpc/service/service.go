@@ -69,11 +69,11 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 				utils.Logger.Error("can't get the topology information", in.Config.GetTopologyId(), err_info.Error())
 				err_flag = 1
 				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-				returnMessage.ReturnMessage = "CHECK fails."
+				returnMessage.ReturnMessage = "CHECK fail."
 			} else {
-				utils.Logger.Info("get the topology information", in.Config.GetTopologyId(), "completed")
+				utils.Logger.Info("request CHECK", in.Config.GetTopologyId(), "success")
 				returnMessage.ReturnCode = pb_common.ReturnCode_OK
-				returnMessage.ReturnMessage = "CHECK successes."
+				returnMessage.ReturnMessage = "CHECK success."
 			}
 
 			utils.Logger.Debug("requrest CHECK details", "return code", returnMessage.ReturnCode, "return compute node", returnMessage.ComputeNodes, "return host node", returnMessage.Hosts)
@@ -143,14 +143,15 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 				utils.Logger.Error("can't deploy topology", topo_id, err_create.Error())
 				err_flag = 1
 				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-				returnMessage.ReturnMessage = "Fail to Create Topology."
+				returnMessage.ReturnMessage = "DEPLOY fail."
 
 			} else {
+				utils.Logger.Info("request DEPLOY", topo_id, "success")
 				returnMessage.ReturnCode = pb_common.ReturnCode_OK
-				returnMessage.ReturnMessage = "Success to create topology"
+				returnMessage.ReturnMessage = "DEPLOY success"
 			}
 
-			utils.Logger.Debug("requrest CREATE details", "return code", returnMessage.ReturnCode, "return compute node", returnMessage.ComputeNodes, "return host node", returnMessage.Hosts)
+			utils.Logger.Debug("requrest DEPLOY details", "return code", returnMessage.ReturnCode, "return compute node", returnMessage.ComputeNodes, "return host node", returnMessage.Hosts)
 
 		}
 
@@ -164,11 +165,11 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			utils.Logger.Error("request DELETE", in.Config.TopologyId, err.Error())
 			err_flag = 1
 			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-			returnMessage.ReturnMessage = "Fail to Delete Topology."
+			returnMessage.ReturnMessage = "DELETE fail."
 		} else {
 			utils.Logger.Info("request DELETE", in.Config.TopologyId, "success")
 			returnMessage.ReturnCode = pb_common.ReturnCode_OK
-			returnMessage.ReturnMessage = "Success to Delete Topology"
+			returnMessage.ReturnMessage = "DELETE success"
 		}
 
 		utils.Logger.Debug("request DELETE", "return message", returnMessage.ReturnMessage, "return code", returnMessage.ReturnCode)
@@ -179,7 +180,7 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 		utils.Logger.Info("Unknown Operation", in.Config.TopologyId, "please check the input")
 		err_flag = 1
 		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-		returnMessage.ReturnMessage = "TopologyHandler: Unknown Operation"
+		returnMessage.ReturnMessage = "Unknown operation, please retry"
 	}
 
 	if err_flag == 1 {
