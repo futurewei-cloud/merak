@@ -15,10 +15,12 @@ package handler
 import (
 	"bytes"
 	"context"
+	"errors"
 	"strconv"
 	"strings"
 	"time"
 
+	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-topo/database"
 
 	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
@@ -53,7 +55,7 @@ func CreateTopologyClasses(client dynamic.Interface, name string, links []databa
 	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Create(Ctx, rc, metav1.CreateOptions{})
 
 	if err != nil {
-		utils.Logger.Error("failed to create topologyClass %s", err.Error())
+		utils.Logger.Error("can't create topologyClass", "create topology class error", err.Error(), "namespace", namespace, "vnode", name)
 		return err
 	}
 
@@ -65,10 +67,8 @@ func GetTopologyClasses(client dynamic.Interface, name string, namespace string)
 
 	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Get(Ctx, name, metav1.GetOptions{})
 
-	utils.Logger.Debug("Get TopologyClass %s", name)
-
 	if err != nil {
-		utils.Logger.Error("failed to create topologyClass %s", err.Error())
+		utils.Logger.Error("can't get topology class data", "get topologyClass error", err.Error(), "namespace", namespace, "vnode", name)
 		return err
 	}
 
@@ -76,20 +76,21 @@ func GetTopologyClasses(client dynamic.Interface, name string, namespace string)
 
 }
 
-func DeleteTopologyClasses(client dynamic.Interface, name string, namespace string) error {
+/*Comment: unused function when deleting with namespace*/
+// func DeleteTopologyClasses(client dynamic.Interface, name string, namespace string) error {
 
-	err := client.Resource(topologyClassGVR).Namespace(namespace).Delete(Ctx, name, metav1.DeleteOptions{})
+// 	err := client.Resource(topologyClassGVR).Namespace(namespace).Delete(Ctx, name, metav1.DeleteOptions{})
 
-	utils.Logger.Debug("Delete TopologyClass %s", name)
+// 	utils.Logger.Debug("Delete TopologyClass %s", name)
 
-	if err != nil {
-		utils.Logger.Error("failed to create topologyClass %s", err.Error())
-		return err
-	}
+// 	if err != nil {
+// 		utils.Logger.Error("failed to create topologyClass", err.Error())
+// 		return err
+// 	}
 
-	return nil
+// 	return nil
 
-}
+// }
 
 func NewTopologyClass(name string, links []database.Vlink, namespace string) *unstructured.Unstructured {
 	var clinks []map[string]interface{}
@@ -125,12 +126,15 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 	/*comment gw creation function*/
 	// var k8snodes []string
 
+	errs := errors.New("topology deployment fails")
+	errs_flag := 0
+
 	nodes := topo.Vnodes
 
 	config := ctrl.GetConfigOrDie()
 	dclient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		utils.Logger.Error("fails to create dynamic client %s", err.Error())
+		utils.Logger.Error("fails to create k8s client in topology deployment", "create dynamic client error", err.Error())
 		return err
 	}
 
@@ -159,8 +163,8 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 		err := CreateTopologyClasses(dclient, node.Name, node.Flinks, namespace)
 
 		if err != nil {
-			utils.Logger.Error("failed to create runtime class %s", err.Error())
-			return err
+			utils.Logger.Error("can't create topology class", "meshnet-cni", err.Error(), "vnode name", node.Name, "namespace", namespace)
+			errs_flag = 1
 		}
 
 		interface_num := len(node.Nics) + 1
@@ -248,8 +252,8 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 			ovs_set, err0 := ovs_config(topo, node.Name, SDN_IP, SDN_PORT)
 			if err0 != nil {
-				utils.Logger.Error("fails to get ovs switch controller info %s", err0.Error())
-				return err0
+				utils.Logger.Error("fails to configure ovs", " ovs switch controller info error", err0.Error(), "vnode", node.Name)
+				errs_flag = 1
 			}
 
 			l["Type"] = "vswitch"
@@ -317,8 +321,8 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 			ovs_set, err0 := ovs_config(topo, node.Name, SDN_IP, SDN_PORT)
 			if err0 != nil {
-				utils.Logger.Error("fails to get ovs switch controller info %s", err0.Error())
-				return err0
+				utils.Logger.Error("fails to configure ovs", "ovs switch controller info error", err0.Error(), "vnode", node.Name)
+				errs_flag = 1
 			}
 
 			l["Type"] = "vswitch"
@@ -348,7 +352,8 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 			vs_pods_config = append(vs_pods_config, newPod)
 
 		} else {
-			utils.Logger.Debug("device type in topology has not been defined yet")
+			utils.Logger.Error("device type in topology has not been defined yet", "device type", "not defined")
+			errs_flag = 1
 		}
 
 	}
@@ -356,23 +361,19 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 	elaps0 := time.Since(start_time)
 	start0 := time.Now()
 
-	utils.Logger.Info("DEPLOY:Complete: create topology crd data in K8s %v", elaps0)
-
-	utils.Logger.Debug("k8s create pods based on pod configuration data ")
+	utils.Logger.Info("request DEPLOY", "create topology crd data in K8s (in second)", elaps0)
 
 	for _, newPod := range vs_pods_config {
 
-		utils.Logger.Debug("newpod %v is deploying", newPod.Name)
-
 		_, err_create := k8client.CoreV1().Pods(namespace).Create(Ctx, newPod, metav1.CreateOptions{})
-		utils.Logger.Debug("k8s create pod %v ", newPod.Name)
-
 		if err_create != nil {
-			utils.Logger.Error("fail to create pod in k8s cluster %s", err_create.Error())
+			utils.Logger.Error("request DEPLOY", "create pod in k8s cluster", err_create.Error(), "namespace", namespace, "pod", newPod.Name)
+			errs_flag = 1
 		} else {
-			err_db := database.SetValue(topo.Topology_id+":"+newPod.Name, newPod)
+			err_db := database.SetValue(topo.Topology_id[:5]+":"+newPod.Name, newPod)
 			if err_db != nil {
-				utils.Logger.Error("save topology in DB error %s", err_db.Error())
+				utils.Logger.Error("request DEPLOY", "can't save topology in DB", err_db.Error(), "topologyid_pod", topo.Topology_id+"_"+newPod.Name)
+				errs_flag = 1
 			}
 
 		}
@@ -380,17 +381,15 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 	for _, newPod := range rack_pods_config {
 
-		utils.Logger.Debug("newpod %v is deploying", newPod.Name)
-
 		_, err_create := k8client.CoreV1().Pods(namespace).Create(Ctx, newPod, metav1.CreateOptions{})
-		utils.Logger.Debug(" k8s create pod %v ", newPod.Name)
-
 		if err_create != nil {
-			utils.Logger.Error("create pod error %s", err_create.Error())
+			utils.Logger.Error("can't create pod", "error", err_create.Error(), "pod", newPod.Name, "namespace", namespace)
+			errs_flag = 1
 		} else {
-			err_db := database.SetValue(topo.Topology_id+":"+newPod.Name, newPod)
+			err_db := database.SetValue(topo.Topology_id[:5]+":"+newPod.Name, newPod)
 			if err_db != nil {
-				utils.Logger.Error("fail: save topology in DB %s", err_db.Error())
+				utils.Logger.Error("can't save topology in DB", "error", err_db.Error(), "topologyid_pod", topo.Topology_id+"_"+newPod.Name)
+				errs_flag = 1
 			}
 
 		}
@@ -398,17 +397,15 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 	for _, newPod := range vhost_pods_config {
 
-		utils.Logger.Debug("newpod %v is under deploying", newPod.Name)
-
 		_, err_create := k8client.CoreV1().Pods(namespace).Create(Ctx, newPod, metav1.CreateOptions{})
-		utils.Logger.Debug("k8s create pod %v", newPod.Name)
-
 		if err_create != nil {
-			utils.Logger.Error("create pod error %s", err_create.Error())
+			utils.Logger.Error("can't create pod", "create pod error", err_create.Error(), "namespace", namespace, "topologyid_pod", topo.Topology_id+"_"+newPod.Name)
+			errs_flag = 1
 		} else {
-			err_db := database.SetValue(topo.Topology_id+":"+newPod.Name, newPod)
+			err_db := database.SetValue(topo.Topology_id[:5]+":"+newPod.Name, newPod)
 			if err_db != nil {
-				utils.Logger.Error("fail: save topology in DB %s", err_db.Error())
+				utils.Logger.Error("can't save topology in DB", "save topology in DB error", err_db.Error())
+				errs_flag = 1
 			}
 
 		}
@@ -416,9 +413,13 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 	elaps1 := time.Since(start0)
 
-	utils.Logger.Info("DEPLOY: Complete: create pod in K8s  %v", elaps1)
+	utils.Logger.Info("request DEPLOY", "create pod in K8s (in second)", elaps1)
 
-	return nil
+	if errs_flag == 1 {
+		return errs
+	} else {
+		return nil
+	}
 
 }
 
@@ -443,10 +444,13 @@ func ovs_config(topo database.TopologyData, node_name string, sdn_ip string, sdn
 
 func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod, cmd []string, namespace string) (string, error) {
 
+	err := errors.New("fails to query pods in K8s cluster")
+
 	req := k8client.CoreV1().RESTClient().Post().Resource("pods").Name(pod.Name).Namespace(namespace).SubResource("exec") // .Param("container", containerName)
 	scheme := runtime.NewScheme()
-	if err1 := corev1.AddToScheme(scheme); err1 != nil {
-		utils.Logger.Error("fail: addtoscheme %s", err1.Error())
+	err1 := corev1.AddToScheme(scheme)
+	if err1 != nil {
+		utils.Logger.Error("pod query fail: ", "addtoscheme", err1.Error())
 	}
 	parameterCodec := runtime.NewParameterCodec(scheme)
 	req.VersionedParams(&corev1.PodExecOptions{
@@ -459,55 +463,41 @@ func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod, cmd []string, na
 		Command:   cmd,
 	}, parameterCodec)
 
-	config, err_config := utils.K8sConfig()
-	if err_config != nil {
-		utils.Logger.Error("fail: k8sconfig %s", err_config.Error())
+	config, err2 := utils.K8sConfig()
+	if err2 != nil {
+		utils.Logger.Error("fail: k8sconfig", "k8sconfig error", err2.Error())
 	}
 
-	exec, err2 := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
-	if err2 != nil {
-		utils.Logger.Error("fail: newspdyexecutor %s", err2.Error())
+	exec, err3 := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
+	if err3 != nil {
+		utils.Logger.Error("fail: newspdyexecutor", "k8sconfig POST error", err3.Error())
 	}
 	var stdout, stderr bytes.Buffer
-	err3 := exec.Stream(remotecommand.StreamOptions{
+	err4 := exec.Stream(remotecommand.StreamOptions{
 		Stdin:  nil,
 		Stdout: &stdout,
 		Stderr: &stderr,
 		Tty:    false,
 	})
-	if err3 != nil {
-		utils.Logger.Error("fail: stream %s", err3.Error())
+	if err4 != nil {
+		utils.Logger.Error("fail: stream", "stream error", err4.Error())
 	}
 
-	return stdout.String(), nil
+	if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
+		return stdout.String(), err
+	} else {
+		return stdout.String(), nil
+	}
 
 }
 
 func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData, namespace string) error {
 
-	config := ctrl.GetConfigOrDie()
-	dclient, err := dynamic.NewForConfig(config)
-
-	if err != nil {
-		utils.Logger.Error("failed to create dynamic client %s", err.Error())
-		return err
-	}
-
-	err_del_db := database.DeleteAllValuesWithKeyPrefix(topo.Topology_id)
+	err_del_db := database.DeleteAllValuesWithKeyPrefix(topo.Topology_id[:5])
 
 	if err_del_db != nil {
-		utils.Logger.Error("failed to delete topology info %s", err_del_db.Error())
+		utils.Logger.Error("can't delete topology info in DB", "topology delete in DB error", err_del_db.Error())
 		return err_del_db
-	}
-
-	for _, node := range topo.Vnodes {
-
-		err_del_t := DeleteTopologyClasses(dclient, node.Name, namespace)
-		if err_del_t != nil {
-			utils.Logger.Error("delete pod topology error %s", err_del_t.Error())
-			return err_del_t
-		}
-
 	}
 
 	k8client.CoreV1().Namespaces().Delete(context.Background(), namespace, metav1.DeleteOptions{})
@@ -520,9 +510,9 @@ func Topo_save(topo database.TopologyData) error {
 	// check pod status
 	topo_id := topo.Topology_id
 
-	err_db := database.SetValue(topo_id, topo)
+	err_db := database.SetValue(topo_id[:5], topo)
 	if err_db != nil {
-		utils.Logger.Error("fail to save in db %s", err_db.Error())
+		utils.Logger.Error("fail to save topology in DB", "topology save in DB error", err_db.Error())
 		return err_db
 	}
 	return nil

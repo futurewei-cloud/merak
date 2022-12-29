@@ -32,17 +32,17 @@ func main() {
 
 	lis, err1 := net.Listen("tcp", fmt.Sprintf(":%d", *service.Port))
 	if err1 != nil {
-		utils.Logger.Fatal("Fail to listen", err1)
+		utils.Logger.Fatal("Fail to listen", "Main", err1)
 	}
 
 	gRPCServer := grpc.NewServer()
 	pb.RegisterMerakTopologyServiceServer(gRPCServer, &service.Server{})
 
-	utils.Logger.Info("Starting gRPC server. Listening at %v", lis.Addr())
+	utils.Logger.Info("Starting gRPC server. ", "gRPC address", lis.Addr())
 
 	err2 := gRPCServer.Serve(lis)
 	if err2 != nil {
-		utils.Logger.Fatal("Can not connect to gPRCServe: %v", err2)
+		utils.Logger.Fatal("Can not connect", "gPRC server connection error", err2)
 	}
 
 }

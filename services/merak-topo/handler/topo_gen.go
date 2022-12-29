@@ -335,7 +335,7 @@ func attach_racks_to_vswitch(vswitch database.Vnode, racks []database.Vnode, uid
 	return vswitch, racks_attached
 }
 
-func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_rack int, ports_per_vswitch int, data_plane_cidr string) (error, database.TopologyData) {
+func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_rack int, ports_per_vswitch int, data_plane_cidr string) (database.TopologyData, error) {
 	var topo database.TopologyData
 	upper := 250
 	nvhosts := vhost_num
@@ -370,7 +370,7 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 		}
 		rack_host_attached, vhs_attached, err := attach_vhosts_to_rack(rack, vhs, uid_initial)
 		if err != nil {
-			utils.Logger.Error("attach vhosts to rack error %s", err.Error())
+			utils.Logger.Error("attach vhosts to rack", "error", err.Error())
 		}
 		uid_initial = uid_initial + len(vhs_attached)
 		racks = append(racks, rack_host_attached)
@@ -381,13 +381,13 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 	uid_initial = uid_initial + len(racks)
 	init_idx_vs = init_idx_vs + len(vs_attached)
 	if err != nil {
-		utils.Logger.Error("create vswitches error %s", err.Error())
+		utils.Logger.Error("create vswitches", "error", err.Error())
 	}
 
 	racks_full_attached = append(racks_full_attached, racks_vs_attached...)
 
 	nvswitch := len(vs_attached)
-	utils.Logger.Debug("vs number %v", len(vs_attached))
+	// utils.Logger.Debug("vs number", len(vs_attached))
 	flag := false
 
 	var vs_to_core []database.Vnode
@@ -397,7 +397,7 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 		vs_upper_attached, vs_lower_attached, err_vs := create_vswitches(vs_attached, init_idx_vs, ports_per_vswitch, uid_initial)
 
 		if err_vs != nil {
-			utils.Logger.Error("create upper layer vswitches error %s", err_vs.Error())
+			utils.Logger.Error("create upper layer vswitches", "error", err_vs.Error())
 		}
 		uid_initial = uid_initial + len(vs_attached)
 		init_idx_vs = init_idx_vs + len(vs_upper_attached)
@@ -417,7 +417,7 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 
 	vswitches = append(vswitches, vs_attached...)
 
-	utils.Logger.Debug("vswitches %v", vswitches)
+	// utils.Logger.Debug("vswitches", vswitches)
 
 	vnodes := append(vhosts, racks_full_attached...)
 	vnodes = append(vnodes, vswitches...)
@@ -425,8 +425,8 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 
 	topo.Vnodes = vnodes
 
-	utils.Logger.Debug("vnodes %v", vnodes)
+	// utils.Logger.Debug("vnodes", vnodes)
 
-	return nil, topo
+	return topo, nil
 
 }
