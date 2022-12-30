@@ -65,18 +65,18 @@ proto:
 .PHONY: unit-tests
 unit-tests:
 	go test -v github.com/futurewei-cloud/merak/services/merak-compute/entities/ -coverprofile=cov_entities.out
-	go test -v github.com/futurewei-cloud/merak/services/datastore/ -coverprofile=cov_datastore.out
+	go test -v github.com/futurewei-cloud/merak/services/common/datastore/ -coverprofile=cov_datastore.out
+	go test -v github.com/futurewei-cloud/merak/services/common/logger/ -coverprofile=cov_logger.out
+	go test -v github.com/futurewei-cloud/merak/services/merak-agent/evm -coverprofile=cov_evm.out
 	go tool cover -func=cov_entities.out
 	go tool cover -func=cov_datastore.out
+	go tool cover -func=cov_evm.out
+	go tool cover -func=cov_logger.out
+	rm cov_logger.out
 	rm cov_entities.out
 	rm cov_datastore.out
+	rm cov_evm.out
 
-.PHONY: deploy-dev
-deploy-dev:
-	kubectl apply -f deployments/kubernetes/scenario.dev.yaml
-	kubectl apply -f deployments/kubernetes/compute.dev.yaml
-	kubectl apply -f deployments/kubernetes/network.dev.yaml
-	kubectl apply -f deployments/kubernetes/topo.dev.yaml
 
 .PHONY: docker-scenario
 docker-scenario:
@@ -137,7 +137,7 @@ docker-topo:
 	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
 	docker push meraksim/merak-topo:dev
 
-.PHONY: docker-test
+.PHONY: docker-test-compute
 docker-test:
 	docker build -t meraksim/test-merak-compute:test -f docker/test.merak.Dockerfile .
 	docker push meraksim/test-merak-compute:test
@@ -156,12 +156,14 @@ docker-all:
 	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
 	docker build -t meraksim/merak-network:dev -f docker/network.Dockerfile .
 	docker build -t meraksim/scenario-manager:dev -f docker/scenario.Dockerfile .
+	docker build -t meraksim/prometheus:dev -f docker/prometheus.Dockerfile .
 	docker push meraksim/merak-compute:dev
 	docker push meraksim/merak-compute-vm-worker:dev
 	docker push meraksim/merak-agent:dev
 	docker push meraksim/scenario-manager:dev
 	docker push meraksim/merak-network:dev
 	docker push meraksim/merak-topo:dev
+	docker push meraksim/prometheus:dev
 
 .PHONY: docker-all-ci
 docker-all-ci:
@@ -179,14 +181,44 @@ docker-all-ci:
 	docker push meraksim/merak-topo:ci
 	docker push meraksim/scenario-manager:ci
 
-.PHONY: kind
-kind:
+.PHONY: docker-all-test
+docker-all-test:
+	make
+	docker build -t meraksim/merak-compute:test -f docker/compute.Dockerfile .
+	docker build -t meraksim/merak-compute-vm-worker:test -f docker/compute-vm-worker.Dockerfile .
+	docker build -t meraksim/merak-topo:test -f docker/topo.Dockerfile .
+	docker build -t meraksim/merak-network:test -f docker/network.Dockerfile .
+	docker build -t meraksim/scenario-manager:test -f docker/scenario.Dockerfile .
+	docker build -t meraksim/merak-agent:test -f docker/agent.Dockerfile .
+	docker push meraksim/merak-agent:test
+	docker push meraksim/merak-compute:test
+	docker push meraksim/merak-compute-vm-worker:test
+	docker push meraksim/merak-network:test
+	docker push meraksim/merak-topo:test
+	docker push meraksim/scenario-manager:test
+
+
+.PHONY: kind-base
+kind-base:
 	kind delete cluster
 	kind create cluster --config=configs/kind.yaml
 	linkerd install --crds | kubectl apply -f -
 	linkerd install | kubectl apply -f -
 	linkerd check
+.PHONY: kind
+kind:
+	make kind-base
 	kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
+
+.PHONY: kind-test
+kind-test:
+	make kind-base
+	kubectl kustomize deployments/kubernetes/test --enable-helm | kubectl apply -f -
+
+.PHONY: kind-ci
+kind-ci:
+	make kind-base
+	kubectl kustomize deployments/kubernetes/ci --enable-helm | kubectl apply -f -
 
 .PHONY: deploy
 deploy:
