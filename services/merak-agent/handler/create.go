@@ -17,6 +17,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strconv"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
@@ -29,7 +30,8 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 	var err error
 	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
 	if !ok {
-		evm, err = merakEvm.CreateMinimalPort(in, RemoteServer, MerakMetrics)
+		url := "http://" + RemoteServer + ":" + strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT) + "/project/" + in.Projectid + "/ports"
+		evm, err = merakEvm.CreateMinimalPort(url, in, MerakMetrics)
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Create Minimal Port Failed",
@@ -86,7 +88,8 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 
 	_, ok = os.LookupEnv(constants.AGENT_MODE_ENV)
 	if !ok {
-		err = evm.UpdatePort(in, RemoteServer, MerakMetrics)
+		url := "http://" + RemoteServer + ":" + strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT) + "/project/" + in.Projectid + "/ports/" + evm.GetRemoteId()
+		err = evm.UpdatePort(url, in, MerakMetrics)
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to update port",
@@ -98,7 +101,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}
 	}
 
-	err = evm.MoveDeviceToNamespace(MerakMetrics)
+	err = evm.MoveDeviceToNetns(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to move device to namespace",

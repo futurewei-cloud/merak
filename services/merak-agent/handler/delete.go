@@ -17,6 +17,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strconv"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
@@ -41,7 +42,7 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 		}, err
 	}
-	err = evm.MoveDeviceRootNamespace(MerakMetrics)
+	err = evm.MoveDeviceToRootNetns(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to move device to root namespace",
@@ -51,7 +52,8 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 
 	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
 	if !ok {
-		err = evm.DeletePort(in, RemoteServer, MerakMetrics)
+		url := "http://" + RemoteServer + ":" + strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT) + "/project/" + in.Projectid + "/ports/" + evm.GetRemoteId()
+		err = evm.DeletePort(url, in, MerakMetrics)
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Delete Port request to Alcor Failed!",

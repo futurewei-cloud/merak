@@ -21,16 +21,16 @@ import (
 
 // Interface for the Merak EVM
 type Evm interface {
-	CreateDevice(m *metrics.MerakMetrics) error
-	DeleteDevice(m *metrics.MerakMetrics) error
-	MoveDeviceToNamespace(m *metrics.MerakMetrics) error
-	MoveDeviceRootNamespace(m *metrics.MerakMetrics) error
-	AssignIP(m *metrics.MerakMetrics) error
-	SetMTUProbing(m *metrics.MerakMetrics) error
-	BringLoUp(m *metrics.MerakMetrics) error
-	AssignMac(m *metrics.MerakMetrics) error
-	AddGateway(m *metrics.MerakMetrics) error
-	BringDeviceUp(m *metrics.MerakMetrics) error
+	CreateDevice(m metrics.Metrics) error
+	DeleteDevice(m metrics.Metrics) error
+	MoveDeviceToNetns(m metrics.Metrics) error
+	MoveDeviceToRootNetns(m metrics.Metrics) error
+	AssignIP(m metrics.Metrics) error
+	SetMTUProbing(m metrics.Metrics) error
+	BringLoUp(m metrics.Metrics) error
+	AssignMac(m metrics.Metrics) error
+	AddGateway(m metrics.Metrics) error
+	BringDeviceUp(m metrics.Metrics) error
 	GetName() string
 	GetIP() string
 	GetMac() string

@@ -21,6 +21,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
+type Metrics interface {
+	GetMetrics(err *error) func()
+}
+
 type MerakMetrics struct {
 	ServiceName     string
 	OpsTotalLatency *prometheus.HistogramVec
@@ -56,7 +60,7 @@ func NewMetrics(reg *prometheus.Registry, serviceName string) *MerakMetrics {
 }
 
 // For use with defer statement to get metrics
-func GetMetrics(merakMetrics *MerakMetrics, err *error) func() {
+func (merakMetrics *MerakMetrics) GetMetrics(err *error) func() {
 	name := getCallerName(1) // Returns callers name
 	start := time.Now()
 	return func() {
