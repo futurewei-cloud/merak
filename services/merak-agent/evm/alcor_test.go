@@ -36,7 +36,7 @@ func TestNewEvm(t *testing.T) {
 		giveGW       string
 		giveStatus   common_pb.Status
 
-		expRes *AlcorEvm
+		expRes Evm
 		expErr error
 		pass   bool
 	}{
@@ -207,12 +207,23 @@ func TestCreateMinimalPort(t *testing.T) {
 }
 
 func TestUpdatePort(t *testing.T) {
+	evm1, err := NewEvm(
+		"vm1",
+		"10.0.0.2",
+		"00:00:00:00:00:01",
+		"123456789101112",
+		"tap12345678910",
+		"10.0.0.0/16",
+		"10.0.0.1",
+		common_pb.Status_DEPLOYING,
+	)
+	assert.Nil(t, err)
 	tests := []struct {
 		in      *pb.InternalPortConfig
 		server  *httptest.Server
 		metrics metrics.Metrics
 		url     string
-		evm     *AlcorEvm
+		evm     Evm
 
 		expErr error
 	}{
@@ -239,16 +250,7 @@ func TestUpdatePort(t *testing.T) {
 				OpsSuccess:      nil,
 				OpsFail:         nil,
 			},
-			evm: &AlcorEvm{
-				name:     "vm1",
-				ip:       "10.0.0.2",
-				mac:      "00:00:00:00:00:01",
-				remoteID: "123456789101112",
-				deviceID: "tap12345678910",
-				cidr:     "10.0.0.0/16",
-				gw:       "10.0.0.1",
-				status:   common_pb.Status_DEPLOYING,
-			},
+			evm:    evm1,
 			expErr: nil,
 		},
 	}
@@ -256,10 +258,11 @@ func TestUpdatePort(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.in.Name, func(t *testing.T) {
 			defer tt.server.Close()
-			err := tt.evm.UpdatePort(
+			err := UpdatePort(
 				tt.server.URL,
 				tt.in,
 				tt.metrics,
+				tt.evm,
 			)
 			assert.Equal(t, tt.expErr, err)
 		})
@@ -316,10 +319,11 @@ func TestDeletePort(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.in.Name, func(t *testing.T) {
 			defer tt.server.Close()
-			err := tt.evm.DeletePort(
+			err := DeletePort(
 				tt.server.URL,
 				tt.in,
 				tt.metrics,
+				tt.evm,
 			)
 			assert.Equal(t, tt.expErr, err)
 		})
@@ -334,13 +338,13 @@ func TestCreateStandaloneDevice(t *testing.T) {
 		OpsFail:         nil,
 	}
 	tests := []struct {
-		bashExec func(cmd string) ([]byte, error)
+		BashExec func(cmd string) ([]byte, error)
 		evm      *AlcorEvm
 		expErr   error
 		pass     bool
 	}{
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip tuntap add mode tap tap1" {
 					return nil, errors.New("Bad")
 				}
@@ -355,7 +359,7 @@ func TestCreateStandaloneDevice(t *testing.T) {
 			pass:   true,
 		},
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip tuntap add mode tap tap1" {
 					return nil, errors.New("Bad")
 				}
@@ -372,7 +376,7 @@ func TestCreateStandaloneDevice(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.evm.deviceID, func(t *testing.T) {
-			bashExec = tt.bashExec
+			BashExec = tt.BashExec
 			if tt.pass {
 				err := tt.evm.CreateStandaloneDevice(&metrics)
 				assert.Nil(t, err)
@@ -392,13 +396,13 @@ func TestDeleteStandaloneDevice(t *testing.T) {
 		OpsFail:         nil,
 	}
 	tests := []struct {
-		bashExec func(cmd string) ([]byte, error)
+		BashExec func(cmd string) ([]byte, error)
 		evm      *AlcorEvm
 		expErr   error
 		pass     bool
 	}{
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip tuntap del mode tap tap1" {
 					return nil, errors.New("Bad")
 				}
@@ -413,7 +417,7 @@ func TestDeleteStandaloneDevice(t *testing.T) {
 			pass:   true,
 		},
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip tuntap del mode tap tap1" {
 					return nil, errors.New("Bad")
 				}
@@ -430,7 +434,7 @@ func TestDeleteStandaloneDevice(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.evm.deviceID, func(t *testing.T) {
-			bashExec = tt.bashExec
+			BashExec = tt.BashExec
 			if tt.pass {
 				err := tt.evm.DeleteStandaloneDevice(&metrics)
 				assert.Nil(t, err)
@@ -450,13 +454,13 @@ func TestCreateNamespace(t *testing.T) {
 		OpsFail:         nil,
 	}
 	tests := []struct {
-		bashExec func(cmd string) ([]byte, error)
+		BashExec func(cmd string) ([]byte, error)
 		evm      *AlcorEvm
 		expErr   error
 		pass     bool
 	}{
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns add vm1" {
 					return nil, errors.New("Bad")
 				}
@@ -471,7 +475,7 @@ func TestCreateNamespace(t *testing.T) {
 			pass:   true,
 		},
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns add vm1" {
 					return nil, errors.New("Bad")
 				}
@@ -488,7 +492,7 @@ func TestCreateNamespace(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.evm.deviceID, func(t *testing.T) {
-			bashExec = tt.bashExec
+			BashExec = tt.BashExec
 			if tt.pass {
 				err := tt.evm.CreateNamespace(&metrics)
 				assert.Nil(t, err)
@@ -508,13 +512,13 @@ func TestDeleteNamespace(t *testing.T) {
 		OpsFail:         nil,
 	}
 	tests := []struct {
-		bashExec func(cmd string) ([]byte, error)
+		BashExec func(cmd string) ([]byte, error)
 		evm      *AlcorEvm
 		expErr   error
 		pass     bool
 	}{
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns delete vm1" {
 					return nil, errors.New("Bad")
 				}
@@ -529,7 +533,7 @@ func TestDeleteNamespace(t *testing.T) {
 			pass:   true,
 		},
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns delete vm1" {
 					return nil, errors.New("Bad")
 				}
@@ -546,7 +550,7 @@ func TestDeleteNamespace(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.evm.deviceID, func(t *testing.T) {
-			bashExec = tt.bashExec
+			BashExec = tt.BashExec
 			if tt.pass {
 				err := tt.evm.DeleteNamespace(&metrics)
 				assert.Nil(t, err)
@@ -566,13 +570,13 @@ func TestMoveDeviceToNamespace(t *testing.T) {
 		OpsFail:         nil,
 	}
 	tests := []struct {
-		bashExec func(cmd string) ([]byte, error)
+		BashExec func(cmd string) ([]byte, error)
 		evm      *AlcorEvm
 		expErr   error
 		pass     bool
 	}{
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip link set tap1 netns vm1" {
 					return nil, errors.New("Bad")
 				}
@@ -587,7 +591,7 @@ func TestMoveDeviceToNamespace(t *testing.T) {
 			pass:   true,
 		},
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip link set tap1 netns vm1" {
 					return nil, errors.New("Bad")
 				}
@@ -604,7 +608,7 @@ func TestMoveDeviceToNamespace(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.evm.deviceID, func(t *testing.T) {
-			bashExec = tt.bashExec
+			BashExec = tt.BashExec
 			if tt.pass {
 				err := tt.evm.MoveDeviceToNetns(&metrics)
 				assert.Nil(t, err)
@@ -624,13 +628,13 @@ func TestMoveDeviceRootNamespace(t *testing.T) {
 		OpsFail:         nil,
 	}
 	tests := []struct {
-		bashExec func(cmd string) ([]byte, error)
+		BashExec func(cmd string) ([]byte, error)
 		evm      *AlcorEvm
 		expErr   error
 		pass     bool
 	}{
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 ip link set tap1 netns 1" {
 					return nil, errors.New("Bad")
 				}
@@ -645,7 +649,7 @@ func TestMoveDeviceRootNamespace(t *testing.T) {
 			pass:   true,
 		},
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 ip link set tap1 netns 1" {
 					return nil, errors.New("Bad")
 				}
@@ -662,7 +666,7 @@ func TestMoveDeviceRootNamespace(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.evm.deviceID, func(t *testing.T) {
-			bashExec = tt.bashExec
+			BashExec = tt.BashExec
 			if tt.pass {
 				err := tt.evm.MoveDeviceToRootNetns(&metrics)
 				assert.Nil(t, err)
@@ -682,13 +686,13 @@ func TestAssignIP(t *testing.T) {
 		OpsFail:         nil,
 	}
 	tests := []struct {
-		bashExec func(cmd string) ([]byte, error)
+		BashExec func(cmd string) ([]byte, error)
 		evm      *AlcorEvm
 		expErr   error
 		pass     bool
 	}{
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 ip addr add 10.0.0.2/16 dev tap1" {
 					return nil, errors.New("Bad")
 				}
@@ -704,7 +708,7 @@ func TestAssignIP(t *testing.T) {
 			pass:   true,
 		},
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 ip addr add 10.0.0..2/16 dev tap1" {
 					return nil, errors.New("Bad")
 				}
@@ -722,7 +726,7 @@ func TestAssignIP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.evm.deviceID, func(t *testing.T) {
-			bashExec = tt.bashExec
+			BashExec = tt.BashExec
 			if tt.pass {
 				err := tt.evm.AssignIP(&metrics)
 				assert.Nil(t, err)
@@ -742,13 +746,13 @@ func TestSetMTUProbing(t *testing.T) {
 		OpsFail:         nil,
 	}
 	tests := []struct {
-		bashExec func(cmd string) ([]byte, error)
+		BashExec func(cmd string) ([]byte, error)
 		evm      *AlcorEvm
 		expErr   error
 		pass     bool
 	}{
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 sysctl -w net.ipv4.tcp_mtu_probing=2" {
 					return nil, errors.New("Bad")
 				}
@@ -764,7 +768,7 @@ func TestSetMTUProbing(t *testing.T) {
 			pass:   true,
 		},
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 sysctl -w net.ipv4.tcp_mtu_probing=2" {
 					return nil, errors.New("Bad")
 				}
@@ -782,7 +786,7 @@ func TestSetMTUProbing(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.evm.deviceID, func(t *testing.T) {
-			bashExec = tt.bashExec
+			BashExec = tt.BashExec
 			if tt.pass {
 				err := tt.evm.SetMTUProbing(&metrics)
 				assert.Nil(t, err)
@@ -802,13 +806,13 @@ func TestBringLoUp(t *testing.T) {
 		OpsFail:         nil,
 	}
 	tests := []struct {
-		bashExec func(cmd string) ([]byte, error)
+		BashExec func(cmd string) ([]byte, error)
 		evm      *AlcorEvm
 		expErr   error
 		pass     bool
 	}{
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 ip link set dev lo up" {
 					return nil, errors.New("Bad")
 				}
@@ -824,7 +828,7 @@ func TestBringLoUp(t *testing.T) {
 			pass:   true,
 		},
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 ip link set dev lo up" {
 					return nil, errors.New("Bad")
 				}
@@ -842,7 +846,7 @@ func TestBringLoUp(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.evm.deviceID, func(t *testing.T) {
-			bashExec = tt.bashExec
+			BashExec = tt.BashExec
 			if tt.pass {
 				err := tt.evm.BringLoUp(&metrics)
 				assert.Nil(t, err)
@@ -862,13 +866,13 @@ func TestAssignMac(t *testing.T) {
 		OpsFail:         nil,
 	}
 	tests := []struct {
-		bashExec func(cmd string) ([]byte, error)
+		BashExec func(cmd string) ([]byte, error)
 		evm      *AlcorEvm
 		expErr   error
 		pass     bool
 	}{
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 ip link set dev tap1 address 00:00:00:00:00:01" {
 					return nil, errors.New("Bad")
 				}
@@ -885,7 +889,7 @@ func TestAssignMac(t *testing.T) {
 			pass:   true,
 		},
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 ip link set dev tap1 address 00:00:00:00:00:01" {
 					return nil, errors.New("Bad")
 				}
@@ -903,7 +907,7 @@ func TestAssignMac(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.evm.deviceID, func(t *testing.T) {
-			bashExec = tt.bashExec
+			BashExec = tt.BashExec
 			if tt.pass {
 				err := tt.evm.AssignMac(&metrics)
 				assert.Nil(t, err)
@@ -923,13 +927,13 @@ func TestAddGateway(t *testing.T) {
 		OpsFail:         nil,
 	}
 	tests := []struct {
-		bashExec func(cmd string) ([]byte, error)
+		BashExec func(cmd string) ([]byte, error)
 		evm      *AlcorEvm
 		expErr   error
 		pass     bool
 	}{
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 ip r add default via 10.0.0.1" {
 					return nil, errors.New("Bad")
 				}
@@ -947,7 +951,7 @@ func TestAddGateway(t *testing.T) {
 			pass:   true,
 		},
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 ip r add default via 10.0.0.1" {
 					return nil, errors.New("Bad")
 				}
@@ -967,7 +971,7 @@ func TestAddGateway(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.evm.deviceID, func(t *testing.T) {
-			bashExec = tt.bashExec
+			BashExec = tt.BashExec
 			if tt.pass {
 				err := tt.evm.AddGateway(&metrics)
 				assert.Nil(t, err)
@@ -987,13 +991,13 @@ func TestBringDeviceUp(t *testing.T) {
 		OpsFail:         nil,
 	}
 	tests := []struct {
-		bashExec func(cmd string) ([]byte, error)
+		BashExec func(cmd string) ([]byte, error)
 		evm      *AlcorEvm
 		expErr   error
 		pass     bool
 	}{
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 ip link set dev tap1 up" {
 					return nil, errors.New("Bad")
 				}
@@ -1011,7 +1015,7 @@ func TestBringDeviceUp(t *testing.T) {
 			pass:   true,
 		},
 		{
-			bashExec: func(cmd string) ([]byte, error) {
+			BashExec: func(cmd string) ([]byte, error) {
 				if cmd != "ip netns exec vm1 ip link set dev tap1 up" {
 					return nil, errors.New("Bad")
 				}
@@ -1031,7 +1035,7 @@ func TestBringDeviceUp(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.evm.deviceID, func(t *testing.T) {
-			bashExec = tt.bashExec
+			BashExec = tt.BashExec
 			if tt.pass {
 				err := tt.evm.BringDeviceUp(&metrics)
 				assert.Nil(t, err)

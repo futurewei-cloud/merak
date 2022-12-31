@@ -47,4 +47,8 @@ type Evm interface {
 	SetDeviceId(id string)
 	SetRemoteId(id string)
 	SetStatus(status common_pb.Status)
+	DeleteNamespace(m metrics.Metrics) error
+	DeleteStandaloneDevice(m metrics.Metrics) error
+	CreateStandaloneDevice(m metrics.Metrics) error
+	CreateNamespace(m metrics.Metrics) error
 }

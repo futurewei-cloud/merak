@@ -17,9 +17,11 @@ import (
 	"context"
 	"errors"
 	"log"
+	"strconv"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
+	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/common/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -30,8 +32,8 @@ type Server struct {
 
 var (
 	RemoteServer       string
+	MerakMetrics       metrics.Metrics
 	PrometheusRegistry *prometheus.Registry
-	MerakMetrics       *metrics.MerakMetrics
 )
 
 func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
@@ -40,7 +42,9 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 	switch op := in.OperationType; op {
 	case common_pb.OperationType_CREATE:
 		log.Println("Operation Create")
-		return caseCreate(ctx, in)
+		createMinimalPortUrl := "http://" + RemoteServer + ":" + strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT) + "/project/" + in.Projectid + "/ports"
+		updatePortUrl := "http://" + RemoteServer + ":" + strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT) + "/project/" + in.Projectid + "/ports/"
+		return caseCreate(ctx, in, createMinimalPortUrl, updatePortUrl)
 
 	case common_pb.OperationType_UPDATE:
 
@@ -52,9 +56,9 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}, errors.New("update unimplemented")
 
 	case common_pb.OperationType_DELETE:
-
 		log.Println("Operation Delete")
-		return caseDelete(ctx, in)
+		deletePortUrl := "http://" + RemoteServer + ":" + strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT) + "/project/" + in.Projectid + "/ports/"
+		return caseDelete(ctx, in, deletePortUrl)
 
 	default:
 		log.Println("Unknown Operation")

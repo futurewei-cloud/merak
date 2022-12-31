@@ -17,7 +17,6 @@ import (
 	"context"
 	"log"
 	"os"
-	"strconv"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
@@ -25,7 +24,7 @@ import (
 	merakEvm "github.com/futurewei-cloud/merak/services/merak-agent/evm"
 )
 
-func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
+func caseDelete(ctx context.Context, in *pb.InternalPortConfig, deletePortUrl string) (*pb.AgentReturnInfo, error) {
 
 	evm, err := merakEvm.NewEvm(
 		in.Name,
@@ -52,8 +51,7 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 
 	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
 	if !ok {
-		url := "http://" + RemoteServer + ":" + strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT) + "/project/" + in.Projectid + "/ports/" + evm.GetRemoteId()
-		err = evm.DeletePort(url, in, MerakMetrics)
+		err = merakEvm.DeletePort(deletePortUrl+evm.GetRemoteId(), in, MerakMetrics, evm)
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Delete Port request to Alcor Failed!",

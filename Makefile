@@ -65,17 +65,14 @@ proto:
 .PHONY: unit-tests
 unit-tests:
 	go test -v github.com/futurewei-cloud/merak/services/merak-compute/entities/ -coverprofile=cov_entities.out
-	go test -v github.com/futurewei-cloud/merak/services/common/datastore/ -coverprofile=cov_datastore.out
-	go test -v github.com/futurewei-cloud/merak/services/common/logger/ -coverprofile=cov_logger.out
-	go test -v github.com/futurewei-cloud/merak/services/merak-agent/evm -coverprofile=cov_evm.out
+	go test -v github.com/futurewei-cloud/merak/services/common/ -coverprofile=cov_common.out
+	go test -v github.com/futurewei-cloud/merak/services/merak-agent/...-coverprofile=cov_merakagent.out
 	go tool cover -func=cov_entities.out
-	go tool cover -func=cov_datastore.out
-	go tool cover -func=cov_evm.out
-	go tool cover -func=cov_logger.out
-	rm cov_logger.out
+	go tool cover -func=cov_common.out
+	go tool cover -func=cov_merakagent.out
+	rm cov_common.out
 	rm cov_entities.out
-	rm cov_datastore.out
-	rm cov_evm.out
+	rm cov_merakagent.out
 
 
 .PHONY: docker-scenario
