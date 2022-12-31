@@ -255,7 +255,7 @@ func (evm AlcorEvm) CreateDevice(m metrics.Metrics) error {
 	defer m.GetMetrics(&err)()
 
 	log.Println("Adding tap " + evm.deviceID + " to br-int!")
-	stdout, err := BashExec("ovs-vsctl add-port br-int " + evm.deviceID + " --  set Interface " + evm.deviceID + " type=internal")
+	stdout, err := BashExec("ovs-vsctl add-port br-int " + evm.deviceID + " -- set Interface " + evm.deviceID + " type=internal")
 	if err != nil {
 		log.Println("ovs-vsctl failed! " + string(stdout))
 		return err
@@ -545,5 +545,6 @@ var BashExec = BashExecute
 
 // Executes the given Bash command
 func BashExecute(cmd string) ([]byte, error) {
-	return exec.Command("Bash", "-c", cmd).Output()
+	log.Println("Executing: " + cmd)
+	return exec.Command("bash", "-c", cmd).Output()
 }
