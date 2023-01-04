@@ -17,6 +17,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"os"
 	"strconv"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
@@ -44,36 +45,14 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 	case common_pb.OperationType_PRECREATE:
 		log.Println("Operation Create Minimal Port")
 		createMinimalPortUrl := "http://" + RemoteServer + ":" + strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT) + "/project/" + in.Projectid + "/ports"
-		evm, err := merakEvm.CreateMinimalPort(createMinimalPortUrl, in, MerakMetrics)
-		if err != nil {
-			return &pb.AgentReturnInfo{
-				ReturnMessage: "Create Minimal Port Failed",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
-				Port: &pb.ReturnPortInfo{
-					Status: common_pb.Status_ERROR,
-				},
-			}, err
-		}
-		vmInfo := pb.ReturnPortInfo{
-			Id:       in.Id,
-			Ip:       evm.GetIP(),
-			Deviceid: evm.GetDeviceId(),
-			Remoteid: evm.GetRemoteId(),
-			Mac:      evm.GetMac(),
-			Status:   common_pb.Status_DEPLOYING,
-		}
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Create Minimal Port Success",
-			ReturnCode:    common_pb.ReturnCode_OK,
-			Port:          &vmInfo,
-		}, nil
+		return caseCreateMinimal(ctx, in, createMinimalPortUrl)
+
 	case common_pb.OperationType_CREATE:
 		log.Println("Operation Create")
 		updatePortUrl := "http://" + RemoteServer + ":" + strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT) + "/project/" + in.Projectid + "/ports/"
 		return caseCreate(ctx, in, updatePortUrl)
 
 	case common_pb.OperationType_UPDATE:
-
 		log.Println("Update Unimplemented")
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Update Unimplemented",
@@ -96,6 +75,11 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 }
 
 func (s *Server) BulkPortAdd(ctx context.Context, in *pb.BulkPorts) (*pb.AgentReturnInfo, error) {
-	log.Println("Operation Bulk Port add")
-	return &pb.AgentReturnInfo{}, merakEvm.Ovsdbbulk(in.Tapnames, MerakMetrics)
+	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
+	if !ok {
+		log.Println("Operation Bulk Port add")
+		return &pb.AgentReturnInfo{}, merakEvm.Ovsdbbulk(in.Tapnames, MerakMetrics)
+	} else {
+		return &pb.AgentReturnInfo{}, nil
+	}
 }

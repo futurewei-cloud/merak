@@ -54,7 +54,7 @@ func TestCaseDelete(t *testing.T) {
 			_, err := caseDelete(
 				context.Background(),
 				tt.in,
-				tt.server.URL+"",
+				tt.server.URL,
 			)
 			assert.Nil(t, err)
 		})

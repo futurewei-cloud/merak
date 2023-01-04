@@ -1,7 +1,6 @@
 /*
 MIT License
 Copyright(c) 2022 Futurewei Cloud
-
 	Permission is hereby granted,
 	free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
 	including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
@@ -56,21 +55,47 @@ func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 	client := agent_pb.NewMerakAgentServiceClient(conn)
 	common.ClientMapGRPC[podIP] = client
 
-	var futures []workflow.Future
+	//Create Minimal Port
+	var futuresMinimal []workflow.Future
+	for _, vm := range vms {
+		future := workflow.ExecuteLocalActivity(ctx, activities.VmCreateMinimalPort, vm, podIP)
+		futuresMinimal = append(futuresMinimal, future)
+	}
+	logger.Info("VmCreate minimal port activities started for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
+
+	for _, future := range futuresMinimal {
+		err = future.Get(ctx, nil)
+		if err != nil {
+			logger.Info("VMCreate minimal port activity failed!", err)
+		}
+	}
+	logger.Info("VmCreate minimal port activities completed for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
+
+	wf := workflow.ExecuteLocalActivity(ctx, activities.PortBulkCreate, vms, podIP)
+	logger.Info("VmCreate bulk port add started!")
+	err = wf.Get(ctx, nil)
+	if err != nil {
+		logger.Info("VmCreate bulk port add failed!")
+	}
+	logger.Info("VmCreate bulk port add completed!")
+
+	//Create VMCreate and Port Update
+	var futuresCreate []workflow.Future
 	for _, vm := range vms {
 		future := workflow.ExecuteLocalActivity(ctx, activities.VmCreate, vm, podIP)
 		logger.Info("VmCreate activity started for vm_id " + vm)
-		futures = append(futures, future)
+		futuresCreate = append(futuresCreate, future)
 	}
-	logger.Info("Started VmCreate workflows for vms" + strings.Join(vms, " "))
+	logger.Info("Final VMCreate activities started for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
 
-	for _, future := range futures {
+	for _, future := range futuresCreate {
 		err = future.Get(ctx, nil)
-		logger.Info("Activity completed!")
 		if err != nil {
-			return nil
+			logger.Info("Final VMCreate port activity failed!", err)
 		}
 	}
+	logger.Info("Final VMCreate activities completed for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
+
 	logger.Info("All activities completed")
 	defer conn.Close()
 	return nil
