@@ -25,10 +25,10 @@ import (
 // Creates a VM given by the vmID
 func VmCreateMinimalPort(ctx context.Context, vmID string, podIP string) error {
 	logger := activity.GetLogger(ctx)
-	logger.Info("Starting create activity for VM " + vmID)
+	logger.Info("VmCreateMinimalPort: Starting create activity for VM " + vmID)
 
 	client := common.ClientMapGRPC[podIP]
-	logger.Info("Sending to agent at" + podIP)
+	logger.Info("VmCreateMinimalPort: Sending to agent at " + podIP)
 	port := agent_pb.InternalPortConfig{
 		OperationType: commonPB.OperationType_PRECREATE,
 		Id:            vmID,
@@ -44,14 +44,14 @@ func VmCreateMinimalPort(ctx context.Context, vmID string, podIP string) error {
 	}
 	resp, err := client.PortHandler(ctx, &port)
 	if err != nil {
-		logger.Error("Unable to create vm on" + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
+		logger.Error("VmCreateMinimalPort: Failed to create vm on" + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
 		if err := common.RedisClient.HSet(
 			ctx,
 			vmID,
 			"status",
 			"5",
 		).Err(); err != nil {
-			logger.Info("Failed to add vm response to DB!")
+			logger.Info("VmCreateMinimalPort: Failed to add vm response to DB!")
 			return err
 		}
 		return err
@@ -77,10 +77,10 @@ func VmCreateMinimalPort(ctx context.Context, vmID string, podIP string) error {
 			"status",
 			"5",
 		).Err(); err != nil {
-			logger.Info("Failed to add vm response to DB!")
+			logger.Info("VmCreateMinimalPort: Failed to add vm response to DB!")
 			return err
 		}
 	}
-	logger.Info("Response from agent at address " + podIP + ": " + resp.GetReturnMessage())
+	logger.Info("VmCreateMinimalPort: Response from agent at address " + podIP + ": " + resp.GetReturnMessage())
 	return nil
 }

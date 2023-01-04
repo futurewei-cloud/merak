@@ -26,10 +26,10 @@ import (
 // Creates a VM given by the vmID
 func VmCreate(ctx context.Context, vmID string, podIP string) error {
 	logger := activity.GetLogger(ctx)
-	logger.Info("Starting create activity for VM " + vmID)
+	logger.Info("Final VMCreate: Starting create activity for VM " + vmID)
 
 	client := common.ClientMapGRPC[podIP]
-	logger.Info("Sending to agent at" + podIP)
+	logger.Info("Final VMCreate: Sending to agent at " + podIP)
 	port := agent_pb.InternalPortConfig{
 		OperationType: commonPB.OperationType_CREATE,
 		Id:            vmID,
@@ -49,14 +49,14 @@ func VmCreate(ctx context.Context, vmID string, podIP string) error {
 	}
 	resp, err := client.PortHandler(ctx, &port)
 	if err != nil {
-		logger.Error("Unable to create vm on" + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
+		logger.Error("Final VMCreate: Failed to create vm on" + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
 		if err := common.RedisClient.HSet(
 			ctx,
 			vmID,
 			"status",
 			"5",
 		).Err(); err != nil {
-			logger.Info("Failed to add vm response to DB!")
+			logger.Info("Final VMCreate: Failed to add vm response to DB!")
 			return err
 		}
 		return err
@@ -68,17 +68,17 @@ func VmCreate(ctx context.Context, vmID string, podIP string) error {
 		status := resp.Port.GetStatus()
 		deviceID := resp.Port.GetDeviceid()
 		remoteID := resp.Port.GetRemoteid()
-		logger.Info("IP:" + ip + " status:" + status.String() + " deviceID:" + deviceID + " remoteID:" + remoteID)
+		logger.Info("Final VMCreate: IP:" + ip + " status:" + status.String() + " deviceID:" + deviceID + " remoteID:" + remoteID)
 		if err := common.RedisClient.HSet(
 			ctx,
 			vmID,
 			"status",
 			strconv.Itoa(int(status.Number())),
 		).Err(); err != nil {
-			logger.Info("Failed to add vm response to DB!")
+			logger.Info("Final VMCreate: Failed to add vm response to DB!")
 			return err
 		}
 	}
-	logger.Info("Response from agent at address " + podIP + ": " + resp.GetReturnMessage())
+	logger.Info("Final VMCreate: Response from agent at address " + podIP + ": " + resp.GetReturnMessage())
 	return nil
 }

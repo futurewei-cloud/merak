@@ -27,7 +27,7 @@ func PortBulkCreate(ctx context.Context, vms []string, podIP string) error {
 
 	client := common.ClientMapGRPC[podIP]
 	ports := agent_pb.BulkPorts{}
-	logger.Info("Sending to agent at" + podIP)
+	logger.Info("PortBulkCreate: Sending to agent at " + podIP)
 	tapNames := []string{}
 	for _, vmID := range vms {
 		tapName := common.RedisClient.HGet(ctx, vmID, "deviceID").Val()
@@ -37,7 +37,7 @@ func PortBulkCreate(ctx context.Context, vms []string, podIP string) error {
 
 	_, err := client.BulkPortAdd(ctx, &ports)
 	if err != nil {
-		logger.Info("BULK PORT ERROR", err)
+		logger.Info("PortBulkCreate: Failed to BulkAddPort", err)
 		return err
 	}
 

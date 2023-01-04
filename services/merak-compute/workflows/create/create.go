@@ -44,12 +44,12 @@ func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 	// Each "VMCreate" workflow populates a table mapping podIP -> gRPC client
 	var agent_address strings.Builder
 	agent_address.WriteString(podIP)
-	logger.Info("Connecting to pod at: " + podIP)
+	logger.Info("Workflow: Connecting to pod at: " + podIP)
 	agent_address.WriteString(":")
 	agent_address.WriteString(strconv.Itoa(constants.AGENT_GRPC_SERVER_PORT))
 	conn, err := grpc.Dial(agent_address.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logger.Info("Failed to dial gRPC server address: "+agent_address.String(), err)
+		logger.Info("Workflow: Failed to dial gRPC server address: "+agent_address.String(), err)
 		return err
 	}
 	client := agent_pb.NewMerakAgentServiceClient(conn)
@@ -61,42 +61,42 @@ func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 		future := workflow.ExecuteLocalActivity(ctx, activities.VmCreateMinimalPort, vm, podIP)
 		futuresMinimal = append(futuresMinimal, future)
 	}
-	logger.Info("VmCreate minimal port activities started for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
+	logger.Info("Workflow: VmCreate minimal port activities started for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
 
 	for _, future := range futuresMinimal {
 		err = future.Get(ctx, nil)
 		if err != nil {
-			logger.Info("VMCreate minimal port activity failed!", err)
+			logger.Info("Workflow: VMCreate minimal port activity failed!", err)
 		}
 	}
-	logger.Info("VmCreate minimal port activities completed for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
+	logger.Info("Workflow: VmCreate minimal port activities completed for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
 
 	wf := workflow.ExecuteLocalActivity(ctx, activities.PortBulkCreate, vms, podIP)
-	logger.Info("VmCreate bulk port add started!")
+	logger.Info("Workflow: VmCreate bulk port add started!")
 	err = wf.Get(ctx, nil)
 	if err != nil {
-		logger.Info("VmCreate bulk port add failed!")
+		logger.Info("Workflow: VmCreate bulk port add failed!")
 	}
-	logger.Info("VmCreate bulk port add completed!")
+	logger.Info("Workflow: VmCreate bulk port add completed!")
 
 	//Create VMCreate and Port Update
 	var futuresCreate []workflow.Future
 	for _, vm := range vms {
 		future := workflow.ExecuteLocalActivity(ctx, activities.VmCreate, vm, podIP)
-		logger.Info("VmCreate activity started for vm_id " + vm)
+		logger.Info("Workflow: VmCreate activity started for vm_id " + vm)
 		futuresCreate = append(futuresCreate, future)
 	}
-	logger.Info("Final VMCreate activities started for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
+	logger.Info("Workflow: Final VMCreate activities started for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
 
 	for _, future := range futuresCreate {
 		err = future.Get(ctx, nil)
 		if err != nil {
-			logger.Info("Final VMCreate port activity failed!", err)
+			logger.Info("Workflow: Final VMCreate port activity failed!", err)
 		}
 	}
-	logger.Info("Final VMCreate activities completed for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
+	logger.Info("Workflow: Final VMCreate activities completed for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
 
-	logger.Info("All activities completed")
+	logger.Info("Workflow: All activities completed")
 	defer conn.Close()
 	return nil
 }
