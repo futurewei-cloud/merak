@@ -17,9 +17,6 @@ bases:
 - https://github.com/networkop/meshnet-cni.git/manifests/base
 resources:
 - temporal.test.yaml
-replicas:
-- name: merak-compute-vm-worker
-  count: 1
 images:
 # Merak
 - name: meraksim/merak-compute
