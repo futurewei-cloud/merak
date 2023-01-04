@@ -24,33 +24,11 @@ import (
 	merakEvm "github.com/futurewei-cloud/merak/services/merak-agent/evm"
 )
 
-func caseCreate(ctx context.Context, in *pb.InternalPortConfig, createMinimalPortUrl, updatePortUrl string) (*pb.AgentReturnInfo, error) {
+func caseCreate(ctx context.Context, in *pb.InternalPortConfig, updatePortUrl string) (*pb.AgentReturnInfo, error) {
 	var err error
 	var evm merakEvm.Evm
 	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
-	if !ok {
-		evm, err = merakEvm.CreateMinimalPort(createMinimalPortUrl, in, MerakMetrics)
-		if err != nil {
-			return &pb.AgentReturnInfo{
-				ReturnMessage: "Create Minimal Port Failed",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
-				Port: &pb.ReturnPortInfo{
-					Status: common_pb.Status_ERROR,
-				},
-			}, err
-
-		}
-		err = evm.CreateDevice(MerakMetrics)
-		if err != nil {
-			return &pb.AgentReturnInfo{
-				ReturnMessage: "ovs-vsctl command failed!",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
-				Port: &pb.ReturnPortInfo{
-					Status: common_pb.Status_ERROR,
-				},
-			}, err
-		}
-	} else {
+	if ok {
 		evm, _ = merakEvm.NewEvm(
 			in.Name,
 			constants.AGENT_STANDALONE_IP,
@@ -71,7 +49,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig, createMinimalPor
 				},
 			}, err
 		}
-	}
+
 
 	err = evm.CreateNamespace(MerakMetrics)
 	if err != nil {

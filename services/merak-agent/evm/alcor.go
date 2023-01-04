@@ -443,6 +443,21 @@ func (evm AlcorEvm) BringDeviceUp(m metrics.Metrics) error {
 	return nil
 }
 
+func Ovsdbbulk(taps []string, m metrics.Metrics) error {
+	// Create Device
+	ovsCmd := "ovs-vsctl "
+	for _, tap := range taps {
+		ovsCmd += " -- add-port br-int " + tap + " -- set Interface " + tap + " type=internal"
+	}
+
+	stdout, err := BashExec(ovsCmd)
+	if err != nil {
+		log.Println("Failed to bulk add tap devices " + ovsCmd + string(stdout))
+		return err
+	}
+	return nil
+}
+
 // Returns the EVM's name
 func (evm AlcorEvm) GetName() string {
 	return evm.name
