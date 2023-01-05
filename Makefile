@@ -100,10 +100,10 @@ docker-compute-test:
 	make proto
 	make compute
 	make vm-worker
-	docker build -t meraksim/merak-compute:test-new -f docker/compute.Dockerfile .
-	docker push meraksim/merak-compute:test-new
-	docker build -t meraksim/merak-compute-vm-worker:test-new -f docker/compute-vm-worker.Dockerfile .
-	docker push meraksim/merak-compute-vm-worker:test-new
+	docker build -t meraksim/merak-compute:test -f docker/compute.Dockerfile .
+	docker push meraksim/merak-compute:test
+	docker build -t meraksim/merak-compute-vm-worker:test -f docker/compute-vm-worker.Dockerfile .
+	docker push meraksim/merak-compute-vm-worker:test
 
 .PHONY: docker-agent
 docker-agent:
