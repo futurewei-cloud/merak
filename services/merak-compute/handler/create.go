@@ -68,21 +68,27 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		}
 		gen := new(errgroup.Group)
 		//Assume same number of Subnets per VPC and same number of VMs per subnet for now
-		vms := []string{}
+		vms := make([]string,
+			len(in.Config.VmDeploy.Vpcs)*len(in.Config.VmDeploy.Vpcs[0].Subnets)*int(in.Config.VmDeploy.Vpcs[0].Subnets[0].NumberVms))
 		for i, vpc := range in.Config.VmDeploy.Vpcs {
 			for j, subnet := range vpc.Subnets {
 				for k := 0; k < int(subnet.NumberVms); k++ {
 					func(i, j, k int,
-						subnet *commonPB.InternalSubnetInfo,
-						vpc *commonPB.InternalVpcInfo,
-						secgroup string,
-						pod *commonPB.InternalComputeInfo,
+						vpcID, vpcProjectID, vpcTenantID,
+						subnetID, subnetCidr, subnetGw, secgroup,
+						podID, podName, podContainerIP, podMAC string,
 						ctx context.Context,
-						vms *[]string) {
+						vms []string) {
 						gen.Go(func() error {
-							return generateVMs(i, j, k, subnet, vpc, secgroup, pod, ctx, vms)
+							return generateVMs(i, j, k,
+								vpc.VpcId, vpc.ProjectId, vpc.TenantId, subnet.SubnetId,
+								subnet.SubnetCidr, subnet.SubnetGw, in.Config.VmDeploy.Secgroups[0],
+								pod.Id, pod.Name, pod.ContainerIp, pod.Mac, ctx, vms)
 						})
-					}(i, j, k, subnet, vpc, in.Config.VmDeploy.Secgroups[0], pod, ctx, &vms)
+					}(i, j, k,
+						vpc.VpcId, vpc.ProjectId, vpc.TenantId, subnet.SubnetId,
+						subnet.SubnetCidr, subnet.SubnetGw, in.Config.VmDeploy.Secgroups[0],
+						pod.Id, pod.Name, pod.ContainerIp, pod.Mac, ctx, vms)
 				}
 			}
 		}
@@ -141,34 +147,32 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 }
 
 func generateVMs(i, j, k int,
-	subnet *commonPB.InternalSubnetInfo,
-	vpc *commonPB.InternalVpcInfo,
-	secgroup string,
-	pod *commonPB.InternalComputeInfo,
+	vpcID, vpcProjectID, vpcTenantID, subnetID, subnetCidr, subnetGw, secgroup,
+	podID, podName, podContainerIP, podMAC string,
 	ctx context.Context,
-	vms *[]string) error {
-	vmID := pod.Id + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
+	vms []string) error {
+	vmID := podID + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
 	suffix := strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
 	if err := RedisClient.HSet(
 		ctx,
 		vmID,
 		"id", vmID,
 		"name", "v"+suffix,
-		"vpc", vpc.VpcId,
-		"tenantID", vpc.TenantId,
-		"projectID", vpc.ProjectId,
-		"subnetID", subnet.SubnetId,
-		"cidr", subnet.SubnetCidr,
-		"gw", subnet.SubnetGw,
+		"vpc", vpcID,
+		"tenantID", vpcTenantID,
+		"projectID", vpcProjectID,
+		"subnetID", subnetID,
+		"cidr", subnetCidr,
+		"gw", subnetGw,
 		"sg", secgroup,
-		"hostIP", pod.ContainerIp,
-		"hostmac", pod.Mac,
-		"hostname", pod.Name,
+		"hostIP", podContainerIP,
+		"hostmac", podMAC,
+		"hostname", podName,
 		"status", "1",
 	).Err(); err != nil {
 		log.Println("Failed to hset vm ", vmID)
 		return err
 	}
-	(*vms)[i+j+k] = vmID
+	vms[i+j+k] = vmID
 	return nil
 }

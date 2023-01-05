@@ -21,9 +21,9 @@ replicas:
 images:
 # Merak
 - name: meraksim/merak-compute
-  newTag: test-new
+  newTag: test
 - name: meraksim/merak-compute-vm-worker
-  newTag: test-new
+  newTag: test
 # - name: meraksim/scenario-manager
 #   newTag: test
 # - name: meraksim/merak-network
