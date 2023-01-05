@@ -37,7 +37,7 @@ import (
 
 func main() {
 
-	numVhost := 10
+	numVhost := 5
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -174,7 +174,7 @@ func config(clientset *kubernetes.Clientset,
 					{
 						SubnetCidr:    "10.1.0.0/16",
 						SubnetGateway: "10.1.0.1",
-						NumberOfVMs:   10,
+						NumberOfVMs:   5000,
 					},
 				},
 			},
@@ -276,7 +276,7 @@ func config(clientset *kubernetes.Clientset,
 		Name:                 "compute-config-1",
 		NumberOfComputeNodes: numVhost,
 		NumberOfPortPerVm:    1,
-		NumberOfVmPerVpc:     100,
+		NumberOfVmPerVpc:     5000,
 		Scheduler:            "SEQUENTIAL",
 		VmDeployType:         "UNIFORM",
 		VPCInfo: []entities.VPCInfo{
@@ -289,7 +289,7 @@ func config(clientset *kubernetes.Clientset,
 					{
 						SubnetCidr:    "10.1.0.0/16",
 						SubnetGateway: "10.1.0.1",
-						NumberOfVMs:   10000,
+						NumberOfVMs:   5000,
 					},
 				},
 			},

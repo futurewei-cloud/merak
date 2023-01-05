@@ -68,8 +68,7 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		}
 		gen := new(errgroup.Group)
 		//Assume same number of Subnets per VPC and same number of VMs per subnet for now
-		vms := make([]string,
-			len(in.Config.VmDeploy.Vpcs)*len(in.Config.VmDeploy.Vpcs[0].Subnets)*int(in.Config.VmDeploy.Vpcs[0].Subnets[0].NumberVms))
+		vms := []string{}
 		for i, vpc := range in.Config.VmDeploy.Vpcs {
 			for j, subnet := range vpc.Subnets {
 				for k := 0; k < int(subnet.NumberVms); k++ {
@@ -133,7 +132,7 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		Id: "Started deployment for " + strconv.Itoa(count) + " VMs",
 	}
 	returnVMs = append(returnVMs, &returnVM)
-	log.Println("Successfully started deployment for " + strconv.Itoa(count) + " VMs")
+	log.Println("Started deployment for " + strconv.Itoa(count) + " VMs")
 	return &pb.ReturnComputeMessage{
 		ReturnMessage: "Successfully started all create workflows!",
 		ReturnCode:    commonPB.ReturnCode_OK,

@@ -49,7 +49,7 @@ func VmCreate(ctx context.Context, vmID string, podIP string) error {
 	}
 	resp, err := client.PortHandler(ctx, &port)
 	if err != nil {
-		logger.Error("Final VMCreate: Failed to create vm on" + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
+		logger.Error("Final VMCreate: Failed to create vm on " + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
 		if err := common.RedisClient.HSet(
 			ctx,
 			vmID,
