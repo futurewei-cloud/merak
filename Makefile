@@ -100,10 +100,10 @@ docker-compute-test:
 	make proto
 	make compute
 	make vm-worker
-	docker build -t meraksim/merak-compute:test -f docker/compute.Dockerfile .
-	docker push meraksim/merak-compute:test
-	docker build -t meraksim/merak-compute-vm-worker:test -f docker/compute-vm-worker.Dockerfile .
-	docker push meraksim/merak-compute-vm-worker:test
+	docker build -t meraksim/merak-compute:test-new -f docker/compute.Dockerfile .
+	docker push meraksim/merak-compute:test-new
+	docker build -t meraksim/merak-compute-vm-worker:test-new -f docker/compute-vm-worker.Dockerfile .
+	docker push meraksim/merak-compute-vm-worker:test-new
 
 .PHONY: docker-agent
 docker-agent:
@@ -205,7 +205,7 @@ kind-base:
 .PHONY: kind
 kind:
 	make kind-base
-	kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
+	kubectl kustomize deployments/kubernetes/test --enable-helm | kubectl apply -f -
 
 .PHONY: kind-test
 kind-test:
@@ -219,17 +219,7 @@ kind-ci:
 
 .PHONY: deploy
 deploy:
-	yes | sudo kubeadm reset
-	sudo rm -rf /root/work && sudo kubeadm init --pod-network-cidr 10.244.0.0/16
-	mkdir -p $HOME/.kube
-	yes | sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-	sudo chown $(id -u):$(id -g) $HOME/.kube/config
-	kubectl taint node $(hostname) node-role.kubernetes.io/control plane:NoSchedule-
-	kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-	linkerd install --crds | kubectl apply -f -
-	linkerd install | kubectl apply -f -
-	linkerd check
-	kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
+	./tools/deploy-kubeadm.sh
 
 .PHONY: clean
 clean:
