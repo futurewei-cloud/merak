@@ -40,7 +40,7 @@ func main() {
 		log.Println("Temporal environment variable not set, using default address.")
 		temporal_address = constants.LOCALHOST
 	}
-	rps, ok := os.LookupEnv(constants.TEMPORAL_CONCURRENCY_ENV)
+	rps, ok := os.LookupEnv(constants.TEMPORAL_RPS_ENV)
 	if !ok {
 		log.Println("RPS environment variable not set, using default.")
 		rps = common.DEFAULT_WORKER_RPS
