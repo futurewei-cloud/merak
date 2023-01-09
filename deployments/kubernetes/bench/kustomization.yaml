@@ -1,0 +1,152 @@
+# MIT License
+# Copyright(c) 2022 Futurewei Cloud
+#     Permission is hereby granted,
+#     free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+#     including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+#     to whom the Software is furnished to do so, subject to the following conditions:
+#     The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+#     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+bases:
+- ../base
+- https://github.com/futurewei-cloud/alcor.git/kubernetes
+- https://github.com/networkop/meshnet-cni.git/manifests/base
+images:
+# Alcor DB Images
+- name: ignite_alcor:lib8
+  newName: yanmo96/ignite_alcor
+  newTag: "rio"
+
+# Alcor Service Images
+- name: network_config_manager:v1.0
+  newName: cjchung4849/network_config_manager
+  newTag: "1005"
+
+- name: api_gateway:v1.0
+  newName: yanmo96/api_gateway
+  newTag: "portmanagertest1"
+
+- name: data_plane_manager:v1.0
+  newName: yanmo96/dpm
+  newTag: "portmanagertest1"
+
+- name: elastic_ip_manager:v1.0
+  newName: yanmo96/elastic_ip_manager
+  newTag: "portmanagertest1"
+
+- name: gateway_manager:v1.0
+  newName: yanmo96/gateway_manager
+  newTag: "portmanagertest1"
+
+- name: mac_manager:v1.0
+  newName: yanmo96/mac_manager
+  newTag: "portmanagertest1"
+
+- name: node_manager:v1.0
+  newName: yanmo96/node_manager
+  newTag: "portmanagertest1"
+
+- name: port_manager:v1.0
+  newName: yanmo96/port_manager
+  newTag: "5fceae8"
+
+- name: private_ip_manager:v1.0
+  newName: yanmo96/private_ip_manager
+  newTag: "portmanagertest1"
+
+- name: quota_manager:v1.0
+  newName: yanmo96/quota_manager
+  newTag: "portmanagertest1"
+
+- name: route_manager:v1.0
+  newName: yanmo96/route_manager
+  newTag: "5fceae8"
+
+- name: security_group_manager:v1.0
+  newName: yanmo96/security_group_manager
+  newTag: "portmanagertest1"
+
+- name: subnet_manager:v1.0
+  newName: yanmo96/subnet_manager
+  newTag: "portmanagertest1"
+
+- name: vpc_manager:v1.0
+  newName: yanmo96/vpc_manager
+  newTag: "5fceae8"
+
+replicas:
+# Merak Service
+- name: merak-compute-vm-worker
+  count: 1
+# Alcor Service
+- name: apimanager
+  count: 1
+- name: dataplanemanager
+  count: 1
+- name: eipmanager
+  count: 1
+- name: gatewaymanager
+  count: 1
+- name: macmanager
+  count: 1
+- name: netwconfigmanager
+  count: 1
+- name: nodemanager
+  count: 1
+- name: ipmanager
+  count: 1
+- name: portmanager
+  count: 1
+- name: quotamanager
+  count: 1
+- name: routemanager
+  count: 1
+- name: sgmanager
+  count: 1
+- name: subnetmanager
+  count: 1
+- name: vpcmanager
+  count: 1
+# Alcor DB
+- name: ignite-alcor-dpm
+  count: 1
+- name: ignite-alcor-ip
+  count: 1
+- name: ignite-alcor-mac
+  count: 1
+- name: ignite-alcor-ncm
+  count: 1
+- name: ignite-alcor-port
+  count: 1
+- name: ignite-alcor
+  count: 1
+
+configMapGenerator:
+- name: api-configmap
+  namespace: default
+  behavior: replace
+  files:
+    - alcor/api-gateway/application.properties
+
+# Temporal Helm Chart
+helmCharts:
+- releaseName: temporal
+  repo: https://charts.wener.tech
+  name: temporal
+  version: 0.15.1
+  valuesInline:
+    server:
+      replicatCount: 1
+    cassandra:
+      config:
+        cluster_size: 1
+    prometheus:
+      enabled: false
+    grafana:
+      enabled: false
+    elasticsearch:
+      enabled: false

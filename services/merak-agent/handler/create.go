@@ -84,21 +84,24 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.CreateVethPair(MerakMetrics)
-	if err != nil {
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Inner and outer veth creation failed!",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-			Port: &pb.ReturnPortInfo{
-				Status: common_pb.Status_ERROR,
-			},
-		}, err
+	_, ok = os.LookupEnv(constants.AGENT_MODE_ENV)
+	if !ok {
+		err = evm.UpdatePort(in, RemoteServer, MerakMetrics)
+		if err != nil {
+			return &pb.AgentReturnInfo{
+				ReturnMessage: "Failed to update port",
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+				Port: &pb.ReturnPortInfo{
+					Status: common_pb.Status_ERROR,
+				},
+			}, err
+		}
 	}
 
-	err = evm.MoveVethToNamespace(MerakMetrics)
+	err = evm.MoveDeviceToNamespace(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
-			ReturnMessage: "Move veth into namespace failed!",
+			ReturnMessage: "Failed to move device to namespace",
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 			Port: &pb.ReturnPortInfo{
 				Status: common_pb.Status_ERROR,
@@ -109,40 +112,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 	err = evm.AssignIP(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed to give inner veth IP!",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-			Port: &pb.ReturnPortInfo{
-				Status: common_pb.Status_ERROR,
-			},
-		}, err
-	}
-
-	err = evm.BringInnerVethUp(MerakMetrics)
-	if err != nil {
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed bring up inner veth!",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-			Port: &pb.ReturnPortInfo{
-				Status: common_pb.Status_ERROR,
-			},
-		}, err
-	}
-
-	err = evm.SetMTUProbing(MerakMetrics)
-	if err != nil {
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed to set MTU probing!",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-			Port: &pb.ReturnPortInfo{
-				Status: common_pb.Status_ERROR,
-			},
-		}, err
-	}
-
-	err = evm.BringOuterVethUp(MerakMetrics)
-	if err != nil {
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed to bring up outer veth!",
+			ReturnMessage: "Failed to give tap IP!",
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 			Port: &pb.ReturnPortInfo{
 				Status: common_pb.Status_ERROR,
@@ -172,61 +142,6 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	err = evm.AddGateway(MerakMetrics)
-	if err != nil {
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed add default gw!",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-			Port: &pb.ReturnPortInfo{
-				Status: common_pb.Status_ERROR,
-			},
-		}, err
-	}
-
-	err = evm.CreateBridge(MerakMetrics)
-	if err != nil {
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed to create bridge!",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-			Port: &pb.ReturnPortInfo{
-				Status: common_pb.Status_ERROR,
-			},
-		}, err
-	}
-
-	err = evm.BringBridgeUp(MerakMetrics)
-	if err != nil {
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed to bring bridge up!",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-			Port: &pb.ReturnPortInfo{
-				Status: common_pb.Status_ERROR,
-			},
-		}, err
-	}
-
-	err = evm.AddVethToBridge(MerakMetrics)
-	if err != nil {
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed to add veth to bridge!",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-			Port: &pb.ReturnPortInfo{
-				Status: common_pb.Status_ERROR,
-			},
-		}, err
-	}
-
-	err = evm.AddDeviceToBridge(MerakMetrics)
-	if err != nil {
-		return &pb.AgentReturnInfo{
-			ReturnMessage: "Failed to add tap to bridge",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-			Port: &pb.ReturnPortInfo{
-				Status: common_pb.Status_ERROR,
-			},
-		}, err
-	}
-
 	err = evm.BringDeviceUp(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
@@ -238,22 +153,28 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	log.Println("Successfully created devices for evm ", evm.GetName())
-
-	_, ok = os.LookupEnv(constants.AGENT_MODE_ENV)
-	if !ok {
-		err = evm.UpdatePort(in, RemoteServer, MerakMetrics)
-		if err != nil {
-			return &pb.AgentReturnInfo{
-				ReturnMessage: "Failed to update port",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
-				Port: &pb.ReturnPortInfo{
-					Status: common_pb.Status_ERROR,
-				},
-			}, err
-		}
+	err = evm.AddGateway(MerakMetrics)
+	if err != nil {
+		return &pb.AgentReturnInfo{
+			ReturnMessage: "Failed add default gw!",
+			ReturnCode:    common_pb.ReturnCode_FAILED,
+			Port: &pb.ReturnPortInfo{
+				Status: common_pb.Status_ERROR,
+			},
+		}, err
 	}
 
+	err = evm.SetMTUProbing(MerakMetrics)
+	if err != nil {
+		return &pb.AgentReturnInfo{
+			ReturnMessage: "Failed to set MTU probing!",
+			ReturnCode:    common_pb.ReturnCode_FAILED,
+			Port: &pb.ReturnPortInfo{
+				Status: common_pb.Status_ERROR,
+			},
+		}, err
+	}
+	log.Println("Successfully created devices for evm ", evm.GetName())
 	return &pb.AgentReturnInfo{
 		ReturnMessage: "Create Success",
 		ReturnCode:    common_pb.ReturnCode_OK,

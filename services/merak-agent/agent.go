@@ -83,7 +83,7 @@ func main() {
 		http.Handle("/metrics", promhttp.HandlerFor(
 			handler.PrometheusRegistry,
 			promhttp.HandlerOpts{Registry: handler.PrometheusRegistry}))
-		http.ListenAndServe(fmt.Sprintf(":%d", *gRPCPort), nil)
+		http.ListenAndServe(fmt.Sprintf(":%d", *prometheusPort), nil)
 	}()
 
 	pb.RegisterMerakAgentServiceServer(gRPCServer, &handler.Server{})

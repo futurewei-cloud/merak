@@ -67,11 +67,10 @@ The Merak agent will then call the Network Provider's plugin to do additional co
 
 For example, in the case of Alcor the following steps will be taken by the plugin.
 
-1. Create a Linux bridge
-2. Create a Tap device
-3. Attach both the veth device in the root namespace and Tap device to the Linux bridge
-4. Attach the Tap Device to OVS.
-5. Call Alcor's rest API to create/update port.
+1. Create a Tap device
+2. Call Alcor's rest API to create/update port.
+3. Move the tap to a network namespace
+
 
 #### Alcor
 
