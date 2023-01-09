@@ -19,7 +19,6 @@ images:
 - name: meraksim/merak-compute-vm-worker
   newTag: test
 resources:
-- temporal.test.yaml
 - test.driver.yaml
 - test.vhost.yaml
 - service.account.yaml
@@ -143,3 +142,21 @@ patches:
       name: sdn-controller
       namespace: merak
 
+# Temporal Helm Chart
+helmCharts:
+- releaseName: temporal
+  repo: https://charts.wener.tech
+  name: temporal
+  version: 0.15.1
+  valuesInline:
+    server:
+      replicatCount: 1
+    cassandra:
+      config:
+        cluster_size: 1
+    prometheus:
+      enabled: false
+    grafana:
+      enabled: false
+    elasticsearch:
+      enabled: false

@@ -97,6 +97,7 @@ func main() {
 	log.Println("Connected to DB!")
 
 	w := worker.New(c, common.VM_TASK_QUEUE, worker.Options{
+		MaxConcurrentWorkflowTaskExecutionSize:  2,
 		MaxConcurrentActivityExecutionSize:      concurrency_int,
 		WorkerActivitiesPerSecond:               rps_int,
 		MaxConcurrentLocalActivityExecutionSize: concurrency_int,

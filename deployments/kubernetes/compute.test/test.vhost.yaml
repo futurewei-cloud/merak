@@ -12,7 +12,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: vhost0
+  name: vhost-0
 spec:
   serviceAccountName: merak-compute
   containers:

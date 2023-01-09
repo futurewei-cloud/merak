@@ -72,12 +72,12 @@ func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 	logger.Info("Workflow: VmCreate minimal port activities completed for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
 
 	wf := workflow.ExecuteLocalActivity(ctx, activities.PortBulkCreate, vms, podIP)
-	logger.Info("Workflow: VmCreate bulk port add started!")
+	logger.Info("Workflow: VmCreate bulk port add started at pod IP " + podIP)
 	err = wf.Get(ctx, nil)
 	if err != nil {
 		logger.Info("Workflow: VmCreate bulk port add failed!")
 	}
-	logger.Info("Workflow: VmCreate bulk port add completed!")
+	logger.Info("Workflow: VmCreate bulk port add completed at pod IP " + podIP)
 
 	//Create VMCreate and Port Update
 	var futuresCreate []workflow.Future

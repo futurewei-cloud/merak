@@ -194,7 +194,6 @@ docker-all-test:
 	docker push meraksim/merak-topo:test
 	docker push meraksim/scenario-manager:test
 
-
 .PHONY: kind-base
 kind-base:
 	kind delete cluster
@@ -202,10 +201,11 @@ kind-base:
 	linkerd install --crds | kubectl apply -f -
 	linkerd install | kubectl apply -f -
 	linkerd check
+
 .PHONY: kind
 kind:
 	make kind-base
-	kubectl kustomize deployments/kubernetes/test --enable-helm | kubectl apply -f -
+	kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
 
 .PHONY: kind-test
 kind-test:

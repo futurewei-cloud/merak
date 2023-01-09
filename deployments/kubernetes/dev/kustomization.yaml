@@ -18,12 +18,6 @@ bases:
 resources:
 - temporal.test.yaml
 images:
-# Merak Images
-- name: meraksim/merak-compute
-  newTag: test
-
-- name: meraksim/merak-compute-vm-worker
-  newTag: test
 # Alcor DB Images
 - name: ignite_alcor:lib8
   newName: yanmo96/ignite_alcor
