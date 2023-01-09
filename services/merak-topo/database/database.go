@@ -122,6 +122,9 @@ func FindEntity(id string, prefix string, entity interface{}) error {
 
 func FindHostEntity(id string, prefix string) (HostNode, error) {
 	var entity HostNode
+	entity.Ip = "X.X.X.X"
+	entity.Status = STATUS_NONE
+	entity.Routing_rule = []string{"Initial"}
 
 	errs_flag := 0
 	var err_return error
@@ -147,6 +150,13 @@ func FindHostEntity(id string, prefix string) (HostNode, error) {
 
 func FindComputeEntity(id string, prefix string) (ComputeNode, error) {
 	var entity ComputeNode
+	entity.ContainerIp = "X.X.X.X"
+	entity.DatapathIp = "X.X.X.X"
+	entity.Id = "XXX"
+	entity.Mac = "XXXXX"
+	entity.Name = "Initial"
+	entity.Status = STATUS_NONE
+	entity.Veth = "Initial"
 	errs_flag := 0
 	var err_return error
 

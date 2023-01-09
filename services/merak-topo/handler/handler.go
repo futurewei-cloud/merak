@@ -40,6 +40,18 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	err_flag := 0
 	errs := errors.New("request DEPLOY- fails to create topology")
 
+	var aca_image string
+	var ovs_image string
+	var namespace string
+
+	for _, img := range images {
+		if strings.Contains(img.Name, "ACA") {
+			aca_image = img.Registry
+		} else if strings.Contains(img.Name, "OVS") {
+			ovs_image = img.Registry
+		}
+	}
+
 	var err_return error
 
 	utils.Logger.Debug("request DEPLOY details", "Vhost number", aca_num, "Rack number", rack_num, "Vhosts per rack", aca_per_rack, "Ports per vswitch", ports_per_vswitch)
@@ -149,6 +161,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 	for _, node := range topo.Vnodes {
 		var cnode database.ComputeNode
+		var crm pb_common.InternalComputeInfo
 		if strings.Contains(node.Name, "vhost") {
 			cnode.Name = node.Name
 			cnode.Id = node.Id
@@ -166,69 +179,67 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 				err_flag = 1
 			}
-		}
-
-	}
-
-	for _, node := range topo.Vnodes {
-		if strings.Contains(node.Name, "vhost") {
-			var cnode database.ComputeNode
-			var crm pb_common.InternalComputeInfo
-
-			c, err := database.FindComputeEntity(topo_id[:5]+":"+node.Name, "")
-
-			cnode = c
-
-			if err != nil {
-				utils.Logger.Error("can't get compute node from DB", topo_id+":"+node.Name, err.Error())
-				err_flag = 1
-			}
-
 			crm.Id = cnode.Id
 			crm.Name = cnode.Name
 			crm.DatapathIp = cnode.DatapathIp
-			crm.ContainerIp = cnode.ContainerIp
 			crm.Mac = cnode.Mac
 			crm.Veth = cnode.Veth
-			if cnode.Status == database.STATUS_READY {
-				crm.Status = pb_common.Status_READY
-			} else if cnode.Status == database.STATUS_DELETING {
-				crm.Status = pb_common.Status_DELETING
-			} else if cnode.Status == database.STATUS_DEPLOYING {
-				crm.Status = pb_common.Status_DEPLOYING
-			} else {
-				crm.Status = pb_common.Status_NONE
-			}
-			if cnode.OperationType == database.OPERATION_CREATE {
-				crm.OperationType = pb_common.OperationType_CREATE
-			} else if cnode.OperationType == database.OPERATION_INFO {
-				crm.OperationType = pb_common.OperationType_INFO
-			} else if cnode.OperationType == database.OPERATION_DELETE {
-				crm.OperationType = pb_common.OperationType_DELETE
-			} else if cnode.OperationType == database.OPERATION_UPDATE {
-				crm.OperationType = pb_common.OperationType_UPDATE
-			}
-
+			crm.Status = pb_common.Status_DEPLOYING
+			crm.OperationType = pb_common.OperationType_CREATE
 			returnMessage.ComputeNodes = append(returnMessage.ComputeNodes, &crm)
 
 		}
 
 	}
+
+	// for _, node := range topo.Vnodes {
+	// 	if strings.Contains(node.Name, "vhost") {
+	// 		var cnode database.ComputeNode
+	// 		var crm pb_common.InternalComputeInfo
+
+	// 		c, err := database.FindComputeEntity(topo_id[:5]+":"+node.Name, "")
+
+	// 		cnode = c
+
+	// 		if err != nil {
+	// 			utils.Logger.Error("can't get compute node from DB", topo_id+":"+node.Name, err.Error())
+	// 			err_flag = 1
+	// 		}
+
+	// 		crm.Id = cnode.Id
+	// 		crm.Name = cnode.Name
+	// 		crm.DatapathIp = cnode.DatapathIp
+	// 		crm.ContainerIp = cnode.ContainerIp
+	// 		crm.Mac = cnode.Mac
+	// 		crm.Veth = cnode.Veth
+	// 		if cnode.Status == database.STATUS_READY {
+	// 			crm.Status = pb_common.Status_READY
+	// 		} else if cnode.Status == database.STATUS_DELETING {
+	// 			crm.Status = pb_common.Status_DELETING
+	// 		} else if cnode.Status == database.STATUS_DEPLOYING {
+	// 			crm.Status = pb_common.Status_DEPLOYING
+	// 		} else {
+	// 			crm.Status = pb_common.Status_NONE
+	// 		}
+	// 		if cnode.OperationType == database.OPERATION_CREATE {
+	// 			crm.OperationType = pb_common.OperationType\_CREATE
+	// 		} else if cnode.OperationType == database.OPERATION_INFO {
+	// 			crm.OperationType = pb_common.OperationType_INFO
+	// 		} else if cnode.OperationType == database.OPERATION_DELETE {
+	// 			crm.OperationType = pb_common.OperationType_DELETE
+	// 		} else if cnode.OperationType == database.OPERATION_UPDATE {
+	// 			crm.OperationType = pb_common.OperationType_UPDATE
+	// 		}
+
+	// 		returnMessage.ComputeNodes = append(returnMessage.ComputeNodes, &crm)
+
+	// 	}
+
+	// }
+
 	elaps2 := time.Since(start1)
 
 	utils.Logger.Info("request DEPLOY", "Complete: Return compute nodes and k8s cluster information to Scenario Manager (in second)", elaps2)
-
-	var aca_image string
-	var ovs_image string
-	var namespace string
-
-	for _, img := range images {
-		if strings.Contains(img.Name, "ACA") {
-			aca_image = img.Registry
-		} else if strings.Contains(img.Name, "OVS") {
-			ovs_image = img.Registry
-		}
-	}
 
 	namespace = "merak-" + topo_id[:5]
 
@@ -237,6 +248,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	k8client.CoreV1().Namespaces().Create(context.Background(), nsSpec, metav1.CreateOptions{})
 
 	go Topo_deploy(k8client, aca_image, ovs_image, topo, aca_parameters, namespace)
+	// Topo_deploy(k8client, aca_image, ovs_image, topo, aca_parameters, namespace)
 
 	if err_flag == 1 {
 		err_return = errs
@@ -390,12 +402,6 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 	var err_return error
 
 	namespace := "merak-" + topo_id[:5]
-	err0 := UpdateComputenodeInfo(k8client, topo_id, namespace)
-
-	if err0 != nil {
-		utils.Logger.Error("can't update compute node info", topo_id, err0.Error())
-		err_flag = 1
-	}
 
 	topo, err := database.FindTopoEntity(topo_id[:5], "")
 
@@ -478,6 +484,15 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 		}
 
 	}
+
+	go UpdateComputenodeInfo(k8client, topo_id, namespace)
+
+	// err0 := UpdateComputenodeInfo(k8client, topo_id, namespace)
+
+	// if err0 != nil {
+	// 	utils.Logger.Error("can't update compute node info", topo_id, err0.Error())
+	// 	err_flag = 1
+	// }
 
 	if err_flag == 1 {
 		err_return = errs
