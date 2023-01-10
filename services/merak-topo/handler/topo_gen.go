@@ -1,21 +1,20 @@
 /*
 MIT License
 Copyright(c) 2022 Futurewei Cloud
-    Permission is hereby granted,
-    free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
-    including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
-    to whom the Software is furnished to do so, subject to the following conditions:
-    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+	Permission is hereby granted,
+	free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+	including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+	to whom the Software is furnished to do so, subject to the following conditions:
+	The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 package handler
 
 import (
-	"fmt"
 	"log"
-
 	"strconv"
 	"strings"
 
@@ -45,7 +44,7 @@ func ip_gen(vhost_idx int, data_plane_cidr string, upper int) string {
 	return ip
 }
 
-func create_vswitches(racks []database.Vnode, init_idx_vs int, ports_per_vswitch int, uid_initial int) (error, []database.Vnode, []database.Vnode) {
+func create_vswitches(racks []database.Vnode, init_idx_vs int, ports_per_vswitch int, uid_initial int) ([]database.Vnode, []database.Vnode) {
 	var vswitches []database.Vnode
 	var racks_attached []database.Vnode
 	num_of_vs := len(racks) / ports_per_vswitch
@@ -74,7 +73,7 @@ func create_vswitches(racks []database.Vnode, init_idx_vs int, ports_per_vswitch
 		j = j + 1
 	}
 
-	return nil, vswitches, racks_attached
+	return vswitches, racks_attached
 }
 
 func create_vhosts(init int, vhosts_per_rack int, data_plane_cidr string, upper int) []database.Vnode {
@@ -193,7 +192,7 @@ func create_and_attach_a_vswitch(vs []database.Vnode, idx_vs int, ports_per_vswi
 	return vswitch_attached, vs_attached
 }
 
-func create_and_attach_a_core(vs []database.Vnode, j int, nports int, uid_initial int) (error, database.Vnode, []database.Vnode) {
+func create_and_attach_a_core(vs []database.Vnode, j int, nports int, uid_initial int) (database.Vnode, []database.Vnode) {
 	var core database.Vnode
 
 	core.Type = "core"
@@ -204,16 +203,12 @@ func create_and_attach_a_core(vs []database.Vnode, j int, nports int, uid_initia
 	core.Nics = nics
 
 	// attach vs to the vswitch
-	err, core_attached, vs_attached := attach_vswitches_to_core(core, vs, uid_initial)
+	core_attached, vs_attached := attach_vswitches_to_core(core, vs, uid_initial)
 
-	if err != nil {
-		fmt.Printf("attach vswitch to vs error %s", err)
-	}
-
-	return err, core_attached, vs_attached
+	return core_attached, vs_attached
 }
 
-func attach_vswitches_to_core(core database.Vnode, vswitches []database.Vnode, uid_initial int) (error, database.Vnode, []database.Vnode) {
+func attach_vswitches_to_core(core database.Vnode, vswitches []database.Vnode, uid_initial int) (database.Vnode, []database.Vnode) {
 
 	var core_links []database.Vlink
 	var vswitches_attached []database.Vnode
@@ -250,10 +245,10 @@ func attach_vswitches_to_core(core database.Vnode, vswitches []database.Vnode, u
 
 	core.Flinks = core_links
 
-	return nil, core, vswitches_attached
+	return core, vswitches_attached
 }
 
-func attach_vhosts_to_rack(rack database.Vnode, hosts []database.Vnode, uid_initial int) (error, database.Vnode, []database.Vnode) {
+func attach_vhosts_to_rack(rack database.Vnode, hosts []database.Vnode, uid_initial int) (database.Vnode, []database.Vnode, error) {
 
 	var rack_links []database.Vlink
 	var hosts_attached []database.Vnode
@@ -295,7 +290,7 @@ func attach_vhosts_to_rack(rack database.Vnode, hosts []database.Vnode, uid_init
 	}
 
 	rack.Flinks = rack_links
-	return nil, rack, hosts_attached
+	return rack, hosts_attached, nil
 }
 
 func attach_racks_to_vswitch(vswitch database.Vnode, racks []database.Vnode, uid_initial int) (database.Vnode, []database.Vnode) {
@@ -341,7 +336,7 @@ func attach_racks_to_vswitch(vswitch database.Vnode, racks []database.Vnode, uid
 	return vswitch, racks_attached
 }
 
-func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_rack int, ports_per_vswitch int, data_plane_cidr string) (error, database.TopologyData) {
+func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_rack int, ports_per_vswitch int, data_plane_cidr string) (database.TopologyData, error) {
 	var topo database.TopologyData
 	upper := 250
 	nvhosts := vhost_num
@@ -374,21 +369,16 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 			init_idx_host = init_idx_host + vhosts_per_rack
 
 		}
-		err, rack_host_attached, vhs_attached := attach_vhosts_to_rack(rack, vhs, uid_initial)
-		if err != nil {
-			fmt.Printf("attach vhosts to rack error %s", err)
-		}
+		rack_host_attached, vhs_attached, _ := attach_vhosts_to_rack(rack, vhs, uid_initial)
+
 		uid_initial = uid_initial + len(vhs_attached)
 		racks = append(racks, rack_host_attached)
 		vhosts = append(vhosts, vhs_attached...)
 	}
 
-	err, vs_attached, racks_vs_attached := create_vswitches(racks, init_idx_vs, ports_per_vswitch, uid_initial)
+	vs_attached, racks_vs_attached := create_vswitches(racks, init_idx_vs, ports_per_vswitch, uid_initial)
 	uid_initial = uid_initial + len(racks)
 	init_idx_vs = init_idx_vs + len(vs_attached)
-	if err != nil {
-		fmt.Printf("create vswitches error %s", err)
-	}
 
 	racks_full_attached = append(racks_full_attached, racks_vs_attached...)
 
@@ -400,11 +390,7 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 
 	for nvswitch > ports_per_vswitch {
 		flag = true
-		err_vs, vs_upper_attached, vs_lower_attached := create_vswitches(vs_attached, init_idx_vs, ports_per_vswitch, uid_initial)
-
-		if err_vs != nil {
-			fmt.Printf("create upper layer vswitches error %s", err_vs)
-		}
+		vs_upper_attached, vs_lower_attached := create_vswitches(vs_attached, init_idx_vs, ports_per_vswitch, uid_initial)
 		uid_initial = uid_initial + len(vs_attached)
 		init_idx_vs = init_idx_vs + len(vs_upper_attached)
 
@@ -419,14 +405,9 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 		vs_to_core = vs_attached
 	}
 
-	err_core, core_attached, vs_attached := create_and_attach_a_core(vs_to_core, 1, len(vs_to_core), uid_initial)
-	if err_core != nil {
-		fmt.Printf("create and attach a core error %s", err_core)
-	}
+	core_attached, vs_attached := create_and_attach_a_core(vs_to_core, 1, len(vs_to_core), uid_initial)
 
 	vswitches = append(vswitches, vs_attached...)
-
-	log.Printf("vswitches %v", vswitches)
 
 	vnodes := append(vhosts, racks_full_attached...)
 	vnodes = append(vnodes, vswitches...)
@@ -434,8 +415,6 @@ func Create_multiple_layers_vswitches(vhost_num int, rack_num int, vhosts_per_ra
 
 	topo.Vnodes = vnodes
 
-	log.Printf("vnodes %v", vnodes)
-
-	return nil, topo
+	return topo, nil
 
 }

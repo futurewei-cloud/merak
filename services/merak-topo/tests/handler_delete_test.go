@@ -32,6 +32,8 @@ func TestTopologyDelete(t *testing.T) {
 	}
 
 	topo_id := "1topo"
+	topoPrefix := "1topo"
+	namespace := "default"
 
 	k8client, err := utils.K8sClient()
 	if err != nil {
@@ -43,7 +45,7 @@ func TestTopologyDelete(t *testing.T) {
 		log.Printf("connect to DB error %s", err1)
 	}
 
-	err4 := handler.Delete(k8client, topo_id, &returnMessage)
+	err4 := handler.Delete(k8client, topo_id, &returnMessage, topoPrefix, namespace)
 	if err4 != nil {
 		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Fail to Delete Topology."
