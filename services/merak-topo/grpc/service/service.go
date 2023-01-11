@@ -41,8 +41,11 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 	errs := errors.New("merak-topo can't handle this request")
 	var err_return error
 
-	namespace := "default"
 	topoPrefix := in.Config.GetTopologyId()[:5]
+
+	/*comment: create topology in the default namespace*/
+	// namespace := "default"
+	namespace := "merak-" + topoPrefix
 
 	utils.Logger.Info("Received request from Scenario Manager", "request", in)
 

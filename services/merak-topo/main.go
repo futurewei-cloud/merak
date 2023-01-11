@@ -27,16 +27,16 @@ import (
 // merak-top main
 func main() {
 	flag.Parse()
+	utils.Init_logger()
 
 	lis, err1 := net.Listen("tcp", fmt.Sprintf(":%d", *service.Port))
 	if err1 != nil {
-		utils.Logger.Fatal("Fail to listen", "Main", err1)
+		utils.Logger.Fatal("network fails to listen", "port service", *service.Port, "error msg", err1)
 	}
 	gRPCServer := grpc.NewServer()
 	pb.RegisterMerakTopologyServiceServer(gRPCServer, &service.Server{})
 
 	utils.Logger.Info("Starting gRPC server. ", "gRPC address", lis.Addr())
-
 	err2 := gRPCServer.Serve(lis)
 	if err2 != nil {
 		utils.Logger.Fatal("Can not connect", "gPRC server connection error", err2)
