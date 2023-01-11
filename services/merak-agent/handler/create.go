@@ -28,7 +28,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig, updatePortUrl st
 	var err error
 	var evm merakEvm.Evm
 
-	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
+	_, ok := os.LookupEnv(constants.MODE_ENV)
 	if ok {
 		evm, _ = merakEvm.NewEvm(
 			in.Name,
@@ -75,7 +75,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig, updatePortUrl st
 		}, err
 	}
 	log.Println(in)
-	_, ok = os.LookupEnv(constants.AGENT_MODE_ENV)
+	_, ok = os.LookupEnv(constants.MODE_ENV)
 	if !ok {
 		log.Println(updatePortUrl + evm.GetRemoteId())
 		err = merakEvm.UpdatePort(updatePortUrl+evm.GetRemoteId(), in, MerakMetrics, evm)
@@ -180,7 +180,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig, updatePortUrl st
 }
 
 func caseCreateMinimal(ctx context.Context, in *pb.InternalPortConfig, createMinimalPortUrl string) (*pb.AgentReturnInfo, error) {
-	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
+	_, ok := os.LookupEnv(constants.MODE_ENV)
 	if !ok {
 		evm, err := merakEvm.CreateMinimalPort(createMinimalPortUrl, in, MerakMetrics)
 		if err != nil {

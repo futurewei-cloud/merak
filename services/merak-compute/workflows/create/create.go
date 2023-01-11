@@ -1,6 +1,7 @@
 /*
 MIT License
 Copyright(c) 2022 Futurewei Cloud
+
 	Permission is hereby granted,
 	free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
 	including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
@@ -13,8 +14,10 @@ Copyright(c) 2022 Futurewei Cloud
 package create
 
 import (
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	constants "github.com/futurewei-cloud/merak/services/common"
@@ -54,30 +57,35 @@ func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 	}
 	client := agent_pb.NewMerakAgentServiceClient(conn)
 	common.ClientMapGRPC[podIP] = client
+	start := time.Now()
 
-	//Create Minimal Port
-	var futuresMinimal []workflow.Future
-	for _, vm := range vms {
-		future := workflow.ExecuteLocalActivity(ctx, activities.VmCreateMinimalPort, vm, podIP)
-		futuresMinimal = append(futuresMinimal, future)
-	}
-	logger.Info("Workflow: VmCreate minimal port activities started for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
-
-	for _, future := range futuresMinimal {
-		err = future.Get(ctx, nil)
-		if err != nil {
-			logger.Info("Workflow: VMCreate minimal port activity failed!", err)
+	// Only run these activities for alcor
+	_, ok := os.LookupEnv(constants.MODE_ENV)
+	if !ok {
+		//Create Minimal Port
+		var futuresMinimal []workflow.Future
+		for _, vm := range vms {
+			future := workflow.ExecuteLocalActivity(ctx, activities.VmCreateMinimalPort, vm, podIP)
+			futuresMinimal = append(futuresMinimal, future)
 		}
-	}
-	logger.Info("Workflow: VmCreate minimal port activities completed for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
+		logger.Info("Workflow: VmCreate minimal port activities started for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
 
-	wf := workflow.ExecuteLocalActivity(ctx, activities.PortBulkCreate, vms, podIP)
-	logger.Info("Workflow: VmCreate bulk port add started at pod IP " + podIP)
-	err = wf.Get(ctx, nil)
-	if err != nil {
-		logger.Info("Workflow: VmCreate bulk port add failed!")
+		for _, future := range futuresMinimal {
+			err = future.Get(ctx, nil)
+			if err != nil {
+				logger.Info("Workflow: VMCreate minimal port activity failed!", err)
+			}
+		}
+		logger.Info("Workflow: VmCreate minimal port activities completed for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
+
+		wf := workflow.ExecuteLocalActivity(ctx, activities.PortBulkCreate, vms, podIP)
+		logger.Info("Workflow: VmCreate bulk port add started at pod IP " + podIP)
+		err = wf.Get(ctx, nil)
+		if err != nil {
+			logger.Info("Workflow: VmCreate bulk port add failed!")
+		}
+		logger.Info("Workflow: VmCreate bulk port add completed at pod IP " + podIP)
 	}
-	logger.Info("Workflow: VmCreate bulk port add completed at pod IP " + podIP)
 
 	//Create VMCreate and Port Update
 	var futuresCreate []workflow.Future
@@ -94,9 +102,10 @@ func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 			logger.Info("Workflow: Final VMCreate port activity failed!", err)
 		}
 	}
+	t := time.Since(start)
 	logger.Info("Workflow: Final VMCreate activities completed for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
 
-	logger.Info("Workflow: All activities completed")
+	logger.Info("Workflow: All activities completed in " + t.String() + "ms")
 	defer conn.Close()
 	return nil
 }

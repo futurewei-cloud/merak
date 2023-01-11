@@ -43,7 +43,7 @@ var (
 
 func main() {
 
-	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
+	_, ok := os.LookupEnv(constants.MODE_ENV)
 	if !ok {
 		startPlugin()
 	}

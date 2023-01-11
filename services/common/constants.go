@@ -52,8 +52,8 @@ const (
 
 	LOG_LOCATION = "/var/log/merak/"
 
-	AGENT_MODE_ENV             = "mode"
-	AGENT_MODE_STANDALONE      = "standalone"
+	MODE_ENV                   = "mode"
+	MODE_STANDALONE            = "standalone"
 	AGENT_STANDALONE_IP        = "10.0.0.2"
 	AGENT_STANDALONE_MAC       = "aa:bb:cc:dd:ee:ff"
 	AGENT_STANDALONE_REMOTE_ID = "NO ALCOR"

@@ -6,7 +6,4 @@ yes | sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 kubectl taint nodes --all node-role.kubernetes.io/control-plane:NoSchedule-
 kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-linkerd install --crds | kubectl apply -f -
-linkerd install --set proxyInit.runAsRoot=true | kubectl apply -f -
-linkerd check
-kubectl kustomize deployments/kubernetes/test --enable-helm | kubectl apply -f -
+kubectl kustomize deployments/kubernetes/compute.test --enable-helm | kubectl apply -f -

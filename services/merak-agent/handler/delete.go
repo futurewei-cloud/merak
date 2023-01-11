@@ -49,7 +49,7 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig, deletePortUrl st
 		}, err
 	}
 
-	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
+	_, ok := os.LookupEnv(constants.MODE_ENV)
 	if !ok {
 		err = merakEvm.DeletePort(deletePortUrl+evm.GetRemoteId(), in, MerakMetrics, evm)
 		if err != nil {
@@ -69,7 +69,7 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig, deletePortUrl st
 		}, err
 	}
 
-	_, ok = os.LookupEnv(constants.AGENT_MODE_ENV)
+	_, ok = os.LookupEnv(constants.MODE_ENV)
 	if !ok {
 		err = evm.DeleteDevice(MerakMetrics)
 		if err != nil {

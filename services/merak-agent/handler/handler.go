@@ -75,7 +75,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 }
 
 func (s *Server) BulkPortAdd(ctx context.Context, in *pb.BulkPorts) (*pb.AgentReturnInfo, error) {
-	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
+	_, ok := os.LookupEnv(constants.MODE_ENV)
 	if !ok {
 		log.Println("Operation Bulk Port add")
 		return &pb.AgentReturnInfo{}, merakEvm.Ovsdbbulk(in.Tapnames, MerakMetrics)
