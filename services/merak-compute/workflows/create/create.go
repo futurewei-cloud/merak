@@ -31,8 +31,7 @@ import (
 )
 
 func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
-	var errors error
-	defer merakwf.MerakMetrics.GetMetrics(&errors)()
+	defer merakwf.MerakMetrics.GetMetrics(&err)()
 	retrypolicy := &temporal.RetryPolicy{
 		InitialInterval:    common.TEMPORAL_ACTIVITY_RETRY_INTERVAL,
 		BackoffCoefficient: common.TEMPORAL_ACTIVITY_BACKOFF,
