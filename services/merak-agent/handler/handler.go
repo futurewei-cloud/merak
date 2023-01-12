@@ -16,13 +16,13 @@ package handler
 import (
 	"context"
 	"errors"
-	"log"
 	"os"
 	"strconv"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	constants "github.com/futurewei-cloud/merak/services/common"
+	"github.com/futurewei-cloud/merak/services/common/logger"
 	"github.com/futurewei-cloud/merak/services/common/metrics"
 	merakEvm "github.com/futurewei-cloud/merak/services/merak-agent/evm"
 	"github.com/prometheus/client_golang/prometheus"
@@ -38,22 +38,24 @@ var (
 	PrometheusRegistry *prometheus.Registry
 )
 
+var MerakLogger *logger.MerakLog
+
 func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
-	log.Println("Received on PortHandler", in)
-	log.Println("Received on PortHandler OP", in.OperationType)
+	MerakLogger.Info("Received on PortHandler", in)
+	MerakLogger.Info("Received on PortHandler OP", in.OperationType)
 	switch op := in.OperationType; op {
 	case common_pb.OperationType_PRECREATE:
-		log.Println("Operation Create Minimal Port")
+		MerakLogger.Info("Operation Create Minimal Port")
 		createMinimalPortUrl := "http://" + RemoteServer + ":" + strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT) + "/project/" + in.Projectid + "/ports"
 		return caseCreateMinimal(ctx, in, createMinimalPortUrl)
 
 	case common_pb.OperationType_CREATE:
-		log.Println("Operation Create")
+		MerakLogger.Info("Operation Create")
 		updatePortUrl := "http://" + RemoteServer + ":" + strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT) + "/project/" + in.Projectid + "/ports/"
 		return caseCreate(ctx, in, updatePortUrl)
 
 	case common_pb.OperationType_UPDATE:
-		log.Println("Update Unimplemented")
+		MerakLogger.Info("Update Unimplemented")
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Update Unimplemented",
 			ReturnCode:    common_pb.ReturnCode_FAILED,
@@ -61,12 +63,12 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 		}, errors.New("update unimplemented")
 
 	case common_pb.OperationType_DELETE:
-		log.Println("Operation Delete")
+		MerakLogger.Info("Operation Delete")
 		deletePortUrl := "http://" + RemoteServer + ":" + strconv.Itoa(constants.ALCOR_PORT_MANAGER_PORT) + "/project/" + in.Projectid + "/ports/"
 		return caseDelete(ctx, in, deletePortUrl)
 
 	default:
-		log.Println("Unknown Operation")
+		MerakLogger.Info("Unknown Operation")
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Unknown Operation",
 			ReturnCode:    common_pb.ReturnCode_FAILED,
@@ -77,7 +79,7 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 func (s *Server) BulkPortAdd(ctx context.Context, in *pb.BulkPorts) (*pb.AgentReturnInfo, error) {
 	_, ok := os.LookupEnv(constants.MODE_ENV)
 	if !ok {
-		log.Println("Operation Bulk Port add")
+		MerakLogger.Info("Operation Bulk Port add")
 		return &pb.AgentReturnInfo{}, merakEvm.Ovsdbbulk(in.Tapnames, MerakMetrics)
 	} else {
 		return &pb.AgentReturnInfo{}, nil

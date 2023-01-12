@@ -16,7 +16,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -27,6 +26,7 @@ import (
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	constants "github.com/futurewei-cloud/merak/services/common"
+	"github.com/futurewei-cloud/merak/services/common/logger"
 	"github.com/futurewei-cloud/merak/services/common/metrics"
 
 	"github.com/futurewei-cloud/merak/services/merak-agent/handler"
@@ -38,7 +38,7 @@ import (
 
 var (
 	gRPCPort       = flag.Int("gRPC port", constants.AGENT_GRPC_SERVER_PORT, "The server port")
-	prometheusPort = flag.Int("Prometheus port", constants.AGENT_PROMETHEUS_PORT, "The server port")
+	prometheusPort = flag.Int("Prometheus port", constants.PROMETHEUS_PORT, "The server port")
 )
 
 func main() {
@@ -47,12 +47,16 @@ func main() {
 	if !ok {
 		startPlugin()
 	}
-
+	var err error
+	handler.MerakLogger, err = logger.NewLogger(logger.ERROR, "merak-agent")
+	if err != nil {
+		handler.MerakLogger.Fatal("Failed to create logger\n", err)
+	}
 	// Start gRPC Server
 	flag.Parse()
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *gRPCPort))
 	if err != nil {
-		log.Fatalln("ERROR: Failed to listen", err)
+		handler.MerakLogger.Fatal("ERROR: Failed to listen", err)
 	}
 
 	enforcement := keepalive.EnforcementPolicy{
@@ -73,7 +77,7 @@ func main() {
 	go func() {
 		hostname, err := os.Hostname()
 		if err != nil {
-			log.Fatal("Unable to get hostname!")
+			handler.MerakLogger.Fatal("Unable to get hostname!\n")
 		}
 		// Prometheus no hyphens allowed
 		hostname = "vhost" + strings.Split(hostname, "-")[1]
@@ -87,38 +91,38 @@ func main() {
 	}()
 
 	pb.RegisterMerakAgentServiceServer(gRPCServer, &handler.Server{})
-	log.Printf("Starting gRPC server. Listening at %v", lis.Addr())
+	handler.MerakLogger.Info("Starting gRPC server. Listening at %v", lis.Addr())
 	if err := gRPCServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v\n", err)
+		handler.MerakLogger.Fatal("failed to serve: %v\n", err)
 	}
 }
 
 func startPlugin() {
 	if len(os.Args) < 3 {
-		log.Fatal("Not enough arguments")
+		handler.MerakLogger.Fatal("Not enough arguments\n")
 	}
 	remote_server := os.Args[1]
 	if net.ParseIP(remote_server) == nil {
-		log.Fatalf("Invalid IP address %s\n", remote_server)
+		handler.MerakLogger.Fatal("Invalid IP address %s\n", remote_server)
 	}
 	handler.RemoteServer = remote_server
 	remote_port := os.Args[2]
 	remote_port_int, err := strconv.Atoi(os.Args[2])
 
 	if err != nil {
-		log.Fatalf("Port: %d is not a valid number!\n", remote_port_int)
+		handler.MerakLogger.Fatal("Port: %d is not a valid number!\n", remote_port_int)
 	}
 	if remote_port_int > constants.MAX_PORT || remote_port_int < constants.MIN_PORT {
-		log.Fatalf("Port: %d is not within a valid range!\n", remote_port_int)
+		handler.MerakLogger.Fatal("Port: %d is not within a valid range!\n", remote_port_int)
 	}
 	cmdString := "service rsyslog restart && /etc/init.d/openvswitch-switch restart && /merak-bin/AlcorControlAgent -d -a " + remote_server + " -p " + remote_port
-	log.Println("Executing command " + cmdString)
+	handler.MerakLogger.Info("Executing command " + cmdString)
 	// Start plugin
 	cmd := exec.Command("bash", "-c", cmdString)
 	cmd.Dir = "/"
 	err = cmd.Start()
 	if err != nil {
-		log.Fatal(err)
+		handler.MerakLogger.Fatal("failed to start plugin", err)
 	}
-	log.Printf("Started ACA %d\n", cmd.Process.Pid)
+	handler.MerakLogger.Info("Started ACA %d\n", cmd.Process.Pid)
 }
