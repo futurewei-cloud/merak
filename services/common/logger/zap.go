@@ -267,21 +267,21 @@ func (log *MerakLog) Flush() error {
 	return e
 }
 
-func LevelEnvParser(level string) (Level, error) {
+func LevelEnvParser(level string) Level {
 	switch strings.ToLower(level) {
 	case "debug":
-		return DEBUG, nil
+		return DEBUG
 	case "info":
-		return INFO, nil
+		return INFO
 	case "warn":
-		return WARN, nil
+		return WARN
 	case "error":
-		return ERROR, nil
+		return ERROR
 	case "fatal":
-		return FATAL, nil
+		return FATAL
 	case "panic":
-		return PANIC, nil
+		return PANIC
 	default:
-		return -1, errors.New("invalid log level")
+		return INFO
 	}
 }

@@ -16,6 +16,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -48,7 +49,12 @@ func main() {
 		startPlugin()
 	}
 	var err error
-	handler.MerakLogger, err = logger.NewLogger(logger.ERROR, "merak-agent")
+	val, ok := os.LookupEnv(constants.MODE_ENV)
+	if !ok {
+		log.Println("No log level specified. Defaulting to INFO")
+		val = "INFO"
+	}
+	handler.MerakLogger, err = logger.NewLogger(logger.LevelEnvParser(val), "merak-agent")
 	if err != nil {
 		handler.MerakLogger.Fatal("Failed to create logger\n", err)
 	}
