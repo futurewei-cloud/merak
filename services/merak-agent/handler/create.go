@@ -15,7 +15,6 @@ package handler
 
 import (
 	"context"
-	"log"
 	"os"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
@@ -74,10 +73,10 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig, updatePortUrl st
 			},
 		}, err
 	}
-	log.Println(in)
+	MerakLogger.Info("In ", in)
 	_, ok = os.LookupEnv(constants.MODE_ENV)
 	if !ok {
-		log.Println(updatePortUrl + evm.GetRemoteId())
+		MerakLogger.Info(updatePortUrl + evm.GetRemoteId())
 		err = merakEvm.UpdatePort(updatePortUrl+evm.GetRemoteId(), in, MerakMetrics, evm)
 		if err != nil {
 			return &pb.AgentReturnInfo{
@@ -166,16 +165,18 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig, updatePortUrl st
 			},
 		}, err
 	}
-	log.Println("Successfully created devices for evm ", evm.GetName())
+
+	returnPort := &pb.ReturnPortInfo{
+		Ip:       evm.GetIP(),
+		Deviceid: evm.GetDeviceId(),
+		Remoteid: evm.GetRemoteId(),
+		Status:   common_pb.Status_DONE,
+	}
+	MerakLogger.Info("Successfully created devices for evm ", evm.GetName())
 	return &pb.AgentReturnInfo{
 		ReturnMessage: "Create Success",
 		ReturnCode:    common_pb.ReturnCode_OK,
-		Port: &pb.ReturnPortInfo{
-			Ip:       evm.GetIP(),
-			Deviceid: evm.GetDeviceId(),
-			Remoteid: evm.GetRemoteId(),
-			Status:   common_pb.Status_DONE,
-		},
+		Port:          returnPort,
 	}, nil
 }
 
