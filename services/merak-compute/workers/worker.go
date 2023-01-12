@@ -15,21 +15,30 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
 	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	constants "github.com/futurewei-cloud/merak/services/common"
+	"github.com/futurewei-cloud/merak/services/common/metrics"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
+	workflow "github.com/futurewei-cloud/merak/services/merak-compute/workflows"
 	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/create"
 	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/delete"
 	"github.com/go-redis/redis/v9"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 )
+
+var prometheusPort = flag.Int("Prometheus port", constants.PROMETHEUS_PORT, "The server port")
 
 var ctx = context.Background()
 
@@ -111,6 +120,14 @@ func main() {
 	w.RegisterActivity(activities.VmDelete)
 	log.Println("Registered VM Workflows and activities.")
 	log.Println("Starting VM Worker.")
+	go func() {
+		workflow.PrometheusRegistry = prometheus.NewRegistry()
+		workflow.MerakMetrics = metrics.NewMetrics(workflow.PrometheusRegistry, "ComputeWorker")
+		http.Handle("/metrics", promhttp.HandlerFor(
+			workflow.PrometheusRegistry,
+			promhttp.HandlerOpts{Registry: workflow.PrometheusRegistry}))
+		http.ListenAndServe(fmt.Sprintf(":%d", *prometheusPort), nil)
+	}()
 	err = w.Run(worker.InterruptCh())
 	if err != nil {
 		log.Fatalln("Unable to start worker", err)

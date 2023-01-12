@@ -17,12 +17,13 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
+	merakwf "github.com/futurewei-cloud/merak/services/merak-compute/workflows"
+
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 	"google.golang.org/grpc"
@@ -30,6 +31,8 @@ import (
 )
 
 func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
+	var errors error
+	defer merakwf.MerakMetrics.GetMetrics(&errors)()
 	retrypolicy := &temporal.RetryPolicy{
 		InitialInterval:    common.TEMPORAL_ACTIVITY_RETRY_INTERVAL,
 		BackoffCoefficient: common.TEMPORAL_ACTIVITY_BACKOFF,
@@ -57,7 +60,6 @@ func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 	}
 	client := agent_pb.NewMerakAgentServiceClient(conn)
 	common.ClientMapGRPC[podIP] = client
-	start := time.Now()
 
 	// Only run these activities for alcor
 	_, ok := os.LookupEnv(constants.MODE_ENV)
@@ -102,10 +104,8 @@ func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 			logger.Info("Workflow: Final VMCreate port activity failed!", err)
 		}
 	}
-	t := time.Since(start)
 	logger.Info("Workflow: Final VMCreate activities completed for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
 
-	logger.Info("Workflow: All activities completed in " + t.String() + "ms")
 	defer conn.Close()
 	return nil
 }
