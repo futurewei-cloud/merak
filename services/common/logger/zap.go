@@ -21,6 +21,7 @@ import (
 	"log/syslog"
 	"os"
 	"strconv"
+	"strings"
 
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/pkg/errors"
@@ -264,4 +265,23 @@ func (log *MerakLog) Flush() error {
 		}
 	}
 	return e
+}
+
+func LevelEnvParser(level string) (Level, error) {
+	switch strings.ToLower(level) {
+	case "debug":
+		return DEBUG, nil
+	case "info":
+		return INFO, nil
+	case "warn":
+		return WARN, nil
+	case "error":
+		return ERROR, nil
+	case "fatal":
+		return FATAL, nil
+	case "panic":
+		return PANIC, nil
+	default:
+		return -1, errors.New("invalid log level")
+	}
 }
