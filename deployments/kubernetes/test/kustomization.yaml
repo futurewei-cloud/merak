@@ -15,9 +15,6 @@ bases:
 - ../base
 - https://github.com/futurewei-cloud/alcor.git/kubernetes
 - https://github.com/networkop/meshnet-cni.git/manifests/base
-replicas:
-- name: merak-compute-vm-worker
-  count: 1
 images:
 # Merak
 - name: meraksim/merak-compute

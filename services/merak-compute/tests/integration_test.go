@@ -15,21 +15,27 @@ package test
 
 import (
 	"context"
+	"log"
+	"net"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
 func TestGrpcClient(t *testing.T) {
+	totalPods := 100
+	numVms := 100
 	var compute_address strings.Builder
 	compute_address.WriteString(constants.COMPUTE_GRPC_SERVER_ADDRESS)
 	compute_address.WriteString(":")
@@ -49,27 +55,85 @@ func TestGrpcClient(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create kube client!: %v\n", err.Error())
 	}
-	kubePod, err := clientset.CoreV1().Pods("default").Get(ctx, "vhost-0", metav1.GetOptions{})
-	if err != nil {
-		t.Fatalf("Failed to get merak-agent pod! %v\n", err)
+	var sc corev1.SecurityContext
+	pri := true
+	sc.Privileged = &pri
+	allow_pri := true
+	sc.AllowPrivilegeEscalation = &allow_pri
+	var capab corev1.Capabilities
+
+	capab.Add = append(capab.Add, "NET_ADMIN")
+	capab.Add = append(capab.Add, "SYS_TIME")
+	sc.Capabilities = &capab
+
+	podConfigs := []*common_pb.InternalComputeInfo{}
+	pods := []*pb.InternalVMPod{}
+	for i := 0; i < totalPods; i++ {
+		newPod := &corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "vhost-" + strconv.Itoa(i),
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:            "vhost-" + strconv.Itoa(i),
+						Image:           "meraksim/merak-agent:bench",
+						ImagePullPolicy: "Always",
+						SecurityContext: &sc,
+						Ports: []corev1.ContainerPort{
+							{ContainerPort: constants.AGENT_GRPC_SERVER_PORT},
+							{ContainerPort: constants.PROMETHEUS_PORT},
+						},
+						Env: []corev1.EnvVar{
+							{
+								Name: "mode", Value: "standalone",
+							},
+						},
+					},
+				},
+			},
+		}
+		_, err_create := clientset.CoreV1().Pods("default").Create(context.Background(), newPod, metav1.CreateOptions{})
+		if err_create != nil {
+			log.Fatal(err_create)
+		}
 	}
-	var ip string = kubePod.Status.PodIP
-	var hostname string = kubePod.Spec.Hostname
+	for i := 0; i < totalPods; i++ {
+		ip := ""
+		for net.ParseIP(ip) == nil {
+			time.Sleep(2 * time.Second)
+			kubePod, err := clientset.CoreV1().Pods("default").Get(ctx, "vhost-"+strconv.Itoa(i), metav1.GetOptions{})
+			if err != nil {
+				t.Fatalf("Failed to get pod!: %v\n", err)
+			}
+			ip = kubePod.Status.PodIP
+		}
 
-	t.Log("Found merak agent pod at " + ip + " on node " + hostname)
-
-	pod0 := pb.InternalVMPod{
-		OperationType: common_pb.OperationType_CREATE,
-		PodIp:         ip,
-		Subnets:       []string{"subnet1"},
-		NumOfVm:       1,
+		t.Log("Found merak agent pod at " + ip)
+		podConfig := common_pb.InternalComputeInfo{
+			OperationType: common_pb.OperationType_CREATE,
+			Id:            "1",
+			Name:          "vhost-" + strconv.Itoa(i),
+			DatapathIp:    ip,
+			ContainerIp:   ip,
+			Mac:           "aa:bb:cc:dd:ee",
+			Veth:          "test",
+		}
+		pod := pb.InternalVMPod{
+			OperationType: common_pb.OperationType_CREATE,
+			PodIp:         ip,
+			Subnets:       []string{"subnet1"},
+			NumOfVm:       1,
+		}
+		podConfigs = append(podConfigs, &podConfig)
+		pods = append(pods, &pod)
 	}
 
 	subnets := common_pb.InternalSubnetInfo{
 		SubnetId:   "8182a4d4-ffff-4ece-b3f0-8d36e3d88000",
 		SubnetCidr: "10.0.1.0/24",
 		SubnetGw:   "10.0.1.1",
-		NumberVms:  1000,
+		NumberVms:  uint32(numVms),
 	}
 	vpc := common_pb.InternalVpcInfo{
 		VpcId:     "9192a4d4-ffff-4ece-b3f0-8d36e3d88001",
@@ -83,7 +147,7 @@ func TestGrpcClient(t *testing.T) {
 		Vpcs:          []*common_pb.InternalVpcInfo{&vpc},
 		Secgroups:     []string{"3dda2801-d675-4688-a63f-dcda8d111111"},
 		Scheduler:     pb.VMScheduleType_SEQUENTIAL,
-		DeployMethod:  []*pb.InternalVMPod{&pod0},
+		DeployMethod:  pods,
 	}
 
 	service := common_pb.InternalServiceInfo{
@@ -98,15 +162,6 @@ func TestGrpcClient(t *testing.T) {
 		WhenToRun:     "now",
 		WhereToRun:    "here",
 	}
-	pod := common_pb.InternalComputeInfo{
-		OperationType: common_pb.OperationType_CREATE,
-		Id:            "1",
-		Name:          hostname,
-		DatapathIp:    ip,
-		ContainerIp:   ip,
-		Mac:           "aa:bb:cc:dd:ee",
-		Veth:          "test",
-	}
 
 	computeConfig := pb.InternalComputeConfiguration{
 		FormatVersion:   1,
@@ -114,7 +169,7 @@ func TestGrpcClient(t *testing.T) {
 		RequestId:       "test",
 		ComputeConfigId: "test",
 		MessageType:     common_pb.MessageType_FULL,
-		Pods:            []*common_pb.InternalComputeInfo{&pod},
+		Pods:            podConfigs,
 		VmDeploy:        &deploy,
 		Services:        []*common_pb.InternalServiceInfo{&service},
 		ExtraInfo:       &pb.InternalComputeExtraInfo{Info: "test"},

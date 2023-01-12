@@ -134,8 +134,8 @@ docker-topo:
 	docker build -t meraksim/merak-topo:dev -f docker/topo.Dockerfile .
 	docker push meraksim/merak-topo:dev
 
-.PHONY: docker-test-compute
-docker-test-compute:
+.PHONY: docker-test-driver-compute
+docker-test-driver-compute:
 	docker build -t meraksim/test-merak-compute:test -f docker/test.merak.Dockerfile .
 	docker push meraksim/test-merak-compute:test
 

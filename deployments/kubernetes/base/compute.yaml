@@ -53,6 +53,8 @@ spec:
         ports:
           - containerPort: 40051
             name: compute-grpc
+          - containerPort: 9001
+            name: prometheus
         env:
         - name: "TEMPORAL"
           value: "temporal-frontend.default.svc.cluster.local"
@@ -79,19 +81,20 @@ spec:
       - key: "node-role.kubernetes.io/master"
         operator: "Exists"
         effect: "NoSchedule"
-      # nodeSelector:
-      #   serviceHost: merak
       containers:
       - name: merak-compute-vm-worker
         image: meraksim/merak-compute-vm-worker:dev
         imagePullPolicy: Always
+        ports:
+        - containerPort: 9001
+          name: prometheus
         env:
         - name: "TEMPORAL"
           value: "temporal-frontend.default.svc.cluster.local"
         - name: RPS
-          value: "1000"
+          value: "200"
         - name: CONCURRENCY
-          value: "1000"
+          value: "7"
         - name: "LOGLEVEL"
           value: "INFO"
 # Single Redis Leader.
@@ -138,8 +141,6 @@ spec:
         role: main
         tier: backend
     spec:
-      # nodeSelector:
-      #   serviceHost: merak
       containers:
       - name: main
         image: "redis:7.0.0"
