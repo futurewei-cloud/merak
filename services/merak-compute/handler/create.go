@@ -26,7 +26,6 @@ import (
 	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/create"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
-	"golang.org/x/sync/errgroup"
 )
 
 func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
@@ -66,39 +65,16 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 				ReturnCode:    commonPB.ReturnCode_FAILED,
 			}, err
 		}
-		gen := new(errgroup.Group)
-		//Assume same number of Subnets per VPC and same number of VMs per subnet for now
-		vms := make([]string,
-			len(in.Config.VmDeploy.Vpcs)*len(in.Config.VmDeploy.Vpcs[0].Subnets)*int(in.Config.VmDeploy.Vpcs[0].Subnets[0].NumberVms))
+		vms := []string{}
 		for i, vpc := range in.Config.VmDeploy.Vpcs {
 			for j, subnet := range vpc.Subnets {
 				for k := 0; k < int(subnet.NumberVms); k++ {
-					func(i, j, k int,
-						vpcID, vpcProjectID, vpcTenantID,
-						subnetID, subnetCidr, subnetGw, secgroup,
-						podID, podName, podContainerIP, podMAC string,
-						ctx context.Context,
-						vms []string) {
-						gen.Go(func() error {
-							return generateVMs(i, j, k,
-								vpc.VpcId, vpc.ProjectId, vpc.TenantId, subnet.SubnetId,
-								subnet.SubnetCidr, subnet.SubnetGw, in.Config.VmDeploy.Secgroups[0],
-								pod.Id, pod.Name, pod.ContainerIp, pod.Mac, ctx, vms)
-						})
-					}(i, j, k,
+					generateVMs(i, j, k,
 						vpc.VpcId, vpc.ProjectId, vpc.TenantId, subnet.SubnetId,
 						subnet.SubnetCidr, subnet.SubnetGw, in.Config.VmDeploy.Secgroups[0],
-						pod.Id, pod.Name, pod.ContainerIp, pod.Mac, ctx, vms)
+						pod.Id, pod.Name, pod.ContainerIp, pod.Mac, ctx, &vms)
 				}
 			}
-		}
-		if err := gen.Wait(); err != nil {
-			log.Println("Failed to generate VMs for pod ", pod.Name)
-			return &pb.ReturnComputeMessage{
-				ReturnMessage: "Failed to generate VMs!",
-				ReturnCode:    commonPB.ReturnCode_FAILED,
-				Vms:           returnVMs,
-			}, err
 		}
 		if err := RedisClient.SAdd(
 			ctx,
@@ -150,7 +126,7 @@ func generateVMs(i, j, k int,
 	vpcID, vpcProjectID, vpcTenantID, subnetID, subnetCidr, subnetGw, secgroup,
 	podID, podName, podContainerIP, podMAC string,
 	ctx context.Context,
-	vms []string) error {
+	vms *[]string) error {
 	vmID := podID + strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
 	suffix := strconv.Itoa(i) + strconv.Itoa(j) + strconv.Itoa(k)
 	if err := RedisClient.HSet(
@@ -173,6 +149,6 @@ func generateVMs(i, j, k int,
 		log.Println("Failed to hset vm ", vmID)
 		return err
 	}
-	vms[i+j+k] = vmID
+	*vms = append(*vms, vmID)
 	return nil
 }
