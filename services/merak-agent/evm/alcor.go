@@ -429,6 +429,8 @@ func (evm AlcorEvm) BringDeviceUp(m metrics.Metrics) error {
 
 func Ovsdbbulk(taps []string, m metrics.Metrics) error {
 	// Create Device
+	var err error
+	defer m.GetMetrics(&err)()
 	ovsCmd := "ovs-vsctl "
 	for _, tap := range taps {
 		ovsCmd += " -- add-port br-int " + tap + " -- set Interface " + tap + " type=internal"
