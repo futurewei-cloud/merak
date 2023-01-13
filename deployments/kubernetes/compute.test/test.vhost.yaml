@@ -17,7 +17,7 @@ spec:
   serviceAccountName: merak-compute
   containers:
   - name: merak-agent
-    image: meraksim/merak-agent:test
+    image: meraksim/merak-agent:bench
     imagePullPolicy: Always
     securityContext:
         privileged: true

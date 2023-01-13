@@ -24,7 +24,7 @@ resources:
 - service.account.yaml
 replicas:
 - name: merak-compute-vm-worker
-  count: 1
+  count: 10
 # Exclude Merak Network
 patches:
 - patch: |-

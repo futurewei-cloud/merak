@@ -205,7 +205,7 @@ kind-base:
 .PHONY: kind
 kind:
 	make kind-base
-	kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
+	kubectl kustomize deployments/kubernetes/alcor --enable-helm | kubectl apply -f -
 
 .PHONY: kind-test
 kind-test:

@@ -92,9 +92,9 @@ spec:
         - name: "TEMPORAL"
           value: "temporal-frontend.default.svc.cluster.local"
         - name: RPS
-          value: "200"
+          value: "1000000"
         - name: CONCURRENCY
-          value: "7"
+          value: "1000"
         - name: "LOG_LEVEL"
           value: "INFO"
 # Single Redis Leader.
