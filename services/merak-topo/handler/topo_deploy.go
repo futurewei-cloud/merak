@@ -49,34 +49,24 @@ var (
 func CreateTopologyClasses(client dynamic.Interface, name string, links []database.Vlink, namespace string) error {
 	rc := NewTopologyClass(name, links, namespace)
 
-	var err_return error
-
 	_, err := client.Resource(topologyClassGVR).Namespace(namespace).Create(Ctx, rc, metav1.CreateOptions{})
 
 	if err != nil {
 		utils.Logger.Error("can't create topologyClass", "create topology class error", err.Error(), "namespace", namespace, "vnode", name)
-		err_return = err
-	} else {
-		err_return = nil
 	}
 
-	return err_return
+	return err
+
 }
 
 func DeleteTopologyClasses(client dynamic.Interface, name string, namespace string) error {
-
-	var err_return error
 
 	err := client.Resource(topologyClassGVR).Namespace(namespace).Delete(Ctx, name, metav1.DeleteOptions{})
 
 	if err != nil {
 		utils.Logger.Error("can't delete topologyClass", "topology class deletion error", err.Error(), "namespace", namespace, "vnode", name)
-		err_return = err
-	} else {
-		err_return = nil
 	}
-
-	return err_return
+	return err
 }
 
 func NewTopologyClass(name string, links []database.Vlink, namespace string) *unstructured.Unstructured {
@@ -435,20 +425,18 @@ func ovs_config(topo database.TopologyData, node_name string, sdn_ip string, sdn
 func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData, topoPrefix string, namespace string) error {
 
 	config := ctrl.GetConfigOrDie()
+
 	dclient, err := dynamic.NewForConfig(config)
-	err_flag := 0
-
-	err_return := errors.New("topology delete fails")
-
 	if err != nil {
 		utils.Logger.Error("can't set up k8s client", "err msg", err.Error())
-		err_flag = 1
+		return err
 	}
 
 	err_del_db := database.DeleteAllValuesWithKeyPrefix(topoPrefix)
 
 	if err_del_db != nil {
 		utils.Logger.Warn("can't delete topology info in DB", "topology delete in DB error", err_del_db.Error())
+		return err_del_db
 	}
 
 	if namespace != "default" {
@@ -456,7 +444,7 @@ func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData, top
 
 		if err_d != nil {
 			utils.Logger.Error("can't delete namespace in k8s cluster", "namespace", namespace, "error msg", err_d.Error())
-			err_flag = 1
+			return err_d
 		}
 
 	} else {
@@ -467,72 +455,18 @@ func Topo_delete(k8client *kubernetes.Clientset, topo database.TopologyData, top
 
 			if err_del != nil {
 				utils.Logger.Error("can't delete topology pod in k8s cluster", "pod name", node.Name, "namespace", namespace, "error msg", err_del.Error())
-				err_flag = 1
+				return err_del
 			}
 
 			err_del_t := DeleteTopologyClasses(dclient, node.Name, namespace)
 			if err_del_t != nil {
 				utils.Logger.Error("can't delete topology class in meshnet", "pod name", node.Name, "namespace", namespace, "error msg", err_del_t.Error())
-				err_flag = 1
+				return err_del_t
 			}
 
 		}
 	}
 
-	if err_flag == 1 {
-		return err_return
-	} else {
-		return nil
-	}
+	return nil
+
 }
-
-/*Comment: unused function*/
-
-// func Pod_query(k8client *kubernetes.Clientset, pod *corev1.Pod, cmd []string, namespace string) (string, error) {
-
-// 	err := errors.New("fails to query pods in K8s cluster")
-
-// 	req := k8client.CoreV1().RESTClient().Post().Resource("pods").Name(pod.Name).Namespace("default").SubResource("exec") // .Param("container", containerName)
-// 	scheme := runtime.NewScheme()
-// 	err1 := corev1.AddToScheme(scheme)
-// 	if err1 != nil {
-// 		utils.Logger.Error("pod query fail: ", "addtoscheme", err1.Error())
-// 	}
-// 	parameterCodec := runtime.NewParameterCodec(scheme)
-// 	req.VersionedParams(&corev1.PodExecOptions{
-// 		Stdin:  false,
-// 		Stdout: true,
-// 		Stderr: true,
-// 		TTY:    false,
-
-// 		Container: pod.Spec.Containers[0].Name,
-// 		Command:   cmd,
-// 	}, parameterCodec)
-
-// 	config, err2 := utils.K8sConfig()
-// 	if err2 != nil {
-// 		utils.Logger.Error("fail: k8sconfig", "k8sconfig error", err2.Error())
-// 	}
-
-// 	exec, err3 := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
-// 	if err3 != nil {
-// 		utils.Logger.Error("fail: newspdyexecutor", "k8sconfig POST error", err3.Error())
-// 	}
-// 	var stdout, stderr bytes.Buffer
-// 	err4 := exec.Stream(remotecommand.StreamOptions{
-// 		Stdin:  nil,
-// 		Stdout: &stdout,
-// 		Stderr: &stderr,
-// 		Tty:    false,
-// 	})
-// 	if err4 != nil {
-// 		utils.Logger.Error("fail: stream", "stream error", err4.Error())
-// 	}
-
-// 	if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
-// 		return stdout.String(), err
-// 	} else {
-// 		return stdout.String(), nil
-// 	}
-
-// }

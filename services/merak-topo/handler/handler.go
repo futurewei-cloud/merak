@@ -83,10 +83,10 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	k8s_nodes, err2 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 
 	if err2 != nil {
-		utils.Logger.Error("request DEPLOY", "check nodes in k8s cluster", err2.Error())
-		returnMessage.ReturnMessage = "CREATE: can not list k8s host nodes info"
+		utils.Logger.Error("request DEPLOY", "k8s cluster nodes no response", err2.Error())
+		returnMessage.ReturnMessage = "CREATE: can not list k8s cluster worker nodes info"
 		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-		err_flag = 1
+		return err2
 	}
 
 	for _, s := range k8s_nodes.Items {
@@ -97,7 +97,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 			utils.Logger.Error("can't get host node info in k8s cluster", s.Name, err3.Error())
 			returnMessage.ReturnMessage = "DEPLOY: can not get k8s host node info from k8s cluster"
 			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-			err_flag = 1
+			return err3
 		}
 
 		for _, c := range s.Status.Conditions {
@@ -238,7 +238,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 	k8s_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err1 != nil {
 		utils.Logger.Error("can't check k8s cluster ", "corev1", err1.Error())
-		err_flag = 1
+		return err1
 	}
 
 	for _, s := range k8s_nodes.Items {
@@ -247,7 +247,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 		node_yaml, err2 := k8client.CoreV1().Nodes().Get(Ctx, s.Name, metav1.GetOptions{})
 		if err2 != nil {
 			utils.Logger.Error("can't get k8s host node info ", s.Name, err2.Error())
-			err_flag = 1
+			return err2
 		}
 
 		for _, c := range s.Status.Conditions {
@@ -296,7 +296,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 
 			if err != nil {
 				utils.Logger.Error("can't get pod info from k8s", node.Name, err.Error(), "namespace", namespace)
-				err_flag = 1
+				return err
 			} else {
 				cnode.Name = res.Name
 				cnode.Id = string(res.UID)
@@ -335,7 +335,6 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 				err_db := database.SetValue(topoPrefix+":"+node.Name, cnode)
 				if err_db != nil {
 					utils.Logger.Warn("can't save compute node in DB", topoPrefix+":"+node.Name, err_db.Error())
-
 				}
 
 			}
@@ -373,7 +372,7 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 
 	if err1 != nil {
 		utils.Logger.Error("k8s cluster no response ", "corev1", err1.Error())
-		err_flag = 1
+		return err1
 	}
 
 	for _, s := range k8s_nodes.Items {

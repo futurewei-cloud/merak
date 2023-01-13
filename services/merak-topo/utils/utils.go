@@ -57,15 +57,10 @@ func K8sClient() (*kubernetes.Clientset, error) {
 
 func K8sConfig() (*rest.Config, error) {
 
-	var err_return error
-	err_return = nil
-
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		Logger.Fatal("can't create k8s config", "k8s config initiate error", err.Error())
-		err_return = err
 	}
 
-	return config, err_return
-
+	return config, err
 }
