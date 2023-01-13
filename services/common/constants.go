@@ -53,7 +53,7 @@ const (
 	LOG_LOCATION = "/var/log/merak/"
 
 	MODE_ENV                   = "mode"
-	LOG_LEVEL_ENV              = "LOGLEVEL"
+	LOG_LEVEL_ENV              = "LOG_LEVEL"
 	MODE_STANDALONE            = "standalone"
 	AGENT_STANDALONE_IP        = "10.0.0.2"
 	AGENT_STANDALONE_MAC       = "aa:bb:cc:dd:ee:ff"

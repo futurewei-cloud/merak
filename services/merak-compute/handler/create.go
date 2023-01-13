@@ -109,7 +109,6 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 			}, err
 		}
 	}
-
 	returnVM := pb.InternalVMInfo{
 		Id: "Started deployment for " + strconv.Itoa(count) + " VMs",
 	}

@@ -87,7 +87,7 @@ func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 		}
 		logger.Info("Workflow: VmCreate bulk port add completed at pod IP " + podIP)
 	}
-
+	logger.Info("Workflow: Final VMCreate activities starting for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
 	//Create VMCreate and Port Update
 	var futuresCreate []workflow.Future
 	for _, vm := range vms {

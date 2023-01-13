@@ -77,7 +77,7 @@ func TestGrpcClient(t *testing.T) {
 				Containers: []corev1.Container{
 					{
 						Name:            "vhost-" + strconv.Itoa(i),
-						Image:           "meraksim/merak-agent:bench",
+						Image:           "meraksim/merak-agent:test",
 						ImagePullPolicy: "Always",
 						SecurityContext: &sc,
 						Ports: []corev1.ContainerPort{

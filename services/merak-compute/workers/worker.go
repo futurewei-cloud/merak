@@ -40,9 +40,8 @@ import (
 
 var prometheusPort = flag.Int("Prometheus port", constants.PROMETHEUS_PORT, "The server port")
 
-var ctx = context.Background()
-
 func main() {
+	ctx := context.Background()
 	common.ClientMapGRPC = make(map[string]agent_pb.MerakAgentServiceClient)
 	temporal_address, ok := os.LookupEnv(constants.TEMPORAL_ENV)
 	if !ok {
@@ -106,7 +105,7 @@ func main() {
 	log.Println("Connected to DB!")
 
 	w := worker.New(c, common.VM_TASK_QUEUE, worker.Options{
-		MaxConcurrentWorkflowTaskExecutionSize:  2,
+		MaxConcurrentWorkflowTaskExecutionSize:  2, // https://github.com.mcas.ms/temporalio/sdk-go/issues/1003#issuecomment-1382509865
 		MaxConcurrentActivityExecutionSize:      concurrency_int,
 		WorkerActivitiesPerSecond:               rps_int,
 		MaxConcurrentLocalActivityExecutionSize: concurrency_int,
