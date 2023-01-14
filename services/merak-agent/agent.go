@@ -56,13 +56,13 @@ func main() {
 	}
 	handler.MerakLogger, err = logger.NewLogger(logger.LevelEnvParser(val), "merak-agent")
 	if err != nil {
-		handler.MerakLogger.Fatal("Failed to create logger\n", err)
+		handler.MerakLogger.Fatal("Failed to create logger\n", "err", err)
 	}
 	// Start gRPC Server
 	flag.Parse()
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *gRPCPort))
 	if err != nil {
-		handler.MerakLogger.Fatal("ERROR: Failed to listen", err)
+		handler.MerakLogger.Fatal("ERROR: Failed to listen", err, err)
 	}
 
 	enforcement := keepalive.EnforcementPolicy{
@@ -97,29 +97,29 @@ func main() {
 	}()
 
 	pb.RegisterMerakAgentServiceServer(gRPCServer, &handler.Server{})
-	handler.MerakLogger.Info("Starting gRPC server. Listening at %v", lis.Addr())
+	handler.MerakLogger.Info("Starting gRPC server. Listening at ", "addr", lis.Addr().String())
 	if err := gRPCServer.Serve(lis); err != nil {
-		handler.MerakLogger.Fatal("failed to serve: %v\n", err)
+		handler.MerakLogger.Fatal("failed to serve \n", "err", err)
 	}
 }
 
 func startPlugin() {
 	if len(os.Args) < 3 {
-		handler.MerakLogger.Fatal("Not enough arguments\n")
+		handler.MerakLogger.Fatal("Not enough arguments")
 	}
 	remote_server := os.Args[1]
 	if net.ParseIP(remote_server) == nil {
-		handler.MerakLogger.Fatal("Invalid IP address %s\n", remote_server)
+		handler.MerakLogger.Fatal("Invalid IP address " + remote_server)
 	}
 	handler.RemoteServer = remote_server
 	remote_port := os.Args[2]
 	remote_port_int, err := strconv.Atoi(os.Args[2])
 
 	if err != nil {
-		handler.MerakLogger.Fatal("Port: %d is not a valid number!\n", remote_port_int)
+		handler.MerakLogger.Fatal("Port: is not a valid number!\n", remote_port_int)
 	}
 	if remote_port_int > constants.MAX_PORT || remote_port_int < constants.MIN_PORT {
-		handler.MerakLogger.Fatal("Port: %d is not within a valid range!\n", remote_port_int)
+		handler.MerakLogger.Fatal("Port: is not within a valid range!\n", remote_port_int)
 	}
 	cmdString := "service rsyslog restart && /etc/init.d/openvswitch-switch restart && /merak-bin/AlcorControlAgent -d -a " + remote_server + " -p " + remote_port
 	handler.MerakLogger.Info("Executing command " + cmdString)
@@ -128,7 +128,7 @@ func startPlugin() {
 	cmd.Dir = "/"
 	err = cmd.Start()
 	if err != nil {
-		handler.MerakLogger.Fatal("failed to start plugin", err)
+		handler.MerakLogger.Fatal("failed to start plugin \n", "err", err)
 	}
-	handler.MerakLogger.Info("Started ACA %d\n", cmd.Process.Pid)
+	handler.MerakLogger.Info("Started ACA \n", "pid", cmd.Process.Pid)
 }

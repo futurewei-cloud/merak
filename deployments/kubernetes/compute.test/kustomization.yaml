@@ -20,7 +20,6 @@ images:
   newTag: test
 resources:
 - test.driver.yaml
-- test.vhost.yaml
 - service.account.yaml
 replicas:
 - name: merak-compute-vm-worker

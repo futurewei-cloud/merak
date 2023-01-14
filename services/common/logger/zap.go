@@ -22,6 +22,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/pkg/errors"
@@ -77,6 +78,7 @@ func (e merakLogError) Error() string {
 
 func newCore(opts *options) (any, error) {
 	config := zap.NewProductionEncoderConfig()
+	config.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
 	config.TimeKey = "time"
 	switch loc := opts.location; loc {
 	case Syslog:

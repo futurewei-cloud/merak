@@ -73,7 +73,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig, updatePortUrl st
 			},
 		}, err
 	}
-	MerakLogger.Info("In ", in)
+	MerakLogger.Info("Protobuf ", "in", in)
 	_, ok = os.LookupEnv(constants.MODE_ENV)
 	if !ok {
 		MerakLogger.Info(updatePortUrl + evm.GetRemoteId())
@@ -172,7 +172,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig, updatePortUrl st
 		Remoteid: evm.GetRemoteId(),
 		Status:   common_pb.Status_DONE,
 	}
-	MerakLogger.Info("Successfully created devices for evm ", evm.GetName())
+	MerakLogger.Info("Successfully created devices for evm ", "name", evm.GetName())
 	return &pb.AgentReturnInfo{
 		ReturnMessage: "Create Success",
 		ReturnCode:    common_pb.ReturnCode_OK,

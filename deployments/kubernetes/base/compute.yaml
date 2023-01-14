@@ -94,7 +94,7 @@ spec:
         - name: RPS
           value: "1000000"
         - name: CONCURRENCY
-          value: "1000"
+          value: "100"
         - name: "LOG_LEVEL"
           value: "INFO"
 # Single Redis Leader.

@@ -41,8 +41,8 @@ var (
 var MerakLogger *logger.MerakLog
 
 func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
-	MerakLogger.Info("Received on PortHandler", in)
-	MerakLogger.Info("Received on PortHandler OP", in.OperationType)
+	MerakLogger.Info("Received on PortHandler", "proto", in)
+	MerakLogger.Info("Received on PortHandler OP", "OPTYPE", in.OperationType)
 	switch op := in.OperationType; op {
 	case common_pb.OperationType_PRECREATE:
 		MerakLogger.Info("Operation Create Minimal Port")
