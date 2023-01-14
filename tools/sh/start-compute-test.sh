@@ -1,0 +1,1 @@
+kubectl taint nodes $(hostname) node-role.kubernetes.io/control-plane:NoSchedule
