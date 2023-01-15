@@ -67,6 +67,12 @@ func main() {
 		log.Fatalln("Concurrency " + concurrency + " is NaN!")
 	}
 
+	tq, ok := os.LookupEnv(constants.TEMPORAL_TQ_ENV)
+	if !ok {
+		log.Fatalln("No Task Queue specified!")
+	}
+	log.Println("Starting worker with task queue " + tq)
+
 	log.Println("Starting worker with " +
 		rps + " activities/sec and max " +
 		concurrency + " concurrent activities")
@@ -104,7 +110,7 @@ func main() {
 	defer common.RedisClient.Close()
 	log.Println("Connected to DB!")
 
-	w := worker.New(c, common.VM_TASK_QUEUE, worker.Options{
+	w := worker.New(c, tq, worker.Options{
 		MaxConcurrentWorkflowTaskExecutionSize:  2, // https://github.com.mcas.ms/temporalio/sdk-go/issues/1003#issuecomment-1382509865
 		MaxConcurrentActivityExecutionSize:      concurrency_int,
 		WorkerActivitiesPerSecond:               rps_int,

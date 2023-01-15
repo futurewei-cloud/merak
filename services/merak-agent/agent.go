@@ -49,7 +49,7 @@ func main() {
 		startPlugin()
 	}
 	var err error
-	val, ok := os.LookupEnv(constants.MODE_ENV)
+	val, ok := os.LookupEnv(constants.LOG_LEVEL_ENV)
 	if !ok {
 		log.Println("No log level specified. Defaulting to INFO")
 		val = "INFO"

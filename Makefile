@@ -217,6 +217,11 @@ kind-ci:
 	make kind-base
 	kubectl kustomize deployments/kubernetes/ci --enable-helm | kubectl apply -f -
 
+.PHONY: kind-compute-test
+kind-ci:
+	make kind-base
+	kubectl kustomize deployments/kubernetes/ci --enable-helm | kubectl apply -f -
+
 .PHONY: deploy
 deploy:
 	./tools/deploy-kubeadm.sh

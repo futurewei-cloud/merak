@@ -16,8 +16,6 @@ bases:
 images:
 - name: meraksim/merak-compute
   newTag: test
-- name: meraksim/merak-compute-vm-worker
-  newTag: test
 resources:
 - test.driver.yaml
 - service.account.yaml

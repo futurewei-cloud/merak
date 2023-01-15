@@ -46,6 +46,7 @@ message InternalVMDeployInfo {
     repeated string secgroups = 4;
     VMScheduleType scheduler = 5;
     repeated InternalVMPod deploy_method = 6;
+    repeated string hosts = 7;
 }
 
 message InternalComputeConfiguration {

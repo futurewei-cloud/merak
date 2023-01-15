@@ -9,6 +9,28 @@
 #     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+# Compute service account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: merak-compute
+  namespace: default
+---
+# Cluster role binding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: merak-compute
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: merak-compute
+    namespace: default
+---
+# Compute Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -31,6 +53,7 @@ metadata:
   name: merak-compute
   namespace: merak
 spec:
+  serviceAccountName: merak-compute
   replicas: 1
   selector:
     matchLabels:
@@ -44,8 +67,6 @@ spec:
       - key: "node-role.kubernetes.io/master"
         operator: "Exists"
         effect: "NoSchedule"
-      # nodeSelector:
-      #   serviceHost: merak
       containers:
       - name: merak-compute
         image: meraksim/merak-compute:dev
@@ -60,43 +81,16 @@ spec:
           value: "temporal-frontend.default.svc.cluster.local"
         - name: "LOG_LEVEL"
           value: "INFO"
----
-# Merak Compute VM Worker Deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: merak-compute-vm-worker
-  namespace: merak
-spec:
-  replicas: 5
-  selector:
-    matchLabels:
-      app: merak-compute-vm-worker
-  template:
-    metadata:
-      labels:
-        app: merak-compute-vm-worker
-    spec:
-      tolerations:
-      - key: "node-role.kubernetes.io/master"
-        operator: "Exists"
-        effect: "NoSchedule"
-      containers:
-      - name: merak-compute-vm-worker
-        image: meraksim/merak-compute-vm-worker:dev
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 9001
-          name: prometheus
-        env:
-        - name: "TEMPORAL"
-          value: "temporal-frontend.default.svc.cluster.local"
         - name: RPS
           value: "1000000"
         - name: CONCURRENCY
           value: "100"
-        - name: "LOG_LEVEL"
-          value: "INFO"
+        - name: WORKER_IMAGE
+          value: meraksim/compute-vm-worker:test
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
 # Single Redis Leader.
 # TODO: Add followers and follower service
 ---

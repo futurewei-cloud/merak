@@ -21,8 +21,6 @@ images:
 # Merak
 - name: meraksim/merak-compute
   newTag: ci
-- name: meraksim/merak-compute-vm-worker
-  newTag: ci
 - name: meraksim/scenario-manager
   newTag: ci
 - name: meraksim/merak-network

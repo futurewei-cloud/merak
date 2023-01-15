@@ -61,8 +61,8 @@ func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 	common.ClientMapGRPC[podIP] = client
 
 	// Only run these activities for alcor
-	_, ok := os.LookupEnv(constants.MODE_ENV)
-	if !ok {
+	val, ok := os.LookupEnv(constants.MODE_ENV)
+	if val != constants.MODE_ALCOR || !ok {
 		//Create Minimal Port
 		var futuresMinimal []workflow.Future
 		for _, vm := range vms {

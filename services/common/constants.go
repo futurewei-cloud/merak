@@ -22,6 +22,12 @@ const (
 	TEMPORAL_CONCURRENCY_ENV = "CONCURRENCY"
 	LOCALHOST                = "127.0.0.1"
 	TEMPORAL_NAMESPACE       = "merak"
+	TEMPORAL_TQ_ENV          = "TQ"
+
+	MERAK_COMPUTE_WORKER_NAMESPACE = "merak-compute-worker"
+
+	KUBE_NODE_LABEL_KEY = "DEDICATED"
+	KUBE_NODE_LABEL_VAL = "MERAK"
 
 	COMPUTE_GRPC_SERVER_ADDRESS = "merak-compute-service.merak.svc.cluster.local"
 	TOPLOGY_GRPC_SERVER_PORT    = 40052
@@ -50,14 +56,25 @@ const (
 	GRPC_MAX_RECV_MSG_SIZE = 1024 * 1024 * 500
 	GRPC_MAX_SEND_MSG_SIZE = 1024 * 1024 * 500
 
-	LOG_LOCATION = "/var/log/merak/"
+	LOG_LEVEL_ENV     = "LOG_LEVEL"
+	LOG_LEVEL_DEFAULT = "INFO"
+	LOG_LOCATION      = "/var/log/merak/"
 
-	MODE_ENV                   = "mode"
-	LOG_LEVEL_ENV              = "LOG_LEVEL"
-	MODE_STANDALONE            = "standalone"
+	MODE_ENV        = "mode"
+	MODE_STANDALONE = "standalone"
+	MODE_ALCOR      = "alcor"
+
 	AGENT_STANDALONE_IP        = "10.0.0.2"
 	AGENT_STANDALONE_MAC       = "aa:bb:cc:dd:ee:ff"
 	AGENT_STANDALONE_REMOTE_ID = "NO ALCOR"
 	AGENT_STANDALONE_GW        = "10.0.0.1"
 	AGENT_STANDALONE_CIDR      = "10.0.0.0/8"
+
+	WORKER_IMAGE_ENV           = "WORKER_IMAGE"
+	WORKER_DEFAULT_IMAGE       = "meraksim/compute-vm-worker:dev"
+	WORKER_DEFAULT_RPS         = "100000"
+	WORKER_DEFAULT_CONCURRENCY = "1000"
+	WORKER_POD_PREFIX          = "ComputeWorker"
+
+	POD_PULL_POLICY_ALWAYS = "Always"
 )

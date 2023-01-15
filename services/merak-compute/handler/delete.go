@@ -72,9 +72,10 @@ func caseDelete(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 				}, err
 			}
 		}
+		tq := RedisClient.HGet(ctx, podID, "host").Val()
 		workflowOptions = client.StartWorkflowOptions{
 			ID:          common.VM_DELETE_WORKFLOW_ID + strconv.Itoa(n),
-			TaskQueue:   common.VM_TASK_QUEUE,
+			TaskQueue:   tq,
 			RetryPolicy: retrypolicy,
 		}
 		log.Println("Executing VM Delete Workflow!")

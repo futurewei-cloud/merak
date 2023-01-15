@@ -93,9 +93,9 @@ func TestGrpcClient(t *testing.T) {
 				},
 			},
 		}
-		_, err_create := clientset.CoreV1().Pods("default").Create(context.Background(), newPod, metav1.CreateOptions{})
-		if err_create != nil {
-			log.Fatal(err_create)
+		_, err := clientset.CoreV1().Pods("default").Create(context.Background(), newPod, metav1.CreateOptions{})
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 	for i := 0; i < totalPods; i++ {

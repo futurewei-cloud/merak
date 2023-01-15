@@ -48,6 +48,7 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 			"ip", pod.ContainerIp,
 			"mac", pod.Mac,
 			"veth", pod.Veth,
+			"host", pod.Host,
 		).Err(); err != nil {
 			return &pb.ReturnComputeMessage{
 				ReturnMessage: "Unable add pod to DB Hash Map",
@@ -91,7 +92,7 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 		// Send a list of VMs to the Workflow
 		workflowOptions = client.StartWorkflowOptions{
 			ID:                       common.VM_CREATE_WORKFLOW_ID + strconv.Itoa(n),
-			TaskQueue:                common.VM_TASK_QUEUE,
+			TaskQueue:                pod.Host,
 			RetryPolicy:              retrypolicy,
 			WorkflowExecutionTimeout: common.TEMPORAL_WF_EXEC_TIMEOUT,
 			WorkflowRunTimeout:       common.TEMPORAL_WF_RUN_TIMEOUT,
