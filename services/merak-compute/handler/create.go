@@ -19,6 +19,8 @@ import (
 	"log"
 	"strconv"
 
+	"math/rand"
+
 	commonPB "github.com/futurewei-cloud/merak/api/proto/v1/common"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
 	constants "github.com/futurewei-cloud/merak/services/common"
@@ -29,7 +31,6 @@ import (
 )
 
 func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
-
 	retrypolicy := &temporal.RetryPolicy{
 		InitialInterval:    common.TEMPORAL_WF_RETRY_INTERVAL,
 		BackoffCoefficient: common.TEMPORAL_WF_BACKOFF,
@@ -77,6 +78,11 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 				}
 			}
 		}
+		// Shuffle the VMs with default seed one
+		// Seed from time with rand.Seed(time.Now().UnixNano())
+		rand.Shuffle(len(vms), func(i, j int) {
+			vms[i], vms[j] = vms[j], vms[i]
+		})
 		if err := RedisClient.SAdd(
 			ctx,
 			constants.COMPUTE_REDIS_VM_SET,
