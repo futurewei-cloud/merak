@@ -36,8 +36,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 )
 
 var (
@@ -109,53 +111,6 @@ func main() {
 	}
 	log.Println("Successfully connected to Redis!")
 	defer handler.RedisClient.Close()
-	createWorkers()
-	//Start gRPC Server
-	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *Port))
-	if err != nil {
-		log.Fatalln("ERROR: Failed to listen", err)
-	}
-	gRPCServer := grpc.NewServer(
-		grpc.MaxSendMsgSize(constants.GRPC_MAX_SEND_MSG_SIZE),
-		grpc.MaxRecvMsgSize(constants.GRPC_MAX_RECV_MSG_SIZE))
-	pb.RegisterMerakComputeServiceServer(gRPCServer, &handler.Server{})
-	log.Printf("Starting gRPC server. Listening at %v", lis.Addr())
-	if err := gRPCServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
-
-}
-
-func createWorkers() {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		log.Fatalf("Failed to get in cluster config!: %v\n", err)
-	}
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		log.Fatalf("Failed to create kube client!: %v\n", err.Error())
-	}
-	// Get all nodes
-	nodes, err := clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		log.Fatalln("Failed to get nodes in the cluster!")
-	}
-	log.Println("Creating workers for nodes: ", nodes.Items)
-
-	// Label the node that this pod is running on
-	node, err := clientset.CoreV1().Nodes().Get(context.Background(), os.Getenv("NODE_NAME"), metav1.GetOptions{})
-	if err != nil {
-		log.Fatalln("Failed to get node!")
-	}
-	log.Println("Found this host: ", node.Name)
-	labelPatch := fmt.Sprintf(`[{"op":"add","path":"/metadata/labels/%s","value":"%s" }]`, constants.KUBE_NODE_LABEL_KEY, constants.KUBE_NODE_LABEL_VAL)
-	_, err = clientset.CoreV1().Nodes().Patch(context.Background(), node.Name, types.JSONPatchType, []byte(labelPatch), metav1.PatchOptions{})
-	if err != nil {
-		log.Fatalln("Failed to label node!")
-	}
-
-	log.Println("Labeled this host: ", node.Name)
 
 	// Get ENV variables
 	temporal_addr, err := getEnv(constants.TEMPORAL_ENV)
@@ -176,74 +131,81 @@ func createWorkers() {
 	}
 	log.Println("WORKER: Using CONCURRENCY from ENV " + concurrency)
 
-	logLevel, err := getEnv(constants.LOG_LEVEL_ENV)
+	loglevel, err := getEnv(constants.LOG_LEVEL_ENV)
 	if err != nil {
-
-		logLevel = constants.LOG_LEVEL_DEFAULT
+		loglevel = constants.LOG_LEVEL_DEFAULT
 	}
-	log.Println("WORKER: Using log level from ENV " + logLevel)
+	log.Println("WORKER: Using log level from ENV " + loglevel)
 
 	mode, err := getEnv(constants.MODE_ENV)
 	if err != nil {
 		mode = constants.MODE_ALCOR
 	}
-	log.Println("WORKER: Using log level from ENV " + logLevel)
+	log.Println("WORKER: Using mode level from ENV " + mode)
 
 	image, err := getEnv(constants.WORKER_IMAGE_ENV)
 	if err != nil {
-		log.Println("Image ENV not set! Using default mode " + constants.WORKER_DEFAULT_IMAGE)
 		image = constants.WORKER_DEFAULT_IMAGE
 	}
-	log.Println("WORKER: Using image from ENV " + image)
+	log.Println("WORKER: Using Image from ENV " + constants.WORKER_DEFAULT_IMAGE)
 
-	// Create worker pods, one per node (only nodes hosting vhosts)
-	for _, host := range nodes.Items {
-		worker := &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: constants.WORKER_POD_PREFIX + host.Name,
-			},
-			Spec: corev1.PodSpec{
-				NodeSelector: map[string]string{
-					constants.KUBE_NODE_LABEL_KEY: constants.KUBE_NODE_LABEL_VAL,
-				},
-				Containers: []corev1.Container{
-					{
-						Name:            constants.WORKER_POD_PREFIX + host.Name,
-						Image:           image,
-						ImagePullPolicy: constants.POD_PULL_POLICY_ALWAYS,
-						Ports: []corev1.ContainerPort{
-							{ContainerPort: constants.PROMETHEUS_PORT},
-						},
-						Env: []corev1.EnvVar{
-							{
-								Name: constants.MODE_ENV, Value: mode,
-							},
-							{
-								Name: constants.TEMPORAL_ENV, Value: temporal_addr,
-							},
-							{
-								Name: constants.TEMPORAL_RPS_ENV, Value: rps,
-							},
-							{
-								Name: constants.TEMPORAL_CONCURRENCY_ENV, Value: concurrency,
-							},
-							{
-								Name: constants.LOG_LEVEL_ENV, Value: logLevel,
-							},
-							{
-								Name: constants.TEMPORAL_TQ_ENV, Value: host.Name,
-							},
-						},
-					},
-				},
-			},
-		}
-		_, err := clientset.CoreV1().Pods(constants.TEMPORAL_NAMESPACE).Create(context.Background(), worker, metav1.CreateOptions{})
-		if err != nil {
-			log.Fatalln("Failed to create worker pod: "+constants.WORKER_POD_PREFIX+host.Name, err.Error())
-		}
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		log.Fatalf("Failed to get in cluster config!: %v\n", err)
 	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		log.Fatalf("Failed to create kube client!: %v\n", err.Error())
+	}
+	// Label the node that this pod is running on
+	node, err := clientset.CoreV1().Nodes().Get(context.Background(), os.Getenv("NODE_NAME"), metav1.GetOptions{})
+	if err != nil {
+		log.Fatalln("Failed to get node!")
+	}
+	log.Println("Found this host: ", node.Name)
+	labelPatch := fmt.Sprintf(`[{"op":"add","path":"/metadata/labels/%s","value":"%s" }]`, constants.KUBE_NODE_LABEL_KEY, constants.KUBE_NODE_LABEL_VAL)
+	_, err = clientset.CoreV1().Nodes().Patch(context.Background(), node.Name, types.JSONPatchType, []byte(labelPatch), metav1.PatchOptions{})
+	if err != nil {
+		log.Fatalln("Failed to label node!")
+	}
+	log.Println("Labeled this host: ", node.Name)
 
+	// Watch nodes
+	informerFactory := informers.NewSharedInformerFactory(clientset, time.Second*5)
+	nodeInformer := informerFactory.Core().V1().Nodes().Informer()
+	nodeInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			err := createWorkerPod(obj.(*corev1.Node).Name, image, mode, temporal_addr, rps, concurrency, loglevel, clientset)
+			if err != nil {
+				log.Println("Failed to create worker pod: "+constants.WORKER_POD_PREFIX+obj.(*corev1.Node).Name, err.Error())
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			err := deleteWorkerPod(obj.(*corev1.Node).Name, clientset)
+			if err != nil {
+				log.Println("Failed to delete worker pod: "+constants.WORKER_POD_PREFIX+obj.(*corev1.Node).Name, err.Error())
+			}
+		},
+	})
+
+	stop := make(chan struct{})
+	defer close(stop)
+	informerFactory.Start(stop)
+
+	//Start gRPC Server
+	flag.Parse()
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *Port))
+	if err != nil {
+		log.Fatalln("ERROR: Failed to listen", err)
+	}
+	gRPCServer := grpc.NewServer(
+		grpc.MaxSendMsgSize(constants.GRPC_MAX_SEND_MSG_SIZE),
+		grpc.MaxRecvMsgSize(constants.GRPC_MAX_RECV_MSG_SIZE))
+	pb.RegisterMerakComputeServiceServer(gRPCServer, &handler.Server{})
+	log.Printf("Starting gRPC server. Listening at %v", lis.Addr())
+	if err := gRPCServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
 
 func getEnv(key string) (string, error) {
@@ -253,4 +215,62 @@ func getEnv(key string) (string, error) {
 		return "", errors.New("ENV variable not set " + key)
 	}
 	return val, nil
+}
+
+func createWorkerPod(hostname, image, mode, temporal_addr, rps, concurrency, loglevel string, clientset *kubernetes.Clientset) error {
+	log.Println("Creating worker for node: " + hostname)
+	worker := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: constants.WORKER_POD_PREFIX + hostname,
+		},
+		Spec: corev1.PodSpec{
+			NodeSelector: map[string]string{
+				constants.KUBE_NODE_LABEL_KEY: constants.KUBE_NODE_LABEL_VAL,
+			},
+			Containers: []corev1.Container{
+				{
+					Name:            constants.WORKER_POD_PREFIX + hostname,
+					Image:           image,
+					ImagePullPolicy: constants.POD_PULL_POLICY_ALWAYS,
+					Ports: []corev1.ContainerPort{
+						{ContainerPort: constants.PROMETHEUS_PORT},
+					},
+					Env: []corev1.EnvVar{
+						{
+							Name: constants.MODE_ENV, Value: mode,
+						},
+						{
+							Name: constants.TEMPORAL_ENV, Value: temporal_addr,
+						},
+						{
+							Name: constants.TEMPORAL_RPS_ENV, Value: rps,
+						},
+						{
+							Name: constants.TEMPORAL_CONCURRENCY_ENV, Value: concurrency,
+						},
+						{
+							Name: constants.LOG_LEVEL_ENV, Value: loglevel,
+						},
+						{
+							Name: constants.TEMPORAL_TQ_ENV, Value: hostname,
+						},
+					},
+				},
+			},
+		},
+	}
+	_, err := clientset.CoreV1().Pods(constants.TEMPORAL_NAMESPACE).Create(context.Background(), worker, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func deleteWorkerPod(hostname string, clientset *kubernetes.Clientset) error {
+	log.Println("Creating worker for node: " + hostname)
+	err := clientset.CoreV1().Pods(constants.TEMPORAL_NAMESPACE).Delete(context.Background(), constants.WORKER_POD_PREFIX+hostname, metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
 }
