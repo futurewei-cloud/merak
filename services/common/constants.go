@@ -24,8 +24,6 @@ const (
 	TEMPORAL_NAMESPACE       = "merak"
 	TEMPORAL_TQ_ENV          = "TQ"
 
-	MERAK_COMPUTE_WORKER_NAMESPACE = "merak-compute-worker"
-
 	KUBE_NODE_LABEL_KEY = "DEDICATED"
 	KUBE_NODE_LABEL_VAL = "MERAK"
 
@@ -71,10 +69,10 @@ const (
 	AGENT_STANDALONE_CIDR      = "10.0.0.0/8"
 
 	WORKER_IMAGE_ENV           = "WORKER_IMAGE"
-	WORKER_DEFAULT_IMAGE       = "meraksim/compute-vm-worker:dev"
+	WORKER_DEFAULT_IMAGE       = "meraksim/merak-compute-vm-worker:dev"
 	WORKER_DEFAULT_RPS         = "100000"
 	WORKER_DEFAULT_CONCURRENCY = "1000"
-	WORKER_POD_PREFIX          = "ComputeWorker"
+	WORKER_POD_PREFIX          = "compute-worker-"
 
 	POD_PULL_POLICY_ALWAYS = "Always"
 )

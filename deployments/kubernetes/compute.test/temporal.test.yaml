@@ -10,13 +10,41 @@
 #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 apiVersion: v1
-kind: Pod
+kind: Service
 metadata:
-  name: test-driver
-  namespace: merak
+  name: temporal-frontend
 spec:
-  serviceAccountName: merak-compute
-  containers:
-  - name: test-driver
-    image: meraksim/test-merak-compute:test
-    imagePullPolicy: Always
+  selector:
+    app: temporalite
+  ports:
+    - protocol: TCP
+      name: temporal-frontend
+      port: 7233
+      targetPort: temporal
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporalite
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temporalite
+  template:
+    metadata:
+      labels:
+        app: temporalite
+    spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: temporalite
+        image: meraksim/temporalite:dev
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 7233
+            name: temporal

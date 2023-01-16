@@ -100,6 +100,7 @@ docker-compute-test:
 	make proto
 	make compute
 	make vm-worker
+	make docker-test-driver-compute
 	docker build -t meraksim/merak-compute:test -f docker/compute.Dockerfile .
 	docker push meraksim/merak-compute:test
 	docker build -t meraksim/merak-compute-vm-worker:test -f docker/compute-vm-worker.Dockerfile .
@@ -218,9 +219,10 @@ kind-ci:
 	kubectl kustomize deployments/kubernetes/ci --enable-helm | kubectl apply -f -
 
 .PHONY: kind-compute-test
-kind-ci:
-	make kind-base
-	kubectl kustomize deployments/kubernetes/ci --enable-helm | kubectl apply -f -
+kind-compute-test:
+	kind delete cluster
+	kind create cluster --config=configs/kind.yaml
+	kubectl kustomize deployments/kubernetes/compute.test --enable-helm | kubectl apply -f -
 
 .PHONY: deploy
 deploy:

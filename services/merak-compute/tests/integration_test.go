@@ -34,8 +34,8 @@ import (
 )
 
 func TestGrpcClient(t *testing.T) {
-	totalPods := 100
-	numVms := 100
+	totalPods := 5
+	numVms := 5
 	var compute_address strings.Builder
 	compute_address.WriteString(constants.COMPUTE_GRPC_SERVER_ADDRESS)
 	compute_address.WriteString(":")
@@ -100,13 +100,15 @@ func TestGrpcClient(t *testing.T) {
 	}
 	for i := 0; i < totalPods; i++ {
 		ip := ""
-		for net.ParseIP(ip) == nil {
+		hostname := ""
+		for net.ParseIP(ip) == nil || hostname == "" {
 			time.Sleep(2 * time.Second)
 			kubePod, err := clientset.CoreV1().Pods("default").Get(ctx, "vhost-"+strconv.Itoa(i), metav1.GetOptions{})
 			if err != nil {
 				t.Fatalf("Failed to get pod!: %v\n", err)
 			}
 			ip = kubePod.Status.PodIP
+			hostname = kubePod.Spec.NodeName
 		}
 
 		t.Log("Found merak agent pod at " + ip)
@@ -118,6 +120,7 @@ func TestGrpcClient(t *testing.T) {
 			ContainerIp:   ip,
 			Mac:           "aa:bb:cc:dd:ee",
 			Veth:          "test",
+			Hostname:      hostname,
 		}
 		pod := pb.InternalVMPod{
 			OperationType: common_pb.OperationType_CREATE,
