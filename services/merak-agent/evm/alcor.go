@@ -408,7 +408,7 @@ func (evm AlcorEvm) AddGateway(m metrics.Metrics) error {
 
 	stdout, err := BashExec("ip netns exec " + evm.name + " ip r add default via " + evm.gw)
 	if err != nil {
-		log.Println("Failed add default gw! " + string(stdout))
+		log.Println("Failed to add default gw! " + string(stdout))
 		return err
 	}
 	return nil
@@ -546,5 +546,6 @@ var BashExec = BashExecute
 
 // Executes the given Bash command
 func BashExecute(cmd string) ([]byte, error) {
+	log.Println("Executing command " + cmd)
 	return exec.Command("bash", "-c", cmd).Output()
 }
