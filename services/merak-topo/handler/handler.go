@@ -419,9 +419,7 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 			crm.ContainerIp = cnode.ContainerIp
 			crm.Mac = cnode.Mac
 			crm.Veth = cnode.Veth
-			crm.Hostname = cnode.HostName
-
-			if cnode.Status == database.STATUS_READY {
+			if cnode.Status == entities.STATUS_READY {
 				crm.Status = pb_common.Status_READY
 			} else if cnode.Status == entities.STATUS_DELETING {
 				crm.Status = pb_common.Status_DELETING
