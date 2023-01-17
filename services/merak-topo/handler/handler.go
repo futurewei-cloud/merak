@@ -217,7 +217,6 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 
 	if err != nil {
 		utils.Logger.Warn("can't find topology info in DB", topoPrefix, err.Error())
-		return err
 	}
 
 	k8s_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
@@ -254,7 +253,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 		err := database.SetValue(topoPrefix+":"+s.Name, hnode)
 		if err != nil {
 			utils.Logger.Warn("can't save host node in DB", topoPrefix+":"+s.Name, err.Error())
-			return err
+
 		}
 
 	}
@@ -274,7 +273,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 
 			if err != nil {
 				utils.Logger.Error("can't get pod info from k8s", node.Name, err.Error(), "namespace", namespace)
-				return err
+				// return err
 			} else {
 				cnode.Name = res.Name
 				cnode.Id = string(res.UID)
@@ -304,7 +303,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 				err_db := database.SetValue(topoPrefix+":"+node.Name, cnode)
 				if err_db != nil {
 					utils.Logger.Warn("can't save compute node in DB", topoPrefix+":"+node.Name, err_db.Error())
-					return err_db
+
 				}
 
 			}
@@ -326,7 +325,7 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 
 	if err != nil {
 		utils.Logger.Warn("request CHECK", topoPrefix, err.Error())
-		return err
+
 	}
 
 	k8s_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
@@ -344,7 +343,6 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 
 		if err != nil {
 			utils.Logger.Warn("request CHECK", topoPrefix+":"+s.Name, err.Error())
-			return err
 
 		} else {
 			hrm.Ip = hnode.Ip

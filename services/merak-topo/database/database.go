@@ -58,7 +58,7 @@ func SetValue(key string, val interface{}) error {
 	err2 := Rdb.Set(Ctx, key, j, 0).Err()
 	if err2 != nil {
 		utils.Logger.Warn("can't save key in DB, please retry", "Warning ", err2.Error(), "key", key)
-		return err2
+
 	}
 
 	return nil
@@ -71,7 +71,7 @@ func Get(key string) (string, error) {
 	val, err := Rdb.Get(Ctx, key).Result()
 	if err != nil {
 		utils.Logger.Warn("can't get key in DB, please retry", "Warning", err.Error(), "key", key)
-		return val, err
+
 	}
 
 	return val, nil
@@ -97,12 +97,12 @@ func FindEntity(id string, prefix string, entity interface{}) error {
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
 		utils.Logger.Warn("can't find entity, please retry", id+prefix, err.Error())
-		return err
+
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
 		utils.Logger.Warn("can't find entity, please retry", "unmarshal key ", err2.Error())
-		return err2
+
 	}
 	return nil
 }
@@ -116,12 +116,12 @@ func FindHostEntity(id string, prefix string) (HostNode, error) {
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
 		utils.Logger.Warn("can't find host entity, please retry", id+prefix, err.Error())
-		return entity, err
+
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
 		utils.Logger.Warn("can't find host entity, please retry", "unmarshal", err2.Error())
-		return entity, err2
+
 	}
 
 	return entity, nil
@@ -140,12 +140,12 @@ func FindComputeEntity(id string, prefix string) (ComputeNode, error) {
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
 		utils.Logger.Warn("can't find compute entity, please retry", id+prefix, err.Error())
-		return entity, err
+
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
 		utils.Logger.Warn("can't find compute entity, please retry", value, err2.Error())
-		return entity, err2
+
 	}
 	return entity, nil
 }
@@ -157,12 +157,12 @@ func FindTopoEntity(id string, prefix string) (TopologyData, error) {
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
 		utils.Logger.Warn("can't find topology entity, please retry", id+prefix, err.Error())
-		return entity, err
+
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
 		utils.Logger.Warn("can't find topology entity, please retry", "unmarshal", err2.Error())
-		return entity, err2
+
 	}
 
 	return entity, nil
@@ -178,7 +178,7 @@ func getKeys(prefix string) ([]string, error) {
 
 	if err := iter.Err(); err != nil {
 		utils.Logger.Warn("can't get keys in DB scan", prefix, err.Error())
-		return allkeys, err
+
 	}
 
 	return allkeys, nil
