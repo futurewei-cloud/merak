@@ -307,6 +307,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topo_id string) error
 				cnode.Veth = node.Nics[len(node.Nics)-1].Intf
 				if res.Status.PodIP != "" {
 					cnode.ContainerIp = res.Status.PodIP
+					cnode.HostName = res.Spec.NodeName
 				} else {
 					log.Printf("pod ip is not ready %v", res.Name)
 				}
@@ -409,6 +410,8 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 			crm.ContainerIp = cnode.ContainerIp
 			crm.Mac = cnode.Mac
 			crm.Veth = cnode.Veth
+			crm.Hostname = cnode.HostName
+
 			if cnode.Status == database.STATUS_READY {
 				crm.Status = pb_common.Status_READY
 			} else if cnode.Status == database.STATUS_DELETING {
