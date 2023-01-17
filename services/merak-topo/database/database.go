@@ -27,9 +27,9 @@ import (
 )
 
 var (
-	Err_query    = errors.New("Invalid Input")
-	Ctx          = context.Background()
-	Rdb          *redis.Client
+	Err_query = errors.New("Invalid Input")
+	Ctx       = context.Background()
+	Rdb       *redis.Client
 )
 
 func ConnectDatabase() error {
@@ -66,19 +66,21 @@ func SetValue(key string, val interface{}) error {
 
 func Get(key string) (string, error) {
 
+	val := "XXX"
+
 	val, err := Rdb.Get(Ctx, key).Result()
 	if err != nil {
 		utils.Logger.Warn("can't get key in DB, please retry", "Warning", err.Error(), "key", key)
-		return err
+		return val, err
 	}
 
 	return val, nil
 }
 
 func Del(key string) error {
-	
+
 	if err := Rdb.Del(Ctx, key).Err(); err != nil {
-		utils.Logger.Warn("can't delete key in DB, please retry", "Warning", err_return.Error(), "key", key)
+		utils.Logger.Warn("can't delete key in DB, please retry", "Warning", err.Error(), "key", key)
 		return err
 	}
 	return nil
@@ -114,12 +116,12 @@ func FindHostEntity(id string, prefix string) (HostNode, error) {
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
 		utils.Logger.Warn("can't find host entity, please retry", id+prefix, err.Error())
-		return err
+		return entity, err
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
 		utils.Logger.Warn("can't find host entity, please retry", "unmarshal", err2.Error())
-		return err2
+		return entity, err2
 	}
 
 	return entity, nil
@@ -134,40 +136,41 @@ func FindComputeEntity(id string, prefix string) (ComputeNode, error) {
 	entity.Name = "Initial"
 	entity.Status = STATUS_NONE
 	entity.Veth = "Initial"
-	
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
 		utils.Logger.Warn("can't find compute entity, please retry", id+prefix, err.Error())
-		return err
+		return entity, err
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
 		utils.Logger.Warn("can't find compute entity, please retry", value, err2.Error())
-		return err2
+		return entity, err2
 	}
 	return entity, nil
 }
 
 func FindTopoEntity(id string, prefix string) (TopologyData, error) {
 	var entity TopologyData
+	entity.Topology_id = "XXX"
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
 		utils.Logger.Warn("can't find topology entity, please retry", id+prefix, err.Error())
-		return err
+		return entity, err
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
 		utils.Logger.Warn("can't find topology entity, please retry", "unmarshal", err2.Error())
-		return err2
+		return entity, err2
 	}
-	
+
 	return entity, nil
+}
 
 func getKeys(prefix string) ([]string, error) {
-	var allkeys []string
-	
+	allkeys := []string{"XXX"}
+
 	iter := Rdb.Scan(Ctx, 0, prefix, 0).Iterator()
 	for iter.Next(Ctx) {
 		allkeys = append(allkeys, iter.Val())
@@ -175,14 +178,14 @@ func getKeys(prefix string) ([]string, error) {
 
 	if err := iter.Err(); err != nil {
 		utils.Logger.Warn("can't get keys in DB scan", prefix, err.Error())
-		return err
+		return allkeys, err
 	}
 
 	return allkeys, nil
 }
 
 func DeleteAllValuesWithKeyPrefix(prefix string) error {
-	
+
 	keys, err := getKeys(fmt.Sprintf("%s*", prefix))
 	if err != nil {
 		utils.Logger.Warn("can't find prefix value in DB, please retry", prefix, err.Error())
@@ -200,4 +203,3 @@ func DeleteAllValuesWithKeyPrefix(prefix string) error {
 	return nil
 
 }
-
