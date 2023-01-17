@@ -15,7 +15,6 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"strings"
 	"time"
@@ -315,7 +314,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 		} else {
 			utils.Logger.Error("device type in topology has not been defined yet", "device type", "not defined")
-			
+
 		}
 
 	}

@@ -15,7 +15,6 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"time"
 
@@ -37,7 +36,6 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 	var aca_image string
 	var ovs_image string
-	var err_return error
 
 	for _, img := range images {
 		if strings.Contains(img.Name, "ACA") {
@@ -484,4 +482,3 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 
 	return nil
 }
-

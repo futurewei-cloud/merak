@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	Err_query = errors.New("Invalid Input")
+	err_query = errors.New("Invalid Input")
 	Ctx       = context.Background()
 	Rdb       *redis.Client
 )
@@ -91,7 +91,7 @@ func FindEntity(id string, prefix string, entity interface{}) error {
 
 	if (id + prefix) == "" {
 		utils.Logger.Warn("can't find entity, please retry", "entity key", "empty key")
-		return Err_query
+		return err_query
 	}
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
