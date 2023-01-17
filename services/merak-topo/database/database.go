@@ -136,6 +136,7 @@ func FindComputeEntity(id string, prefix string) (ComputeNode, error) {
 	entity.Name = "Initial"
 	entity.Status = STATUS_NONE
 	entity.Veth = "Initial"
+	entity.HostName = "XXXX"
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
