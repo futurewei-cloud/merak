@@ -103,9 +103,6 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 	/*comment gw creation function*/
 	// var k8snodes []string
 
-	errs := errors.New("topology deployment fails")
-	errs_flag := 0
-
 	nodes := topo.Vnodes
 
 	config := ctrl.GetConfigOrDie()
@@ -119,18 +116,6 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 	var rack_pods_config []*corev1.Pod
 	var vs_pods_config []*corev1.Pod
 
-	/*comment gw creation function*/
-	// k_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-	// if err1 != nil {
-	// 	return fmt.Errorf("fails to query k8s nodes info %s", err1)
-	// }
-
-	// for _, s := range k_nodes.Items {
-	// 	if s.Spec.Taints == nil {
-	// 		k8snodes = append(k8snodes, s.Name)
-	// 	}
-	// }
-
 	start_time := time.Now()
 
 	for _, node := range nodes {
@@ -141,7 +126,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 		if err != nil {
 			utils.Logger.Error("can't create topology class", "meshnet-cni", err.Error(), "vnode name", node.Name, "namespace", namespace)
-			errs_flag = 1
+			return err
 		}
 
 		interface_num := len(node.Nics) + 1
@@ -230,7 +215,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 			ovs_set, err0 := ovs_config(topo, node.Name, SDN_IP, SDN_PORT)
 			if err0 != nil {
 				utils.Logger.Error("fails to configure ovs", " ovs switch controller info error", err0.Error(), "vnode", node.Name)
-				errs_flag = 1
+				return err0
 			}
 
 			l["Type"] = "vswitch"
@@ -299,7 +284,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 			ovs_set, err0 := ovs_config(topo, node.Name, SDN_IP, SDN_PORT)
 			if err0 != nil {
 				utils.Logger.Error("fails to configure ovs", "ovs switch controller info error", err0.Error(), "vnode", node.Name)
-				errs_flag = 1
+				return err0
 			}
 
 			l["Type"] = "vswitch"
@@ -330,7 +315,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 		} else {
 			utils.Logger.Error("device type in topology has not been defined yet", "device type", "not defined")
-			errs_flag = 1
+			
 		}
 
 	}
@@ -346,12 +331,12 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 		if err_create != nil {
 			utils.Logger.Error("request DEPLOY", "create pod in k8s cluster", err_create.Error(), "namespace", namespace, "pod", newPod.Name)
-			errs_flag = 1
+			return err_create
 		} else {
 			err_db := database.SetValue(topoPrefix+":"+newPod.Name, newPod)
 			if err_db != nil {
 				utils.Logger.Error("request DEPLOY", "can't save topology in DB", err_db.Error(), "topologyid_pod", topoPrefix+"_"+newPod.Name)
-				errs_flag = 1
+				return err_db
 			}
 
 		}
@@ -363,12 +348,12 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 		if err_create != nil {
 			utils.Logger.Error("can't create pod", "error", err_create.Error(), "pod", newPod.Name, "namespace", namespace)
-			errs_flag = 1
+			return err_create
 		} else {
 			err_db := database.SetValue(topoPrefix+":"+newPod.Name, newPod)
 			if err_db != nil {
 				utils.Logger.Error("request DEPLOY", "can't save topology in DB", err_db.Error(), "topologyid_pod", topoPrefix+"_"+newPod.Name)
-				errs_flag = 1
+				return err_db
 			}
 
 		}
@@ -380,12 +365,12 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 		if err_create != nil {
 			utils.Logger.Error("can't create pod", "create pod error", err_create.Error(), "namespace", namespace, "topologyid_pod", topoPrefix+"_"+newPod.Name)
-			errs_flag = 1
+			return err_create
 		} else {
 			err_db := database.SetValue(topoPrefix+":"+newPod.Name, newPod)
 			if err_db != nil {
 				utils.Logger.Error("can't save topology in DB", "save topology in DB error", err_db.Error())
-				errs_flag = 1
+				return err_db
 			}
 
 		}
@@ -395,11 +380,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 
 	utils.Logger.Info("request DEPLOY", "create pod in K8s (in second)", elaps1)
 
-	if errs_flag == 1 {
-		return errs
-	} else {
-		return nil
-	}
+	return nil
 
 }
 

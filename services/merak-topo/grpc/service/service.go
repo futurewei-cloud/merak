@@ -37,10 +37,8 @@ type Server struct {
 
 func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInfo) (*pb.ReturnTopologyMessage, error) {
 	var returnMessage pb.ReturnTopologyMessage
-	err_flag := 0
 	errs := errors.New("merak-topo can't handle this request")
-	var err_return error
-
+	
 	topoPrefix := in.Config.GetTopologyId()[:5]
 
 	/*comment: create topology in the default namespace*/
@@ -52,13 +50,13 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 	k8client, err := utils.K8sClient()
 	if err != nil {
 		utils.Logger.Error("k8s client", "configuration", err.Error())
-		return &returnMessage, errs
+		return &returnMessage, err
 	}
 
 	err1 := database.ConnectDatabase()
 	if err1 != nil {
 		utils.Logger.Error("redis database", "connect to DB", err1.Error())
-		return &returnMessage, errs
+		return &returnMessage, err1
 	}
 
 	// Operation&Return
@@ -70,16 +68,17 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 			err_info := handler.Info(k8client, in.Config.GetTopologyId(), &returnMessage, topoPrefix, namespace)
 			if err_info != nil {
 				utils.Logger.Info("topology information is not ready yet", in.Config.GetTopologyId(), err_info.Error())
-				err_flag = 1
 				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 				returnMessage.ReturnMessage = "CHECK fail."
+				return &returnMessage,err_info
+				
 			} else {
 				returnMessage.ReturnCode = pb_common.ReturnCode_OK
 				returnMessage.ReturnMessage = "CHECK success."
 			}
 
 			utils.Logger.Debug("requrest CHECK details", "return code", returnMessage.ReturnCode, "return compute node", returnMessage.ComputeNodes, "return host node", returnMessage.Hosts)
-
+			
 		}
 
 	case pb_common.OperationType_CREATE:
@@ -141,9 +140,10 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 			if err_create != nil {
 				utils.Logger.Error("can't deploy topology", topo_id, err_create.Error())
-				err_flag = 1
 				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 				returnMessage.ReturnMessage = "DEPLOY fail."
+				return &returnMessage, err_create
+				
 			} else {
 				utils.Logger.Info("request DEPLOY", topo_id, "success")
 				returnMessage.ReturnCode = pb_common.ReturnCode_OK
@@ -152,7 +152,6 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 			utils.Logger.Debug("requrest DEPLOY details", "return code", returnMessage.ReturnCode, "return compute node", returnMessage.ComputeNodes, "return host node", returnMessage.Hosts)
 
-			return &returnMessage, err_create
 		}
 
 	case pb_common.OperationType_DELETE:
@@ -163,32 +162,30 @@ func (s *Server) TopologyHandler(ctx context.Context, in *pb.InternalTopologyInf
 
 		if err != nil {
 			utils.Logger.Error("request DELETE", in.Config.TopologyId, err.Error())
-			err_flag = 1
+			
 			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 			returnMessage.ReturnMessage = "DELETE fail"
+			utils.Logger.Debug("request DELETE", "return message", returnMessage.ReturnMessage, "return code", returnMessage.ReturnCode)
+			return &returnMessage, err
 		} else {
 			utils.Logger.Info("request DELETE", in.Config.TopologyId, "success")
 			returnMessage.ReturnCode = pb_common.ReturnCode_OK
 			returnMessage.ReturnMessage = "DELETE success"
+			utils.Logger.Debug("request DELETE", "return message", returnMessage.ReturnMessage, "return code", returnMessage.ReturnCode)
 		}
 
-		utils.Logger.Debug("request DELETE", "return message", returnMessage.ReturnMessage, "return code", returnMessage.ReturnCode)
+		
+		
 
 	case pb_common.OperationType_UPDATE:
 		// update topology
 	default:
 		utils.Logger.Info("Unknown Operation", in.Config.TopologyId, "please check the input")
-		err_flag = 1
 		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
 		returnMessage.ReturnMessage = "Unknown operation, please retry"
+		return &returnMessage, errs
 	}
 
-	if err_flag == 1 {
-		err_return = errs
-		err_flag = 0
-	} else {
-		err_return = nil
-	}
-	return &returnMessage, err_return
+	return &returnMessage, nil
 
 }

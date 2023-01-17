@@ -39,9 +39,6 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 	var ovs_image string
 	var err_return error
 
-	err_flag := 0
-	errs := errors.New("request DEPLOY- fails to create topology")
-
 	for _, img := range images {
 		if strings.Contains(img.Name, "ACA") {
 			aca_image = img.Registry
@@ -57,7 +54,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 		utils.Logger.Error("request DEPLOY", "multiple layers vswitches", err_create.Error())
 		returnMessage.ReturnMessage = "Can not create multiple layers vswitches"
 		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-		err_flag = 1
+		return err_create
 
 	}
 
@@ -73,7 +70,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 		utils.Logger.Error("request DEPLOY", "save topology to redis", err_db.Error(), "topo_id", topoPrefix)
 		returnMessage.ReturnMessage = "Can not save topology to redis"
 		returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-		err_flag = 1
+		return err_db
 	}
 
 	elaps1 := time.Since(start0)
@@ -121,7 +118,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 			utils.Logger.Error("can not save host node info in DB", "key", topoPrefix+":"+s.Name, "error msg", err.Error())
 			returnMessage.ReturnMessage = "DEPLOY: can not save host node info in DB"
 			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-			err_flag = 1
+			return err
 		}
 
 	}
@@ -138,7 +135,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 			utils.Logger.Error("cannot query host node info from DB ", topoPrefix+":"+s.Name, err.Error())
 			returnMessage.ReturnMessage = "DEPLOY: cannot query host node info from DB"
 			returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-			err_flag = 1
+			return err
 		} else {
 			hrm.Ip = hnode.Ip
 			if hnode.Status == database.STATUS_READY {
@@ -174,7 +171,7 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 				utils.Logger.Error("can not save compute node info in DB ", topoPrefix+":"+cnode.Name, err.Error())
 				returnMessage.ReturnMessage = "DEPLOY: can not save compute node info in DB"
 				returnMessage.ReturnCode = pb_common.ReturnCode_FAILED
-				err_flag = 1
+				return err
 			}
 
 			crm.Id = cnode.Id
@@ -210,29 +207,19 @@ func Create(k8client *kubernetes.Clientset, topo_id string, aca_num uint32, rack
 
 	elaps2 := time.Since(start1)
 
-	if err_flag == 1 {
-		err_return = errs
-		utils.Logger.Info("request DEPLOY", "Fails: check merak-topo logs", elaps2)
-	} else {
-		err_return = nil
-		utils.Logger.Info("request DEPLOY", "Complete: Return compute nodes and k8s cluster information to Scenario Manager (in second)", elaps2)
-	}
-
-	return err_return
+	utils.Logger.Info("request DEPLOY", "Complete: Return compute nodes and k8s cluster information to Scenario Manager (in second)", elaps2)
+	return nil
 
 }
 
 func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, namespace string) error {
-
-	err_flag := 0
-	errs := errors.New("fails to update compute nodes and k8s node info in DB")
-	var err_return error
 
 	start_time := time.Now()
 	topo, err := database.FindTopoEntity(topoPrefix, "")
 
 	if err != nil {
 		utils.Logger.Warn("can't find topology info in DB", topoPrefix, err.Error())
+		return err
 	}
 
 	k8s_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
@@ -269,6 +256,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 		err := database.SetValue(topoPrefix+":"+s.Name, hnode)
 		if err != nil {
 			utils.Logger.Warn("can't save host node in DB", topoPrefix+":"+s.Name, err.Error())
+			return err
 		}
 
 	}
@@ -277,14 +265,6 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 	start_time0 := time.Now()
 
 	utils.Logger.Info("Complete", "updating host node info in DB (in second) ", elaps0)
-
-	/*comment mac learning function*/
-
-	// err3 := QueryMac(client, topo_id)
-
-	// if err3 != nil {
-	// 	return fmt.Errorf("query mac error %s", err3)
-	// }
 
 	for _, node := range topo.Vnodes {
 
@@ -310,15 +290,6 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 					utils.Logger.Debug("Warning", "pod ip is not ready", res.Name)
 				}
 
-				/*comment mac learning function*/
-				// mac, err := database.Get(topo_id + ":" + cnode.Ip)
-				// if err != nil {
-				// 	log.Printf("updatecomputenode: mac address is not available")
-				// } else {
-				// 	cnode.Mac = strings.Trim(mac, "\"")
-				// 	cnode.OperationType = pb.OperationType_INFO
-				// }
-
 				cnode.Mac = "ff:ff:ff:ff:ff:ff"
 				cnode.OperationType = database.OPERATION_INFO
 
@@ -335,6 +306,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 				err_db := database.SetValue(topoPrefix+":"+node.Name, cnode)
 				if err_db != nil {
 					utils.Logger.Warn("can't save compute node in DB", topoPrefix+":"+node.Name, err_db.Error())
+					return err_db
 				}
 
 			}
@@ -347,25 +319,16 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 
 	utils.Logger.Info("Complete", "updating compute nodes info in DB (in second) ", elaps)
 
-	if err_flag == 1 {
-		err_return = errs
-		err_flag = 0
-	} else {
-		err_return = nil
-	}
-	return err_return
+	return nil
 }
 
 func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.ReturnTopologyMessage, topoPrefix string, namespace string) error {
-
-	err_flag := 0
-	errs := errors.New("fails to handle request CHECK")
-	var err_return error
 
 	topo, err := database.FindTopoEntity(topoPrefix, "")
 
 	if err != nil {
 		utils.Logger.Warn("request CHECK", topoPrefix, err.Error())
+		return err
 	}
 
 	k8s_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
@@ -383,6 +346,7 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 
 		if err != nil {
 			utils.Logger.Warn("request CHECK", topoPrefix+":"+s.Name, err.Error())
+			return err
 
 		} else {
 			hrm.Ip = hnode.Ip
@@ -409,6 +373,7 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 
 			if err != nil {
 				utils.Logger.Warn("request CHECK", topoPrefix+":"+node.Name, err.Error())
+				return err
 			}
 			crm.Id = cnode.Id
 			crm.Name = cnode.Name
@@ -443,12 +408,7 @@ func Info(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Retu
 
 	go UpdateComputenodeInfo(k8client, topoPrefix, namespace)
 
-	if err_flag == 1 {
-		err_return = errs
-	} else {
-		err_return = nil
-	}
-	return err_return
+	return nil
 }
 
 func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.ReturnTopologyMessage, topoPrefix string, namespace string) error {
@@ -457,6 +417,7 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 
 	if err_db != nil {
 		utils.Logger.Warn("request DELETE", "can't query topology data from DB", topoPrefix, err_db.Error())
+		return err_db
 	}
 
 	k8s_nodes, err1 := k8client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
@@ -476,6 +437,7 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 
 		if err != nil {
 			utils.Logger.Error("can't get host node info from DB error", topoPrefix+":"+s.Name, err.Error())
+			return err
 		} else {
 			hrm.Ip = hnode.Ip
 			if hnode.Status == database.STATUS_READY {
@@ -500,6 +462,7 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 
 			if err != nil {
 				utils.Logger.Error("request DELETE", topoPrefix+":"+node.Name, err.Error())
+				return err
 			}
 
 			crm.Id = cnode.Id
@@ -522,82 +485,3 @@ func Delete(k8client *kubernetes.Clientset, topo_id string, returnMessage *pb.Re
 	return nil
 }
 
-/*comment this function for query mac address*/
-// func QueryMac(k8client *kubernetes.Clientset, topo_id string) error {
-
-// 	topo_data, err := database.FindTopoEntity(topo_id, "")
-
-// 	if err != nil {
-// 		return fmt.Errorf("failed to retrieve topology data from DB %s", err)
-// 	}
-// 	count_ping := 0
-
-// 	for _, node := range topo_data.Vnodes {
-
-// 		if strings.Contains(node.Name, "cgw") && count_ping < 1 {
-// 			count_ping = count_ping + 1
-
-// 			pod, err := database.FindPodEntity(topo_id+":"+node.Name, "")
-
-// 			if err != nil {
-// 				return fmt.Errorf("failed to retrieve pod data from DB %s", err)
-// 			}
-
-// 			ip_list, err_db := database.FindIPEntity(topo_id+":ips", "")
-// 			if err_db != nil {
-// 				return fmt.Errorf("failed to retrieve ip address data from DB %s", err_db)
-// 			}
-
-// 			for index := len(ip_list) - 1; index >= 0; index-- {
-// 				ip := ip_list[index]
-// 				ip = strings.Split(ip, "/")[0]
-// 				cmd1 := []string{
-// 					"ping",
-// 					"-c 1",
-// 					ip,
-// 				}
-// 				Pod_query(k8client, pod, cmd1)
-
-// 			}
-
-// 			cmd2 := []string{
-// 				"arp",
-// 				"-a",
-// 			}
-// 			out2, err3 := Pod_query(k8client, pod, cmd2)
-
-// 			if err3 != nil {
-// 				return fmt.Errorf("failed to query pod compute node info from K8s %s", err)
-// 			}
-
-// 			re, _ := regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
-
-// 			re2, _ := regexp.Compile(`^[a-fA-F0-9]{2}(:[a-fA-F0-9]{2}){5}$`)
-// 			var ip string
-// 			var mac string
-// 			count := 0
-
-// 			for _, s := range strings.Split(out2, " ") {
-// 				s1 := strings.Trim(s, "(")
-// 				s2 := strings.Trim(s1, ")")
-// 				s2 = strings.Trim(s2, "\"")
-
-// 				if re.MatchString(s2) {
-// 					ip = s2
-// 					count = count + 1
-// 				} else if re2.MatchString(s) {
-// 					mac = s2
-// 					count = count + 1
-// 					if count == 2 {
-// 						database.SetValue(topo_id+":"+ip, mac)
-// 						count = 0
-// 					}
-// 				}
-// 			}
-// 			if count != 0 {
-// 				log.Printf("arp output parsing error. ip and mac doesn't match")
-// 			}
-// 		}
-// 	}
-// 	return nil
-// }
