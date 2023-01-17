@@ -211,9 +211,29 @@ func createWorkerPod(hostname string, config workerConfig, clientset *kubernetes
 	if err != nil {
 		log.Fatalln("ERROR: Unable to convert rpsUpper to int", err)
 	}
+	var rpsInt, concurrencyInt int
+	var rps, concurrency string
+
 	rand.Seed(time.Now().UnixNano())
-	concurrency := strconv.Itoa(rand.Intn((concurrencyUpper - concurrencyLower + 1) + concurrencyLower))
-	rps := strconv.Itoa(rand.Intn((rpsUpper - rpsLower + 1) + rpsLower))
+	if rpsUpper == rpsLower {
+		rpsInt = rpsUpper
+	} else {
+		rpsInt = rand.Intn((rpsUpper - rpsLower + 1) + rpsLower)
+	}
+	if concurrencyUpper == concurrencyLower {
+		concurrencyInt = concurrencyUpper
+	} else {
+		concurrencyInt = rand.Intn((concurrencyUpper - concurrencyLower + 1) + concurrencyLower)
+	}
+
+	if rpsInt == 0 {
+		rpsInt = 1
+	}
+	if concurrencyInt == 0 {
+		concurrencyInt = 1
+	}
+	rps = strconv.Itoa(rpsInt)
+	concurrency = strconv.Itoa(concurrencyInt)
 	log.Println("Creating worker for node: " + hostname)
 	worker := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
