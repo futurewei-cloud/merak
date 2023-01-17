@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"os"
 	"strconv"
@@ -46,6 +47,17 @@ var (
 	ctx  = context.Background()
 	Port = flag.Int("port", constants.COMPUTE_GRPC_SERVER_PORT, "The server port")
 )
+
+type workerConfig struct {
+	rpsUpper         string
+	rpsLower         string
+	concurrencyUpper string
+	concurrencyLower string
+	image            string
+	logLevel         string
+	mode             string
+	temporalAddress  string
+}
 
 func main() {
 	// Connect to temporal
@@ -112,42 +124,7 @@ func main() {
 	log.Println("Successfully connected to Redis!")
 	defer handler.RedisClient.Close()
 
-	// Get ENV variables
-	temporal_addr, err := getEnv(constants.TEMPORAL_ENV)
-	if err != nil {
-		temporal_addr = constants.TEMPORAL_ADDRESS
-	}
-	log.Println("WORKER: Using Temporal address from ENV " + constants.TEMPORAL_ADDRESS)
-
-	rps, err := getEnv(constants.TEMPORAL_RPS_ENV)
-	if err != nil {
-		rps = constants.WORKER_DEFAULT_RPS
-	}
-	log.Println("WORKER: Using RPS from ENV " + rps)
-
-	concurrency, err := getEnv(constants.TEMPORAL_CONCURRENCY_ENV)
-	if err != nil {
-		concurrency = constants.WORKER_DEFAULT_CONCURRENCY
-	}
-	log.Println("WORKER: Using CONCURRENCY from ENV " + concurrency)
-
-	loglevel, err := getEnv(constants.LOG_LEVEL_ENV)
-	if err != nil {
-		loglevel = constants.LOG_LEVEL_DEFAULT
-	}
-	log.Println("WORKER: Using log level from ENV " + loglevel)
-
-	mode, err := getEnv(constants.MODE_ENV)
-	if err != nil {
-		mode = constants.MODE_ALCOR
-	}
-	log.Println("WORKER: Using mode level from ENV " + mode)
-
-	image, err := getEnv(constants.WORKER_IMAGE_ENV)
-	if err != nil {
-		image = constants.WORKER_DEFAULT_IMAGE
-	}
-	log.Println("WORKER: Using Image from ENV " + constants.WORKER_DEFAULT_IMAGE)
+	workerConfig := getConfigFromEnv()
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -175,9 +152,9 @@ func main() {
 	nodeInformer := informerFactory.Core().V1().Nodes().Informer()
 	nodeInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			err := createWorkerPod(obj.(*corev1.Node).Name, image, mode, temporal_addr, rps, concurrency, loglevel, clientset)
+			err := createWorkerPod(obj.(*corev1.Node).Name, workerConfig, clientset)
 			if err != nil {
-				log.Println("Failed to create worker pod: "+constants.WORKER_POD_PREFIX+obj.(*corev1.Node).Name, err.Error())
+				log.Println("Failed to create worker pod: "+constants.WORKER_POD_PREFIX+obj.(*corev1.Node).Name, workerConfig, err.Error())
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -217,7 +194,26 @@ func getEnv(key string) (string, error) {
 	return val, nil
 }
 
-func createWorkerPod(hostname, image, mode, temporal_addr, rps, concurrency, loglevel string, clientset *kubernetes.Clientset) error {
+func createWorkerPod(hostname string, config workerConfig, clientset *kubernetes.Clientset) error {
+	concurrencyLower, err := strconv.Atoi(config.concurrencyLower)
+	if err != nil {
+		log.Fatalln("ERROR: Unable to convert concurrencyLower to int", err)
+	}
+	concurrencyUpper, err := strconv.Atoi(config.concurrencyUpper)
+	if err != nil {
+		log.Fatalln("ERROR: Unable to convert concurrencyUpper to int", err)
+	}
+	rpsLower, err := strconv.Atoi(config.rpsLower)
+	if err != nil {
+		log.Fatalln("ERROR: Unable to convert rpsLower to int", err)
+	}
+	rpsUpper, err := strconv.Atoi(config.rpsUpper)
+	if err != nil {
+		log.Fatalln("ERROR: Unable to convert rpsUpper to int", err)
+	}
+	rand.Seed(time.Now().UnixNano())
+	concurrency := strconv.Itoa(rand.Intn((concurrencyUpper - concurrencyLower + 1) + concurrencyLower))
+	rps := strconv.Itoa(rand.Intn((rpsUpper - rpsLower + 1) + rpsLower))
 	log.Println("Creating worker for node: " + hostname)
 	worker := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -230,17 +226,17 @@ func createWorkerPod(hostname, image, mode, temporal_addr, rps, concurrency, log
 			Containers: []corev1.Container{
 				{
 					Name:            constants.WORKER_POD_PREFIX + hostname,
-					Image:           image,
+					Image:           config.image,
 					ImagePullPolicy: constants.POD_PULL_POLICY_ALWAYS,
 					Ports: []corev1.ContainerPort{
 						{ContainerPort: constants.PROMETHEUS_PORT},
 					},
 					Env: []corev1.EnvVar{
 						{
-							Name: constants.MODE_ENV, Value: mode,
+							Name: constants.MODE_ENV, Value: config.mode,
 						},
 						{
-							Name: constants.TEMPORAL_ENV, Value: temporal_addr,
+							Name: constants.TEMPORAL_ENV, Value: config.temporalAddress,
 						},
 						{
 							Name: constants.TEMPORAL_RPS_ENV, Value: rps,
@@ -249,7 +245,7 @@ func createWorkerPod(hostname, image, mode, temporal_addr, rps, concurrency, log
 							Name: constants.TEMPORAL_CONCURRENCY_ENV, Value: concurrency,
 						},
 						{
-							Name: constants.LOG_LEVEL_ENV, Value: loglevel,
+							Name: constants.LOG_LEVEL_ENV, Value: config.logLevel,
 						},
 						{
 							Name: constants.TEMPORAL_TQ_ENV, Value: hostname,
@@ -259,7 +255,7 @@ func createWorkerPod(hostname, image, mode, temporal_addr, rps, concurrency, log
 			},
 		},
 	}
-	_, err := clientset.CoreV1().Pods(constants.TEMPORAL_NAMESPACE).Create(context.Background(), worker, metav1.CreateOptions{})
+	_, err = clientset.CoreV1().Pods(constants.TEMPORAL_NAMESPACE).Create(context.Background(), worker, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -273,4 +269,66 @@ func deleteWorkerPod(hostname string, clientset *kubernetes.Clientset) error {
 		return err
 	}
 	return nil
+}
+
+func getConfigFromEnv() workerConfig {
+	temporalAddress, err := getEnv(constants.TEMPORAL_ENV)
+	if err != nil {
+		temporalAddress = constants.TEMPORAL_ADDRESS
+	}
+	log.Println("WORKER: Using Temporal address from ENV " + temporalAddress)
+
+	rpsUpper, err := getEnv(constants.TEMPORAL_RPS_UPPER_ENV)
+	if err != nil {
+		rpsUpper = constants.WORKER_DEFAULT_RPS
+	}
+	log.Println("WORKER: Using RPS_UPPER from ENV " + rpsUpper)
+
+	rpsLower, err := getEnv(constants.TEMPORAL_RPS_LOWER_ENV)
+	if err != nil {
+		rpsUpper = constants.WORKER_DEFAULT_RPS
+	}
+	log.Println("WORKER: Using RPS_LOWER from ENV " + rpsLower)
+
+	concurrencyUpper, err := getEnv(constants.TEMPORAL_CONCURRENCY_UPPER_ENV)
+	if err != nil {
+		concurrencyUpper = constants.WORKER_DEFAULT_CONCURRENCY
+	}
+	log.Println("WORKER: Using CONCURRENCY_UPPER from ENV " + concurrencyUpper)
+
+	concurrencyLower, err := getEnv(constants.TEMPORAL_CONCURRENCY_LOWER_ENV)
+	if err != nil {
+		concurrencyLower = constants.WORKER_DEFAULT_CONCURRENCY
+	}
+	log.Println("WORKER: Using CONCURRENCY_UPPER from ENV " + concurrencyLower)
+
+	logLevel, err := getEnv(constants.LOG_LEVEL_ENV)
+	if err != nil {
+		logLevel = constants.LOG_LEVEL_DEFAULT
+	}
+	log.Println("WORKER: Using log level from ENV " + logLevel)
+
+	mode, err := getEnv(constants.MODE_ENV)
+	if err != nil {
+		// Default to Alcor mode
+		mode = constants.MODE_ALCOR
+	}
+	log.Println("WORKER: Using mode level from ENV " + mode)
+
+	image, err := getEnv(constants.WORKER_IMAGE_ENV)
+	if err != nil {
+		image = constants.WORKER_DEFAULT_IMAGE
+	}
+	log.Println("WORKER: Using Image from ENV " + image)
+
+	return workerConfig{
+		mode:             mode,
+		temporalAddress:  temporalAddress,
+		rpsUpper:         rpsUpper,
+		rpsLower:         rpsLower,
+		concurrencyUpper: concurrencyUpper,
+		concurrencyLower: concurrencyLower,
+		logLevel:         logLevel,
+		image:            image,
+	}
 }

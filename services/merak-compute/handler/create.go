@@ -18,6 +18,7 @@ import (
 	"context"
 	"log"
 	"strconv"
+	"time"
 
 	"math/rand"
 
@@ -78,8 +79,8 @@ func caseCreate(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.Retu
 				}
 			}
 		}
-		// Shuffle the VMs with default seed one
-		// Seed from time with rand.Seed(time.Now().UnixNano())
+		// Shuffle the VMs
+		rand.Seed(time.Now().UnixNano())
 		rand.Shuffle(len(vms), func(i, j int) {
 			vms[i], vms[j] = vms[j], vms[i]
 		})

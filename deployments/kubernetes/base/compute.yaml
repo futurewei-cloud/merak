@@ -81,12 +81,18 @@ spec:
           value: "temporal-frontend.default.svc.cluster.local"
         - name: "LOG_LEVEL"
           value: "INFO"
-        - name: RPS
+        - name: RPS_UPPER         # Will use a random RPS value between lower and upper for each worker
           value: "1000000"
-        - name: CONCURRENCY
+        - name: RPS_LOWER
+          value: "1000000"
+        - name: CONCURRENCY_UPPER # Will use a random Concurrency value between lower and upper for each worker
+          value: "1000"
+        - name: CONCURRENCY_LOWER
           value: "1000"
         - name: WORKER_IMAGE
           value: meraksim/merak-compute-vm-worker:test
+        - name: MODE
+          value: ALCOR
         - name: NODE_NAME
           valueFrom:
             fieldRef:
