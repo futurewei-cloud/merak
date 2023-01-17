@@ -84,4 +84,5 @@ type ComputeNode struct {
 	Veth          string        `json:"veth"`
 	ContainerIp   string        `json:"container_ip"`
 	Status        ServiceStatus `json:"status"`
+	HostName      string        `json:"hostname"`
 }
