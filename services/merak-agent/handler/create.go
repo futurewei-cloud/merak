@@ -27,8 +27,12 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig, updatePortUrl st
 	var err error
 	var evm merakEvm.Evm
 
-	_, ok := os.LookupEnv(constants.MODE_ENV)
-	if ok {
+	val, ok := os.LookupEnv(constants.MODE_ENV)
+	if !ok {
+		val = constants.MODE_ALCOR
+	}
+	MerakLogger.Info("Executing in mode " + val)
+	if val == constants.MODE_STANDALONE {
 		evm, _ = merakEvm.NewEvm(
 			in.Name,
 			constants.AGENT_STANDALONE_IP,
@@ -73,9 +77,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig, updatePortUrl st
 			},
 		}, err
 	}
-	MerakLogger.Info("Protobuf ", "in", in)
-	_, ok = os.LookupEnv(constants.MODE_ENV)
-	if !ok {
+	if val == constants.MODE_ALCOR {
 		MerakLogger.Info(updatePortUrl + evm.GetRemoteId())
 		err = merakEvm.UpdatePort(updatePortUrl+evm.GetRemoteId(), in, MerakMetrics, evm)
 		if err != nil {

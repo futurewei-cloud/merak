@@ -25,7 +25,6 @@ import (
 )
 
 func caseDelete(ctx context.Context, in *pb.InternalPortConfig, deletePortUrl string) (*pb.AgentReturnInfo, error) {
-
 	evm, err := merakEvm.NewEvm(
 		in.Name,
 		constants.AGENT_STANDALONE_IP,
@@ -49,8 +48,12 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig, deletePortUrl st
 		}, err
 	}
 
-	_, ok := os.LookupEnv(constants.MODE_ENV)
+	val, ok := os.LookupEnv(constants.MODE_ENV)
 	if !ok {
+		val = constants.MODE_ALCOR
+	}
+	MerakLogger.Info("Executing in mode " + val)
+	if val == constants.MODE_ALCOR {
 		err = merakEvm.DeletePort(deletePortUrl+evm.GetRemoteId(), in, MerakMetrics, evm)
 		if err != nil {
 			return &pb.AgentReturnInfo{
@@ -69,8 +72,7 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig, deletePortUrl st
 		}, err
 	}
 
-	_, ok = os.LookupEnv(constants.MODE_ENV)
-	if !ok {
+	if val == constants.MODE_ALCOR {
 		err = evm.DeleteDevice(MerakMetrics)
 		if err != nil {
 			log.Println("Failed to delete tap")

@@ -62,7 +62,11 @@ func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 
 	// Only run these activities for alcor
 	val, ok := os.LookupEnv(constants.MODE_ENV)
-	if val != constants.MODE_ALCOR || !ok {
+	if !ok {
+		logger.Info("Workflow: MODE_ENV not set, defaulting to standalone mode")
+		val = constants.MODE_STANDALONE
+	}
+	if val == constants.MODE_ALCOR {
 		//Create Minimal Port
 		var futuresMinimal []workflow.Future
 		for _, vm := range vms {

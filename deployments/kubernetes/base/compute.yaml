@@ -90,7 +90,7 @@ spec:
         - name: CONCURRENCY_LOWER
           value: "1000"
         - name: WORKER_IMAGE
-          value: meraksim/merak-compute-vm-worker:test
+          value: meraksim/merak-compute-vm-worker:dev
         - name: MODE
           value: ALCOR
         - name: NODE_NAME

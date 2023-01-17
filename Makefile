@@ -203,8 +203,8 @@ kind-base:
 	linkerd install | kubectl apply -f -
 	linkerd check
 
-.PHONY: kind
-kind:
+.PHONY: kind-alcor
+kind-alcor:
 	make kind-base
 	kubectl kustomize deployments/kubernetes/alcor --enable-helm | kubectl apply -f -
 

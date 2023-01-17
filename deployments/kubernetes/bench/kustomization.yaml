@@ -79,9 +79,6 @@ images:
   newTag: "5fceae8"
 
 replicas:
-# Merak Service
-- name: merak-compute-vm-worker
-  count: 1
 # Alcor Service
 - name: apimanager
   count: 1

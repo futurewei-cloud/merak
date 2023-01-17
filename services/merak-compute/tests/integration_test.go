@@ -78,7 +78,7 @@ func TestGrpcClient(t *testing.T) {
 					{
 						Name:            "vhost-" + strconv.Itoa(i),
 						Image:           "meraksim/merak-agent:test",
-						ImagePullPolicy: "Always",
+						ImagePullPolicy: constants.POD_PULL_POLICY_ALWAYS,
 						SecurityContext: &sc,
 						Ports: []corev1.ContainerPort{
 							{ContainerPort: constants.AGENT_GRPC_SERVER_PORT},
@@ -86,7 +86,7 @@ func TestGrpcClient(t *testing.T) {
 						},
 						Env: []corev1.EnvVar{
 							{
-								Name: "mode", Value: "standalone",
+								Name: constants.MODE_ENV, Value: constants.MODE_STANDALONE,
 							},
 						},
 					},

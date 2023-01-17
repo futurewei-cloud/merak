@@ -43,11 +43,6 @@ var (
 )
 
 func main() {
-
-	_, ok := os.LookupEnv(constants.MODE_ENV)
-	if !ok {
-		startPlugin()
-	}
 	var err error
 	val, ok := os.LookupEnv(constants.LOG_LEVEL_ENV)
 	if !ok {
@@ -58,6 +53,16 @@ func main() {
 	if err != nil {
 		handler.MerakLogger.Fatal("Failed to create logger\n", "err", err)
 	}
+
+	val, ok = os.LookupEnv(constants.MODE_ENV)
+	if !ok {
+		// Default to Alcor mode
+		val = constants.MODE_ALCOR
+	}
+	if val == constants.MODE_ALCOR {
+		startPlugin()
+	}
+
 	// Start gRPC Server
 	flag.Parse()
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *gRPCPort))

@@ -15,14 +15,18 @@ Copyright(c) 2022 Futurewei Cloud
 package constants
 
 const (
-	TEMPORAL_ADDRESS         = "temporal-frontend.default.svc.cluster.local"
-	TEMPORAL_PORT            = 7233
-	TEMPORAL_ENV             = "TEMPORAL"
-	TEMPORAL_RPS_ENV         = "RPS"
-	TEMPORAL_CONCURRENCY_ENV = "CONCURRENCY"
-	LOCALHOST                = "127.0.0.1"
-	TEMPORAL_NAMESPACE       = "merak"
-	TEMPORAL_TQ_ENV          = "TQ"
+	TEMPORAL_ADDRESS               = "temporal-frontend.default.svc.cluster.local"
+	TEMPORAL_PORT                  = 7233
+	TEMPORAL_ENV                   = "TEMPORAL"
+	TEMPORAL_RPS_ENV               = "RPS"
+	TEMPORAL_CONCURRENCY_ENV       = "CONCURRENCY"
+	TEMPORAL_RPS_UPPER_ENV         = "RPS_UPPER"
+	TEMPORAL_RPS_LOWER_ENV         = "RPS_LOWER"
+	TEMPORAL_CONCURRENCY_UPPER_ENV = "CONCURRENCY_UPPER"
+	TEMPORAL_CONCURRENCY_LOWER_ENV = "CONCURRENCY_LOWER"
+	LOCALHOST                      = "127.0.0.1"
+	TEMPORAL_NAMESPACE             = "merak"
+	TEMPORAL_TQ_ENV                = "TQ"
 
 	KUBE_NODE_LABEL_KEY = "DEDICATED"
 	KUBE_NODE_LABEL_VAL = "MERAK"
@@ -58,9 +62,9 @@ const (
 	LOG_LEVEL_DEFAULT = "INFO"
 	LOG_LOCATION      = "/var/log/merak/"
 
-	MODE_ENV        = "mode"
-	MODE_STANDALONE = "standalone"
-	MODE_ALCOR      = "alcor"
+	MODE_ENV        = "MODE"
+	MODE_STANDALONE = "STANDALONE"
+	MODE_ALCOR      = "ALCOR"
 
 	AGENT_STANDALONE_IP        = "10.0.0.2"
 	AGENT_STANDALONE_MAC       = "aa:bb:cc:dd:ee:ff"

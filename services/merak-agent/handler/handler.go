@@ -77,6 +77,8 @@ func (s *Server) PortHandler(ctx context.Context, in *pb.InternalPortConfig) (*p
 }
 
 func (s *Server) BulkPortAdd(ctx context.Context, in *pb.BulkPorts) (*pb.AgentReturnInfo, error) {
+	var err error
+	defer MerakMetrics.GetMetrics(&err)()
 	_, ok := os.LookupEnv(constants.MODE_ENV)
 	if !ok {
 		MerakLogger.Info("Operation Bulk Port add")

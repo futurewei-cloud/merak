@@ -88,7 +88,7 @@ func config(clientset *kubernetes.Clientset,
 				Cmd:      []string{"string"},
 				Id:       "image-1",
 				Name:     "ACA",
-				Registry: "meraksim/merak-agent:test",
+				Registry: "meraksim/merak-agent:dev",
 			},
 			{
 				Args:     []string{"string"},

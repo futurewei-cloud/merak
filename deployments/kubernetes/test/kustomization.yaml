@@ -19,14 +19,12 @@ images:
 # Merak
 - name: meraksim/merak-compute
   newTag: test
-- name: meraksim/merak-compute-vm-worker
-  newTag: test
-# - name: meraksim/scenario-manager
-#   newTag: test
-# - name: meraksim/merak-network
-#   newTag: test
-# - name: meraksim/merak-topology
-#   newTag: test
+- name: meraksim/scenario-manager
+  newTag: "0116"
+- name: meraksim/merak-network
+  newTag: dev
+- name: meraksim/merak-topology
+  newTag: "0116"
 # Alcor DB Images
 - name: ignite_alcor:lib8
   newName: yanmo96/ignite_alcor
