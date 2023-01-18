@@ -159,7 +159,7 @@ Before deploying Merak with Alcor, you will need the following.
 Once your cluster is ready, you can deploy the latest small scale development (one replica for every service) build of Merak and [Alcor](https://github.com/futurewei-cloud/alcor) with the command below.
 
 ```
-kubectl kustomize https://github.com/futurewei-cloud/merak/deployments/kubernetes/dev --enable-helm | kubectl apply -f -
+kubectl kustomize https://github.com/futurewei-cloud/merak/deployments/kubernetes/alcor --enable-helm | kubectl apply -f -
 ```
 
 A successful deployment should take roughly 5 minutes for all pods to come to `running` state.
@@ -190,8 +190,8 @@ The deployed components are as follows:
 
 ![Successful Merak Deployment](docs/images/merak_successful_deployment.jpg)
 
-The deployment settings such as container image and replicas can be changed by editing the kustomize file under `deployments/kubernetes/dev/kustomization.yaml` and redeploying with
+The deployment settings such as container image and replicas can be changed by editing the kustomize file under `deployments/kubernetes/alcor/kustomization.yaml` and redeploying with
 
 ```
-kubectl kustomize deployments/kubernetes/dev --enable-helm | kubectl apply -f -
+kubectl kustomize deployments/kubernetes/alcor --enable-helm | kubectl apply -f -
 ```
