@@ -134,22 +134,3 @@ patches:
     metadata:
       name: sdn-controller
       namespace: merak
-
-# # Temporal Helm Chart
-# helmCharts:
-# - releaseName: temporal
-#   repo: https://charts.wener.tech
-#   name: temporal
-#   version: 0.15.1
-#   valuesInline:
-#     server:
-#       replicatCount: 1
-#     cassandra:
-#       config:
-#         cluster_size: 1
-#     prometheus:
-#       enabled: false
-#     grafana:
-#       enabled: false
-#     elasticsearch:
-#       enabled: false

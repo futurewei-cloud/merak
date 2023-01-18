@@ -67,7 +67,7 @@ func main() {
 	flag.Parse()
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *gRPCPort))
 	if err != nil {
-		handler.MerakLogger.Fatal("ERROR: Failed to listen", err, err)
+		handler.MerakLogger.Fatal("ERROR: Failed to listen", err)
 	}
 
 	enforcement := keepalive.EnforcementPolicy{
@@ -126,7 +126,7 @@ func startPlugin() {
 	if remote_port_int > constants.MAX_PORT || remote_port_int < constants.MIN_PORT {
 		handler.MerakLogger.Fatal("Port: is not within a valid range!\n", remote_port_int)
 	}
-	cmdString := "service rsyslog restart && /etc/init.d/openvswitch-switch restart && /merak-bin/AlcorControlAgent -d -a " + remote_server + " -p " + remote_port
+	cmdString := "service rsyslog restart && /etc/init.d/openvswitch-switch restart && /merak-bin/AlcorControlAgent -a " + remote_server + " -p " + remote_port
 	handler.MerakLogger.Info("Executing command " + cmdString)
 	// Start plugin
 	cmd := exec.Command("bash", "-c", cmdString)
