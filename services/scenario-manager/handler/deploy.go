@@ -253,16 +253,9 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*compute_p
 		}
 
 		if err := constructComputeMessage(&compute, &service, returnTopo, returnNetwork, &computeconf, action); err != nil {
-			return nil, errors.New("compute config protobuf message error")
+			return nil, err
 		}
 
-		for _, n := range returnNetwork.GetVpcs() {
-			for _, s := range n.GetSubnets() {
-				if compute.NumberOfComputeNodes != 0 && len(n.GetSubnets()) != 0 {
-					s.NumberVms = uint32(compute.NumberOfVmPerVpc) / uint32(compute.NumberOfComputeNodes) / uint32(len(n.GetSubnets()))
-				}
-			}
-		}
 		logger.Log.Infof("after returnNetworkMessage: %s", returnNetwork)
 	}
 

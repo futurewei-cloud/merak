@@ -14,6 +14,7 @@ Copyright(c) 2022 Futurewei Cloud
 package handler
 
 import (
+	"errors"
 	"strings"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
@@ -254,11 +255,47 @@ func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entit
 	var vmDeployPb compute_pb.InternalVMDeployInfo
 	vmDeployPb.OperationType = actionToOperation(action)
 	if netReturn != nil {
-		vmDeployPb.Vpcs = netReturn.GetVpcs()
 		vmDeployPb.Secgroups = netReturn.GetSecurityGroupIds()
+	} else {
+		return errors.New("the virtual newtork is not ready, there is no VPC info exist")
 	}
 	vmDeployPb.DeployType = getVMDeployType(compute.VmDeployType)
 	vmDeployPb.Scheduler = getVMDeployScheduler(compute.Scheduler)
+
+	if vmDeployPb.DeployType == compute_pb.VMDeployType_ASSIGN {
+		if len(compute.VPCInfo) <= 0 {
+			return errors.New("please enter VPCInfo for creating VM")
+		}
+		for _, vpc := range compute.VPCInfo {
+			var vpcPb pb.InternalVpcInfo
+			vpcPb.ProjectId = vpc.ProjectId
+			vpcPb.TenantId = vpc.TenantId
+			vpcPb.VpcCidr = vpc.VpcCidr
+			if len(vpc.SubnetInfo) <= 0 {
+				return errors.New("please enter subnet_info and number of VMs to be deployed")
+			}
+			for _, subnet := range vpc.SubnetInfo {
+				var subnetPb pb.InternalSubnetInfo
+				subnetPb.NumberVms = uint32(subnet.NumberOfVMs)
+				subnetPb.SubnetCidr = subnet.SubnetCidr
+				subnetPb.SubnetGw = subnet.SubnetGateway
+				vpcPb.Subnets = append(vpcPb.Subnets, &subnetPb)
+			}
+			vmDeployPb.Vpcs = append(vmDeployPb.Vpcs, &vpcPb)
+		}
+	} else {
+		vmDeployPb.Vpcs = netReturn.GetVpcs()
+		for _, n := range netReturn.GetVpcs() {
+			for _, s := range n.GetSubnets() {
+				if compute.NumberOfComputeNodes != 0 && len(n.GetSubnets()) != 0 {
+					s.NumberVms = uint32(compute.NumberOfVmPerVpc) / uint32(compute.NumberOfComputeNodes) / uint32(len(n.GetSubnets()))
+				}
+				if s.NumberVms <= 0 {
+					return errors.New("number of VMs to be deployed in a VPC are zero")
+				}
+			}
+		}
+	}
 
 	conf.VmDeploy = &vmDeployPb
 
