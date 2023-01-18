@@ -285,12 +285,12 @@ func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entit
 		}
 	} else {
 		vmDeployPb.Vpcs = netReturn.GetVpcs()
-		for _, n := range netReturn.GetVpcs() {
-			for _, s := range n.GetSubnets() {
-				if compute.NumberOfComputeNodes != 0 && len(n.GetSubnets()) != 0 {
-					s.NumberVms = uint32(compute.NumberOfVmPerVpc) / uint32(compute.NumberOfComputeNodes) / uint32(len(n.GetSubnets()))
+		for _, vpc := range vmDeployPb.GetVpcs() {
+			for _, subnet := range vpc.GetSubnets() {
+				if compute.NumberOfComputeNodes != 0 && len(vpc.GetSubnets()) != 0 {
+					subnet.NumberVms = uint32(compute.NumberOfVmPerVpc) / uint32(compute.NumberOfComputeNodes) / uint32(len(vpc.GetSubnets()))
 				}
-				if s.NumberVms <= 0 {
+				if subnet.NumberVms <= 0 {
 					return errors.New("number of VMs to be deployed in a VPC are zero")
 				}
 			}
