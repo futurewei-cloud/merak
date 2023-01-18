@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	err_query = errors.New("Invalid Input")
+	err_query = errors.New("invalid input")
 	Ctx       = context.Background()
 	Rdb       *redis.Client
 )
@@ -66,12 +66,12 @@ func SetValue(key string, val interface{}) error {
 
 func Get(key string) (string, error) {
 
-	val := "XXX"
+	var val string
 
 	val, err := Rdb.Get(Ctx, key).Result()
 	if err != nil {
+		val = DB_GET_NORESPONSE
 		utils.Logger.Warn("can't get key in DB, please retry", "Warning", err.Error(), "key", key)
-
 	}
 
 	return val, nil
@@ -97,7 +97,6 @@ func FindEntity(id string, prefix string, entity interface{}) error {
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
 		utils.Logger.Warn("can't find entity, please retry", id+prefix, err.Error())
-
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
@@ -107,53 +106,66 @@ func FindEntity(id string, prefix string, entity interface{}) error {
 	return nil
 }
 
-func FindHostEntity(id string, prefix string) (HostNode, error) {
+func NewHostEntity(entity_ip string, entity_status ServiceStatus, routing_rule string) HostNode {
 	var entity HostNode
-	entity.Ip = "X.X.X.X"
-	entity.Status = STATUS_NONE
-	entity.Routing_rule = []string{"Initial"}
+	entity.Ip = entity_ip
+	entity.Status = entity_status
+	entity.Routing_rule = []string{routing_rule}
+	return entity
+}
+
+func FindHostEntity(id string, prefix string) (HostNode, error) {
+
+	host_entity := NewHostEntity(ENTITY_IP_INIT, ENTITY_STATUS_INIT, ENTITY_ROUTING_RULE_INIT)
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
 		utils.Logger.Warn("can't find host entity, please retry", id+prefix, err.Error())
 
 	}
-	err2 := json.Unmarshal([]byte(value), &entity)
+	err2 := json.Unmarshal([]byte(value), &host_entity)
 	if err2 != nil {
 		utils.Logger.Warn("can't find host entity, please retry", "unmarshal", err2.Error())
 
 	}
 
-	return entity, nil
+	return host_entity, nil
+}
+
+func NewComputeEntity(entity_container_ip string, entity_datapath_ip string, entity_id string, entity_mac string, entity_name string, entity_status ServiceStatus, entity_veth string, entity_hostname string) ComputeNode {
+	var entity ComputeNode
+	entity.ContainerIp = entity_container_ip
+	entity.DatapathIp = entity_datapath_ip
+	entity.Id = entity_id
+	entity.Mac = entity_mac
+	entity.Name = entity_name
+	entity.Status = entity_status
+	entity.Veth = entity_veth
+	entity.HostName = entity_hostname
+
+	return entity
 }
 
 func FindComputeEntity(id string, prefix string) (ComputeNode, error) {
-	var entity ComputeNode
-	entity.ContainerIp = "X.X.X.X"
-	entity.DatapathIp = "X.X.X.X"
-	entity.Id = "XXX"
-	entity.Mac = "XXXXX"
-	entity.Name = "Initial"
-	entity.Status = STATUS_NONE
-	entity.Veth = "Initial"
-	entity.HostName = "XXXX"
+
+	compute_entity := NewComputeEntity(ENTITY_CONTAINERIP_INIT, ENTITY_DATAPATHIP_INIT, ENTITY_ID_INIT, ENTITY_MAC_INIT, ENTITY_NAME_INIT, ENTITY_STATUS_INIT, ENTITY_VETH_INIT, ENTITY_HOSTNAME_INIT)
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
 		utils.Logger.Warn("can't find compute entity, please retry", id+prefix, err.Error())
 
 	}
-	err2 := json.Unmarshal([]byte(value), &entity)
+	err2 := json.Unmarshal([]byte(value), &compute_entity)
 	if err2 != nil {
 		utils.Logger.Warn("can't find compute entity, please retry", value, err2.Error())
 
 	}
-	return entity, nil
+	return compute_entity, nil
 }
 
 func FindTopoEntity(id string, prefix string) (TopologyData, error) {
 	var entity TopologyData
-	entity.Topology_id = "XXX"
+	entity.Topology_id = ENTITY_TOPOLOGY_ID_INIT
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
@@ -170,7 +182,7 @@ func FindTopoEntity(id string, prefix string) (TopologyData, error) {
 }
 
 func getKeys(prefix string) ([]string, error) {
-	allkeys := []string{"XXX"}
+	var allkeys []string
 
 	iter := Rdb.Scan(Ctx, 0, prefix, 0).Iterator()
 	for iter.Next(Ctx) {
@@ -179,7 +191,6 @@ func getKeys(prefix string) ([]string, error) {
 
 	if err := iter.Err(); err != nil {
 		utils.Logger.Warn("can't get keys in DB scan", prefix, err.Error())
-
 	}
 
 	return allkeys, nil
