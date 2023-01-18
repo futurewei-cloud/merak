@@ -287,7 +287,7 @@ func UpdateComputenodeInfo(k8client *kubernetes.Clientset, topoPrefix string, na
 					utils.Logger.Debug("Warning", "pod ip is not ready", res.Name)
 				}
 
-				cnode.Mac = "ff:ff:ff:ff:ff:ff"
+				cnode.Mac = database.ENTITY_MAC_INIT
 				cnode.OperationType = database.OPERATION_INFO
 
 				if len(res.Status.ContainerStatuses) == 0 {

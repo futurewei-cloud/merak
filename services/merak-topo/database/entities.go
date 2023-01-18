@@ -30,7 +30,7 @@ const (
 	ENTITY_CONTAINERIP_INIT  = "0.0.0.0"
 	ENTITY_DATAPATHIP_INIT   = "0.0.0.0"
 	ENTITY_ID_INIT           = "000"
-	ENTITY_MAC_INIT          = "00:00:00:00"
+	ENTITY_MAC_INIT          = "ff:ff:ff:ff:ff:ff"
 	ENTITY_NAME_INIT         = "InitPod_0"
 	ENTITY_VETH_INIT         = "InitEth_0"
 	ENTITY_HOSTNAME_INIT     = "InitWorkerNode"
