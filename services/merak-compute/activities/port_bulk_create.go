@@ -11,49 +11,35 @@ Copyright(c) 2022 Futurewei Cloud
 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-package handler
+package activities
 
 import (
 	"context"
-	"errors"
-	"log"
 
-	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/compute"
-	"github.com/go-redis/redis/v9"
-	"go.temporal.io/sdk/client"
+	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
+	"github.com/futurewei-cloud/merak/services/merak-compute/common"
+	"go.temporal.io/sdk/activity"
 )
 
-var (
-	workflowOptions client.StartWorkflowOptions
-	TemporalClient  client.Client
-	RedisClient     redis.Client
-)
+// Calls ovsdb bulk port add
+func PortBulkCreate(ctx context.Context, vms []string, podIP string) error {
+	logger := activity.GetLogger(ctx)
 
-type Server struct {
-	pb.UnimplementedMerakComputeServiceServer
-}
-
-func (s *Server) ComputeHandler(ctx context.Context, in *pb.InternalComputeConfigInfo) (*pb.ReturnComputeMessage, error) {
-	log.Println("Received on ComputeHandler", in)
-	switch op := in.OperationType; op {
-	case common_pb.OperationType_INFO:
-
-		return caseInfo(ctx, in)
-
-	case common_pb.OperationType_CREATE:
-
-		return caseCreate(ctx, in)
-
-	case common_pb.OperationType_DELETE:
-
-		return caseDelete(ctx, in)
-
-	default:
-		log.Println("Unknown Operation")
-		return &pb.ReturnComputeMessage{
-			ReturnMessage: "Unknown Operation",
-			ReturnCode:    common_pb.ReturnCode_FAILED,
-		}, errors.New("unknown operation")
+	client := common.ClientMapGRPC[podIP]
+	ports := agent_pb.BulkPorts{}
+	logger.Info("PortBulkCreate: Sending to agent at " + podIP)
+	tapNames := []string{}
+	for _, vmID := range vms {
+		tapName := common.RedisClient.HGet(ctx, vmID, "deviceID").Val()
+		tapNames = append(tapNames, tapName)
 	}
+	ports.Tapnames = tapNames
+
+	_, err := client.BulkPortAdd(ctx, &ports)
+	if err != nil {
+		logger.Info("PortBulkCreate: Failed to BulkAddPort", err)
+		return err
+	}
+
+	return nil
 }

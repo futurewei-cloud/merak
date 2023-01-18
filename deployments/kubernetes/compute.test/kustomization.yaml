@@ -16,16 +16,9 @@ bases:
 images:
 - name: meraksim/merak-compute
   newTag: test
-- name: meraksim/merak-compute-vm-worker
-  newTag: test
 resources:
-- temporal.test.yaml
 - test.driver.yaml
-- test.vhost.yaml
-- service.account.yaml
-replicas:
-- name: merak-compute-vm-worker
-  count: 1
+- temporal.test.yaml
 # Exclude Merak Network
 patches:
 - patch: |-
@@ -56,7 +49,7 @@ patches:
     metadata:
       name: merak-redis-network
       namespace: merak
-# Exclude Scenario
+# Exclude Merak Scenario
 - patch: |-
     $patch: delete
     apiVersion: v1
@@ -85,8 +78,7 @@ patches:
     metadata:
       name: scenario-redis-master
       namespace: merak
-
-# Exclude Topology
+# Exclude Merak Topology
 - patch: |-
     $patch: delete
     apiVersion: v1
@@ -142,4 +134,3 @@ patches:
     metadata:
       name: sdn-controller
       namespace: merak
-

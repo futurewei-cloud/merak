@@ -15,13 +15,21 @@ Copyright(c) 2022 Futurewei Cloud
 package constants
 
 const (
-	TEMPORAL_ADDRESS         = "temporal-frontend.default.svc.cluster.local"
-	TEMPORAL_PORT            = 7233
-	TEMPORAL_ENV             = "TEMPORAL"
-	TEMPORAL_RPS_ENV         = "RPS"
-	TEMPORAL_CONCURRENCY_ENV = "CONCURRENCY"
-	LOCALHOST                = "127.0.0.1"
-	TEMPORAL_NAMESPACE       = "merak"
+	TEMPORAL_ADDRESS               = "temporal-frontend.default.svc.cluster.local"
+	TEMPORAL_PORT                  = 7233
+	TEMPORAL_ENV                   = "TEMPORAL"
+	TEMPORAL_RPS_ENV               = "RPS"
+	TEMPORAL_CONCURRENCY_ENV       = "CONCURRENCY"
+	TEMPORAL_RPS_UPPER_ENV         = "RPS_UPPER"
+	TEMPORAL_RPS_LOWER_ENV         = "RPS_LOWER"
+	TEMPORAL_CONCURRENCY_UPPER_ENV = "CONCURRENCY_UPPER"
+	TEMPORAL_CONCURRENCY_LOWER_ENV = "CONCURRENCY_LOWER"
+	LOCALHOST                      = "127.0.0.1"
+	TEMPORAL_NAMESPACE             = "merak"
+	TEMPORAL_TQ_ENV                = "TQ"
+
+	KUBE_NODE_LABEL_KEY = "DEDICATED"
+	KUBE_NODE_LABEL_VAL = "MERAK"
 
 	COMPUTE_GRPC_SERVER_ADDRESS = "merak-compute-service.merak.svc.cluster.local"
 	TOPLOGY_GRPC_SERVER_PORT    = 40052
@@ -30,7 +38,7 @@ const (
 	NETWORK_GRPC_SERVER_ADDRESS = "merak-network-service.merak.svc.cluster.local"
 	AGENT_GRPC_SERVER_PORT      = 40054
 	COMPUTE_GRPC_SERVER_PORT    = 40051
-	AGENT_PROMETHEUS_PORT       = 9001
+	PROMETHEUS_PORT             = 9001
 
 	COMPUTE_REDIS_ADDRESS = "compute-redis-main.merak.svc.cluster.local"
 	COMPUTE_REDIS_PORT    = 30051
@@ -50,13 +58,25 @@ const (
 	GRPC_MAX_RECV_MSG_SIZE = 1024 * 1024 * 500
 	GRPC_MAX_SEND_MSG_SIZE = 1024 * 1024 * 500
 
-	LOG_LOCATION = "/var/log/merak/"
+	LOG_LEVEL_ENV     = "LOG_LEVEL"
+	LOG_LEVEL_DEFAULT = "INFO"
+	LOG_LOCATION      = "/var/log/merak/"
 
-	AGENT_MODE_ENV             = "mode"
-	AGENT_MODE_STANDALONE      = "standalone"
+	MODE_ENV        = "MODE"
+	MODE_STANDALONE = "STANDALONE"
+	MODE_ALCOR      = "ALCOR"
+
 	AGENT_STANDALONE_IP        = "10.0.0.2"
 	AGENT_STANDALONE_MAC       = "aa:bb:cc:dd:ee:ff"
 	AGENT_STANDALONE_REMOTE_ID = "NO ALCOR"
 	AGENT_STANDALONE_GW        = "10.0.0.1"
 	AGENT_STANDALONE_CIDR      = "10.0.0.0/8"
+
+	WORKER_IMAGE_ENV           = "WORKER_IMAGE"
+	WORKER_DEFAULT_IMAGE       = "meraksim/merak-compute-vm-worker:dev"
+	WORKER_DEFAULT_RPS         = "100000"
+	WORKER_DEFAULT_CONCURRENCY = "1000"
+	WORKER_POD_PREFIX          = "compute-worker-"
+
+	POD_PULL_POLICY_ALWAYS = "Always"
 )

@@ -15,9 +15,11 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"os"
 	"strconv"
@@ -32,12 +34,30 @@ import (
 	"go.temporal.io/api/workflowservice/v1"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 )
 
 var (
 	ctx  = context.Background()
 	Port = flag.Int("port", constants.COMPUTE_GRPC_SERVER_PORT, "The server port")
 )
+
+type workerConfig struct {
+	rpsUpper         int
+	rpsLower         int
+	concurrencyUpper int
+	concurrencyLower int
+	image            string
+	logLevel         string
+	mode             string
+	temporalAddress  string
+}
 
 func main() {
 	// Connect to temporal
@@ -104,6 +124,51 @@ func main() {
 	log.Println("Successfully connected to Redis!")
 	defer handler.RedisClient.Close()
 
+	workerConfig := getConfigFromEnv()
+
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		log.Fatalf("Failed to get in cluster config!: %v\n", err)
+	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		log.Fatalf("Failed to create kube client!: %v\n", err.Error())
+	}
+	// Label the node that this pod is running on
+	node, err := clientset.CoreV1().Nodes().Get(context.Background(), os.Getenv("NODE_NAME"), metav1.GetOptions{})
+	if err != nil {
+		log.Fatalln("Failed to get node!")
+	}
+	log.Println("Found this host: ", node.Name)
+	labelPatch := fmt.Sprintf(`[{"op":"add","path":"/metadata/labels/%s","value":"%s" }]`, constants.KUBE_NODE_LABEL_KEY, constants.KUBE_NODE_LABEL_VAL)
+	_, err = clientset.CoreV1().Nodes().Patch(context.Background(), node.Name, types.JSONPatchType, []byte(labelPatch), metav1.PatchOptions{})
+	if err != nil {
+		log.Fatalln("Failed to label node!")
+	}
+	log.Println("Labeled this host: ", node.Name)
+
+	// Watch nodes
+	informerFactory := informers.NewSharedInformerFactory(clientset, time.Second*5)
+	nodeInformer := informerFactory.Core().V1().Nodes().Informer()
+	nodeInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			err := createWorkerPod(obj.(*corev1.Node).Name, workerConfig, clientset)
+			if err != nil {
+				log.Println("Failed to create worker pod: "+constants.WORKER_POD_PREFIX+obj.(*corev1.Node).Name, workerConfig, err.Error())
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			err := deleteWorkerPod(obj.(*corev1.Node).Name, clientset)
+			if err != nil {
+				log.Println("Failed to delete worker pod: "+constants.WORKER_POD_PREFIX+obj.(*corev1.Node).Name, err.Error())
+			}
+		},
+	})
+
+	stop := make(chan struct{})
+	defer close(stop)
+	informerFactory.Start(stop)
+
 	//Start gRPC Server
 	flag.Parse()
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *Port))
@@ -118,5 +183,172 @@ func main() {
 	if err := gRPCServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
+}
 
+func getEnv(key string) (string, error) {
+	val, ok := os.LookupEnv(key)
+	if !ok {
+		log.Println("Temporal environment variable not set, using default address.")
+		return "", errors.New("ENV variable not set " + key)
+	}
+	return val, nil
+}
+
+func createWorkerPod(hostname string, config workerConfig, clientset *kubernetes.Clientset) error {
+
+	var rpsInt, concurrencyInt int
+	var rps, concurrency string
+
+	rand.Seed(time.Now().UnixNano())
+	if config.rpsUpper == config.rpsLower {
+		rpsInt = config.rpsUpper
+	} else {
+		rpsInt = rand.Intn((config.rpsUpper - config.rpsLower + 1) + config.rpsLower)
+	}
+	if config.concurrencyUpper == config.concurrencyLower {
+		concurrencyInt = config.concurrencyUpper
+	} else {
+		concurrencyInt = rand.Intn((config.concurrencyUpper - config.concurrencyLower + 1) + config.concurrencyLower)
+	}
+
+	if rpsInt == 0 {
+		rpsInt = 1
+	}
+	if concurrencyInt == 0 {
+		concurrencyInt = 1
+	}
+	rps = strconv.Itoa(rpsInt)
+	concurrency = strconv.Itoa(concurrencyInt)
+	log.Println("Creating worker for node: " + hostname)
+	worker := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: constants.WORKER_POD_PREFIX + hostname,
+		},
+		Spec: corev1.PodSpec{
+			NodeSelector: map[string]string{
+				constants.KUBE_NODE_LABEL_KEY: constants.KUBE_NODE_LABEL_VAL,
+			},
+			Containers: []corev1.Container{
+				{
+					Name:            constants.WORKER_POD_PREFIX + hostname,
+					Image:           config.image,
+					ImagePullPolicy: constants.POD_PULL_POLICY_ALWAYS,
+					Ports: []corev1.ContainerPort{
+						{ContainerPort: constants.PROMETHEUS_PORT},
+					},
+					Env: []corev1.EnvVar{
+						{
+							Name: constants.MODE_ENV, Value: config.mode,
+						},
+						{
+							Name: constants.TEMPORAL_ENV, Value: config.temporalAddress,
+						},
+						{
+							Name: constants.TEMPORAL_RPS_ENV, Value: rps,
+						},
+						{
+							Name: constants.TEMPORAL_CONCURRENCY_ENV, Value: concurrency,
+						},
+						{
+							Name: constants.LOG_LEVEL_ENV, Value: config.logLevel,
+						},
+						{
+							Name: constants.TEMPORAL_TQ_ENV, Value: hostname,
+						},
+					},
+				},
+			},
+		},
+	}
+	_, err := clientset.CoreV1().Pods(constants.TEMPORAL_NAMESPACE).Create(context.Background(), worker, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func deleteWorkerPod(hostname string, clientset *kubernetes.Clientset) error {
+	log.Println("Creating worker for node: " + hostname)
+	err := clientset.CoreV1().Pods(constants.TEMPORAL_NAMESPACE).Delete(context.Background(), constants.WORKER_POD_PREFIX+hostname, metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getConfigFromEnv() workerConfig {
+	temporalAddress, err := getEnv(constants.TEMPORAL_ENV)
+	if err != nil {
+		temporalAddress = constants.TEMPORAL_ADDRESS
+	}
+	log.Println("WORKER: Using Temporal address from ENV " + temporalAddress)
+
+	rpsUpper, err := getEnv(constants.TEMPORAL_RPS_UPPER_ENV)
+	if err != nil {
+		rpsUpper = constants.WORKER_DEFAULT_RPS
+	}
+	log.Println("WORKER: Using RPS_UPPER from ENV " + rpsUpper)
+
+	rpsLower, err := getEnv(constants.TEMPORAL_RPS_LOWER_ENV)
+	if err != nil {
+		rpsUpper = constants.WORKER_DEFAULT_RPS
+	}
+	log.Println("WORKER: Using RPS_LOWER from ENV " + rpsLower)
+
+	concurrencyUpper, err := getEnv(constants.TEMPORAL_CONCURRENCY_UPPER_ENV)
+	if err != nil {
+		concurrencyUpper = constants.WORKER_DEFAULT_CONCURRENCY
+	}
+	log.Println("WORKER: Using CONCURRENCY_UPPER from ENV " + concurrencyUpper)
+
+	concurrencyLower, err := getEnv(constants.TEMPORAL_CONCURRENCY_LOWER_ENV)
+	if err != nil {
+		concurrencyLower = constants.WORKER_DEFAULT_CONCURRENCY
+	}
+	log.Println("WORKER: Using CONCURRENCY_UPPER from ENV " + concurrencyLower)
+
+	logLevel, err := getEnv(constants.LOG_LEVEL_ENV)
+	if err != nil {
+		logLevel = constants.LOG_LEVEL_DEFAULT
+	}
+	log.Println("WORKER: Using log level from ENV " + logLevel)
+
+	mode, err := getEnv(constants.MODE_ENV)
+	if err != nil {
+		// Default to Alcor mode
+		mode = constants.MODE_ALCOR
+	}
+	log.Println("WORKER: Using mode level from ENV " + mode)
+
+	image, err := getEnv(constants.WORKER_IMAGE_ENV)
+	if err != nil {
+		image = constants.WORKER_DEFAULT_IMAGE
+	}
+	log.Println("WORKER: Using Image from ENV " + image)
+	concurrencyLowerInt, err := strconv.Atoi(concurrencyLower)
+	if err != nil {
+		log.Fatalln("ERROR: Unable to convert concurrencyLower to int", err)
+	}
+	concurrencyUpperInt, err := strconv.Atoi(concurrencyUpper)
+	if err != nil {
+		log.Fatalln("ERROR: Unable to convert concurrencyUpper to int", err)
+	}
+	rpsLowerInt, err := strconv.Atoi(rpsLower)
+	if err != nil {
+		log.Fatalln("ERROR: Unable to convert rpsLower to int", err)
+	}
+	rpsUpperInt, err := strconv.Atoi(rpsUpper)
+	if err != nil {
+		log.Fatalln("ERROR: Unable to convert rpsUpper to int", err)
+	}
+	return workerConfig{
+		mode:             mode,
+		temporalAddress:  temporalAddress,
+		rpsUpper:         rpsUpperInt,
+		rpsLower:         rpsLowerInt,
+		concurrencyUpper: concurrencyUpperInt,
+		concurrencyLower: concurrencyLowerInt,
+		logLevel:         logLevel,
+		image:            image,
+	}
 }

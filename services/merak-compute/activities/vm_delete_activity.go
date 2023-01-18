@@ -40,7 +40,7 @@ func VmDelete(ctx context.Context, vmID string) (string, error) {
 	agent_address.WriteString(strconv.Itoa(constants.AGENT_GRPC_SERVER_PORT))
 	conn, err := grpc.Dial(agent_address.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logger.Info("Failed to dial gRPC server address: "+agent_address.String(), err)
+		logger.Info("VMDelete: Failed to dial gRPC server address: "+agent_address.String(), err)
 		return vmID, err
 	}
 	client := agentPB.NewMerakAgentServiceClient(conn)
@@ -51,10 +51,10 @@ func VmDelete(ctx context.Context, vmID string) (string, error) {
 		Deviceid:      common.RedisClient.HGet(ctx, vmID, "deviceID").Val(),
 		Remoteid:      common.RedisClient.HGet(ctx, vmID, "remoteID").Val(),
 	}
-	logger.Info("Sending to agent: ", podIP)
+	logger.Info("VMDelete: Sending to agent: ", podIP)
 	resp, err := client.PortHandler(ctx, &port)
 	if err != nil {
-		logger.Error("Unable delete vm ID " + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
+		logger.Error("VMDelete: Unable delete vm ID " + podIP + "Reason: " + resp.GetReturnMessage() + "\n")
 		return vmID, err
 	}
 	common.RedisClient.HDel(ctx, vmID)                                 // VM Detail hashmap

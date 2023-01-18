@@ -21,6 +21,8 @@ import (
 	"log/syslog"
 	"os"
 	"strconv"
+	"strings"
+	"time"
 
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/pkg/errors"
@@ -76,6 +78,7 @@ func (e merakLogError) Error() string {
 
 func newCore(opts *options) (any, error) {
 	config := zap.NewProductionEncoderConfig()
+	config.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
 	config.TimeKey = "time"
 	switch loc := opts.location; loc {
 	case Syslog:
@@ -264,4 +267,23 @@ func (log *MerakLog) Flush() error {
 		}
 	}
 	return e
+}
+
+func LevelEnvParser(level string) Level {
+	switch strings.ToLower(level) {
+	case "debug":
+		return DEBUG
+	case "info":
+		return INFO
+	case "warn":
+		return WARN
+	case "error":
+		return ERROR
+	case "fatal":
+		return FATAL
+	case "panic":
+		return PANIC
+	default:
+		return INFO
+	}
 }

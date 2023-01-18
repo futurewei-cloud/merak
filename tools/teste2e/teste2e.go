@@ -37,7 +37,7 @@ import (
 
 func main() {
 
-	numVhost := 10
+	numVhost := 5
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -174,7 +174,7 @@ func config(clientset *kubernetes.Clientset,
 					{
 						SubnetCidr:    "10.1.0.0/16",
 						SubnetGateway: "10.1.0.1",
-						NumberOfVMs:   10,
+						NumberOfVMs:   50,
 					},
 				},
 			},
@@ -276,7 +276,7 @@ func config(clientset *kubernetes.Clientset,
 		Name:                 "compute-config-1",
 		NumberOfComputeNodes: numVhost,
 		NumberOfPortPerVm:    1,
-		NumberOfVmPerVpc:     10,
+		NumberOfVmPerVpc:     50,
 		Scheduler:            "SEQUENTIAL",
 		VmDeployType:         "UNIFORM",
 		VPCInfo: []entities.VPCInfo{
@@ -289,7 +289,7 @@ func config(clientset *kubernetes.Clientset,
 					{
 						SubnetCidr:    "10.1.0.0/16",
 						SubnetGateway: "10.1.0.1",
-						NumberOfVMs:   10,
+						NumberOfVMs:   50,
 					},
 				},
 			},
@@ -391,6 +391,7 @@ func checkTopo(scenarioConfigID string, scenarioNodePortAddress string, scenario
 		respBody := string(respBodyByte[:])
 		readyNodes, _ := strconv.Atoi(strings.TrimSpace(strings.Split(strings.Split(gjson.Get(respBody, "message").Str, ",")[1], ":")[1]))
 		if readyNodes == expReady {
+			fmt.Printf("%d of %d vHosts ready\n", readyNodes, expReady)
 			break
 		}
 		time.Sleep(time.Second * 2)
@@ -463,6 +464,7 @@ func checkCompute(scenarioConfigID string, scenarioNodePortAddress string, scena
 		ready, _ = strconv.Atoi(strings.TrimSpace(strings.Split(gjson.Get(respBody, "data.vms.0.id").Str, " ")[0]))
 		expReady, _ = strconv.Atoi(strings.TrimSpace(strings.Split(gjson.Get(respBody, "data.vms.0.id").Str, " ")[3]))
 		if ready == expReady {
+			fmt.Printf("%d of %d vHosts ready\n", ready, expReady)
 			break
 		}
 		time.Sleep(time.Second * 2)

@@ -15,7 +15,6 @@ package handler
 
 import (
 	"context"
-	"log"
 	"os"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
@@ -24,33 +23,16 @@ import (
 	merakEvm "github.com/futurewei-cloud/merak/services/merak-agent/evm"
 )
 
-func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
-	var evm *merakEvm.AlcorEvm
+func caseCreate(ctx context.Context, in *pb.InternalPortConfig, updatePortUrl string) (*pb.AgentReturnInfo, error) {
 	var err error
-	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
-	if !ok {
-		evm, err = merakEvm.CreateMinimalPort(in, RemoteServer, MerakMetrics)
-		if err != nil {
-			return &pb.AgentReturnInfo{
-				ReturnMessage: "Create Minimal Port Failed",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
-				Port: &pb.ReturnPortInfo{
-					Status: common_pb.Status_ERROR,
-				},
-			}, err
+	var evm merakEvm.Evm
 
-		}
-		err = evm.CreateDevice(MerakMetrics)
-		if err != nil {
-			return &pb.AgentReturnInfo{
-				ReturnMessage: "ovs-vsctl command failed!",
-				ReturnCode:    common_pb.ReturnCode_FAILED,
-				Port: &pb.ReturnPortInfo{
-					Status: common_pb.Status_ERROR,
-				},
-			}, err
-		}
-	} else {
+	val, ok := os.LookupEnv(constants.MODE_ENV)
+	if !ok {
+		val = constants.MODE_ALCOR
+	}
+	MerakLogger.Info("Executing in mode " + val)
+	if val == constants.MODE_STANDALONE {
 		evm, _ = merakEvm.NewEvm(
 			in.Name,
 			constants.AGENT_STANDALONE_IP,
@@ -61,6 +43,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			constants.AGENT_STANDALONE_GW,
 			common_pb.Status_DEPLOYING,
 		)
+
 		err := evm.CreateStandaloneDevice(MerakMetrics)
 		if err != nil {
 			return &pb.AgentReturnInfo{
@@ -71,8 +54,19 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 				},
 			}, err
 		}
-	}
 
+	} else {
+		evm, _ = merakEvm.NewEvm(
+			in.Name,
+			in.Ip,
+			in.Mac,
+			in.Remoteid,
+			in.Deviceid,
+			in.Cidr,
+			in.Gw,
+			common_pb.Status_DEPLOYING,
+		)
+	}
 	err = evm.CreateNamespace(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
@@ -83,10 +77,9 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			},
 		}, err
 	}
-
-	_, ok = os.LookupEnv(constants.AGENT_MODE_ENV)
-	if !ok {
-		err = evm.UpdatePort(in, RemoteServer, MerakMetrics)
+	if val == constants.MODE_ALCOR {
+		MerakLogger.Info(updatePortUrl + evm.GetRemoteId())
+		err = merakEvm.UpdatePort(updatePortUrl+evm.GetRemoteId(), in, MerakMetrics, evm)
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Failed to update port",
@@ -98,7 +91,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}
 	}
 
-	err = evm.MoveDeviceToNamespace(MerakMetrics)
+	err = evm.MoveDeviceToNetns(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to move device to namespace",
@@ -174,15 +167,48 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			},
 		}, err
 	}
-	log.Println("Successfully created devices for evm ", evm.GetName())
+
+	returnPort := &pb.ReturnPortInfo{
+		Ip:       evm.GetIP(),
+		Deviceid: evm.GetDeviceId(),
+		Remoteid: evm.GetRemoteId(),
+		Status:   common_pb.Status_DONE,
+	}
+	MerakLogger.Info("Successfully created devices for evm ", "name", evm.GetName())
 	return &pb.AgentReturnInfo{
 		ReturnMessage: "Create Success",
 		ReturnCode:    common_pb.ReturnCode_OK,
-		Port: &pb.ReturnPortInfo{
+		Port:          returnPort,
+	}, nil
+}
+
+func caseCreateMinimal(ctx context.Context, in *pb.InternalPortConfig, createMinimalPortUrl string) (*pb.AgentReturnInfo, error) {
+	_, ok := os.LookupEnv(constants.MODE_ENV)
+	if !ok {
+		evm, err := merakEvm.CreateMinimalPort(createMinimalPortUrl, in, MerakMetrics)
+		if err != nil {
+			return &pb.AgentReturnInfo{
+				ReturnMessage: "Create Minimal Port Failed",
+				ReturnCode:    common_pb.ReturnCode_FAILED,
+				Port: &pb.ReturnPortInfo{
+					Status: common_pb.Status_ERROR,
+				},
+			}, err
+		}
+		vmInfo := pb.ReturnPortInfo{
+			Id:       in.Id,
 			Ip:       evm.GetIP(),
 			Deviceid: evm.GetDeviceId(),
 			Remoteid: evm.GetRemoteId(),
-			Status:   common_pb.Status_DONE,
-		},
-	}, nil
+			Mac:      evm.GetMac(),
+			Status:   common_pb.Status_DEPLOYING,
+		}
+		return &pb.AgentReturnInfo{
+			ReturnMessage: "Create Minimal Port Success",
+			ReturnCode:    common_pb.ReturnCode_OK,
+			Port:          &vmInfo,
+		}, nil
+	} else {
+		return &pb.AgentReturnInfo{}, nil
+	}
 }

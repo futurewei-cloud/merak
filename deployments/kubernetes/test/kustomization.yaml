@@ -15,18 +15,16 @@ bases:
 - ../base
 - https://github.com/futurewei-cloud/alcor.git/kubernetes
 - https://github.com/networkop/meshnet-cni.git/manifests/base
-resources:
-- temporal.test.yaml
 images:
 # Merak
 - name: meraksim/merak-compute
-  newTag: ci
+  newTag: test
 - name: meraksim/scenario-manager
-  newTag: ci
+  newTag: "0116"
 - name: meraksim/merak-network
-  newTag: ci
+  newTag: dev
 - name: meraksim/merak-topology
-  newTag: ci
+  newTag: "0116"
 # Alcor DB Images
 - name: ignite_alcor:lib8
   newName: yanmo96/ignite_alcor
@@ -90,6 +88,9 @@ images:
   newTag: "5fceae8"
 
 replicas:
+# Merak Service
+- name: merak-compute-vm-worker
+  count: 1
 # Alcor Service
 - name: apimanager
   count: 1
@@ -139,3 +140,23 @@ configMapGenerator:
   behavior: replace
   files:
     - alcor/api-gateway/application.properties
+
+
+# Temporal Helm Chart
+helmCharts:
+- releaseName: temporal
+  repo: https://charts.wener.tech
+  name: temporal
+  version: 0.15.1
+  valuesInline:
+    server:
+      replicatCount: 1
+    cassandra:
+      config:
+        cluster_size: 1
+    prometheus:
+      enabled: false
+    grafana:
+      enabled: false
+    elasticsearch:
+      enabled: false

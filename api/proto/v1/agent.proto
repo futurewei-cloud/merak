@@ -20,7 +20,13 @@ import "ntest.proto";
 service MerakAgentService {
     rpc PortHandler (InternalPortConfig) returns (AgentReturnInfo) {}
     rpc TestHandler (InternalTestTargetConfig) returns (AgentReturnTestInfo) {}
+    rpc BulkPortAdd (BulkPorts) returns (AgentReturnInfo) {}
 }
+
+enum CreateStage {
+    MINIMAL = 0;
+    BATCH = 1;
+  }
 
 message InternalPortConfig {
     common.OperationType operation_type = 1;
@@ -36,13 +42,17 @@ message InternalPortConfig {
     string hostname = 11;
     string remoteid = 12;
     string deviceid = 13;
+    string ip = 15;
+    string mac = 16;
 }
 
 message ReturnPortInfo {
-    string ip = 1;
-    string remoteid = 2;
-    string deviceid = 3;
-    common.Status status = 8;
+    string id = 1;
+    string ip = 2;
+    string remoteid = 3;
+    string deviceid = 4;
+    string mac = 5;
+    common.Status status = 6;
 }
 
 message AgentReturnInfo {
@@ -61,4 +71,8 @@ message AgentReturnTestInfo {
     common.ReturnCode return_code = 1;
     string return_message = 2;
     ntest.TestStatus results = 3;
+}
+
+message BulkPorts {
+    repeated string tapnames = 1;
 }

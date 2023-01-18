@@ -88,7 +88,7 @@ You can deploy Merak and [Alcor](https://github.com/futurewei-cloud/alcor) in [K
 ```
 git clone https://github.com/futurewei-cloud/merak.git
 cd merak
-make kind
+make kind-alcor
 ```
 
 Please wait for all pods to be in running state as shown in the picture below

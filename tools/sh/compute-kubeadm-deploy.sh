@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # MIT License
 # Copyright(c) 2022 Futurewei Cloud
 #     Permission is hereby granted,
@@ -9,23 +11,12 @@
 #     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 #     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# Test service account
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: merak-compute
-  namespace: default
----
-# Cluster role binding
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: merak-compute
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-  - kind: ServiceAccount
-    name: merak-compute
-    namespace: default
+yes | sudo kubeadm reset
+sudo rm -rf /var/lib/cni/networks/cbr0/*
+sudo rm -rf /root/work && sudo kubeadm init --pod-network-cidr 10.244.0.0/16
+mkdir -p $HOME/.kube
+yes | sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+kubectl taint nodes --all node-role.kubernetes.io/control-plane:NoSchedule-
+kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+kubectl kustomize deployments/kubernetes/compute.test --enable-helm | kubectl apply -f -

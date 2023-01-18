@@ -24,8 +24,7 @@ import (
 	merakEvm "github.com/futurewei-cloud/merak/services/merak-agent/evm"
 )
 
-func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturnInfo, error) {
-
+func caseDelete(ctx context.Context, in *pb.InternalPortConfig, deletePortUrl string) (*pb.AgentReturnInfo, error) {
 	evm, err := merakEvm.NewEvm(
 		in.Name,
 		constants.AGENT_STANDALONE_IP,
@@ -41,7 +40,7 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 			ReturnCode:    common_pb.ReturnCode_FAILED,
 		}, err
 	}
-	err = evm.MoveDeviceRootNamespace(MerakMetrics)
+	err = evm.MoveDeviceToRootNetns(MerakMetrics)
 	if err != nil {
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Failed to move device to root namespace",
@@ -49,9 +48,13 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	_, ok := os.LookupEnv(constants.AGENT_MODE_ENV)
+	val, ok := os.LookupEnv(constants.MODE_ENV)
 	if !ok {
-		err = evm.DeletePort(in, RemoteServer, MerakMetrics)
+		val = constants.MODE_ALCOR
+	}
+	MerakLogger.Info("Executing in mode " + val)
+	if val == constants.MODE_ALCOR {
+		err = merakEvm.DeletePort(deletePortUrl+evm.GetRemoteId(), in, MerakMetrics, evm)
 		if err != nil {
 			return &pb.AgentReturnInfo{
 				ReturnMessage: "Delete Port request to Alcor Failed!",
@@ -69,8 +72,7 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig) (*pb.AgentReturn
 		}, err
 	}
 
-	_, ok = os.LookupEnv(constants.AGENT_MODE_ENV)
-	if !ok {
+	if val == constants.MODE_ALCOR {
 		err = evm.DeleteDevice(MerakMetrics)
 		if err != nil {
 			log.Println("Failed to delete tap")

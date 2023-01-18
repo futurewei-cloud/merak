@@ -14,6 +14,7 @@ Copyright(c) 2022 Futurewei Cloud
 package create
 
 import (
+	"os"
 	"strconv"
 	"strings"
 
@@ -21,6 +22,8 @@ import (
 	constants "github.com/futurewei-cloud/merak/services/common"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
+	merakwf "github.com/futurewei-cloud/merak/services/merak-compute/workflows"
+
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 	"google.golang.org/grpc"
@@ -28,6 +31,7 @@ import (
 )
 
 func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
+	defer merakwf.MerakMetrics.GetMetrics(&err)()
 	retrypolicy := &temporal.RetryPolicy{
 		InitialInterval:    common.TEMPORAL_ACTIVITY_RETRY_INTERVAL,
 		BackoffCoefficient: common.TEMPORAL_ACTIVITY_BACKOFF,
@@ -45,33 +49,66 @@ func Create(ctx workflow.Context, vms []string, podIP string) (err error) {
 	// Each "VMCreate" workflow populates a table mapping podIP -> gRPC client
 	var agent_address strings.Builder
 	agent_address.WriteString(podIP)
-	logger.Info("Connecting to pod at: " + podIP)
+	logger.Info("Workflow: Connecting to pod at: " + podIP)
 	agent_address.WriteString(":")
 	agent_address.WriteString(strconv.Itoa(constants.AGENT_GRPC_SERVER_PORT))
 	conn, err := grpc.Dial(agent_address.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logger.Info("Failed to dial gRPC server address: "+agent_address.String(), err)
+		logger.Info("Workflow: Failed to dial gRPC server address: "+agent_address.String(), err)
 		return err
 	}
 	client := agent_pb.NewMerakAgentServiceClient(conn)
 	common.ClientMapGRPC[podIP] = client
 
-	var futures []workflow.Future
+	// Only run these activities for alcor
+	val, ok := os.LookupEnv(constants.MODE_ENV)
+	if !ok {
+		logger.Info("Workflow: MODE_ENV not set, defaulting to standalone mode")
+		val = constants.MODE_STANDALONE
+	}
+	if val == constants.MODE_ALCOR {
+		//Create Minimal Port
+		var futuresMinimal []workflow.Future
+		for _, vm := range vms {
+			future := workflow.ExecuteLocalActivity(ctx, activities.VmCreateMinimalPort, vm, podIP)
+			futuresMinimal = append(futuresMinimal, future)
+		}
+		logger.Info("Workflow: VmCreate minimal port activities started for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
+
+		for _, future := range futuresMinimal {
+			err = future.Get(ctx, nil)
+			if err != nil {
+				logger.Info("Workflow: VMCreate minimal port activity failed!", err)
+			}
+		}
+		logger.Info("Workflow: VmCreate minimal port activities completed for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
+
+		wf := workflow.ExecuteLocalActivity(ctx, activities.PortBulkCreate, vms, podIP)
+		logger.Info("Workflow: VmCreate bulk port add started at pod IP " + podIP)
+		err = wf.Get(ctx, nil)
+		if err != nil {
+			logger.Info("Workflow: VmCreate bulk port add failed!")
+		}
+		logger.Info("Workflow: VmCreate bulk port add completed at pod IP " + podIP)
+	}
+	logger.Info("Workflow: Final VMCreate activities starting for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
+	//Create VMCreate and Port Update
+	var futuresCreate []workflow.Future
 	for _, vm := range vms {
 		future := workflow.ExecuteLocalActivity(ctx, activities.VmCreate, vm, podIP)
-		logger.Info("VmCreate activity started for vm_id " + vm)
-		futures = append(futures, future)
+		logger.Info("Workflow: VmCreate activity started for vm_id " + vm)
+		futuresCreate = append(futuresCreate, future)
 	}
-	logger.Info("Started VmCreate workflows for vms" + strings.Join(vms, " "))
+	logger.Info("Workflow: Final VMCreate activities started for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
 
-	for _, future := range futures {
+	for _, future := range futuresCreate {
 		err = future.Get(ctx, nil)
-		logger.Info("Activity completed!")
 		if err != nil {
-			return nil
+			logger.Info("Workflow: Final VMCreate port activity failed!", err)
 		}
 	}
-	logger.Info("All activities completed")
+	logger.Info("Workflow: Final VMCreate activities completed for all " + strconv.Itoa(len(vms)) + " vms at pod IP " + podIP)
+
 	defer conn.Close()
 	return nil
 }

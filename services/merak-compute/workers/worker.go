@@ -15,32 +15,40 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
 	agent_pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	constants "github.com/futurewei-cloud/merak/services/common"
+	"github.com/futurewei-cloud/merak/services/common/metrics"
 	"github.com/futurewei-cloud/merak/services/merak-compute/activities"
 	"github.com/futurewei-cloud/merak/services/merak-compute/common"
+	workflow "github.com/futurewei-cloud/merak/services/merak-compute/workflows"
 	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/create"
 	"github.com/futurewei-cloud/merak/services/merak-compute/workflows/delete"
 	"github.com/go-redis/redis/v9"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 )
 
-var ctx = context.Background()
+var prometheusPort = flag.Int("Prometheus port", constants.PROMETHEUS_PORT, "The server port")
 
 func main() {
+	ctx := context.Background()
 	common.ClientMapGRPC = make(map[string]agent_pb.MerakAgentServiceClient)
 	temporal_address, ok := os.LookupEnv(constants.TEMPORAL_ENV)
 	if !ok {
 		log.Println("Temporal environment variable not set, using default address.")
 		temporal_address = constants.LOCALHOST
 	}
-	rps, ok := os.LookupEnv(constants.TEMPORAL_CONCURRENCY_ENV)
+	rps, ok := os.LookupEnv(constants.TEMPORAL_RPS_ENV)
 	if !ok {
 		log.Println("RPS environment variable not set, using default.")
 		rps = common.DEFAULT_WORKER_RPS
@@ -58,6 +66,12 @@ func main() {
 	if err != nil {
 		log.Fatalln("Concurrency " + concurrency + " is NaN!")
 	}
+
+	tq, ok := os.LookupEnv(constants.TEMPORAL_TQ_ENV)
+	if !ok {
+		log.Fatalln("No Task Queue specified!")
+	}
+	log.Println("Starting worker with task queue " + tq)
 
 	log.Println("Starting worker with " +
 		rps + " activities/sec and max " +
@@ -96,7 +110,8 @@ func main() {
 	defer common.RedisClient.Close()
 	log.Println("Connected to DB!")
 
-	w := worker.New(c, common.VM_TASK_QUEUE, worker.Options{
+	w := worker.New(c, tq, worker.Options{
+		MaxConcurrentWorkflowTaskExecutionSize:  2, // https://github.com.mcas.ms/temporalio/sdk-go/issues/1003#issuecomment-1382509865
 		MaxConcurrentActivityExecutionSize:      concurrency_int,
 		WorkerActivitiesPerSecond:               rps_int,
 		MaxConcurrentLocalActivityExecutionSize: concurrency_int,
@@ -105,9 +120,19 @@ func main() {
 	w.RegisterWorkflow(create.Create)
 	w.RegisterWorkflow(delete.Delete)
 	w.RegisterActivity(activities.VmCreate)
+	w.RegisterActivity(activities.VmCreateMinimalPort)
+	w.RegisterActivity(activities.PortBulkCreate)
 	w.RegisterActivity(activities.VmDelete)
 	log.Println("Registered VM Workflows and activities.")
 	log.Println("Starting VM Worker.")
+	go func() {
+		workflow.PrometheusRegistry = prometheus.NewRegistry()
+		workflow.MerakMetrics = metrics.NewMetrics(workflow.PrometheusRegistry, "ComputeWorker")
+		http.Handle("/metrics", promhttp.HandlerFor(
+			workflow.PrometheusRegistry,
+			promhttp.HandlerOpts{Registry: workflow.PrometheusRegistry}))
+		http.ListenAndServe(fmt.Sprintf(":%d", *prometheusPort), nil)
+	}()
 	err = w.Run(worker.InterruptCh())
 	if err != nil {
 		log.Fatalln("Unable to start worker", err)
