@@ -49,10 +49,10 @@ var (
 )
 
 type workerConfig struct {
-	rpsUpper         string
-	rpsLower         string
-	concurrencyUpper string
-	concurrencyLower string
+	rpsUpper         int
+	rpsLower         int
+	concurrencyUpper int
+	concurrencyLower int
 	image            string
 	logLevel         string
 	mode             string
@@ -195,35 +195,20 @@ func getEnv(key string) (string, error) {
 }
 
 func createWorkerPod(hostname string, config workerConfig, clientset *kubernetes.Clientset) error {
-	concurrencyLower, err := strconv.Atoi(config.concurrencyLower)
-	if err != nil {
-		log.Fatalln("ERROR: Unable to convert concurrencyLower to int", err)
-	}
-	concurrencyUpper, err := strconv.Atoi(config.concurrencyUpper)
-	if err != nil {
-		log.Fatalln("ERROR: Unable to convert concurrencyUpper to int", err)
-	}
-	rpsLower, err := strconv.Atoi(config.rpsLower)
-	if err != nil {
-		log.Fatalln("ERROR: Unable to convert rpsLower to int", err)
-	}
-	rpsUpper, err := strconv.Atoi(config.rpsUpper)
-	if err != nil {
-		log.Fatalln("ERROR: Unable to convert rpsUpper to int", err)
-	}
+
 	var rpsInt, concurrencyInt int
 	var rps, concurrency string
 
 	rand.Seed(time.Now().UnixNano())
-	if rpsUpper == rpsLower {
-		rpsInt = rpsUpper
+	if config.rpsUpper == config.rpsLower {
+		rpsInt = config.rpsUpper
 	} else {
-		rpsInt = rand.Intn((rpsUpper - rpsLower + 1) + rpsLower)
+		rpsInt = rand.Intn((config.rpsUpper - config.rpsLower + 1) + config.rpsLower)
 	}
-	if concurrencyUpper == concurrencyLower {
-		concurrencyInt = concurrencyUpper
+	if config.concurrencyUpper == config.concurrencyLower {
+		concurrencyInt = config.concurrencyUpper
 	} else {
-		concurrencyInt = rand.Intn((concurrencyUpper - concurrencyLower + 1) + concurrencyLower)
+		concurrencyInt = rand.Intn((config.concurrencyUpper - config.concurrencyLower + 1) + config.concurrencyLower)
 	}
 
 	if rpsInt == 0 {
@@ -275,7 +260,7 @@ func createWorkerPod(hostname string, config workerConfig, clientset *kubernetes
 			},
 		},
 	}
-	_, err = clientset.CoreV1().Pods(constants.TEMPORAL_NAMESPACE).Create(context.Background(), worker, metav1.CreateOptions{})
+	_, err := clientset.CoreV1().Pods(constants.TEMPORAL_NAMESPACE).Create(context.Background(), worker, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -340,14 +325,29 @@ func getConfigFromEnv() workerConfig {
 		image = constants.WORKER_DEFAULT_IMAGE
 	}
 	log.Println("WORKER: Using Image from ENV " + image)
-
+	concurrencyLowerInt, err := strconv.Atoi(concurrencyLower)
+	if err != nil {
+		log.Fatalln("ERROR: Unable to convert concurrencyLower to int", err)
+	}
+	concurrencyUpperInt, err := strconv.Atoi(concurrencyUpper)
+	if err != nil {
+		log.Fatalln("ERROR: Unable to convert concurrencyUpper to int", err)
+	}
+	rpsLowerInt, err := strconv.Atoi(rpsLower)
+	if err != nil {
+		log.Fatalln("ERROR: Unable to convert rpsLower to int", err)
+	}
+	rpsUpperInt, err := strconv.Atoi(rpsUpper)
+	if err != nil {
+		log.Fatalln("ERROR: Unable to convert rpsUpper to int", err)
+	}
 	return workerConfig{
 		mode:             mode,
 		temporalAddress:  temporalAddress,
-		rpsUpper:         rpsUpper,
-		rpsLower:         rpsLower,
-		concurrencyUpper: concurrencyUpper,
-		concurrencyLower: concurrencyLower,
+		rpsUpper:         rpsUpperInt,
+		rpsLower:         rpsLowerInt,
+		concurrencyUpper: concurrencyUpperInt,
+		concurrencyLower: concurrencyLowerInt,
 		logLevel:         logLevel,
 		image:            image,
 	}
