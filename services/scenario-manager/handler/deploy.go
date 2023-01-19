@@ -224,7 +224,7 @@ func ComputeHanlder(s *entities.Scenario, action entities.EventName) (*compute_p
 	var computeconf compute_pb.InternalComputeConfigInfo
 	if action == entities.EVENT_CHECK {
 		if err := constructComputeMessage(&compute, nil, nil, nil, &computeconf, action); err != nil {
-			return nil, errors.New("compute config protobuf message error")
+			return nil, err
 		}
 	} else {
 		var service entities.ServiceConfig

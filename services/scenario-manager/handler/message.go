@@ -256,8 +256,6 @@ func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entit
 	vmDeployPb.OperationType = actionToOperation(action)
 	if netReturn != nil {
 		vmDeployPb.Secgroups = netReturn.GetSecurityGroupIds()
-	} else {
-		return errors.New("the virtual newtork is not ready, there is no VPC info exist")
 	}
 	vmDeployPb.DeployType = getVMDeployType(compute.VmDeployType)
 	vmDeployPb.Scheduler = getVMDeployScheduler(compute.Scheduler)
