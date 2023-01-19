@@ -15,18 +15,19 @@ Copyright(c) 2022 Futurewei Cloud
 package constants
 
 const (
-	TEMPORAL_ADDRESS               = "temporal-frontend.default.svc.cluster.local"
-	TEMPORAL_PORT                  = 7233
-	TEMPORAL_ENV                   = "TEMPORAL"
-	TEMPORAL_RPS_ENV               = "RPS"
-	TEMPORAL_CONCURRENCY_ENV       = "CONCURRENCY"
-	TEMPORAL_RPS_UPPER_ENV         = "RPS_UPPER"
-	TEMPORAL_RPS_LOWER_ENV         = "RPS_LOWER"
-	TEMPORAL_CONCURRENCY_UPPER_ENV = "CONCURRENCY_UPPER"
-	TEMPORAL_CONCURRENCY_LOWER_ENV = "CONCURRENCY_LOWER"
-	LOCALHOST                      = "127.0.0.1"
-	TEMPORAL_NAMESPACE             = "merak"
-	TEMPORAL_TQ_ENV                = "TQ"
+	TEMPORAL_ADDRESS                  = "temporal-frontend.default.svc.cluster.local"
+	TEMPORAL_PORT                     = 7233
+	TEMPORAL_ENV                      = "TEMPORAL"
+	TEMPORAL_RPS_ENV                  = "RPS"
+	TEMPORAL_CONCURRENCY_ENV          = "CONCURRENCY"
+	TEMPORAL_RPS_UPPER_ENV            = "RPS_UPPER"
+	TEMPORAL_RPS_LOWER_ENV            = "RPS_LOWER"
+	TEMPORAL_CONCURRENCY_UPPER_ENV    = "CONCURRENCY_UPPER"
+	TEMPORAL_CONCURRENCY_LOWER_ENV    = "CONCURRENCY_LOWER"
+	TEMPORAL_CONCURRENT_WORKFLOWS_ENV = "CONCURRENT_WORKFLOWS"
+	LOCALHOST                         = "127.0.0.1"
+	TEMPORAL_NAMESPACE                = "merak"
+	TEMPORAL_TQ_ENV                   = "TQ"
 
 	KUBE_NODE_LABEL_KEY = "DEDICATED"
 	KUBE_NODE_LABEL_VAL = "MERAK"
@@ -72,11 +73,12 @@ const (
 	AGENT_STANDALONE_GW        = "10.0.0.1"
 	AGENT_STANDALONE_CIDR      = "10.0.0.0/8"
 
-	WORKER_IMAGE_ENV           = "WORKER_IMAGE"
-	WORKER_DEFAULT_IMAGE       = "meraksim/merak-compute-vm-worker:dev"
-	WORKER_DEFAULT_RPS         = "100000"
-	WORKER_DEFAULT_CONCURRENCY = "1000"
-	WORKER_POD_PREFIX          = "compute-worker-"
+	WORKER_IMAGE_ENV                    = "WORKER_IMAGE"
+	WORKER_DEFAULT_IMAGE                = "meraksim/merak-compute-vm-worker:dev"
+	WORKER_DEFAULT_RPS                  = "100000"
+	WORKER_DEFAULT_CONCURRENCY          = "1000"
+	WORKER_DEFAULT_CONCURRENT_WORKFLOWS = "1000"
+	WORKER_POD_PREFIX                   = "compute-worker-"
 
 	POD_PULL_POLICY_ALWAYS = "Always"
 )

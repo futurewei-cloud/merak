@@ -93,6 +93,8 @@ spec:
           value: meraksim/merak-compute-vm-worker:dev
         - name: MODE
           value: ALCOR
+        - name: CONCURRENT_WORKFLOWS
+          value: "1"
         - name: NODE_NAME
           valueFrom:
             fieldRef:

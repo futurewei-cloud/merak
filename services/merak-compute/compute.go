@@ -49,14 +49,15 @@ var (
 )
 
 type workerConfig struct {
-	rpsUpper         int
-	rpsLower         int
-	concurrencyUpper int
-	concurrencyLower int
-	image            string
-	logLevel         string
-	mode             string
-	temporalAddress  string
+	rpsUpper            int // Using int for now, should be float64, can be less than 1
+	rpsLower            int // Using int for now, should be float64, can be less than 1
+	concurrencyUpper    int
+	concurrencyLower    int
+	concurrentWorkflows int
+	image               string
+	logLevel            string
+	mode                string
+	temporalAddress     string
 }
 
 func main() {
@@ -219,6 +220,7 @@ func createWorkerPod(hostname string, config workerConfig, clientset *kubernetes
 	}
 	rps = strconv.Itoa(rpsInt)
 	concurrency = strconv.Itoa(concurrencyInt)
+	concurrentWorkflows := strconv.Itoa(config.concurrentWorkflows)
 	log.Println("Creating worker for node: " + hostname)
 	worker := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -248,6 +250,9 @@ func createWorkerPod(hostname string, config workerConfig, clientset *kubernetes
 						},
 						{
 							Name: constants.TEMPORAL_CONCURRENCY_ENV, Value: concurrency,
+						},
+						{
+							Name: constants.TEMPORAL_CONCURRENT_WORKFLOWS_ENV, Value: concurrentWorkflows,
 						},
 						{
 							Name: constants.LOG_LEVEL_ENV, Value: config.logLevel,
@@ -325,6 +330,12 @@ func getConfigFromEnv() workerConfig {
 		image = constants.WORKER_DEFAULT_IMAGE
 	}
 	log.Println("WORKER: Using Image from ENV " + image)
+
+	concurrentWorkflows, err := getEnv(constants.TEMPORAL_CONCURRENT_WORKFLOWS_ENV)
+	if err != nil {
+		concurrentWorkflows = constants.WORKER_DEFAULT_CONCURRENT_WORKFLOWS
+	}
+	log.Println("WORKER: Using MaxConcurrentWorkflows from ENV " + concurrentWorkflows)
 	concurrencyLowerInt, err := strconv.Atoi(concurrencyLower)
 	if err != nil {
 		log.Fatalln("ERROR: Unable to convert concurrencyLower to int", err)
@@ -341,14 +352,19 @@ func getConfigFromEnv() workerConfig {
 	if err != nil {
 		log.Fatalln("ERROR: Unable to convert rpsUpper to int", err)
 	}
+	concurrentWorkflowsInt, err := strconv.Atoi(concurrentWorkflows)
+	if err != nil {
+		log.Fatalln("ERROR: Unable to convert concurrentWorkflows to int", err)
+	}
 	return workerConfig{
-		mode:             mode,
-		temporalAddress:  temporalAddress,
-		rpsUpper:         rpsUpperInt,
-		rpsLower:         rpsLowerInt,
-		concurrencyUpper: concurrencyUpperInt,
-		concurrencyLower: concurrencyLowerInt,
-		logLevel:         logLevel,
-		image:            image,
+		mode:                mode,
+		temporalAddress:     temporalAddress,
+		rpsUpper:            rpsUpperInt,
+		rpsLower:            rpsLowerInt,
+		concurrencyUpper:    concurrencyUpperInt,
+		concurrencyLower:    concurrencyLowerInt,
+		concurrentWorkflows: concurrentWorkflowsInt,
+		logLevel:            logLevel,
+		image:               image,
 	}
 }
