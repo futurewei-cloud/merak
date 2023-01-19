@@ -254,42 +254,46 @@ func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entit
 
 	var vmDeployPb compute_pb.InternalVMDeployInfo
 	vmDeployPb.OperationType = actionToOperation(action)
-	if netReturn != nil {
-		vmDeployPb.Secgroups = netReturn.GetSecurityGroupIds()
-	}
 	vmDeployPb.DeployType = getVMDeployType(compute.VmDeployType)
 	vmDeployPb.Scheduler = getVMDeployScheduler(compute.Scheduler)
 
-	if vmDeployPb.DeployType == compute_pb.VMDeployType_ASSIGN {
-		if len(compute.VPCInfo) <= 0 {
-			return errors.New("please enter VPCInfo for creating VM")
+	if action != entities.EVENT_CHECK {
+		if netReturn != nil {
+			vmDeployPb.Secgroups = netReturn.GetSecurityGroupIds()
+		} else {
+			return errors.New("construct compute message - virtual network is not ready yet")
 		}
-		for _, vpc := range compute.VPCInfo {
-			var vpcPb pb.InternalVpcInfo
-			vpcPb.ProjectId = vpc.ProjectId
-			vpcPb.TenantId = vpc.TenantId
-			vpcPb.VpcCidr = vpc.VpcCidr
-			if len(vpc.SubnetInfo) <= 0 {
-				return errors.New("please enter subnet_info and number of VMs to be deployed")
+		if vmDeployPb.DeployType == compute_pb.VMDeployType_ASSIGN {
+			if len(compute.VPCInfo) <= 0 {
+				return errors.New("construct compute message - please enter VPCInfo for creating VM")
 			}
-			for _, subnet := range vpc.SubnetInfo {
-				var subnetPb pb.InternalSubnetInfo
-				subnetPb.NumberVms = uint32(subnet.NumberOfVMs)
-				subnetPb.SubnetCidr = subnet.SubnetCidr
-				subnetPb.SubnetGw = subnet.SubnetGateway
-				vpcPb.Subnets = append(vpcPb.Subnets, &subnetPb)
-			}
-			vmDeployPb.Vpcs = append(vmDeployPb.Vpcs, &vpcPb)
-		}
-	} else {
-		vmDeployPb.Vpcs = netReturn.GetVpcs()
-		for _, vpc := range vmDeployPb.GetVpcs() {
-			for _, subnet := range vpc.GetSubnets() {
-				if compute.NumberOfComputeNodes != 0 && len(vpc.GetSubnets()) != 0 {
-					subnet.NumberVms = uint32(compute.NumberOfVmPerVpc) / uint32(compute.NumberOfComputeNodes) / uint32(len(vpc.GetSubnets()))
+			for _, vpc := range compute.VPCInfo {
+				var vpcPb pb.InternalVpcInfo
+				vpcPb.ProjectId = vpc.ProjectId
+				vpcPb.TenantId = vpc.TenantId
+				vpcPb.VpcCidr = vpc.VpcCidr
+				if len(vpc.SubnetInfo) <= 0 {
+					return errors.New("construct compute message - please enter subnet_info and number of VMs to be deployed")
 				}
-				if subnet.NumberVms <= 0 {
-					return errors.New("number of VMs to be deployed in a VPC are zero")
+				for _, subnet := range vpc.SubnetInfo {
+					var subnetPb pb.InternalSubnetInfo
+					subnetPb.NumberVms = uint32(subnet.NumberOfVMs)
+					subnetPb.SubnetCidr = subnet.SubnetCidr
+					subnetPb.SubnetGw = subnet.SubnetGateway
+					vpcPb.Subnets = append(vpcPb.Subnets, &subnetPb)
+				}
+				vmDeployPb.Vpcs = append(vmDeployPb.Vpcs, &vpcPb)
+			}
+		} else {
+			vmDeployPb.Vpcs = netReturn.GetVpcs()
+			for _, vpc := range vmDeployPb.GetVpcs() {
+				for _, subnet := range vpc.GetSubnets() {
+					if compute.NumberOfComputeNodes != 0 && len(vpc.GetSubnets()) != 0 {
+						subnet.NumberVms = uint32(compute.NumberOfVmPerVpc) / uint32(compute.NumberOfComputeNodes) / uint32(len(vpc.GetSubnets()))
+					}
+					if subnet.NumberVms <= 0 {
+						return errors.New("construct compute message - number of VMs to be deployed in a VPC are zero")
+					}
 				}
 			}
 		}
