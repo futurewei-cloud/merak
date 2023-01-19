@@ -33,9 +33,8 @@ func Init_logger() {
 
 	if err != nil {
 		Logger.Fatal("Can not build a new logger", err)
-	} else {
-		Logger.Info("Create logger for merak-topo", "Init_logger", "Created")
 	}
+	Logger.Info("Create logger for merak-topo", "Init_logger", "Created")
 
 }
 
