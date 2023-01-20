@@ -157,5 +157,9 @@ func generateVMs(i, j, k int,
 		return err
 	}
 	*vms = append(*vms, vmID)
+	if err := RedisClient.LPush(ctx, "l"+podID, vmID).Err(); err != nil {
+		log.Println("Failed to add pod -> vm mapping " + vmID)
+		return err
+	}
 	return nil
 }
