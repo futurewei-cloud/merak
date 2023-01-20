@@ -277,7 +277,10 @@ func constructComputeMessage(compute *entities.ComputeConfig, serviceConf *entit
 				}
 				for _, subnet := range vpc.SubnetInfo {
 					var subnetPb pb.InternalSubnetInfo
-					subnetPb.NumberVms = uint32(subnet.NumberOfVMs)
+					subnetPb.NumberVms = uint32(subnet.NumberOfVMs) / uint32(compute.NumberOfComputeNodes)
+					if subnetPb.NumberVms <= 0 {
+						return errors.New("construt compute message - number of compute nodes larger than number of VMs per vpc")
+					}
 					subnetPb.SubnetCidr = subnet.SubnetCidr
 					subnetPb.SubnetGw = subnet.SubnetGateway
 					vpcPb.Subnets = append(vpcPb.Subnets, &subnetPb)
