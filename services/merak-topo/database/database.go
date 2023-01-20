@@ -18,17 +18,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 
-	"strings"
+	// "strings"
+
+	"github.com/futurewei-cloud/merak/services/merak-topo/utils"
 
 	"github.com/go-redis/redis/v8"
 )
 
 var (
-	ErrNil = errors.New("no matching record found in redis database")
-	Ctx    = context.Background()
-	Rdb    *redis.Client
+	err_query = errors.New("invalid input")
+	Ctx       = context.Background()
+	Rdb       *redis.Client
 )
 
 func ConnectDatabase() error {
@@ -40,7 +41,8 @@ func ConnectDatabase() error {
 	})
 
 	if err := client.Ping(Ctx).Err(); err != nil {
-		return fmt.Errorf("ConnectDB: connect DB error %s", err.Error())
+		utils.Logger.Error("can't connect to DB, please retry", "connect DB error", err.Error())
+		return err
 	}
 
 	Rdb = client
@@ -50,27 +52,36 @@ func ConnectDatabase() error {
 func SetValue(key string, val interface{}) error {
 	j, err := json.Marshal(val)
 	if err != nil {
-		return fmt.Errorf("SetValue: save value json marshal error %s", err.Error())
+		utils.Logger.Error("can't marshal, please retry ", "json marshal ", err.Error())
+		return err
 	}
 	err2 := Rdb.Set(Ctx, key, j, 0).Err()
 	if err2 != nil {
-		return fmt.Errorf("SetValue: save value in DB error %s", err2.Error())
+		utils.Logger.Warn("can't save key in DB, please retry", "Warning ", err2.Error(), "key", key)
+
 	}
 
 	return nil
 }
 
 func Get(key string) (string, error) {
+
+	var val string
+
 	val, err := Rdb.Get(Ctx, key).Result()
 	if err != nil {
-		return "", fmt.Errorf("Get: get from DB error %s", err.Error())
+		val = DB_GET_NORESPONSE
+		utils.Logger.Warn("can't get key in DB, please retry", "Warning", err.Error(), "key", key)
 	}
+
 	return val, nil
 }
 
 func Del(key string) error {
+
 	if err := Rdb.Del(Ctx, key).Err(); err != nil {
-		return fmt.Errorf("Del: delete error %s", err.Error())
+		utils.Logger.Warn("can't delete key in DB, please retry", "Warning", err.Error(), "key", key)
+		return err
 	}
 	return nil
 }
@@ -79,78 +90,95 @@ func Del(key string) error {
 func FindEntity(id string, prefix string, entity interface{}) error {
 
 	if (id + prefix) == "" {
-		log.Printf("GetPbReturnValue: get key is empty")
+		utils.Logger.Warn("can't find entity, please retry", "entity key", "empty key")
+		return err_query
 	}
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		return fmt.Errorf("FindEntity: get value for key in DB %s", err.Error())
+		utils.Logger.Warn("can't find entity, please retry", id+prefix, err.Error())
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
-		return fmt.Errorf("FindEntity: unmarshal key error %s", err2.Error())
+		utils.Logger.Warn("can't find entity, please retry", "unmarshal key ", err2.Error())
+
 	}
 	return nil
+}
+
+func NewHostEntity(entity_ip string, entity_status ServiceStatus, routing_rule string) HostNode {
+	var entity HostNode
+	entity.Ip = entity_ip
+	entity.Status = entity_status
+	entity.Routing_rule = []string{routing_rule}
+	return entity
 }
 
 func FindHostEntity(id string, prefix string) (HostNode, error) {
-	var entity HostNode
+
+	host_entity := NewHostEntity(ENTITY_IP_INIT, ENTITY_STATUS_INIT, ENTITY_ROUTING_RULE_INIT)
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		return entity, fmt.Errorf("FindHostEntity:get value from DB error %s", err.Error())
+		utils.Logger.Warn("can't find host entity, please retry", id+prefix, err.Error())
 
 	}
-	err2 := json.Unmarshal([]byte(value), &entity)
+	err2 := json.Unmarshal([]byte(value), &host_entity)
 	if err2 != nil {
-		return entity, fmt.Errorf("FindHostEntity: unmarshal error %s", err2.Error())
+		utils.Logger.Warn("can't find host entity, please retry", "unmarshal", err2.Error())
+
 	}
-	return entity, nil
+
+	return host_entity, nil
+}
+
+func NewComputeEntity(entity_container_ip string, entity_datapath_ip string, entity_id string, entity_mac string, entity_name string, entity_status ServiceStatus, entity_veth string, entity_hostname string) ComputeNode {
+	var entity ComputeNode
+	entity.ContainerIp = entity_container_ip
+	entity.DatapathIp = entity_datapath_ip
+	entity.Id = entity_id
+	entity.Mac = entity_mac
+	entity.Name = entity_name
+	entity.Status = entity_status
+	entity.Veth = entity_veth
+	entity.HostName = entity_hostname
+
+	return entity
 }
 
 func FindComputeEntity(id string, prefix string) (ComputeNode, error) {
-	var entity ComputeNode
+
+	compute_entity := NewComputeEntity(ENTITY_CONTAINERIP_INIT, ENTITY_DATAPATHIP_INIT, ENTITY_ID_INIT, ENTITY_MAC_INIT, ENTITY_NAME_INIT, ENTITY_STATUS_INIT, ENTITY_VETH_INIT, ENTITY_HOSTNAME_INIT)
 
 	value, err := Rdb.Get(Ctx, id+prefix).Result()
 	if err != nil {
-		return entity, fmt.Errorf("FindHostEntity:get value from DB error %s", err.Error())
+		utils.Logger.Warn("can't find compute entity, please retry", id+prefix, err.Error())
+
+	}
+	err2 := json.Unmarshal([]byte(value), &compute_entity)
+	if err2 != nil {
+		utils.Logger.Warn("can't find compute entity, please retry", value, err2.Error())
+
+	}
+	return compute_entity, nil
+}
+
+func FindTopoEntity(id string, prefix string) (TopologyData, error) {
+	var entity TopologyData
+	entity.Topology_id = ENTITY_TOPOLOGY_ID_INIT
+
+	value, err := Rdb.Get(Ctx, id+prefix).Result()
+	if err != nil {
+		utils.Logger.Warn("can't find topology entity, please retry", id+prefix, err.Error())
+
 	}
 	err2 := json.Unmarshal([]byte(value), &entity)
 	if err2 != nil {
-		return entity, fmt.Errorf("FindHostEntity: unmarshal error %s", err2.Error())
+		utils.Logger.Warn("can't find topology entity, please retry", "unmarshal", err2.Error())
+
 	}
+
 	return entity, nil
-}
-
-func GetAllValuesWithKeyPrefix(prefix string) (map[string]string, error) {
-	keys, err := getKeys(fmt.Sprintf("%s*", prefix))
-	if err != nil {
-		return nil, fmt.Errorf("GetAllValuesWithKeyPrefix:get keys error %s", err.Error())
-	}
-
-	values, err2 := getKeyAndValueMap(keys, prefix)
-	if err2 != nil {
-		return nil, fmt.Errorf("GetAllValuesWithKeyPrefix:get key and value map error %s", err2.Error())
-	}
-	return values, nil
-}
-
-func DeleteAllValuesWithKeyPrefix(prefix string) error {
-	keys, err := getKeys(fmt.Sprintf("%s*", prefix))
-	if err != nil {
-		return fmt.Errorf("DeleteAllValuesWithKeyPrefix: get keys error %s", err.Error())
-	}
-
-	for _, key := range keys {
-
-		err2 := Del(key)
-		if err2 != nil {
-			return fmt.Errorf("DeleteAllValuesWithKeyPrefix: Del key %v error %s", key, err2.Error())
-		}
-
-	}
-
-	return nil
 }
 
 func getKeys(prefix string) ([]string, error) {
@@ -162,36 +190,28 @@ func getKeys(prefix string) ([]string, error) {
 	}
 
 	if err := iter.Err(); err != nil {
-		return nil, fmt.Errorf("getKeys:scan db error '%s' when retriving key '%s' keys", err.Error(), prefix)
+		utils.Logger.Warn("can't get keys in DB scan", prefix, err.Error())
 	}
 
 	return allkeys, nil
 }
-func getKeyAndValueMap(keys []string, prefix string) (map[string]string, error) {
-	values := make(map[string]string)
-	for _, key := range keys {
-		value, err := Rdb.Get(Ctx, key).Result()
-		if err != nil {
-			return nil, fmt.Errorf("getKeyAndValueMap:Get value error '%s' when retriving key '%s' keys", err.Error(), prefix)
-		}
 
-		strippedKey := strings.Split(key, prefix)
-		values[strippedKey[1]] = value
-	}
-	return values, nil
-}
+func DeleteAllValuesWithKeyPrefix(prefix string) error {
 
-func FindTopoEntity(id string, prefix string) (TopologyData, error) {
-	var entity TopologyData
-
-	value, err := Rdb.Get(Ctx, id+prefix).Result()
+	keys, err := getKeys(fmt.Sprintf("%s*", prefix))
 	if err != nil {
-		return entity, fmt.Errorf("FindTopoEntity:get value from DB error %s", err.Error())
+		utils.Logger.Warn("can't find prefix value in DB, please retry", prefix, err.Error())
+		return err
+	}
 
+	for _, key := range keys {
+		err2 := Del(key)
+		if err2 != nil {
+			utils.Logger.Warn("can't delete key in DB, please retry", key, err2.Error())
+			return err2
+		}
 	}
-	err2 := json.Unmarshal([]byte(value), &entity)
-	if err2 != nil {
-		return entity, fmt.Errorf("FindTopoEntity: unmarshal error %s", err2.Error())
-	}
-	return entity, nil
+
+	return nil
+
 }
