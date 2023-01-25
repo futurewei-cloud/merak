@@ -16,6 +16,7 @@ package handler
 import (
 	"context"
 	"os"
+	"runtime"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
@@ -175,6 +176,9 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig, updatePortUrl st
 		Status:   common_pb.Status_DONE,
 	}
 	MerakLogger.Info("Successfully created devices for evm ", "name", evm.GetName())
+	runtime.SetFinalizer(evm, func(evm merakEvm.Evm) {
+		MerakLogger.Info("Finalize evm ", "name", evm.GetName())
+	})
 	return &pb.AgentReturnInfo{
 		ReturnMessage: "Create Success",
 		ReturnCode:    common_pb.ReturnCode_OK,
