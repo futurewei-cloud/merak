@@ -17,6 +17,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"runtime"
 
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/agent"
 	common_pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
@@ -93,6 +94,9 @@ func caseDelete(ctx context.Context, in *pb.InternalPortConfig, deletePortUrl st
 	}
 
 	log.Println("Successfully deleted devices for evm ", evm.GetName())
+	runtime.SetFinalizer(evm, func(evm merakEvm.Evm) {
+		MerakLogger.Info("Finalize EVM Delete ", "name", evm.GetName())
+	})
 	return &pb.AgentReturnInfo{
 		ReturnMessage: "Delete Success!",
 		ReturnCode:    common_pb.ReturnCode_OK,

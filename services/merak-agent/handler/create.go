@@ -177,7 +177,7 @@ func caseCreate(ctx context.Context, in *pb.InternalPortConfig, updatePortUrl st
 	}
 	MerakLogger.Info("Successfully created devices for evm ", "name", evm.GetName())
 	runtime.SetFinalizer(evm, func(evm merakEvm.Evm) {
-		MerakLogger.Info("Finalize evm ", "name", evm.GetName())
+		MerakLogger.Info("Finalize EVM Create ", "name", evm.GetName())
 	})
 	return &pb.AgentReturnInfo{
 		ReturnMessage: "Create Success",
@@ -207,6 +207,9 @@ func caseCreateMinimal(ctx context.Context, in *pb.InternalPortConfig, createMin
 			Mac:      evm.GetMac(),
 			Status:   common_pb.Status_DEPLOYING,
 		}
+		runtime.SetFinalizer(evm, func(evm merakEvm.Evm) {
+			MerakLogger.Info("Finalize EVM CreateMinimalPort ", "name", evm.GetName())
+		})
 		return &pb.AgentReturnInfo{
 			ReturnMessage: "Create Minimal Port Success",
 			ReturnCode:    common_pb.ReturnCode_OK,
