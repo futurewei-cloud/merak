@@ -14,12 +14,9 @@ Copyright(c) 2022 Futurewei Cloud
 package database
 
 import (
-	"context"
-	"encoding/json"
 	"testing"
 
-	"github.com/alicebob/miniredis/v2"
-	"github.com/futurewei-cloud/merak/services/common/datastore"
+	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,10 +48,14 @@ func TestComputeEntityNew(t *testing.T) {
 
 func TestComputeEntitiyDBSuccess(t *testing.T) {
 
-	ctx := context.Background()
-	server, _ := miniredis.Run()
-	defer server.Close()
-	datastore, _ := datastore.NewClient(ctx, server.Addr(), "", 0)
+	client := redis.NewClient(&redis.Options{
+
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	Rdb = client
 
 	c0 := NewComputeEntity(
 		"10.244.0.45",
@@ -66,7 +67,6 @@ func TestComputeEntitiyDBSuccess(t *testing.T) {
 		"vh0-eth1",
 		"kind-control-plane",
 	)
-	jsonBytes, _ := json.Marshal(c0)
-	err := datastore.HashBytesUpdate(ctx, "compute_entity", c0.Name, jsonBytes)
+	err := SetValue(c0.Name, c0)
 	assert.Nil(t, err)
 }
