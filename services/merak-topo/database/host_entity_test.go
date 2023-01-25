@@ -40,8 +40,8 @@ func TestHostEntitiyDBSuccess(t *testing.T) {
 	client := redis.NewClient(&redis.Options{
 
 		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Password: "",
+		DB:       0,
 	})
 
 	Rdb = client
@@ -60,8 +60,8 @@ func TestHostEntityDBFail(t *testing.T) {
 	client := redis.NewClient(&redis.Options{
 
 		Addr:     "localhost:0000",
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Password: "",
+		DB:       0,
 	})
 
 	Rdb = client

@@ -69,8 +69,8 @@ func TestTopoHandlerWorkFlowSuccess(t *testing.T) {
 
 	client := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Password: "",
+		DB:       0,
 	})
 
 	database.Rdb = client
@@ -85,8 +85,8 @@ func TestTopoHandlerWorkFlowSuccess(t *testing.T) {
 }
 
 func TestTopoHandlerWorkFlowFail(t *testing.T) {
-	aca_num := 500
-	rack_num := 900
+	aca_num := 20
+	rack_num := 25
 	aca_per_rack := 4
 	data_plane_cidr := "10.200.0.0/16"
 
@@ -96,8 +96,8 @@ func TestTopoHandlerWorkFlowFail(t *testing.T) {
 
 	client := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Password: "",
+		DB:       0,
 	})
 
 	database.Rdb = client
@@ -107,6 +107,6 @@ func TestTopoHandlerWorkFlowFail(t *testing.T) {
 	k8s := newTestSimpleK8s()
 	_, err := k8s.clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 
-	assert.Nil(t, err1, err2, err)
+	assert.Error(t, err1, err2, err)
 
 }
