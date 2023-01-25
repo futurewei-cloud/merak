@@ -134,3 +134,5 @@ patches:
     metadata:
       name: sdn-controller
       namespace: merak
+patchesStrategicMerge:
+  - compute.yaml

@@ -85,7 +85,8 @@ func main() {
 
 	log.Println("Starting worker with " +
 		rps + " activities/sec and max " +
-		concurrency + " concurrent activities")
+		concurrency + " concurrent activities and max" +
+		concurrentWorkflows + " concurrent workflows")
 	var sb strings.Builder
 	sb.WriteString(temporal_address)
 	sb.WriteString(":")
