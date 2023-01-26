@@ -11,38 +11,62 @@ Copyright(c) 2022 Futurewei Cloud
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package tests
+package database
 
 import (
-	"context"
-	"strconv"
-	"strings"
 	"testing"
 
-	pb "github.com/futurewei-cloud/merak/api/proto/v1/topology"
-	constants "github.com/futurewei-cloud/merak/services/common"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"github.com/go-redis/redis/v8"
+	"github.com/stretchr/testify/assert"
 )
 
-//grpc test
-func TestGrpcClient(t *testing.T) {
-	var topology_address strings.Builder
-	topology_address.WriteString(constants.TOPLOGY_GRPC_SERVER_ADDRESS)
-	topology_address.WriteString(":")
-	topology_address.WriteString(strconv.Itoa(constants.TOPLOGY_GRPC_SERVER_PORT))
+func TestComputeEntityNew(t *testing.T) {
+	c0 := NewComputeEntity(
+		"10.244.0.45",
+		"10.200.0.1",
+		"b15e479d-0566-464d-b1ba-916acd812b7f",
+		"ff:ff:ff:ff:ff:ff",
+		"vhost-0",
+		STATUS_DEPLOYING,
+		"vh0-eth1",
+		"kind-control-plane",
+	)
 
-	conn, err := grpc.Dial(topology_address.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		t.Fatalf("Failed to dial gRPC server address!: %v", err)
-	}
-	defer conn.Close()
+	c1 := NewComputeEntity(
+		"10.244.0.35",
+		"10.200.0.6",
+		"ff35d20a-9af6-4e0a-aa5c-0b6a7a6e7c61",
+		"ff:ff:ff:ff:ff:ff",
+		"vhost-8",
+		STATUS_DELETING,
+		"vh8-eth1",
+		"kind-control-plane",
+	)
 
-	client := pb.NewMerakTopologyServiceClient(conn)
-	resp, err := client.TopologyHandler(context.Background(), &pb.InternalTopologyInfo{})
-	if err != nil {
-		t.Fatalf("gRPCTestHandler failed: %v", err)
-	}
-	t.Logf("Response: %+v", resp)
-	defer conn.Close()
+	assert.NotEqual(t, c0, c1)
+}
+
+func TestComputeEntitiyDBSuccess(t *testing.T) {
+
+	client := redis.NewClient(&redis.Options{
+
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+
+	Rdb = client
+
+	c0 := NewComputeEntity(
+		"10.244.0.45",
+		"10.200.0.1",
+		"b15e479d-0566-464d-b1ba-916acd812b7f",
+		"ff:ff:ff:ff:ff:ff",
+		"vhost-0",
+		STATUS_DEPLOYING,
+		"vh0-eth1",
+		"kind-control-plane",
+	)
+	err := SetValue(c0.Name, c0)
+	assert.Nil(t, err)
 }
