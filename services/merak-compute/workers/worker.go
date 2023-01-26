@@ -51,7 +51,7 @@ func main() {
 	rps, ok := os.LookupEnv(constants.TEMPORAL_RPS_ENV)
 	if !ok {
 		log.Println("RPS environment variable not set, using default.")
-		rps = common.DEFAULT_WORKER_RPS
+		rps = constants.WORKER_DEFAULT_RPS
 	}
 	rps_int, err := strconv.ParseFloat(rps, 64)
 	if err != nil {
@@ -60,11 +60,21 @@ func main() {
 	concurrency, ok := os.LookupEnv(constants.TEMPORAL_CONCURRENCY_ENV)
 	if !ok {
 		log.Println("Concurrency environment variable not set, using default.")
-		concurrency = common.DEFAULT_WORKER_CONCURRENCY
+		concurrency = constants.WORKER_DEFAULT_CONCURRENCY
 	}
 	concurrency_int, err := strconv.Atoi(concurrency)
 	if err != nil {
 		log.Fatalln("Concurrency " + concurrency + " is NaN!")
+	}
+
+	concurrentWorkflows, ok := os.LookupEnv(constants.TEMPORAL_CONCURRENT_WORKFLOWS_ENV)
+	if !ok {
+		log.Println("Concurrent Workflows environment variable not set, using default.")
+		concurrency = constants.WORKER_DEFAULT_CONCURRENT_WORKFLOWS
+	}
+	concurrentWorkflowsInt, err := strconv.Atoi(concurrentWorkflows)
+	if err != nil {
+		log.Fatalln("Concurrent Workflows " + concurrentWorkflows + " is NaN!")
 	}
 
 	tq, ok := os.LookupEnv(constants.TEMPORAL_TQ_ENV)
@@ -75,7 +85,8 @@ func main() {
 
 	log.Println("Starting worker with " +
 		rps + " activities/sec and max " +
-		concurrency + " concurrent activities")
+		concurrency + " concurrent activities and max" +
+		concurrentWorkflows + " concurrent workflows")
 	var sb strings.Builder
 	sb.WriteString(temporal_address)
 	sb.WriteString(":")
@@ -111,7 +122,7 @@ func main() {
 	log.Println("Connected to DB!")
 
 	w := worker.New(c, tq, worker.Options{
-		MaxConcurrentWorkflowTaskExecutionSize:  2, // https://github.com.mcas.ms/temporalio/sdk-go/issues/1003#issuecomment-1382509865
+		MaxConcurrentWorkflowTaskExecutionSize:  concurrentWorkflowsInt,
 		MaxConcurrentActivityExecutionSize:      concurrency_int,
 		WorkerActivitiesPerSecond:               rps_int,
 		MaxConcurrentLocalActivityExecutionSize: concurrency_int,

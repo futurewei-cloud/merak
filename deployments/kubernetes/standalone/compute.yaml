@@ -69,7 +69,7 @@ spec:
         effect: "NoSchedule"
       containers:
       - name: merak-compute
-        image: meraksim/merak-compute:dev
+        image: meraksim/merak-compute:test
         imagePullPolicy: Always
         ports:
           - containerPort: 40051
@@ -90,11 +90,11 @@ spec:
         - name: CONCURRENCY_LOWER
           value: "1000"
         - name: WORKER_IMAGE
-          value: meraksim/merak-compute-vm-worker:dev
+          value: meraksim/merak-compute-vm-worker:test
         - name: MODE
-          value: ALCOR
+          value: STANDALONE
         - name: CONCURRENT_WORKFLOWS
-          value: "2" # https://github.com/temporalio/sdk-go/issues/1003
+          value: "2"
         - name: NODE_NAME
           valueFrom:
             fieldRef:

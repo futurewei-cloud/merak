@@ -218,11 +218,11 @@ kind-ci:
 	make kind-base
 	kubectl kustomize deployments/kubernetes/ci --enable-helm | kubectl apply -f -
 
-.PHONY: kind-compute-test
-kind-compute-test:
+.PHONY: kind-standalone
+kind-standalone:
 	kind delete cluster
 	kind create cluster --config=configs/kind.yaml
-	kubectl kustomize deployments/kubernetes/compute.test --enable-helm | kubectl apply -f -
+	kubectl kustomize deployments/kubernetes/standalone --enable-helm | kubectl apply -f -
 
 .PHONY: deploy
 deploy:

@@ -18,7 +18,7 @@ images:
   newTag: test
 resources:
 - test.driver.yaml
-- temporal.test.yaml
+# - temporal.test.yaml
 # Exclude Merak Network
 patches:
 - patch: |-
@@ -134,3 +134,23 @@ patches:
     metadata:
       name: sdn-controller
       namespace: merak
+patchesStrategicMerge:
+  - compute.yaml
+# Temporal Helm Chart
+helmCharts:
+- releaseName: temporal
+  repo: https://charts.wener.tech
+  name: temporal
+  version: 0.15.1
+  valuesInline:
+    server:
+      replicatCount: 1
+    cassandra:
+      config:
+        cluster_size: 1
+    prometheus:
+      enabled: false
+    grafana:
+      enabled: false
+    elasticsearch:
+      enabled: false
