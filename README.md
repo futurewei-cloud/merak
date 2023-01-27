@@ -110,10 +110,10 @@ Once everything is created, you can test network connnectivity as shown below.
 1. Run ```kubectl get pods -A``` to see all vhost pods.
 ![Step 1](docs/images/merak_e2e_step1.jpg)
 
-1. Merak uses network namespaces to emulate VMs, run ``` kubectl exec -it -n (pod namespace) vhost-0 ip netns exec v000 ip a ``` to get the IP address of the emulated VM `v000` inside of the emulated host `vhost-0`.
+1. Merak uses network namespaces to emulate VMs, run ``` kubectl exec -it -n <namespace of the pod> vhost-0 ip netns exec v000 ip a ``` to get the IP address of the emulated VM `v000` inside of the emulated host `vhost-0`.
 ![Step 2](docs/images/merak_e2e_step2.jpg)
 
-1. Ping the VM `v000` on `vhost-0` from a different VM on `vhost-1` with the following command ``` kubectl exec -it -n (pod namespace) vhost-1 ip netns exec v000 ping (IP address from step 2)```
+1. Ping the VM `v000` on `vhost-0` from a different VM on `vhost-1` with the following command ``` kubectl exec -it -n <namespace of the pod> vhost-1 ip netns exec v000 ping (IP address from step 2)```
 ![Step 2](docs/images/merak_e2e_step3.jpg)
 
 ### Clean-up:
