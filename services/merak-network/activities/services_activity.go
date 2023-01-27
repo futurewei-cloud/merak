@@ -29,7 +29,7 @@ func DoServices(services []*pb.InternalServiceInfo) (string, error) {
 	var runIds []string
 	numberOfService := 0
 	for _, service := range services {
-		if service.WhereToRun == "NETWORK" {
+		if strings.ToUpper(service.WhereToRun) == "NETWORK" {
 			idServiceMap[service.Name] = service
 			if service.WhenToRun != "INIT" {
 				log.Printf("WhenToRun %s", service.WhenToRun)
