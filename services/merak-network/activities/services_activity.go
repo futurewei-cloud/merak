@@ -14,12 +14,9 @@ Copyright(c) 2022 Futurewei Cloud
 package activities
 
 import (
-	"fmt"
 	pb "github.com/futurewei-cloud/merak/api/proto/v1/common"
-	"github.com/futurewei-cloud/merak/services/merak-network/http"
 	"github.com/futurewei-cloud/merak/services/merak-network/utils"
 	"log"
-	"os/exec"
 	"strings"
 )
 
@@ -32,7 +29,7 @@ func DoServices(services []*pb.InternalServiceInfo) (string, error) {
 	var runIds []string
 	numberOfService := 0
 	for _, service := range services {
-		if service.WhereToRun == "network" {
+		if strings.ToUpper(service.WhereToRun) == "NETWORK" {
 			idServiceMap[service.Name] = service
 			if service.WhenToRun != "INIT" {
 				log.Printf("WhenToRun %s", service.WhenToRun)
@@ -60,54 +57,54 @@ func DoServices(services []*pb.InternalServiceInfo) (string, error) {
 	}
 	log.Printf("runSequenceMap %s", runSequenceMap)
 
-	for _, eachRunId := range runIds {
-		currentId := eachRunId
-		for {
-			if idServiceMap[currentId].Cmd == "curl" {
-				log.Println("ssh service")
-				var headers []string
-				var payload string
-				for _, parameter := range idServiceMap[currentId].Parameters {
-					if strings.Split(parameter, " ")[0] == "-H" {
-						headers = append(headers, strings.ReplaceAll(strings.Split(parameter, " ")[1], "'", ""))
-					}
-					if strings.Split(parameter, " ")[0] == "-d" {
-						payload = strings.ReplaceAll(strings.Split(parameter, " ")[1], "'", "")
-					}
-				}
-				returnMessage, returnErr := http.RequestCall(idServiceMap[currentId].Url, strings.Split(idServiceMap[currentId].Parameters[0], " ")[0], payload, headers)
-				if returnErr != nil {
-					log.Printf("returnErr %s", returnErr)
-					return "", returnErr
-				}
-				log.Printf("returnMessage %s", returnMessage)
-
-			}
-			if idServiceMap[currentId].Cmd == "ssh" {
-				var shellCommand string
-				for _, command := range idServiceMap[currentId].Parameters {
-					shellCommand = shellCommand + " " + command
-				}
-				cmd := exec.Command(shellCommand)
-				stdout, err := cmd.Output()
-				if err != nil {
-					fmt.Println(err.Error())
-					return "", err
-				}
-				log.Printf("shellCommand out: %s", string(stdout))
-				log.Println("curl service")
-			}
-
-			nextKey, ok := runSequenceMap[currentId]
-			log.Printf("nextKey %s", nextKey)
-			if ok {
-				fmt.Println("value: ", nextKey)
-				currentId = nextKey
-			} else {
-				fmt.Println("key not found")
-				break
-			}
-		}
-	}
+	//for _, eachRunId := range runIds {
+	//	currentId := eachRunId
+	//	for {
+	//		if idServiceMap[currentId].Cmd == "curl" {
+	//			log.Println("ssh service")
+	//			var headers []string
+	//			var payload string
+	//			for _, parameter := range idServiceMap[currentId].Parameters {
+	//				if strings.Split(parameter, " ")[0] == "-H" {
+	//					headers = append(headers, strings.ReplaceAll(strings.Split(parameter, " ")[1], "'", ""))
+	//				}
+	//				if strings.Split(parameter, " ")[0] == "-d" {
+	//					payload = strings.ReplaceAll(strings.Split(parameter, " ")[1], "'", "")
+	//				}
+	//			}
+	//			returnMessage, returnErr := http.RequestCall(idServiceMap[currentId].Url, strings.Split(idServiceMap[currentId].Parameters[0], " ")[0], payload, headers)
+	//			if returnErr != nil {
+	//				log.Printf("returnErr %s", returnErr)
+	//				return "", returnErr
+	//			}
+	//			log.Printf("returnMessage %s", returnMessage)
+	//
+	//		}
+	//		if idServiceMap[currentId].Cmd == "ssh" {
+	//			var shellCommand string
+	//			for _, command := range idServiceMap[currentId].Parameters {
+	//				shellCommand = shellCommand + " " + command
+	//			}
+	//			cmd := exec.Command(shellCommand)
+	//			stdout, err := cmd.Output()
+	//			if err != nil {
+	//				fmt.Println(err.Error())
+	//				return "", err
+	//			}
+	//			log.Printf("shellCommand out: %s", string(stdout))
+	//			log.Println("curl service")
+	//		}
+	//
+	//		nextKey, ok := runSequenceMap[currentId]
+	//		log.Printf("nextKey %s", nextKey)
+	//		if ok {
+	//			fmt.Println("value: ", nextKey)
+	//			currentId = nextKey
+	//		} else {
+	//			fmt.Println("key not found")
+	//			break
+	//		}
+	//	}
+	//}
 	return "", nil
 }
