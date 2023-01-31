@@ -145,7 +145,7 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 		//// create pods
 		var newPod *corev1.Pod
 		l := make(map[string]string)
-		l["App"] = node.Name
+
 		l["Topo"] = "topology"
 
 		var sc corev1.SecurityContext
@@ -196,6 +196,16 @@ func Topo_deploy(k8client *kubernetes.Clientset, aca_image string, ovs_image str
 							Ports: []corev1.ContainerPort{
 								{ContainerPort: constants.AGENT_GRPC_SERVER_PORT},
 								{ContainerPort: constants.PROMETHEUS_PORT},
+							},
+						},
+					},
+					TopologySpreadConstraints: []corev1.TopologySpreadConstraint{
+						{
+							MaxSkew:           1,
+							TopologyKey:       "kubernetes.io/hostname",
+							WhenUnsatisfiable: corev1.ScheduleAnyway,
+							LabelSelector: &metav1.LabelSelector{
+								MatchLabels: l,
 							},
 						},
 					},
