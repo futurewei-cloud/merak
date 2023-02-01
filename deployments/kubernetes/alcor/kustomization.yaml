@@ -21,7 +21,7 @@ images:
 # Alcor DB Images
 - name: ignite_alcor:lib8
   newName: futureweinetworking/ignite_alcor
-  newTag: "rio"
+  newTag: "dev"
 
 # Alcor Service Images
 - name: network_config_manager:v1.0
