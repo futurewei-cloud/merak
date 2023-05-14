@@ -1,0 +1,12 @@
+- hosts: all
+  become: yes
+  tasks:
+  - name: pull meraksim/merak-agent:0908-fixed
+    docker_image:
+      name: meraksim/merak-agent:0908-fixed
+  - name: pull yanmo96/ovs_only:latest
+    docker_image:
+      name: yanmo96/ovs_only:latest
+  - name: pull networkop/init-wait:latest
+    docker_image:
+      name: networkop/init-wait:latest

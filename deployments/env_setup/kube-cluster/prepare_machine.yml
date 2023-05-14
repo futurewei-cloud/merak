@@ -1,0 +1,15 @@
+- hosts: all 
+  become: yes
+  tasks:
+  - name: install pip
+    apt:
+      name: python3-pip
+      update_cache: yes
+      state: present
+  - name: Install Docker python package
+    pip:
+      name: docker
+  - name: Install ovs
+    apt:
+      name: openvswitch-switch=2.9.8-0ubuntu0.18.04.2
+      state: present

@@ -1,0 +1,106 @@
+# MIT License
+# Copyright(c) 2020 Futurewei Cloud
+#
+#     Permission is hereby granted,
+#     free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction,
+#     including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons
+#     to whom the Software is furnished to do so, subject to the following conditions:
+#
+#     The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+#     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+#     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-configmap
+  namespace: default
+data:
+  application.properties: |
+    spring.redis.host=localhost
+    spring.redis.port=6380
+    ignite.kubeNamespace=ignite-alcor
+    ignite.kubeServiceName=ignite-alcor-service
+    ignite.host=ignite-alcor-service.ignite-alcor.svc.cluster.local
+    ignite.port=10800
+    ignite.thin.client.enable=true
+    #ignite.key-store-path=keystore.jks
+    #ignite.key-store-password=123456
+    #ignite.trust-store-path=truststore.jks
+    #ignite.trust-store-password=123456
+    logging.level.root=DEBUG
+    spring.servlet.multipart.enabled=true
+    spring.servlet.multipart.file-size-threshold=2KB
+    spring.servlet.multipart.max-file-size=200MB
+    spring.servlet.multipart.max-request-size=215MB
+    microservices.dataplane.service.url=http://dataplanemanager-service.default.svc.cluster.local:30010/network-configuration
+    microservices.dataplane.nodeservice.url=http://dataplanemanager-service.default.svc.cluster.local:30010/nodes
+
+    opentracing.jaeger.udp-sender.host=10.101.70.203
+    opentracing.jaeger.udp-sender.port=6831
+    opentracing.jaeger.const-sampler.decision=true
+    opentracing.jaeger.enabled=false
+    opentracing.jaeger.log-spans=true
+    opentracing.jaeger.enable-w3c-propagation=true
+    opentracing.jaeger.enable-b3-propagation=true
+    opentracing.jaeger.service-name=alcor-node
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nodemanager
+  name: nodemanager
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: nodemanager
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nodemanager
+    spec:
+      serviceAccountName: alcor-account
+      volumes:
+        - name: node-volume
+          configMap:
+            name: node-configmap
+            items:
+              - key: application.properties
+                path: application.properties
+      containers:
+        - image: yanmo96/node_manager:portmanagertest1
+        #- image: fwnetworking/controller:node_manager-v0.3.0
+          name: nodemanager-web
+          imagePullPolicy: IfNotPresent
+          command: ["java", "-jar", "/app/AlcorNodeManager-0.1.0.jar", "--spring.config.location=/etc/node/application.properties"]
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: node-volume
+              mountPath: /etc/node
+          envFrom:
+            - configMapRef:
+                name: node-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodemanager-service
+  namespace: default
+  labels:
+    name: nodemanager-service
+spec:
+  type: NodePort
+  ports:
+    - port: 9007
+      targetPort: 8080
+      nodePort: 30007
+  selector:
+    app: nodemanager
+
